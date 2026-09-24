@@ -38,8 +38,24 @@ params_sc_bt_metacells(
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`.
+  `n_probe`. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 ## Value
 
-A list with the metacell parameters.
+A named list with the following elements:
+
+- max_shared - Integer. Maximum number of allowed shared neighbours for
+  the meta cell to be considered. Defaults to `15L`.
+
+- target_no_metacells - Integer. Target number of meta-cells to
+  generate. Defaults to `1000L`.
+
+- max_iter - Integer. Maximum number of iterations for the algorithm.
+  Defaults to `5000L`.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.

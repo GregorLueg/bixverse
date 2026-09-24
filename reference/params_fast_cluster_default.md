@@ -11,16 +11,16 @@ params_fast_cluster_default()
 
 ## Value
 
-A list with the following parameters for fast clustering:
+A named list with the following elements:
 
-- km_type - The type of k-means clustering. Defaults to `"minibatch"`
+- km_type - String. The type of k-means clustering. One of
+  `c("minibatch", "standard")`. Defaults to `"minibatch"`.
 
-- n_centroids - The number of centroids to use. Default to `NULL` and
-  the function will use `sqrt(N_cells) * 4` for the number of
-  n_centroids.
+- n_centroids - Integer or `NULL`. The number of centroids to use.
+  `NULL` uses `sqrt(N_cells) * 4` centroids. Defaults to `NULL`.
 
-- kmeans_iters - Number of maximum k-means iterations. Defaults to
-  `100L`
+- kmeans_iters - Integer. Number of maximum k-means iterations. Defaults
+  to `100L`.
 
-- batch_size - Max batch size will be set to `4098L`, but pending data
-  set set to `N_cells / 2`.
+- batch_size - Integer. Max batch size, capped at `N_cells / 2`
+  depending on the data set. Defaults to `4098L`.

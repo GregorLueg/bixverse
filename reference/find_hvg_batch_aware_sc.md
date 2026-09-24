@@ -80,8 +80,8 @@ This function will return a list with:
 
 - hvg_gene_idx - The (0-index) gene features.
 
-- batch_hvg_data - data.table with the detailed information of the
-  variance per batch.
+- hvg_data - data.table with the detailed information of the variance
+  per batch.
 
 ## Examples
 

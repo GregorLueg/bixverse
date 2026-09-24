@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -96,8 +101,8 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_knn</span><span class="op">(</span></span>
 <span>  k <span class="op">=</span> <span class="fl">15L</span>,</span>
-<span>  knn_method <span class="op">=</span> <span class="st">"kmknn"</span>,</span>
-<span>  ann_dist <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
+<span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"kmknn"</span>, <span class="st">"hnsw"</span>, <span class="st">"annoy"</span>, <span class="st">"nndescent"</span>, <span class="st">"ivf"</span>, <span class="st">"exhaustive"</span><span class="op">)</span>,</span>
+<span>  ann_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"euclidean"</span>, <span class="st">"cosine"</span><span class="op">)</span>,</span>
 <span>  n_trees <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  search_budget <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  delta <span class="op">=</span> <span class="fl">0.001</span>,</span>
@@ -122,13 +127,11 @@
 
 <dt id="arg-knn-method">knn_method<a class="anchor" aria-label="anchor" href="#arg-knn-method"></a></dt>
 <dd><p>String. Which method to use for the approximate nearest
-neighbour search. Defaults to <code>"kmknn"</code>. One of
-<code>c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>.</p></dd>
+neighbour search. One of <code>c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>. Defaults to <code>"kmknn"</code>.</p></dd>
 
 
 <dt id="arg-ann-dist">ann_dist<a class="anchor" aria-label="anchor" href="#arg-ann-dist"></a></dt>
-<dd><p>String. Distance metric to use. Defaults to <code>"euclidean"</code>.
-One of <code>c("cosine", "euclidean")</code>.</p></dd>
+<dd><p>String. Distance metric to use. One of <code>c("euclidean", "cosine")</code>. Defaults to <code>"euclidean"</code>.</p></dd>
 
 
 <dt id="arg-n-trees">n_trees<a class="anchor" aria-label="anchor" href="#arg-n-trees"></a></dt>
@@ -137,12 +140,13 @@ One of <code>c("cosine", "euclidean")</code>.</p></dd>
 
 <dt id="arg-search-budget">search_budget<a class="anchor" aria-label="anchor" href="#arg-search-budget"></a></dt>
 <dd><p>Integer or <code>NULL</code>. Annoy param: optional search budget
-per tree. If <code>NULL</code>, defaults to <code>n_trees * k * 20L</code> internally.</p></dd>
+per tree. If <code>NULL</code>, defaults to <code>n_trees * k * 20L</code> internally. Defaults to
+<code>NULL</code>.</p></dd>
 
 
 <dt id="arg-delta">delta<a class="anchor" aria-label="anchor" href="#arg-delta"></a></dt>
-<dd><p>Numeric. NNDescent param: early termination criterion.
-Defaults to <code>0.001</code>.</p></dd>
+<dd><p>Numeric. NNDescent param: early termination criterion. Defaults
+to <code>0.001</code>.</p></dd>
 
 
 <dt id="arg-diversify-prob">diversify_prob<a class="anchor" aria-label="anchor" href="#arg-diversify-prob"></a></dt>
@@ -152,20 +156,20 @@ applied at the end of index construction. Defaults to <code>0.0</code>.</p></dd>
 
 <dt id="arg-ef-budget">ef_budget<a class="anchor" aria-label="anchor" href="#arg-ef-budget"></a></dt>
 <dd><p>Integer or <code>NULL</code>. NNDescent param: optional query budget.
-Higher values improve recall at the cost of speed.</p></dd>
+Higher values improve recall at the cost of speed. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-extract-knn">extract_knn<a class="anchor" aria-label="anchor" href="#arg-extract-knn"></a></dt>
 <dd><p>Boolean. NNDescent param: hand back the graph the descent
-already built instead of beam searching it. Skips the query pass entirely,
-so it is much faster, at the cost of some recall. Rows the descent never
-filled come back padded with duplicate edges. Ignored by every other method.
+already built instead of beam searching it. Skips the query pass entirely, so
+it is much faster, at the cost of some recall. Rows the descent never filled
+come back padded with duplicate edges. Ignored by every other method.
 Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-m">m<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>Integer. HNSW param: number of connections between layers.
-Defaults to <code>16L</code>.</p></dd>
+<dd><p>Integer. HNSW param: number of connections between layers. Defaults
+to <code>16L</code>.</p></dd>
 
 
 <dt id="arg-ef-construction">ef_construction<a class="anchor" aria-label="anchor" href="#arg-ef-construction"></a></dt>
@@ -180,18 +184,46 @@ time. Higher values improve recall at the cost of speed. Defaults to <code>100L<
 
 <dt id="arg-n-list">n_list<a class="anchor" aria-label="anchor" href="#arg-n-list"></a></dt>
 <dd><p>Integer or <code>NULL</code>. IVF param: number of clusters to generate.
-If <code>NULL</code>, defaults to <code>sqrt(n)</code> internally.</p></dd>
+If <code>NULL</code>, defaults to <code>sqrt(n)</code> internally. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-n-probe">n_probe<a class="anchor" aria-label="anchor" href="#arg-n-probe"></a></dt>
-<dd><p>Integer or <code>NULL</code>. IVF param: number of clusters to query.
-If <code>NULL</code>, defaults to <code>sqrt(n_list)</code> internally.</p></dd>
+<dd><p>Integer or <code>NULL</code>. IVF param: number of clusters to query. If
+<code>NULL</code>, defaults to <code>sqrt(n_list)</code> internally. Defaults to <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the kNN parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>k - Integer. Number of neighbours. Defaults to <code>15L</code>.</p></li>
+<li><p>knn_method - String. Which method to use for the approximate nearest
+neighbour search. One of <code>c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>. Defaults to <code>"kmknn"</code>.</p></li>
+<li><p>ann_dist - String. Distance metric to use. One of <code>c("euclidean", "cosine")</code>. Defaults to <code>"euclidean"</code>.</p></li>
+<li><p>n_trees - Integer. Annoy param: number of trees. Defaults to <code>50L</code>.</p></li>
+<li><p>search_budget - Integer or <code>NULL</code>. Annoy param: optional search budget
+per tree. If <code>NULL</code>, defaults to <code>n_trees * k * 20L</code> internally. Defaults to
+<code>NULL</code>.</p></li>
+<li><p>delta - Numeric. NNDescent param: early termination criterion.
+Defaults to <code>0.001</code>.</p></li>
+<li><p>diversify_prob - Numeric. NNDescent param: diversification probability
+applied at the end of index construction. Defaults to <code>0.0</code>.</p></li>
+<li><p>ef_budget - Integer or <code>NULL</code>. NNDescent param: optional query budget.
+Higher values improve recall at the cost of speed. Defaults to <code>NULL</code>.</p></li>
+<li><p>extract_knn - Boolean. NNDescent param: hand back the graph the
+descent already built instead of beam searching it. Skips the query pass
+entirely, so it is much faster, at the cost of some recall. Rows the descent
+never filled come back padded with duplicate edges. Ignored by every other
+method. Defaults to <code>FALSE</code>.</p></li>
+<li><p>m - Integer. HNSW param: number of connections between layers.
+Defaults to <code>16L</code>.</p></li>
+<li><p>ef_construction - Integer. HNSW param: size of the dynamic candidate
+list during construction. Defaults to <code>200L</code>.</p></li>
+<li><p>ef_search - Integer. HNSW param: size of the candidate list at query
+time. Higher values improve recall at the cost of speed. Defaults to <code>100L</code>.</p></li>
+<li><p>n_list - Integer or <code>NULL</code>. IVF param: number of clusters to generate.
+If <code>NULL</code>, defaults to <code>sqrt(n)</code> internally. Defaults to <code>NULL</code>.</p></li>
+<li><p>n_probe - Integer or <code>NULL</code>. IVF param: number of clusters to query.
+If <code>NULL</code>, defaults to <code>sqrt(n_list)</code> internally. Defaults to <code>NULL</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

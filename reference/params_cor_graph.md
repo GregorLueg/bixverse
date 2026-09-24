@@ -17,23 +17,38 @@ params_cor_graph(
 
 - epsilon:
 
-  Float. Defines the epsilon parameter for the radial basis function.
-  Defaults to 2, but should be ideally optimised.
+  Numeric. Defines the epsilon parameter for the radial basis function.
+  Defaults to `2.0`.
 
 - min_cor:
 
-  Float. Minimum absolute correlation that needs to be observed in
+  Numeric. Minimum absolute correlation that needs to be observed in
   either data set. Only relevant for differential correlation-based
-  graphs.
+  graphs. Defaults to `0.2`.
 
 - fdr_threshold:
 
-  Float. Maximum FDR for the differential correlation p-value.
+  Numeric. Maximum FDR for the differential correlation p-value.
+  Defaults to `0.05`.
 
 - verbose:
 
-  Boolean. Controls verbosity of the graph generation function.
+  Boolean. Controls verbosity of the graph generation function. Defaults
+  to `TRUE`.
 
 ## Value
 
-List with parameters for usage in subsequent function.
+A named list with the following elements:
+
+- epsilon - Numeric. Defines the epsilon parameter for the radial basis
+  function. Defaults to `2.0`.
+
+- min_cor - Numeric. Minimum absolute correlation that needs to be
+  observed in either data set. Only relevant for differential
+  correlation-based graphs. Defaults to `0.2`.
+
+- fdr_threshold - Numeric. Maximum FDR for the differential correlation
+  p-value. Defaults to `0.05`.
+
+- verbose - Boolean. Controls verbosity of the graph generation
+  function. Defaults to `TRUE`.

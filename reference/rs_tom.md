@@ -23,8 +23,9 @@ rs_tom(x, tom_type, signed)
 
 - signed:
 
-  Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
-  should be ≥ 0.
+  Boolean. Shall the signed TOM be calculated, i.e. the connectivity be
+  taken over absolute affinities. If set to `FALSE`, values should be
+  \>= 0.
 
 ## Value
 

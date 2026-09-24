@@ -17,7 +17,7 @@ during matrix operations which can affect convergence."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,9 @@ during matrix operations which can affect convergence."><meta property="og:image
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -58,7 +61,9 @@ during matrix operations which can affect convergence."><meta property="og:image
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -131,24 +136,27 @@ during matrix operations which can affect convergence.</p>
 
 
 <dt id="arg-embd">embd<a class="anchor" aria-label="anchor" href="#arg-embd"></a></dt>
-<dd><p>Numerical matrix. The embedding matrix (for example PCA embedding)
-used for the generation of the kNN graph and kernel matrix.</p></dd>
+<dd><p>Numerical matrix. The embedding matrix (for example PCA
+embedding) used for the generation of the kNN graph and kernel matrix.</p></dd>
 
 
 <dt id="arg-cells-to-keep">cells_to_keep<a class="anchor" aria-label="anchor" href="#arg-cells-to-keep"></a></dt>
-<dd><p>Optional indices of the cells to keep, i.e., the
-cells used for the generation of the embedding.</p></dd>
+<dd><p>Optional integer vector. Original cell indices
+(0-indexed!) of the rows of <code>embd</code>, in row order. If <code>NULL</code>, the rows are
+assumed to map one-to-one onto the count file.</p></dd>
 
 
 <dt id="arg-cells-to-use">cells_to_use<a class="anchor" aria-label="anchor" href="#arg-cells-to-use"></a></dt>
-<dd><p>Optional indices of cells to use for meta cell
-generation. Useful if you wish to generate meta cells in specific cell
-types.</p></dd>
+<dd><p>Optional integer vector. Original cell indices
+(0-indexed!) to restrict the meta cell generation to, e.g. specific cell
+types. The kNN graph is then regenerated on the subset. Cells not in
+<code>cells_to_keep</code> are dropped silently.</p></dd>
 
 
 <dt id="arg-knn-data">knn_data<a class="anchor" aria-label="anchor" href="#arg-knn-data"></a></dt>
 <dd><p>Optional list. This contains pre-computed kNN data
-(including distances). The user has to ensure consistency!</p></dd>
+(including distances). The user has to ensure consistency! Ignored when
+<code>cells_to_use</code> is set.</p></dd>
 
 
 <dt id="arg-seacells-params">seacells_params<a class="anchor" aria-label="anchor" href="#arg-seacells-params"></a></dt>
@@ -171,13 +179,16 @@ detailed verbosity.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the following elements:</p><ul><li><p>assignments - A list containing assignment information with elements:
-assignments (vector), metacells (list), unassigned (vector), n_metacells,
-n_cells, n_unassigned</p></li>
-<li><p>aggregated - A list with indptr, indices, raw_counts, norm_counts,
-nrow, ncol in sparse format.</p></li>
-<li><p>rss - Vector of RSS values from each iteration.</p></li>
-<li><p>archetypes - Vector of cell indices selected as archetypes.</p></li>
+    <p>A list with the following elements:</p><ul><li><p>assignments - A list with <code>assignments</code> (integer vector with the
+1-indexed meta cell id per original cell, <code>-1</code> if unassigned),
+<code>metacells</code> (list of 1-indexed original cell indices per meta cell),
+<code>unassigned</code> (1-indexed), <code>n_metacells</code>, <code>n_cells</code> and <code>n_unassigned</code>.
+Empty archetypes are dropped and the ids renumbered.</p></li>
+<li><p>aggregated - A CSR list (meta cells x genes) with indptr, indices,
+raw_counts, norm_counts, nrow and ncol.</p></li>
+<li><p>rss - Numerical vector of RSS values from each iteration.</p></li>
+<li><p>archetypes - Integer vector with the original cell indices
+(0-indexed!) of the archetypes of the retained meta cells.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

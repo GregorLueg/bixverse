@@ -18,12 +18,12 @@ rs_mutual_info(x, n_bins, strategy, normalise)
 - n_bins:
 
   Optional integer. Number of bins to use. If `NULL` is provided the
-  function will default to `sqrt(nrows(x))`.
+  function will default to `sqrt(nrow(x))`.
 
 - strategy:
 
-  String. Binning strategy One of `c("equal_width", "equal_freq")`. If
-  weird string is provided, it will default to `"equal_width"`.
+  String. Binning strategy. One of `c("equal_width", "equal_freq")`.
+  Unknown strings default to `"equal_width"`.
 
 - normalise:
 
@@ -32,4 +32,5 @@ rs_mutual_info(x, n_bins, strategy, normalise)
 
 ## Value
 
-The mutual information matrix.
+The symmetric mutual information matrix. The diagonal holds the column
+entropies, or `0` if `normalise = TRUE`.

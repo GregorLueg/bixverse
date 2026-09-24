@@ -1,6 +1,7 @@
 # Calculate mitch enrichment leveraging Rust under the hood
 
-Calculate mitch enrichment leveraging Rust under the hood
+**\[experimental\]** Ranks the contrasts column-wise and runs the mitch
+MANOVA/ANOVA tests per pathway.
 
 ## Usage
 
@@ -12,8 +13,9 @@ rs_mitch_calc(x, pathway_list, min_size)
 
 - x:
 
-  Numerical matrix. Each column represents on the contrasts you wish to
-  test for and the rows represent the gene statistics per contrast.
+  Numerical matrix. Each column represents one of the contrasts you wish
+  to test for and the rows represent the gene statistics per contrast.
+  Needs row names (the genes).
 
 - pathway_list:
 
@@ -21,7 +23,7 @@ rs_mitch_calc(x, pathway_list, min_size)
 
 - min_size:
 
-  Integer. Minimum size of gene the gene set to be tested for.
+  Integer. Minimum size of the gene set to be tested for.
 
 ## Value
 
@@ -29,15 +31,18 @@ A list with the following elements:
 
 - pathway_names - The name of the pathway.
 
-- pathway_sizes The size of the pathway.
+- pathway_sizes - The size of the pathway.
 
-- manova_pvals - The p-value of the MANOVA test.
+- manova_pval - The p-value of the MANOVA test.
 
-- anova_pvals The p-values of the ANOVA test on top of the MANOVA
-  results. Total length = `ncol(x)` \* number of pathways.
+- manova_fdr - The Benjamini-Hochberg adjusted `manova_pval`.
 
-- scores - The scores for each pathway set, contrast. Same length as
-  `anova_pvals`.
+- anova_pvals - The p-values of the ANOVA test on top of the MANOVA
+  results. Total length = `ncol(x)` \* number of pathways,
+  pathway-major.
+
+- scores - The scores for each pathway set, contrast. Same length and
+  layout as `anova_pvals`.
 
 - s_dist - Calculated distances from the hypotenuse.
 

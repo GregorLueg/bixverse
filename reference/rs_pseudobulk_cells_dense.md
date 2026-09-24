@@ -2,8 +2,8 @@
 
 **\[experimental\]** This function will return a dense matrix of
 `length(cell_indices_ls) x number of genes`. The function has the option
-to return the sum of the sum of the raw counts or the average of the
-normalised counts.
+to return the sum of the raw counts or the average of the normalised
+counts.
 
 ## Usage
 
@@ -19,12 +19,14 @@ rs_pseudobulk_cells_dense(f_path, cell_indices_ls, assay, verbose)
 
 - cell_indices_ls:
 
-  List. Must contains 0-indexed positions of the cells to aggregate per
-  element.
+  List. Each element contains the 0-indexed positions of the cells to
+  aggregate.
 
 - assay:
 
-  String. One of `c("raw", "norm")`. Which counts to normalise.
+  String. One of `c("raw", "norm")`. `"raw"` sums the raw counts,
+  `"norm"` averages the normalised counts. Unrecognised values fall back
+  to `"raw"`.
 
 - verbose:
 
@@ -33,4 +35,4 @@ rs_pseudobulk_cells_dense(f_path, cell_indices_ls, assay, verbose)
 
 ## Value
 
-A dense matrix with the pseudo-bulked data.
+A dense numerical matrix of pseudo-bulked samples x genes.

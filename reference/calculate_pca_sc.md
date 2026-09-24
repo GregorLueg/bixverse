@@ -14,6 +14,7 @@ calculate_pca_sc(
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
+  residuals = FALSE,
   .verbose = TRUE
 )
 ```
@@ -55,6 +56,16 @@ calculate_pca_sc(
 
   Integer. Controls reproducibility. Only relevant if
   `randomised_svd = TRUE`.
+
+- residuals:
+
+  Boolean. Run the PCA on the Pearson residuals of a model fitted with
+  [`fit_residuals_sc()`](https://gregorlueg.github.io/bixverse/reference/fit_residuals_sc.md)
+  instead of the stored normalised layer. Needs
+  `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since the
+  residuals already carry the signal as variance, and does not support
+  `sparse_svd`: a residual column is dense even where the counts are
+  not. Not supported for `MetaCells`.
 
 - .verbose:
 

@@ -63,7 +63,7 @@ rs_sc_pca(
 
 ## Value
 
-A list with with the following items
+A list with the following items
 
 - scores - The samples projected on the PCA space.
 
@@ -71,7 +71,8 @@ A list with with the following items
 
 - singular_values - The singular values for the PCA.
 
-- scaled - The scaled matrix if you set return_scaled to `TRUE`.
+- scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
+  `NULL`.
 
 ## References
 

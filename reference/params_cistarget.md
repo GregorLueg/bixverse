@@ -27,41 +27,75 @@ params_cistarget(
 
 - auc_threshold:
 
-  Numeric between 0 and 1. Proportion of genes to use for AUC threshold
-  calculation. Default is 0.05 (5% of genes).
+  Numeric. Numeric between 0 and 1. Proportion of genes to use for AUC
+  threshold calculation. Default is 0.05 (5% of genes). Defaults to
+  `0.05`.
 
 - nes_threshold:
 
   Numeric. Normalised Enrichment Score threshold for significant motifs.
-  Default is 3.0.
+  Default is 3.0. Defaults to `3.0`.
 
 - max_rank:
 
   Integer. Depth of the recovery curves used to derive the background
   and the leading edge. Clamped to the number of genes in the ranking
-  database. Default is 5000, the RcisTarget value.
+  database. Default is 5000, the RcisTarget value. Defaults to `5000L`.
 
 - n_mean:
 
   Integer. Window for the rolling mean smoothing the background recovery
   curve. Only read when `rcc_method = "approx"`. Default is 100, the
-  RcisTarget value.
+  RcisTarget value. Defaults to `100L`.
 
 - rcc_method:
 
-  Character. Method for recovery curve calculation. Either "approx"
-  (approximate, faster) or "icistarget" (exact, slower).
+  String. Method for recovery curve calculation. Either "approx"
+  (approximate, faster) or "icistarget" (exact, slower). One of
+  `c("approx", "icistarget")`. Defaults to `"approx"`.
 
 - high_conf_cats:
 
-  Character vector. Annotation categories considered high confidence.
+  String vector. Annotation categories considered high confidence.
   Default includes direct annotations and orthology-based inferences.
+  Defaults to `c("directAnnotation", "inferredBy_Orthology")`.
 
 - low_conf_cats:
 
-  Character vector. Annotation categories considered lower confidence.
-  Default includes motif similarity-based inferences.
+  String vector. Annotation categories considered lower confidence.
+  Default includes motif similarity-based inferences. Defaults to
+  `c("inferredBy_MotifSimilarity", "inferredBy_MotifSimilarity_n_Orthology")`.
 
 ## Value
 
-A validated list of RcisTarget parameters.
+A named list with the following elements:
+
+- auc_threshold - Numeric. Numeric between 0 and 1. Proportion of genes
+  to use for AUC threshold calculation. Default is 0.05 (5% of genes).
+  Defaults to `0.05`.
+
+- nes_threshold - Numeric. Normalised Enrichment Score threshold for
+  significant motifs. Default is 3.0. Defaults to `3.0`.
+
+- max_rank - Integer. Depth of the recovery curves used to derive the
+  background and the leading edge. Clamped to the number of genes in the
+  ranking database. Default is 5000, the RcisTarget value. Defaults to
+  `5000L`.
+
+- n_mean - Integer. Window for the rolling mean smoothing the background
+  recovery curve. Only read when `rcc_method = "approx"`. Default is
+  100, the RcisTarget value. Defaults to `100L`.
+
+- rcc_method - String. Method for recovery curve calculation. Either
+  "approx" (approximate, faster) or "icistarget" (exact, slower). One of
+  `c("approx", "icistarget")`. Defaults to `"approx"`.
+
+- high_conf_cats - String vector. Annotation categories considered high
+  confidence. Default includes direct annotations and orthology-based
+  inferences. Defaults to
+  `c("directAnnotation", "inferredBy_Orthology")`.
+
+- low_conf_cats - String vector. Annotation categories considered lower
+  confidence. Default includes motif similarity-based inferences.
+  Defaults to
+  `c("inferredBy_MotifSimilarity", "inferredBy_MotifSimilarity_n_Orthology")`.

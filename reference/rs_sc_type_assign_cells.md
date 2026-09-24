@@ -22,12 +22,14 @@ rs_sc_type_assign_cells(sc_type_res, from, to, weights, cluster_labels, params)
 
 - from, to:
 
-  Optional integer vectors. 1-indexed(!) edges of the sNN graph. If
+  Optional integer vectors. 1-indexed(!) edges of the sNN graph, each
+  edge listed once; the graph is symmetrised on the way in. If either is
   `NULL`, no smoothing is applied.
 
 - weights:
 
   Optional numeric vector. Edge weights, same length as `from`.
+  Reciprocal weights are averaged. If `NULL`, the graph is unweighted.
 
 - cluster_labels:
 
@@ -55,11 +57,15 @@ A list with
 - agreement - Numeric vector. Fraction of graph neighbours sharing the
   call. `NULL` if no graph was provided.
 
-- hybrid_assignments - Integer vector, as `assignments`. Only present if
-  `cluster_labels` was provided.
+- hybrid_assignments - Integer vector, as `assignments`. `NULL` if no
+  `cluster_labels` were provided.
 
-- composition - List with the per-cluster composition. Only present if
-  `cluster_labels` was provided.
+- composition - List with the per-cluster composition (`cluster_id`,
+  `n_cells`, `n_unknown`, `dominant`, `second`, `purity`,
+  `second_fraction`, `entropy`, `cluster_mixed` and the clusters x cell
+  types count matrix `counts`). `dominant` and `second` use the same
+  1-based encoding as `assignments`. `NULL` if no `cluster_labels` were
+  provided.
 
 ## References
 

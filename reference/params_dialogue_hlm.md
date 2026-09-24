@@ -21,26 +21,41 @@ params_dialogue_hlm(
 - min_cells_per_sample:
 
   Integer. Minimum cells a sample must contribute, in *both* cell types
-  of a pair, before it takes part in that pair's models.
+  of a pair, before it takes part in that pair's models. Defaults to
+  `2L`.
 
 - use_tme_qc:
 
   Boolean. Include the partner cell type's mean quality in that sample
-  as a fixed effect. Upstream's `tme.qc`.
+  as a fixed effect. Upstream's `tme.qc`. Defaults to `TRUE`.
 
 - use_cell_quality:
 
   Boolean. Include the responding cell's own quality as a fixed effect.
-  Upstream's `cellQ`.
+  Upstream's `cellQ`. Defaults to `TRUE`.
 
 - satterthwaite:
 
   Boolean. Compute Satterthwaite denominator degrees of freedom, as
-  `lmerTest` does.
+  `lmerTest` does. Defaults to `TRUE`.
 
 ## Value
 
-A list with the stage two DIALOGUE parameters.
+A named list with the following elements:
+
+- min_cells_per_sample - Integer. Minimum cells a sample must
+  contribute, in *both* cell types of a pair, before it takes part in
+  that pair's models. Defaults to `2L`.
+
+- use_tme_qc - Boolean. Include the partner cell type's mean quality in
+  that sample as a fixed effect. Upstream's `tme.qc`. Defaults to
+  `TRUE`.
+
+- use_cell_quality - Boolean. Include the responding cell's own quality
+  as a fixed effect. Upstream's `cellQ`. Defaults to `TRUE`.
+
+- satterthwaite - Boolean. Compute Satterthwaite denominator degrees of
+  freedom, as `lmerTest` does. Defaults to `TRUE`.
 
 ## Details
 

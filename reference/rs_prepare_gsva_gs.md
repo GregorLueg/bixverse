@@ -24,4 +24,6 @@ rs_prepare_gsva_gs(feature_names, pathway_list, min_size, max_size)
 
 ## Value
 
-Returns a list with (zero-indexed) indices.
+Returns a named list with the sorted, 0-based indices of the pathways
+whose size (after matching to `feature_names`) is within
+`[min_size, max_size]`.

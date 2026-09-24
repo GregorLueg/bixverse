@@ -25,11 +25,12 @@ rs_sc_type(
 - cell_indices:
 
   Integer vector. 0-indexed(!) positions of cells to include in the
-  analysis
+  analysis.
 
 - cell_markers:
 
-  A list with the cell marker gene indices.
+  List. One element per cell type, each a list with that cell type's
+  marker gene indices.
 
 - sensitivity:
 
@@ -50,10 +51,10 @@ rs_sc_type(
 
 A list with
 
-- cell_types - String vector. The cell types
+- cell_types - Character vector. The cell types.
 
-- scores - Row-major scores (cells x cell_types).
+- scores - Numerical vector. Row-major scores (cells x cell_types).
 
-- n_cells - Number of cells
+- n_cells - Integer. Number of cells.
 
-- n_cell_types - Number of cell types
+- n_cell_types - Integer. Number of cell types.

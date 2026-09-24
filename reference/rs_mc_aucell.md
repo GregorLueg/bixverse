@@ -5,7 +5,8 @@ indices (0-indexed!) and calculate an AUCell type statistic. Three
 options here: the recovery-curve AUC of Aibar, et al. (the actual AUCell
 statistic), an AUC derived from the Mann-Whitney statistic, or average
 precision. This version works on MetaCell counts which are stored in
-memory directly.
+memory directly. Genes are ranked within each meta cell on the second
+layer, an `f32` cast of the supplied counts.
 
 ## Usage
 
@@ -18,7 +19,7 @@ rs_mc_aucell(sparse_data, gs_list, aucell_params, verbose)
 - sparse_data:
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
-  `ncol` and `format`.
+  `ncol` and `cs_type`. Shape is (metacells, genes).
 
 - gs_list:
 
@@ -37,4 +38,4 @@ rs_mc_aucell(sparse_data, gs_list, aucell_params, verbose)
 
 ## Value
 
-A matrix of cells x gene sets with the values representing the AUC.
+A matrix of meta cells x gene sets with the values representing the AUC.

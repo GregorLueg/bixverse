@@ -11,7 +11,7 @@ Kang et al."><meta property="og:image" content="https://gregorlueg.github.io/bix
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,9 @@ Kang et al."><meta property="og:image" content="https://gregorlueg.github.io/bix
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -52,7 +55,9 @@ Kang et al."><meta property="og:image" content="https://gregorlueg.github.io/bix
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -150,17 +155,17 @@ Kang et al.</p>
 
 <dt id="arg-ref-to-query-gene-map">ref_to_query_gene_map<a class="anchor" aria-label="anchor" href="#arg-ref-to-query-gene-map"></a></dt>
 <dd><p>Integer vector. For each reference HVG slot,
-the 0-based query gene index, or <code>NA_integer_</code> if absent.</p></dd>
+the 0-based query gene index, or <code>NA_integer_</code> (or any negative value) if
+absent. Absent slots are filled with zeros.</p></dd>
 
 
 <dt id="arg-batch-labels-query">batch_labels_query<a class="anchor" aria-label="anchor" href="#arg-batch-labels-query"></a></dt>
-<dd><p>List of 0-indexed integer vectors (empty = no
-batch correction).</p></dd>
+<dd><p>List of 0-indexed integer vectors, one per batch
+variable. An empty list skips the batch correction (<code>z_corr = z_pca</code>).</p></dd>
 
 
 <dt id="arg-params-symphony">params_symphony<a class="anchor" aria-label="anchor" href="#arg-params-symphony"></a></dt>
-<dd><p>Named list. Contains the parameters for the referemce
-generation.</p></dd>
+<dd><p>Named list. The query mapping parameters.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -170,8 +175,13 @@ detailed verbosity.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with z_pca, z_corr, r.</p>
-    </div>
+    <p>A list with</p><ul><li><p>z_pca - Numerical matrix. Query projected into the reference PC
+space (N_q x d).</p></li>
+<li><p>z_corr - Numerical matrix. Query after the batch correction
+(N_q x d).</p></li>
+<li><p>r - Numerical matrix. Query soft assignments onto the reference
+centroids (K x N_q).</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Kang et al., Nat Comm, 2021.</p>

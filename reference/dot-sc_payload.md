@@ -22,7 +22,8 @@ and `other_embeddings`, hence the flag.
 
 - artefact:
 
-  String. One of `c("pca", "embedding", "knn", "snn", "magic")`.
+  String. One of
+  `c("pca", "embedding", "knn", "snn", "magic", "residuals")`.
 
 - name:
 

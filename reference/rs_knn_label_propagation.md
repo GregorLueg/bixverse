@@ -21,12 +21,12 @@ rs_knn_label_propagation(
 
 - from:
 
-  Integer vector. Source node indices for each edge.
+  Integer vector. 1-based source node indices for each edge.
 
 - to:
 
-  Integer vector. Target node indices for each edge. Must be the same
-  length as `from`.
+  Integer vector. 1-based target node indices for each edge. Must be the
+  same length as `from`.
 
 - one_hot_encoding:
 
@@ -41,8 +41,8 @@ rs_knn_label_propagation(
 - weights:
 
   Optional numeric vector. Edge weights for each pair in `from`/`to`.
-  Must have the same length as `from`. If NULL, all edges are treated as
-  unweighted.
+  Must have the same length as `from`. If `NULL`, all edges are treated
+  as unweighted.
 
 - label_prop_params:
 
@@ -57,11 +57,12 @@ rs_knn_label_propagation(
 
   - `symmetrise` logical, symmetrise the graph (FALSE)
 
-  - `symmetry_strategy` character, one of "average", "min", "max"
-    ("average")
+  - `symmetry_strategy` character, one of `"average"`, `"min"`, `"max"`
+    (`"average"`). Only used for weighted graphs.
 
   - `max_hops` integer, restrict spreading radius (unrestricted)
 
 ## Value
 
-The matrix with the probabilities of being of a certain class.
+The matrix with the probabilities of being of a certain class. Same
+shape as `one_hot_encoding`.

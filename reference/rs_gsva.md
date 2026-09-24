@@ -19,8 +19,7 @@ rs_gsva(exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 
 - gs_list:
 
-  List. A list containing the indices of the pathway genes (needs to be
-  null indexed). See
+  List. A list containing the 0-based indices of the pathway genes. See
   [`rs_prepare_gsva_gs()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_gsva_gs.md).
 
 - tau:
@@ -31,7 +30,7 @@ rs_gsva(exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 - kernel:
 
   String. One of `c("gaussian", "poisson", "none")`. The kernel function
-  to use.
+  to use. Unknown strings default to `"gaussian"`.
 
 - max_diff:
 
@@ -40,7 +39,7 @@ rs_gsva(exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 
 - abs_rank:
 
-  Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
+  Boolean. If `TRUE` = pos-neg, `FALSE` = pos+neg
 
 - timings:
 

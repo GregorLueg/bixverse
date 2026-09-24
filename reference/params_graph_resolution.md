@@ -13,17 +13,24 @@ params_graph_resolution(min_res = 0.1, max_res = 10, number_res = 15L)
 
 - min_res:
 
-  Float. Minimum resolution to test.
+  Numeric. Minimum resolution to test. Defaults to `0.1`.
 
 - max_res:
 
-  Float. Maximum resolution to test.
+  Numeric. Maximum resolution to test. Defaults to `10.0`.
 
 - number_res:
 
   Integer. Number of resolutions to test between the `max_res` and
-  `min_res.`
+  `min_res.` Defaults to `15L`.
 
 ## Value
 
-List with parameters for usage in subsequent function.
+A named list with the following elements:
+
+- min_res - Numeric. Minimum resolution to test. Defaults to `0.1`.
+
+- max_res - Numeric. Maximum resolution to test. Defaults to `10.0`.
+
+- number_res - Integer. Number of resolutions to test between the
+  `max_res` and `min_res.` Defaults to `15L`.

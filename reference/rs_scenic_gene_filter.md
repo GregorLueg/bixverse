@@ -21,7 +21,7 @@ rs_scenic_gene_filter(f_path_genes, cell_indices, scenic_params, verbose)
 
 - scenic_params:
 
-  Named list. Contains all of the parameters need for SCENIC.
+  Named list. Contains all of the parameters needed for SCENIC.
 
 - verbose:
 

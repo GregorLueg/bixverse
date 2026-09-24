@@ -16,7 +16,8 @@ Label an artefact for reporting and provenance lookups
 
 - artefact:
 
-  String. One of `c("pca", "embedding", "knn", "snn", "magic")`.
+  String. One of
+  `c("pca", "embedding", "knn", "snn", "magic", "residuals")`.
 
 - name:
 

@@ -1,6 +1,10 @@
 # Wrapper for a Limma Voom analysis
 
-Wrapper function to run Limma Voom workflows.
+Runs the limma-voom workflow (`calcNormFactors()` -\> `voomLmFit()` -\>
+`contrasts.fit()` -\> `eBayes()` -\> `topTable()`) in Rust via the
+`edge-rs` crate, gated against limma `3.66.0`. The design is
+`~ 0 + main_contrast + co_variates` and every requested contrast is
+tested separately. limma and edgeR are not needed.
 
 ## Usage
 
@@ -8,11 +12,11 @@ Wrapper function to run Limma Voom workflows.
 run_limma_voom(
   meta_data,
   main_contrast,
-  dge_list,
+  counts,
   contrast_list = NULL,
   co_variates = NULL,
-  quantile_norm = FALSE,
-  ...,
+  limma_params = params_limma_voom(),
+  lib_size = NULL,
   .verbose = TRUE
 )
 ```
@@ -22,17 +26,18 @@ run_limma_voom(
 - meta_data:
 
   data.table. The meta information about the experiment in which the
-  contrast info (and potential co-variates) can be found.
+  contrast info (and potential co-variates) can be found. Rows need to
+  be in the same order as the columns of `counts`.
 
 - main_contrast:
 
   String. Which column contains the main groups you want to test
   differential gene expression with the Limma-Voom workflow for.
 
-- dge_list:
+- counts:
 
-  DGEList, see
-  [`edgeR::DGEList()`](https://rdrr.io/pkg/edgeR/man/DGEList.html).
+  Numeric matrix. Raw counts of genes x samples, with gene identifiers
+  as row names.
 
 - contrast_list:
 
@@ -45,16 +50,17 @@ run_limma_voom(
   String or NULL. Optional co-variates you wish to consider during model
   fitting.
 
-- quantile_norm:
+- limma_params:
 
-  Boolean. Shall the counts be also quantile-normalised. Defaults to
-  `FALSE`.
+  List. The limma parameters, see
+  [`params_limma_voom()`](https://gregorlueg.github.io/bixverse/reference/params_limma_voom.md).
 
-- ...:
+- lib_size:
 
-  Additional parameters to forward to
-  [`limma::eBayes()`](https://rdrr.io/pkg/limma/man/ebayes.html) or
-  [`limma::voom()`](https://rdrr.io/pkg/limma/man/voom.html).
+  Optional numeric vector. Library size per sample, in the column order
+  of `counts`. `NULL` uses the column sums of `counts`. Pass the column
+  sums from before gene filtering to match edgeR, which keeps those on a
+  subset `DGEList`.
 
 - .verbose:
 
@@ -62,9 +68,14 @@ run_limma_voom(
 
 ## Value
 
-A data.table with all the DGE results from
-[`limma::topTable()`](https://rdrr.io/pkg/limma/man/toptable.html) for
-the identified contrast pairs.
+A data.table with the columns of limma's `topTable(confint = TRUE)`
+(`gene_id`, `logFC`, `CI.L`, `CI.R`, `AveExpr`, `t`, `P.Value`,
+`adj.P.Val`, `B`) plus `contrast`, sorted by p-value within each
+contrast.
+
+## References
+
+Law, et al., Genome Biol, 2014
 
 ## Examples
 
@@ -75,11 +86,10 @@ meta <- data.table::data.table(
   sample_id = colnames(syn$counts),
   case_control = rep(c("case", "control"), each = 50)
 )
-dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
 res <- run_limma_voom(
   meta_data = meta,
   main_contrast = "case_control",
-  dge_list = dge_list,
+  counts = syn$counts,
   .verbose = FALSE
 )
 head(res)

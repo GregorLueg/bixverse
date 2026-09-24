@@ -13,7 +13,7 @@ but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc."><m
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,9 @@ but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc."><m
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -54,7 +57,9 @@ but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc."><m
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -115,12 +120,13 @@ but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.</p>
 
 
 <dt id="arg-gs-list">gs_list<a class="anchor" aria-label="anchor" href="#arg-gs-list"></a></dt>
-<dd><p>Nested list. Each sublist contains the (0-indexed!) positive
-and negative gene indices of that specific gene set.</p></dd>
+<dd><p>Nested list. Each sublist contains the (0-indexed!) <code>pos</code>
+and <code>neg</code> gene indices of that specific gene set.</p></dd>
 
 
 <dt id="arg-cells-to-keep">cells_to_keep<a class="anchor" aria-label="anchor" href="#arg-cells-to-keep"></a></dt>
-<dd><p>Integer. Vector of indices of the cells to keep.</p></dd>
+<dd><p>Integer. Vector of indices (0-indexed) of the cells to
+keep.</p></dd>
 
 
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>

@@ -11,7 +11,7 @@ performance optimisations compared to the original implementation."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,9 @@ performance optimisations compared to the original implementation."><meta proper
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -52,7 +55,9 @@ performance optimisations compared to the original implementation."><meta proper
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -113,8 +118,8 @@ columns = samples</p></dd>
 
 
 <dt id="arg-gs-list">gs_list<a class="anchor" aria-label="anchor" href="#arg-gs-list"></a></dt>
-<dd><p>List. A list containing the indices of the pathway genes
-(needs to be null indexed). See <code><a href="rs_prepare_gsva_gs.html">rs_prepare_gsva_gs()</a></code>.</p></dd>
+<dd><p>List. A list containing the 0-based indices of the pathway
+genes. See <code><a href="rs_prepare_gsva_gs.html">rs_prepare_gsva_gs()</a></code>.</p></dd>
 
 
 <dt id="arg-tau">tau<a class="anchor" aria-label="anchor" href="#arg-tau"></a></dt>
@@ -124,7 +129,7 @@ Larger values emphasise the tails more.</p></dd>
 
 <dt id="arg-kernel">kernel<a class="anchor" aria-label="anchor" href="#arg-kernel"></a></dt>
 <dd><p>String. One of <code>c("gaussian", "poisson", "none")</code>. The
-kernel function to use.</p></dd>
+kernel function to use. Unknown strings default to <code>"gaussian"</code>.</p></dd>
 
 
 <dt id="arg-max-diff">max_diff<a class="anchor" aria-label="anchor" href="#arg-max-diff"></a></dt>
@@ -133,7 +138,7 @@ absolute value</p></dd>
 
 
 <dt id="arg-abs-rank">abs_rank<a class="anchor" aria-label="anchor" href="#arg-abs-rank"></a></dt>
-<dd><p>Booelan. If <code>TRUE</code> = pos-neg, <code>FALSE</code> = pos+neg</p></dd>
+<dd><p>Boolean. If <code>TRUE</code> = pos-neg, <code>FALSE</code> = pos+neg</p></dd>
 
 
 <dt id="arg-timings">timings<a class="anchor" aria-label="anchor" href="#arg-timings"></a></dt>

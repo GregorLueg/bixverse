@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -76,7 +79,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -121,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Meta cells with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-06</p>
+      <p class="date">2026-09-24</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -417,7 +422,7 @@
 <span><span class="co">#&gt;        method      mean    median</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;     &lt;num&gt;     &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:    hdWGCNA 0.8838462 0.9615385</span></span>
-<span><span class="co">#&gt; 2:   SEACells 0.9062850 1.0000000</span></span>
+<span><span class="co">#&gt; 2:   SEACells 0.9071613 1.0000000</span></span>
 <span><span class="co">#&gt; 3: SuperCells 0.8944299 0.9784323</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -523,14 +528,14 @@
 <span><span class="op">]</span></span>
 <span><span class="co">#&gt;        method mean_separation median_separation mean_compactness</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;           &lt;num&gt;             &lt;num&gt;            &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:    hdWGCNA       0.2296309         0.1619662       0.04015361</span></span>
-<span><span class="co">#&gt; 2:   SEACells       0.2940955         0.2268341       0.04926960</span></span>
-<span><span class="co">#&gt; 3: SuperCells       0.3235611         0.2823487       0.03296062</span></span>
+<span><span class="co">#&gt; 1:    hdWGCNA       0.2296309         0.1619663       0.04015358</span></span>
+<span><span class="co">#&gt; 2:   SEACells       0.2984881         0.2517844       0.04371741</span></span>
+<span><span class="co">#&gt; 3: SuperCells       0.3235611         0.2823486       0.03296061</span></span>
 <span><span class="co">#&gt;    median_compactness</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         0.02346520</span></span>
-<span><span class="co">#&gt; 2:         0.02318757</span></span>
-<span><span class="co">#&gt; 3:         0.01786626</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:         0.02346519</span></span>
+<span><span class="co">#&gt; 2:         0.02364935</span></span>
+<span><span class="co">#&gt; 3:         0.01786625</span></span></code></pre></div>
 </div>
 <p>Some differences are visible here. hdWGCNA has the worst separation and best compactness (not unexpected given the bootstrapping method only sampling direct neighbours). SEACells has the worst compactness across the three methods (not unsurprising as the meta cells here capture more sparse regions of the manifold) and middling separation; SuperCells (version 2.0, the default setting here) is in the middle.</p>
 <div class="cell">
@@ -549,26 +554,26 @@
 <span><span class="va">per_region_stats</span><span class="op">[</span><span class="op">]</span></span>
 <span><span class="co">#&gt;        method region mean_separation median_separation mean_compactness</span></span>
 <span><span class="co">#&gt;        &lt;char&gt; &lt;fctr&gt;           &lt;num&gt;             &lt;num&gt;            &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:   SEACells   high      0.11233952        0.05976086       0.05698109</span></span>
-<span><span class="co">#&gt; 2:   SEACells    mid      0.24002206        0.21256762       0.02036809</span></span>
-<span><span class="co">#&gt; 3:   SEACells    low      0.39570248        0.36261827       0.06980948</span></span>
-<span><span class="co">#&gt; 4: SuperCells   high      0.08978871        0.09189881       0.01214339</span></span>
-<span><span class="co">#&gt; 5: SuperCells    mid      0.26108690        0.24177314       0.01418879</span></span>
-<span><span class="co">#&gt; 6: SuperCells    low      0.47085054        0.45609263       0.06127356</span></span>
-<span><span class="co">#&gt; 7:    hdWGCNA   high      0.06160545        0.05265773       0.02189890</span></span>
-<span><span class="co">#&gt; 8:    hdWGCNA    mid      0.19093214        0.17392731       0.02312327</span></span>
-<span><span class="co">#&gt; 9:    hdWGCNA    low      0.51732463        0.43812373       0.10195862</span></span>
+<span><span class="co">#&gt; 1:   SEACells   high      0.09839552        0.06426560       0.03820344</span></span>
+<span><span class="co">#&gt; 2:   SEACells    mid      0.24858123        0.21486215       0.02019086</span></span>
+<span><span class="co">#&gt; 3:   SEACells    low      0.40522654        0.35579760       0.06392928</span></span>
+<span><span class="co">#&gt; 4: SuperCells   high      0.08978872        0.09189878       0.01214338</span></span>
+<span><span class="co">#&gt; 5: SuperCells    mid      0.26108684        0.24177319       0.01418878</span></span>
+<span><span class="co">#&gt; 6: SuperCells    low      0.47085047        0.45609272       0.06127352</span></span>
+<span><span class="co">#&gt; 7:    hdWGCNA   high      0.06160546        0.05265773       0.02189889</span></span>
+<span><span class="co">#&gt; 8:    hdWGCNA    mid      0.19093211        0.17392711       0.02312326</span></span>
+<span><span class="co">#&gt; 9:    hdWGCNA    low      0.51732468        0.43812367       0.10195854</span></span>
 <span><span class="co">#&gt;    median_compactness</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         0.01674779</span></span>
-<span><span class="co">#&gt; 2:         0.01541106</span></span>
-<span><span class="co">#&gt; 3:         0.06216574</span></span>
+<span><span class="co">#&gt; 1:         0.01441045</span></span>
+<span><span class="co">#&gt; 2:         0.01580934</span></span>
+<span><span class="co">#&gt; 3:         0.05446856</span></span>
 <span><span class="co">#&gt; 4:         0.01180709</span></span>
-<span><span class="co">#&gt; 5:         0.01166382</span></span>
+<span><span class="co">#&gt; 5:         0.01166381</span></span>
 <span><span class="co">#&gt; 6:         0.05646009</span></span>
 <span><span class="co">#&gt; 7:         0.02150713</span></span>
-<span><span class="co">#&gt; 8:         0.01998666</span></span>
-<span><span class="co">#&gt; 9:         0.08192077</span></span></code></pre></div>
+<span><span class="co">#&gt; 8:         0.01998665</span></span>
+<span><span class="co">#&gt; 9:         0.08192065</span></span></code></pre></div>
 </div>
 <p>We can also look at this per density region in the manifold where we can observe that compactness is smallest in the high density regions, whereas separation is the highest in the low density regions. And below as plots:</p>
 <section class="level4"><h4 id="compactness-plots">Compactness plots<a class="anchor" aria-label="anchor" href="#compactness-plots"></a>
@@ -756,7 +761,7 @@
 <span></span>
 <span><span class="co"># no motif filter here, so the leading edge column does not exist yet</span></span>
 <span><span class="va">tf_to_gene_ls</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_regulons.html">build_regulons</a></span><span class="op">(</span><span class="va">scenic_res</span>, use_leading_edge <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Built 584 regulons (120 dropped below 10 genes). Median size: 318</span></span></code></pre></div>
+<span><span class="co">#&gt; Built 591 regulons (132 dropped below 10 genes). Median size: 319</span></span></code></pre></div>
 </div>
 <p>In a proper situation we would filter down the TF to gene associations via motifs, please refer to the details in this <a href="https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic">vignette</a>. We will skip this step for now and just run AUCell to show how it works. Which statistic you get is controlled by <code><a href="../reference/params_sc_aucell.html">params_sc_aucell()</a></code>. The default is <code>"recovery"</code>, the original AUCell recovery curve, which is what SCENIC uses. <code>"wilcox"</code> (Mann-Whitney AUC over the full ranking) and <code>"ap"</code> (average precision) are the other two options.</p>
 <div class="cell">
@@ -812,21 +817,21 @@
 <span><span class="co">#&gt;   Source class:     MetaCells</span></span>
 <span><span class="co">#&gt;   k range:          2 to 12</span></span>
 <span><span class="co">#&gt;   No runs per k:    10</span></span>
-<span><span class="co">#&gt;   Most stable k:    3 (stability = 0.9996)</span></span>
+<span><span class="co">#&gt;   Most stable k:    3 (stability = 0.9998)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;         k stability best_error median_error consensus_failed n_dropped</span></span>
 <span><span class="co">#&gt;     &lt;int&gt;     &lt;num&gt;      &lt;num&gt;        &lt;num&gt;           &lt;lgcl&gt;     &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1:     2 0.9955609 0.16297275   0.16300438            FALSE         0</span></span>
-<span><span class="co">#&gt;  2:     3 0.9995862 0.13030683   0.13031578            FALSE         0</span></span>
-<span><span class="co">#&gt;  3:     4 0.9980750 0.11379853   0.11381429            FALSE         0</span></span>
-<span><span class="co">#&gt;  4:     5 0.9981757 0.10180865   0.10183508            FALSE         0</span></span>
-<span><span class="co">#&gt;  5:     6 0.9991091 0.09197484   0.09198987            FALSE         0</span></span>
-<span><span class="co">#&gt;  6:     7 0.7674468 0.08590021   0.08686616            FALSE         0</span></span>
-<span><span class="co">#&gt;  7:     8 0.8156788 0.08186042   0.08193363            FALSE         0</span></span>
-<span><span class="co">#&gt;  8:     9 0.8583752 0.07797292   0.07820582            FALSE         0</span></span>
-<span><span class="co">#&gt;  9:    10 0.8722950 0.07429841   0.07434057            FALSE         0</span></span>
-<span><span class="co">#&gt; 10:    11 0.8880448 0.07210460   0.07228552            FALSE         0</span></span>
-<span><span class="co">#&gt; 11:    12 0.8235734 0.07049182   0.07066580            FALSE         0</span></span>
+<span><span class="co">#&gt;  1:     2 0.9984253 0.16357014   0.16360325            FALSE         0</span></span>
+<span><span class="co">#&gt;  2:     3 0.9998102 0.13163950   0.13164973            FALSE         0</span></span>
+<span><span class="co">#&gt;  3:     4 0.9970441 0.11493415   0.11495408            FALSE         0</span></span>
+<span><span class="co">#&gt;  4:     5 0.9986752 0.10272858   0.10275481            FALSE         0</span></span>
+<span><span class="co">#&gt;  5:     6 0.9551063 0.09282853   0.09286200            FALSE         0</span></span>
+<span><span class="co">#&gt;  6:     7 0.8888487 0.08629628   0.08633831            FALSE         0</span></span>
+<span><span class="co">#&gt;  7:     8 0.8981720 0.08229806   0.08241096            FALSE         0</span></span>
+<span><span class="co">#&gt;  8:     9 0.7397426 0.07847766   0.07854208            FALSE         0</span></span>
+<span><span class="co">#&gt;  9:    10 0.8083084 0.07478666   0.07486889            FALSE         0</span></span>
+<span><span class="co">#&gt; 10:    11 0.9458344 0.07267082   0.07275741            FALSE         0</span></span>
+<span><span class="co">#&gt; 11:    12 0.7476515 0.07095402   0.07109538            FALSE         0</span></span>
 <span><span class="co">#&gt;     n_empty_clusters n_converged</span></span>
 <span><span class="co">#&gt;                &lt;int&gt;       &lt;int&gt;</span></span>
 <span><span class="co">#&gt;  1:                0          10</span></span>
@@ -869,7 +874,7 @@
 <span><span class="co">#&gt;   No components:    6</span></span>
 <span><span class="co">#&gt;   No runs:          10</span></span>
 <span><span class="co">#&gt;   Stability:        0.9992</span></span>
-<span><span class="co">#&gt;   Relative error:   0.09197</span></span>
+<span><span class="co">#&gt;   Relative error:   0.09284</span></span>
 <span><span class="co">#&gt;   Dropped:          0 / 60 components</span></span>
 <span><span class="co">#&gt;   Preprocessing:    none</span></span></code></pre></div>
 </div>
@@ -878,7 +883,7 @@
 <div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mc_nmf_diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stability.html">get_stability</a></span><span class="op">(</span><span class="va">mc_nmf</span><span class="op">)</span></span>
 <span><span class="va">mc_nmf_diag</span><span class="op">$</span><span class="va">stability</span></span>
-<span><span class="co">#&gt; [1] 0.9992322</span></span>
+<span><span class="co">#&gt; [1] 0.9991815</span></span>
 <span><span class="va">mc_nmf_diag</span><span class="op">$</span><span class="va">cluster_sizes</span></span>
 <span><span class="co">#&gt;    cluster     n</span></span>
 <span><span class="co">#&gt;      &lt;int&gt; &lt;int&gt;</span></span>
@@ -935,16 +940,16 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">top_genes</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mc_w</span><span class="op">)</span></span>
 <span><span class="va">top_genes</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span>
 <span><span class="co">#&gt; $comp_01</span></span>
-<span><span class="co">#&gt;  [1] "NKAIN2"  "MSI2"    "CALN1"   "ZNF385D" "INPP4B"  "MEIS1"   "CHRM3"  </span></span>
-<span><span class="co">#&gt;  [8] "ANGPT1"  "ATP8B4"  "ZBTB20" </span></span>
+<span><span class="co">#&gt;  [1] "NKAIN2"  "MSI2"    "CALN1"   "ZNF385D" "MEIS1"   "INPP4B"  "ANGPT1" </span></span>
+<span><span class="co">#&gt;  [8] "CHRM3"   "ATP8B4"  "ZBTB20" </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $comp_02</span></span>
-<span><span class="co">#&gt;  [1] "DIAPH3" "ASPM"   "TOP2A"  "POLQ"   "RRM2"   "CIT"    "MKI67"  "NUSAP1"</span></span>
-<span><span class="co">#&gt;  [9] "KIF15"  "AURKB" </span></span>
+<span><span class="co">#&gt;  [1] "MPO"    "ATP8B4" "LRMDA"  "FNDC3B" "AZU1"   "KCNQ5"  "EREG"   "ELANE" </span></span>
+<span><span class="co">#&gt;  [9] "LYST"   "CSF3R" </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $comp_03</span></span>
-<span><span class="co">#&gt;  [1] "XACT"    "RPL12"   "RACK1"   "ZNF385D" "S100A6"  "GAPDH"   "RYR3"   </span></span>
-<span><span class="co">#&gt;  [8] "S100A4"  "MIF"     "HBB"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "DIAPH3" "ASPM"   "TOP2A"  "POLQ"   "MKI67"  "RRM2"   "CIT"    "NUSAP1"</span></span>
+<span><span class="co">#&gt;  [9] "KIF15"  "AURKB"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="pseudo-bulking">Pseudo-bulking<a class="anchor" aria-label="anchor" href="#pseudo-bulking"></a>
 </h2>
@@ -966,7 +971,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">pb_counts</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]    14 12464</span></span></code></pre></div>
 </div>
-<p>The returned matrix has one row per group and one column per gene. From here the standard bulk DGE pipeline applies; <code>bixverse</code> does not wrap the DGE call itself.</p>
+<p>The returned matrix has one row per group and one column per gene. From here the standard bulk DGE pipeline applies: transpose it and hand it to <code><a href="../reference/run_edger_ql.html">run_edger_ql()</a></code> or <code><a href="../reference/run_limma_voom.html">run_limma_voom()</a></code>, both in Rust, no edgeR or limma needed.</p>
 </section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">

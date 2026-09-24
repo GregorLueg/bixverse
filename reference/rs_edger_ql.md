@@ -1,9 +1,10 @@
 # Run the edgeR quasi-likelihood chain on a count matrix
 
-**\[experimental\]** Runs `filterByExpr` -\> `calcNormFactors` -\>
-`glmQLFit` -\> `glmQLFTest`, implemented in Rust via the `edge-rs` crate
-and gated against edgeR 4.8.2. The tested axis does not have to be
-genes: Milo's neighbourhood counts are tested with the same call, with
+**\[experimental\]** Runs optional `filterByExpr` -\> `calcNormFactors`
+-\> `glmQLFit` -\> `glmQLFTest`, implemented in Rust via the `edge-rs`
+crate and gated against edgeR 4.8.2. `legacy = TRUE` adds `estimateDisp`
+before the fit. The tested axis does not have to be genes: Milo's
+neighbourhood counts are tested with the same call, with
 `filter = FALSE`.
 
 ## Usage
@@ -35,7 +36,8 @@ rs_edger_ql(counts, design, edger_params)
 
 ## Value
 
-A list with the following elements
+A list with the following elements, all but `features_to_keep` with one
+entry per kept feature
 
 - features_to_keep - Boolean. Which features survived the filters. Spans
   the full feature axis of `counts`.

@@ -17,7 +17,7 @@ clusters fall back to the per-cell calls) are returned on top."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,9 @@ clusters fall back to the per-cell calls) are returned on top."><meta property="
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -58,7 +61,9 @@ clusters fall back to the per-cell calls) are returned on top."><meta property="
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -122,11 +127,13 @@ clusters fall back to the per-cell calls) are returned on top.</p>
 
 <dt id="arg-from-to">from, to<a class="anchor" aria-label="anchor" href="#arg-from-to"></a></dt>
 <dd><p>Optional integer vectors. 1-indexed(!) edges of the sNN
-graph. If <code>NULL</code>, no smoothing is applied.</p></dd>
+graph, each edge listed once; the graph is symmetrised on the way in. If
+either is <code>NULL</code>, no smoothing is applied.</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Optional numeric vector. Edge weights, same length as <code>from</code>.</p></dd>
+<dd><p>Optional numeric vector. Edge weights, same length as <code>from</code>.
+Reciprocal weights are averaged. If <code>NULL</code>, the graph is unweighted.</p></dd>
 
 
 <dt id="arg-cluster-labels">cluster_labels<a class="anchor" aria-label="anchor" href="#arg-cluster-labels"></a></dt>
@@ -147,10 +154,14 @@ cell, <code>0L</code> denoting Unknown.</p></li>
 <li><p>margins - Numeric vector. Best minus second best score per cell.</p></li>
 <li><p>agreement - Numeric vector. Fraction of graph neighbours sharing the
 call. <code>NULL</code> if no graph was provided.</p></li>
-<li><p>hybrid_assignments - Integer vector, as <code>assignments</code>. Only present
-if <code>cluster_labels</code> was provided.</p></li>
-<li><p>composition - List with the per-cluster composition. Only present if
-<code>cluster_labels</code> was provided.</p></li>
+<li><p>hybrid_assignments - Integer vector, as <code>assignments</code>. <code>NULL</code> if no
+<code>cluster_labels</code> were provided.</p></li>
+<li><p>composition - List with the per-cluster composition (<code>cluster_id</code>,
+<code>n_cells</code>, <code>n_unknown</code>, <code>dominant</code>, <code>second</code>, <code>purity</code>,
+<code>second_fraction</code>, <code>entropy</code>, <code>cluster_mixed</code> and the clusters x cell
+types count matrix <code>counts</code>). <code>dominant</code> and <code>second</code> use the same
+1-based encoding as <code>assignments</code>. <code>NULL</code> if no <code>cluster_labels</code> were
+provided.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

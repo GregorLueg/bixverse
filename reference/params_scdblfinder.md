@@ -66,7 +66,7 @@ params_scdblfinder(
   Boolean. Shall fast Louvain clustering be applied, i.e., k-means
   clustering and use the centroids for kNN graph generation and Louvain
   clustering with then backpropagating the membership based on centroid
-  proximity.
+  proximity. Defaults to `FALSE`.
 
 - n_iterations:
 
@@ -107,43 +107,52 @@ params_scdblfinder(
 - se_fraction:
 
   Numeric. Multiplier on the standard error for the SE rule used in
-  round selection. Defaults to `1.0`
+  round selection. Defaults to `1.0`.
 
 - include_pcs:
 
-  Integer. Number of leading principal components to include as
-  classifier features. Defaults to `19L`.
+  Any. Number of leading principal components to include as classifier
+  features. Defaults to `19L`.
 
 - expected_doublet_rate:
 
-  Optional numeric. Expected doublet rate as a percentage. If not
-  provided, will be calculated internally.
+  Numeric or `NULL`. Expected doublet rate as a percentage. If not
+  provided, will be calculated internally. Defaults to `NULL`.
 
 - cxds_genes:
 
-  Optional integer. Number of CXDS genes to consider. If not provided,
-  defaults to `500L`.
+  Integer or `NULL`. Number of CXDS genes to consider. If not provided,
+  defaults to `500L`. Defaults to `NULL`.
 
 - manual_threshold:
 
-  Optional numeric. Manual score threshold. If `NULL` (default),
-  expected-rate thresholding is used.
+  Numeric or `NULL`. Manual score threshold. If `NULL` (default),
+  expected-rate thresholding is used. Defaults to `NULL`.
 
 - normalisation:
 
   List. Optional overrides for normalisation parameters. See
   [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md).
+  See
+  [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
+  for the available elements. Defaults to `list(mean_center = TRUE)`.
 
 - pca:
 
   List. Optional overrides for PCA parameters. See
   [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md).
+  See
+  [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 - knn:
 
   List. Optional overrides for kNN parameters. See
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md).
-  NNDescent works better for the larger k-values often used here.
+  NNDescent works better for the larger k-values often used here. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to `list(k = 0L)`.
 
 - fast_cluster_params:
 
@@ -151,8 +160,88 @@ params_scdblfinder(
   relevant if `fast_cluster = TRUE`. See
   [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
   for available parameters: `km_type`, `n_centroids`, `kmeans_iters` and
-  `batch_size`.
+  `batch_size`. See
+  [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 ## Value
 
-A named list with all scDblFinder parameters.
+A named list with the following elements:
+
+- The elements of
+  [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md),
+  overridden by `normalisation`, spliced in at this position.
+
+- The elements of
+  [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md),
+  overridden by `pca`, spliced in at this position.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.
+
+- The elements of
+  [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md),
+  overridden by `fast_cluster_params`, spliced in at this position.
+
+- n_genes - Integer. Number of top-expressed genes to use as features.
+  Defaults to `1352L`.
+
+- doublet_ratio - Numeric. Ratio of simulated doublets to observed
+  cells. Defaults to `1.0`.
+
+- heterotypic_bias - Numeric. Fraction of simulated pairs forced to come
+  from different clusters (0-1). Defaults to `1.0`.
+
+- cluster_resolution - Numeric. Resolution for the initial Louvain
+  clustering. Defaults to `1.0`.
+
+- cluster_iters - Integer. Number of Louvain iterations per clustering
+  step. Defaults to `10L`.
+
+- fast_cluster - Boolean. Shall fast Louvain clustering be applied,
+  i.e., k-means clustering and use the centroids for kNN graph
+  generation and Louvain clustering with then backpropagating the
+  membership based on centroid proximity. Defaults to `FALSE`.
+
+- n_iterations - Integer. Number of refinement iterations. Typically
+  2-3. Defaults to `3L`.
+
+- gbm_n_trees - Integer. Maximum number of boosting rounds for the GBM
+  classifier. Defaults to `200L`.
+
+- max_depth - Integer. Maximum tree depth. Shallow trees (3-5) work
+  best. Defaults to `4L`.
+
+- learning_rate - Numeric. Shrinkage applied to each tree. Defaults to
+  `0.3`.
+
+- min_samples_leaf - Integer. Minimum training samples per leaf.
+  Defaults to `20L`.
+
+- subsample_rate - Numeric. Fraction of samples used per tree. Defaults
+  to `0.75`.
+
+- cv_folds - Integer. Number of cross-validation folds for boosting
+  round selection. Defaults to `5L`.
+
+- cv_early_stop - Integer. Early stopping patience per CV fold. Defaults
+  to `2L`.
+
+- se_fraction - Numeric. Multiplier on the standard error for the SE
+  rule used in round selection. Defaults to `1.0`.
+
+- include_pcs - Any. Number of leading principal components to include
+  as classifier features. Defaults to `19L`.
+
+- expected_doublet_rate - Numeric or `NULL`. Expected doublet rate as a
+  percentage. If not provided, will be calculated internally. Defaults
+  to `NULL`.
+
+- manual_threshold - Numeric or `NULL`. Manual score threshold. If
+  `NULL` (default), expected-rate thresholding is used. Defaults to
+  `NULL`.
+
+- cxds_genes - Integer or `NULL`. Number of CXDS genes to consider. If
+  not provided, defaults to `500L`. Defaults to `NULL`.

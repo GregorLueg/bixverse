@@ -42,7 +42,8 @@ rs_mnn(
 
 - batch_indices:
 
-  Integer vector. These represent to which batch a given cell belongs.
+  Integer vector. These represent to which batch a given cell belongs
+  (0-indexed!).
 
 - precomputed_pca:
 
@@ -63,4 +64,5 @@ rs_mnn(
 
 ## Value
 
-The batch-corrected embedding space.
+Numerical matrix, cells x dimensions, with the batch-corrected
+embedding.

@@ -1,6 +1,7 @@
-# Check blitzGSEA parameters
+# Check blitzGSEA params
 
-Checkmate extension for checking the blitzGSEA parameters.
+Checkmate extension for the output of
+[`params_blitzgsea()`](https://gregorlueg.github.io/bixverse/reference/params_blitzgsea.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkBlitzGseaParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

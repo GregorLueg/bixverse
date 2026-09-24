@@ -1,6 +1,6 @@
-# Check NEBULA parameters
+# Check NEBULA params
 
-Checkmate extension for checking the NEBULA parameters, see
+Checkmate extension for the output of
 [`params_nebula()`](https://gregorlueg.github.io/bixverse/reference/params_nebula.md).
 
 ## Usage
@@ -13,8 +13,9 @@ checkNebulaParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

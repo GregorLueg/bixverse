@@ -1,6 +1,6 @@
-# Check LDA parameters
+# Check LDA params
 
-Checkmate extension for checking the LDA solver parameters, see
+Checkmate extension for the output of
 [`params_lda()`](https://gregorlueg.github.io/bixverse/reference/params_lda.md).
 
 ## Usage
@@ -13,8 +13,9 @@ checkLdaParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

@@ -1,8 +1,8 @@
 # Filter the term similarities for a specific critical value
 
 **\[experimental\]** This function takes the similarity values as the
-upper triangle, the row/column names and filtering the values down based
-on the threshold.
+upper triangle and the row/column names and filters the values down to
+those `>= threshold`.
 
 ## Usage
 
@@ -15,7 +15,7 @@ rs_filter_onto_sim(sim_vals, names, threshold)
 - sim_vals:
 
   Numerical vector. The upper triangle of the similarity matrix as a
-  flattened vector.
+  flattened vector (row-wise, diagonal excluded).
 
 - names:
 

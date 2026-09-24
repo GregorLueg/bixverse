@@ -26,34 +26,56 @@ params_module_membership(
   String. `"zscore"` standardises each component and keeps
   `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values against a
   Normal null fitted the same way, Benjamini-Hochberg adjusts, and keeps
-  `padj < fdr`. Defaults to `"zscore"`.
+  `padj < fdr`. One of `c("zscore", "fdr")`. Defaults to `"zscore"`.
 
 - cutoff:
 
-  Float. Absolute z threshold for `method = "zscore"`. Defaults to
+  Numeric. Absolute z threshold for `method = "zscore"`. Defaults to
   `3.0`.
 
 - fdr:
 
-  Float. Adjusted p-value threshold for `method = "fdr"`. Defaults to
+  Numeric. Adjusted p-value threshold for `method = "fdr"`. Defaults to
   `0.05`.
 
 - tails:
 
   String. `"auto"` uses an upper-tail-only test when every loading is
   non-negative (the NMF case) and a two-sided one otherwise. `"upper"`
-  and `"both"` force the choice. Defaults to `"auto"`.
+  and `"both"` force the choice. One of `c("auto", "upper", "both")`.
+  Defaults to `"auto"`.
 
 - scaling:
 
   String. `"robust"` centres and scales each component by its median and
   MAD. `"standard"` uses the mean and standard deviation instead, which
-  is stricter and less forgiving of skewed loadings (e.g. NMF). Defaults
-  to `"robust"`.
+  is stricter and less forgiving of skewed loadings (e.g. NMF). One of
+  `c("robust", "standard")`. Defaults to `"robust"`.
 
 ## Value
 
-A list with the parameters for usage in subsequent functions.
+A named list with the following elements:
+
+- method - String. `"zscore"` standardises each component and keeps
+  `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values against a
+  Normal null fitted the same way, Benjamini-Hochberg adjusts, and keeps
+  `padj < fdr`. One of `c("zscore", "fdr")`. Defaults to `"zscore"`.
+
+- cutoff - Numeric. Absolute z threshold for `method = "zscore"`.
+  Defaults to `3.0`.
+
+- fdr - Numeric. Adjusted p-value threshold for `method = "fdr"`.
+  Defaults to `0.05`.
+
+- tails - String. `"auto"` uses an upper-tail-only test when every
+  loading is non-negative (the NMF case) and a two-sided one otherwise.
+  `"upper"` and `"both"` force the choice. One of
+  `c("auto", "upper", "both")`. Defaults to `"auto"`.
+
+- scaling - String. `"robust"` centres and scales each component by its
+  median and MAD. `"standard"` uses the mean and standard deviation
+  instead, which is stricter and less forgiving of skewed loadings (e.g.
+  NMF). One of `c("robust", "standard")`. Defaults to `"robust"`.
 
 ## References
 

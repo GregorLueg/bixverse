@@ -1,6 +1,7 @@
-# Check label propagation parameters
+# Check label propagation params
 
-Checkmate extension for checking label propagation parameters.
+Checkmate extension for the output of
+[`params_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/params_label_propagation.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkLabelPropParams(x)
 
 - x:
 
-  The list to check/assert.
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

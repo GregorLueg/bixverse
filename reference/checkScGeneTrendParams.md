@@ -1,6 +1,7 @@
-# Check gene trend parameters
+# Check gene trend params
 
-Checkmate extension for checking the gene trend parameters.
+Checkmate extension for the output of
+[`params_sc_gene_trends()`](https://gregorlueg.github.io/bixverse/reference/params_sc_gene_trends.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkScGeneTrendParams(x)
 
 - x:
 
-  The list to check/assert.
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

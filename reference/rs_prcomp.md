@@ -23,7 +23,7 @@ rs_prcomp(x, scale, top_pcs)
 - top_pcs:
 
   Optional integer. Only return the top PCs (under the hood all of them
-  will be calculated).
+  will be calculated). `NULL` returns all.
 
 ## Value
 
@@ -33,6 +33,7 @@ A list with:
 
 - v - v matrix of the SVD.
 
-- s - Eigenvalues of the SVD.
+- s - Standard deviations of the PCs, i.e. singular values divided by
+  `sqrt(nrow(x) - 1)`.
 
 - scaled - Boolean. Was the matrix scaled.

@@ -23,35 +23,64 @@ params_sctype_cells(
 
 - alpha:
 
-  Numeric in `[0, 1]`. Self-retention during smoothing. Each iteration
-  computes `alpha * original + (1 - alpha) * neighbour_average`.
+  Numeric. Numeric in `[0, 1]`. Self-retention during smoothing. Each
+  iteration computes
+  `alpha * original + (1 - alpha) * neighbour_average`. Defaults to
+  `0.5`.
 
 - iterations:
 
-  Integer \>= 0. Number of smoothing iterations. `0` disables smoothing.
+  Integer. Integer \>= 0. Number of smoothing iterations. `0` disables
+  smoothing. Defaults to `2L`.
 
 - tolerance:
 
-  Numeric \> 0. Convergence tolerance for the smoothing.
+  Numeric. Numeric \> 0. Convergence tolerance for the smoothing.
+  Defaults to `1e-04`.
 
 - calibration:
 
-  String. One of `c("none", "column_z")`. `"column_z"` standardises each
-  cell type's score column across cells, which removes the bias towards
-  cell types whose marker sets happen to produce larger scores.
+  String. `"column_z"` standardises each cell type's score column across
+  cells, which removes the bias towards cell types whose marker sets
+  happen to produce larger scores. One of `c("none", "column_z")`.
+  Defaults to `"none"`.
 
 - score_floor:
 
-  Numeric \>= 0. Minimum score for a cell to get a call instead of `NA`.
+  Numeric. Numeric \>= 0. Minimum score for a cell to get a call instead
+  of `NA`. Defaults to `0.25`.
 
 - purity_threshold:
 
-  Numeric in `[0, 1]`. Cluster purity above which the hybrid assignment
-  keeps the cluster-level call.
+  Numeric. Numeric in `[0, 1]`. Cluster purity above which the hybrid
+  assignment keeps the cluster-level call. Defaults to `0.9`.
 
 ## Value
 
-A list with the parameters for usage in subsequent functions.
+A named list with the following elements:
+
+- alpha - Numeric. Numeric in `[0, 1]`. Self-retention during smoothing.
+  Each iteration computes
+  `alpha * original + (1 - alpha) * neighbour_average`. Defaults to
+  `0.5`.
+
+- iterations - Integer. Integer \>= 0. Number of smoothing iterations.
+  `0` disables smoothing. Defaults to `2L`.
+
+- tolerance - Numeric. Numeric \> 0. Convergence tolerance for the
+  smoothing. Defaults to `1e-04`.
+
+- calibration - String. `"column_z"` standardises each cell type's score
+  column across cells, which removes the bias towards cell types whose
+  marker sets happen to produce larger scores. One of
+  `c("none", "column_z")`. Defaults to `"none"`.
+
+- score_floor - Numeric. Numeric \>= 0. Minimum score for a cell to get
+  a call instead of `NA`. Defaults to `0.25`.
+
+- purity_threshold - Numeric. Numeric in `[0, 1]`. Cluster purity above
+  which the hybrid assignment keeps the cluster-level call. Defaults to
+  `0.9`.
 
 ## References
 

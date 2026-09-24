@@ -2,8 +2,9 @@
 
 **\[experimental\]** This function assesses the quality of the clusters
 with a given cut `k`. Returns the median R2 (cor^2) and the median
-absolute deviation (MAD) of the clusters. Large clusters (≥1000) are
-subsampled to a random set of 1000 genes.
+absolute deviation (MAD) of the clusters. Clusters with more than 1000
+genes are subsampled to a random set of 1000 genes. Genes not found in
+`row_names` are skipped.
 
 ## Usage
 
@@ -15,7 +16,8 @@ rs_coremo_quality(cluster_genes, cor_mat, row_names, seed)
 
 - cluster_genes:
 
-  A list. Contains the cluster and their respective genes.
+  A list. Contains the cluster and their respective genes as character
+  vectors.
 
 - cor_mat:
 
@@ -32,10 +34,10 @@ rs_coremo_quality(cluster_genes, cor_mat, row_names, seed)
 
 ## Value
 
-A list containing:
+A list containing, one entry per cluster:
 
 - r2med - median R2 of the cluster.
 
-- r2mad - median absolute deviation of the R2 in the cluster.
+- r2mad - scaled median absolute deviation of the R2 in the cluster.
 
-- size - size of the cluster.
+- size - number of cluster genes found in `row_names`.

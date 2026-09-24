@@ -1,24 +1,22 @@
-# Assert DGRDL parameter
+# Assert DGRDL params
 
-Checkmate extension for asserting dual graph regularised dictionary
-learning parameters.
+Assert DGRDL params
 
 ## Usage
 
 ``` r
-assertDGRDLparams(x, .var.name = checkmate::vname(x), add = NULL)
+assertDGRDLParams(x, .var.name = checkmate::vname(x), add = NULL)
 ```
 
 ## Arguments
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 - .var.name:
 
-  Name of the checked object to print in assertions. Defaults to the
-  heuristic implemented in checkmate.
+  Name of the checked object to print in assertions.
 
 - add:
 

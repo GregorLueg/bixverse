@@ -111,6 +111,7 @@ sc_object
 #>   KNN generated: FALSE
 #>   SNN generated: FALSE
 #>   MAGIC imputed: none
+#>   Residual model: none
 #>   Stale artefacts: none
 ```
 
@@ -337,13 +338,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7121771
+#> [1] 0.710988
 #> 
 #> $recall
-#> [1] 0.4951892
+#> [1] 0.4939064
 #> 
 #> $f1
-#> [1] 0.5841846
+#> [1] 0.5828917
 ```
 
 ### scDblFinder

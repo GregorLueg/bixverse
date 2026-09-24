@@ -1,8 +1,8 @@
 # Run hypergeometric enrichment a list of target genes over the gene ontology
 
 **\[experimental\]** This function implements a Rust version of the gene
-ontology enrichment with elimination: the starting point are the leafs
-of the ontology and hypergeometric tests will first conducted there.
+ontology enrichment with elimination: the starting point are the leaves
+of the ontology and hypergeometric tests will first be conducted there.
 Should the hypergeometric test p-value be below a certain threshold, the
 genes of that gene ontology term will be removed from all ancestors.
 This function is designed to leverage Rust-based threading for parallel
@@ -62,17 +62,17 @@ rs_gse_geom_elim_list(
 
 ## Value
 
-A list containing:
+A list containing (results of all target sets concatenated):
 
 - go_ids - The gene ontology identifier.
 
-- pvals - The calculated odds ratios.
+- pvals - The calculated p-values.
 
-- fdrs - The calculated fdrs.
+- fdr - The calculated FDRs.
 
 - odds_ratios - The calculated odds ratios.
 
-- overlap - The size of the overlap.
+- hits - The size of the overlap.
 
 - gene_set_lengths - The length of the gene sets.
 

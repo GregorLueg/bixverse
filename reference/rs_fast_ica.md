@@ -2,7 +2,7 @@
 
 **\[experimental\]** This function serves as a wrapper over the fast ICA
 implementations in Rust. It assumes a whitened matrix and also an
-intialised w_init.
+initialised w_init.
 
 ## Usage
 
@@ -23,8 +23,8 @@ rs_fast_ica(whiten, w_init, ica_type, ica_params)
 
 - ica_type:
 
-  String. One of 'logcosh' or 'exp'. If weird string is provided, it
-  will default to `"logcosh"`.
+  String. One of `c("logcosh", "exp")`. Any other string defaults to
+  `"logcosh"`.
 
 - ica_params:
 
@@ -49,4 +49,5 @@ A list with the following items:
 
 - mixing - The mixing matrix for subsequent usage.
 
-- converged - Boolean if the algorithm converged.
+- converged - Boolean. Did the best tolerance reached fall below
+  `max_tol`.

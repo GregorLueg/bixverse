@@ -1,7 +1,6 @@
-# Check synthetic bulk RNAseq parameters
+# Check synthetic bulk params
 
-Checkmate extension for checking the synthetic bulk RNAseq parameters,
-see
+Checkmate extension for the output of
 [`params_synthetic_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/params_synthetic_bulk_rnaseq.md).
 
 ## Usage
@@ -14,8 +13,9 @@ checkSyntheticBulkParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

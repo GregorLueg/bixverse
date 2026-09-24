@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -99,7 +104,7 @@
 <span>  tol <span class="op">=</span> <span class="fl">1e-04</span>,</span>
 <span>  eps <span class="op">=</span> <span class="fl">1e-10</span>,</span>
 <span>  check_every <span class="op">=</span> <span class="fl">10L</span>,</span>
-<span>  nmf_init <span class="op">=</span> <span class="st">"nndsvd"</span></span>
+<span>  nmf_init <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nndsvd"</span>, <span class="st">"svd"</span>, <span class="st">"random"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -108,33 +113,47 @@
 
 
 <dl><dt id="arg-max-iter">max_iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
-<dd><p>Integer. Maximum number of HALS iterations.</p></dd>
+<dd><p>Integer. Maximum number of HALS iterations. Defaults to
+<code>250L</code>.</p></dd>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
 <dd><p>Numeric. Convergence tolerance on the relative change in
-reconstruction loss.</p></dd>
+reconstruction loss. Defaults to <code>1e-04</code>.</p></dd>
 
 
 <dt id="arg-eps">eps<a class="anchor" aria-label="anchor" href="#arg-eps"></a></dt>
-<dd><p>Numeric. Numerical floor for non-negativity / division safety.</p></dd>
+<dd><p>Numeric. Numerical floor for non-negativity / division safety.
+Defaults to <code>1e-10</code>.</p></dd>
 
 
 <dt id="arg-check-every">check_every<a class="anchor" aria-label="anchor" href="#arg-check-every"></a></dt>
-<dd><p>Integer. Convergence check interval in iterations.</p></dd>
+<dd><p>Integer. Convergence check interval in iterations.
+Defaults to <code>10L</code>.</p></dd>
 
 
 <dt id="arg-nmf-init">nmf_init<a class="anchor" aria-label="anchor" href="#arg-nmf-init"></a></dt>
-<dd><p>String. One of <code>c("nndsvd", "svd", "random")</code>. <code>"nndsvd"</code>
-and <code>"svd"</code> both map to deterministic NNDSVD initialisation; <code>"random"</code>
-uses random non-negative draws. For stabilised (multi-run) NMF this field
-is ignored and random init is always used.</p></dd>
+<dd><p>String. <code>"nndsvd"</code> and <code>"svd"</code> both map to deterministic
+NNDSVD initialisation; <code>"random"</code> uses random non-negative draws. For
+stabilised (multi-run) NMF this field is ignored and random init is always
+used. One of <code>c("nndsvd", "svd", "random")</code>. Defaults to <code>"nndsvd"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the HALS NMF parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>max_iter - Integer. Maximum number of HALS iterations. Defaults to
+<code>250L</code>.</p></li>
+<li><p>tol - Numeric. Convergence tolerance on the relative change in
+reconstruction loss. Defaults to <code>1e-04</code>.</p></li>
+<li><p>eps - Numeric. Numerical floor for non-negativity / division safety.
+Defaults to <code>1e-10</code>.</p></li>
+<li><p>check_every - Integer. Convergence check interval in iterations.
+Defaults to <code>10L</code>.</p></li>
+<li><p>nmf_init - String. <code>"nndsvd"</code> and <code>"svd"</code> both map to deterministic
+NNDSVD initialisation; <code>"random"</code> uses random non-negative draws. For
+stabilised (multi-run) NMF this field is ignored and random init is always
+used. One of <code>c("nndsvd", "svd", "random")</code>. Defaults to <code>"nndsvd"</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

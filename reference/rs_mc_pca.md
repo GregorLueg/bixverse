@@ -2,7 +2,9 @@
 
 **\[experimental\]** Calculates PCA for MetaCells or more generally
 speaking sparse data. This is happening in-memory compared to the
-(usually much) larger single cell data sets.
+(usually much) larger single cell data sets. The matrix is densified,
+optionally CLR transformed and scaled according to `pca_params` before
+the SVD.
 
 ## Usage
 
@@ -15,7 +17,8 @@ rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 - sparse_data:
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
-  `ncol` and `format`.
+  `ncol` and `cs_type`. Shape is (metacells, genes), holding the
+  normalised counts of the genes to use.
 
 - no_pcs:
 
@@ -23,12 +26,14 @@ rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 
 - pca_params:
 
-  Named list. Contains the parameters to use for this PCA run.
+  Named list. Contains the parameters to use for this PCA run, see
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md).
 
 - clr_offsets:
 
-  Optional numeric. If you wish to use the `PFlogPF` normalisation prior
-  to PCA from Booeshaghi, et al.
+  Optional numeric. One offset per meta cell for the `PFlogPF`
+  normalisation from Booeshaghi, et al., computed against the full gene
+  panel. Required if `pca_params$clr` is `TRUE`, ignored otherwise.
 
 - seed:
 
@@ -41,7 +46,7 @@ rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 
 ## Value
 
-A list with with the following items
+A list with the following items
 
 - scores - The samples projected on the PCA space (solved via sparse
   SVD).

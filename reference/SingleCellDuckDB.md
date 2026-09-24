@@ -38,6 +38,8 @@ observation/cell metadata and the feature/gene metadata.
 
 - [`SingleCellDuckDB$populate_obs_from_multi_duckdb()`](#method-SingleCellDuckDB-populate_obs_from_multi_duckdb)
 
+- [`SingleCellDuckDB$populate_obs_from_duckdb_subset()`](#method-SingleCellDuckDB-populate_obs_from_duckdb_subset)
+
 - [`SingleCellDuckDB$populate_vars_from_duckdb_reordered()`](#method-SingleCellDuckDB-populate_vars_from_duckdb_reordered)
 
 - [`SingleCellDuckDB$populate_obs_from_multi_plain_text()`](#method-SingleCellDuckDB-populate_obs_from_multi_plain_text)
@@ -405,6 +407,40 @@ inputs, and rbindlists.
 
   List of lists; each must contain `db_path` (string) and `exp_id`
   (string).
+
+#### Returns
+
+Invisible self.
+
+------------------------------------------------------------------------
+
+### `SingleCellDuckDB$populate_obs_from_duckdb_subset()`
+
+Populate the obs table from a single source DuckDB, restricted to a
+subset of cells and reordered to match.
+
+Needed because `add_data_obs()` requires an obs table to already exist,
+so an object written from scratch out of a subset of a parent (as
+[`cellsweep_sc()`](https://gregorlueg.github.io/bixverse/reference/cellsweep_sc.md)
+does) has nothing to attach columns to.
+
+#### Usage
+
+    SingleCellDuckDB$populate_obs_from_duckdb_subset(
+      source_db_path,
+      cell_idx_to_keep
+    )
+
+#### Arguments
+
+- `source_db_path`:
+
+  String. Path to the source DuckDB.
+
+- `cell_idx_to_keep`:
+
+  Integer vector. **1-based** source `cell_idx` values, in the order the
+  new object stores them.
 
 #### Returns
 

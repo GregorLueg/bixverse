@@ -21,5 +21,6 @@ rs_get_gs_indices(gene_universe, pathway_list)
 
 ## Value
 
-Returns a list with the index positions of the gene set genes in the
-gene universe. Importantly, these are indexed to R's 1-indexing!
+Returns a list with the sorted index positions of the gene set genes in
+the gene universe. Importantly, these are indexed to R's 1-indexing!
+Non-character elements are passed through unchanged.

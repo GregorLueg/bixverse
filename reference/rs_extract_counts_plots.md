@@ -28,12 +28,14 @@ rs_extract_counts_plots(f_path, cell_indices, gene_index, norm, scale, clip)
 
 - scale:
 
-  Boolean. Shall the normalised counts be scaled.
+  Boolean. Shall the normalised counts be z-scored across the selected
+  cells.
 
 - clip:
 
-  Optional float. Clipping for the Z-scores if scale is set to `TRUE`
+  Optional float. Clips the Z-scores to `[-clip, clip]`. Only used if
+  `scale = TRUE`.
 
 ## Value
 
-The dense vector of expression values for this gene.
+Numerical vector with one expression value per cell in `cell_indices`.

@@ -1,7 +1,9 @@
 # Calculate the critical value
 
-**\[experimental\]** This function calculates the critical value for a
-given set based on random permutations and a given alpha value.
+**\[experimental\]** Same as
+[`rs_critval()`](https://gregorlueg.github.io/bixverse/reference/rs_critval.md),
+but the values are taken from the upper triangle (diagonal excluded) of
+a symmetric matrix.
 
 ## Usage
 
@@ -13,17 +15,16 @@ rs_critval_mat(mat, iters, alpha, seed)
 
 - mat:
 
-  Numeric matrix. The (symmetric matrix with all of the values).
+  Numeric matrix. The symmetric matrix with all of the values.
 
 - iters:
 
-  Integer. Number of random permutations to use.
+  Integer. Size of the bootstrap sample.
 
 - alpha:
 
-  Float. The alpha value. For example, 0.001 would mean that the
-  critical value is smaller than 0.1 percentile of the random
-  permutations.
+  Float. The alpha value. For example, 0.001 would return the value
+  exceeded by roughly 0.1 percent of the bootstrap sample.
 
 - seed:
 

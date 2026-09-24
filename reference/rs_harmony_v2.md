@@ -21,8 +21,8 @@ rs_harmony_v2(pca, harmony_params, batch_labels, seed, verbose)
 
 - batch_labels:
 
-  List. Each element in the list needs to be a 0-indexed integer that
-  represents the batch effects you wish to regress out.
+  List. Each element needs to be a 0-indexed integer vector, one per
+  batch variable you wish to regress out.
 
 - seed:
 
@@ -35,4 +35,5 @@ rs_harmony_v2(pca, harmony_params, batch_labels, seed, verbose)
 
 ## Value
 
-The batch-corrected Harmony (v2) embedding space.
+Numerical matrix, cells x dimensions, with the batch-corrected Harmony
+(v2) embedding.

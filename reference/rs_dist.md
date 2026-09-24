@@ -18,8 +18,10 @@ rs_dist(x, distance_type)
 
 - distance_type:
 
-  String. One of `c("euclidean", "manhattan", "canberra", "cosine")`.
+  String. One of
+  `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`.
+  `"correlation"` is `1 - Pearson r`. Unknown strings raise an error.
 
 ## Value
 
-The calculated distance matrix
+The calculated distance matrix.

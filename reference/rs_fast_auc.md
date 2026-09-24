@@ -1,7 +1,8 @@
 # Fast AUC calculation
 
 **\[experimental\]** This function calculates rapidly AUCs based on an
-approximation.
+approximation: the fraction of `iters` random (positive, negative)
+pairs, drawn with replacement, where the positive score is larger.
 
 ## Usage
 
@@ -30,4 +31,4 @@ rs_fast_auc(pos_scores, neg_scores, iters, seed)
 
 ## Value
 
-The AUC.
+The approximate AUC.

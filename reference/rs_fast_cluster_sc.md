@@ -37,8 +37,8 @@ rs_fast_cluster_sc(
 
 - n_centroids:
 
-  Optional integer. The number of clusters to find. If not provided,
-  defaults to `sqrt(nrow(embd))`.
+  Optional integer. The number of k-means centroids. If not provided,
+  defaults to `floor(sqrt(nrow(embd)))`.
 
 - fc_params:
 
@@ -65,4 +65,12 @@ rs_fast_cluster_sc(
 
 ## Value
 
-A list with the memberships per resolution.
+A list with the following elements:
+
+- membership - List with one integer membership vector per resolution.
+
+- k_means_cluster - Integer vector with the k-means cluster per cell if
+  `return_kmeans = TRUE`, otherwise `NULL`.
+
+- centroids - Numerical matrix with the k-means centroids if
+  `return_kmeans = TRUE`, otherwise `NULL`.

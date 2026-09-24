@@ -258,6 +258,8 @@ differential gene expression results.
 - [`params_edger_ql()`](https://gregorlueg.github.io/bixverse/reference/params_edger_ql.md)
   : Wrapper function for parameters for the edgeR quasi-likelihood
   workflow
+- [`params_limma_voom()`](https://gregorlueg.github.io/bixverse/reference/params_limma_voom.md)
+  : Wrapper function for parameters for the limma-voom workflow
 - [`hedges_g_dge()`](https://gregorlueg.github.io/bixverse/reference/hedges_g_dge.md)
   : Calculate the effect size
 - [`get_dge_effect_sizes()`](https://gregorlueg.github.io/bixverse/reference/get_dge_effect_sizes.md)
@@ -709,6 +711,8 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Run scDblFinder doublet detection on a SingleCells object
 - [`gene_set_proportions_sc()`](https://gregorlueg.github.io/bixverse/reference/gene_set_proportions_sc.md)
   : Calculate the proportions of reads for specific gene sets
+- [`cellsweep_sc()`](https://gregorlueg.github.io/bixverse/reference/cellsweep_sc.md)
+  : Remove ambient and bulk contamination with CellSweep
 - [`per_cell_qc_outlier()`](https://gregorlueg.github.io/bixverse/reference/per_cell_qc_outlier.md)
   : Use MAD outlier detection on per-cell QC metrics
 - [`run_cell_qc()`](https://gregorlueg.github.io/bixverse/reference/run_cell_qc.md)
@@ -727,6 +731,16 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Identify HVGs without mutating object state
 - [`calculate_pca_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_pca_sc.md)
   : Run PCA for single cell
+- [`fit_residuals_sc()`](https://gregorlueg.github.io/bixverse/reference/fit_residuals_sc.md)
+  : Fit a residual model for single cell data
+- [`sct_corrected_counts_sc()`](https://gregorlueg.github.io/bixverse/reference/sct_corrected_counts_sc.md)
+  : Write scTransform-corrected counts to a new store
+- [`get_residual_fit()`](https://gregorlueg.github.io/bixverse/reference/get_residual_fit.md)
+  : Get the fitted residual model
+- [`set_residual_fit()`](https://gregorlueg.github.io/bixverse/reference/set_residual_fit.md)
+  : Set/add the fitted residual model
+- [`remove_residual_fit()`](https://gregorlueg.github.io/bixverse/reference/remove_residual_fit.md)
+  : Remove the fitted residual model
 - [`generate_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/generate_sc_knn.md)
   : Generate a new SingleCellNearestNeighbour from data
 - [`find_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/find_neighbours_sc.md)
@@ -737,6 +751,10 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Calculate the proportions of reads for the Top N genes
 - [`params_sc_magic()`](https://gregorlueg.github.io/bixverse/reference/params_sc_magic.md)
   : Wrapper function for MAGIC imputation parameters
+- [`params_sc_cellsweep()`](https://gregorlueg.github.io/bixverse/reference/params_sc_cellsweep.md)
+  : Default parameters for CellSweep denoising
+- [`params_sc_empty_droplets()`](https://gregorlueg.github.io/bixverse/reference/params_sc_empty_droplets.md)
+  : Parameters for identifying empty droplets
 - [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
   : Helper function to generate normalisation defaults for doublet
   detection.
@@ -746,6 +764,10 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Wrapper function for HVG detection parameters.
 - [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
   : Wrapper for PCA specifically designed for single cells
+- [`params_sc_sctransform()`](https://gregorlueg.github.io/bixverse/reference/params_sc_sctransform.md)
+  : Wrapper function for scTransform (v2) parameters
+- [`params_sc_apr()`](https://gregorlueg.github.io/bixverse/reference/params_sc_apr.md)
+  : Wrapper function for analytic Pearson residual parameters
 - [`params_scrublet()`](https://gregorlueg.github.io/bixverse/reference/params_scrublet.md)
   : Wrapper function for Scrublet doublet detection parameters
 - [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md)
@@ -789,8 +811,16 @@ Batch correction methods and metrics for single cell
   : Calculate kBET scores
 - [`calculate_batch_asw_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_asw_sc.md)
   : Calculate batch average silhouette width
-- [`calculate_batch_lisi_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_lisi_sc.md)
-  : Calculate batch LISI scores
+- [`calculate_lisi_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_lisi_sc.md)
+  : Calculate LISI scores (iLISI or cLISI)
+- [`calculate_pcr_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_pcr_sc.md)
+  : Calculate the principal component regression on batch
+- [`calculate_cell_type_asw_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_cell_type_asw_sc.md)
+  : Calculate cell type average silhouette width
+- [`calculate_graph_connectivity_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_graph_connectivity_sc.md)
+  : Calculate the graph connectivity per cell type
+- [`calculate_integration_metrics_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_integration_metrics_sc.md)
+  : Calculate a summary of integration metrics
 - [`params_sc_fastmnn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fastmnn.md)
   : Wrapper function for the fastMNN parameters
 - [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md)
@@ -1231,6 +1261,9 @@ Functions and helpers to download or generate synthetic data.
 - [`download_pbmc8k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc8k.md)
   : Download PBMC8K data from Zenodo
 
+- [`download_pbmc_1k_5p()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc_1k_5p.md)
+  : Download the raw PBMC 1k 5' matrix from 10x Genomics
+
 - [`calculate_sparsity_stats()`](https://gregorlueg.github.io/bixverse/reference/calculate_sparsity_stats.md)
   : Helper function to calculate the induced sparsity
 
@@ -1248,6 +1281,9 @@ Functions and helpers to download or generate synthetic data.
 - [`generate_dialogue_test_data()`](https://gregorlueg.github.io/bixverse/reference/generate_dialogue_test_data.md)
   : Single cell test data with a planted multicellular programme
 
+- [`generate_cellsweep_test_data()`](https://gregorlueg.github.io/bixverse/reference/generate_cellsweep_test_data.md)
+  : Single cell test data with a planted ambient profile
+
 - [`cell_cycle_genes`](https://gregorlueg.github.io/bixverse/reference/cell_cycle_genes.md)
   : Cell cycle genes
 
@@ -1264,8 +1300,15 @@ Functions and helpers to download or generate synthetic data.
   : Default parameters for generation of synthetic single cell data
   (RNA)
 
+- [`params_sc_synthetic_data_adt()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_data_adt.md)
+  : Default parameters for generation of synthetic single cell data
+  (ADT)
+
 - [`params_sc_synthetic_dialogue()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_dialogue.md)
   : Default parameters for generation of synthetic DIALOGUE data
+
+- [`params_sc_synthetic_cellsweep()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_cellsweep.md)
+  : Default parameters for generation of synthetic CellSweep data
 
 - [`params_synthetic_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/params_synthetic_bulk_rnaseq.md)
   : Wrapper function to generate synthetic bulk RNAseq parameters
@@ -1315,8 +1358,6 @@ There is a lot more under the hood…
 
 - [`rs_2d_loess()`](https://gregorlueg.github.io/bixverse/reference/rs_2d_loess.md)
   **\[experimental\]** : Rust implementation of a Loess function
-- [`rs_batch_lisi()`](https://gregorlueg.github.io/bixverse/reference/rs_batch_lisi.md)
-  **\[experimental\]** : Calculate batch LISI scores
 - [`rs_batch_silhouette_width()`](https://gregorlueg.github.io/bixverse/reference/rs_batch_silhouette_width.md)
   **\[experimental\]** : Calculate batch silhouette width from an
   embedding
@@ -1326,6 +1367,11 @@ There is a lot more under the hood…
 - [`rs_blitzgsea_score()`](https://gregorlueg.github.io/bixverse/reference/rs_blitzgsea_score.md)
   **\[experimental\]** : Score gene sets against a calibrated blitzGSEA
   null
+- [`rs_calc_norm_factors()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_norm_factors.md)
+  **\[experimental\]** : Calculate normalisation factors
+- [`rs_cell_type_asw()`](https://gregorlueg.github.io/bixverse/reference/rs_cell_type_asw.md)
+  **\[experimental\]** : Calculate cell type silhouette width from an
+  embedding
 - [`rs_cistarget()`](https://gregorlueg.github.io/bixverse/reference/rs_cistarget.md)
   **\[experimental\]** : Run CisTarget motif enrichment analysis
 - [`rs_compare_knn()`](https://gregorlueg.github.io/bixverse/reference/rs_compare_knn.md)
@@ -1353,6 +1399,8 @@ There is a lot more under the hood…
   co-variance matrix
 - [`rs_covariance()`](https://gregorlueg.github.io/bixverse/reference/rs_covariance.md)
   **\[experimental\]** : Calculate the column-wise co-variance.
+- [`rs_cpm()`](https://gregorlueg.github.io/bixverse/reference/rs_cpm.md)
+  **\[experimental\]** : Counts per million
 - [`rs_dense_to_upper_triangle()`](https://gregorlueg.github.io/bixverse/reference/rs_dense_to_upper_triangle.md)
   **\[experimental\]** : Generate a vector-based representation of the
   upper triangle of a matrix
@@ -1368,6 +1416,8 @@ There is a lot more under the hood…
   **\[experimental\]** : Run the Rust implementation of fast ICA.
 - [`rs_fdr_adjustment()`](https://gregorlueg.github.io/bixverse/reference/rs_fdr_adjustment.md)
   **\[experimental\]** : Calculate a BH-based FDR
+- [`rs_filter_by_expr()`](https://gregorlueg.github.io/bixverse/reference/rs_filter_by_expr.md)
+  **\[experimental\]** : Filter lowly expressed genes
 - [`rs_gene_trends()`](https://gregorlueg.github.io/bixverse/reference/rs_gene_trends.md)
   **\[experimental\]** : Fit Palantir gene trends over pseudotime
 - [`rs_geom_elim_fgsea_simple()`](https://gregorlueg.github.io/bixverse/reference/rs_geom_elim_fgsea_simple.md)
@@ -1376,6 +1426,8 @@ There is a lot more under the hood…
 - [`rs_gower_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_gower_dist.md)
   **\[experimental\]** : Calculates the Gower distance for a given
   matrix
+- [`rs_graph_connectivity()`](https://gregorlueg.github.io/bixverse/reference/rs_graph_connectivity.md)
+  **\[experimental\]** : Calculate graph connectivity per cell type
 - [`rs_gse_geom_elim()`](https://gregorlueg.github.io/bixverse/reference/rs_gse_geom_elim.md)
   **\[experimental\]** : Run hypergeometric enrichment over the gene
   ontology
@@ -1402,12 +1454,12 @@ There is a lot more under the hood…
   genes
 - [`rs_ica_iters()`](https://gregorlueg.github.io/bixverse/reference/rs_ica_iters.md)
   **\[experimental\]** : Run ICA over a given no_comp with random
-  initilisations of w_init
+  initialisations of w_init
 - [`rs_ica_iters_cv()`](https://gregorlueg.github.io/bixverse/reference/rs_ica_iters_cv.md)
   **\[experimental\]** : Run ICA with cross-validation and random
-  initialsiation
+  initialisation
 - [`rs_jaccard_row_integers()`](https://gregorlueg.github.io/bixverse/reference/rs_jaccard_row_integers.md)
-  **\[experimental\]** : Calculate rapidbly Jaccard similarities between
+  **\[experimental\]** : Calculate rapidly Jaccard similarities between
   rows
 - [`rs_kbet()`](https://gregorlueg.github.io/bixverse/reference/rs_kbet.md)
   **\[experimental\]** : Calculate kBET type scores
@@ -1420,6 +1472,11 @@ There is a lot more under the hood…
   matrices
 - [`rs_ligand_activity_scores()`](https://gregorlueg.github.io/bixverse/reference/rs_ligand_activity_scores.md)
   **\[experimental\]** : Calculate the NicheNet ligand activity scores
+- [`rs_limma_voom()`](https://gregorlueg.github.io/bixverse/reference/rs_limma_voom.md)
+  **\[experimental\]** : Run the limma linear model chain on a count
+  matrix
+- [`rs_lisi()`](https://gregorlueg.github.io/bixverse/reference/rs_lisi.md)
+  **\[experimental\]** : Calculate LISI scores on any label
 - [`rs_mad_outlier()`](https://gregorlueg.github.io/bixverse/reference/rs_mad_outlier.md)
   **\[experimental\]** : Calculate MAD outlier detection in Rust.
 - [`rs_edger_ql()`](https://gregorlueg.github.io/bixverse/reference/rs_edger_ql.md)
@@ -1435,20 +1492,29 @@ There is a lot more under the hood…
 - [`rs_mc_hotspot_gene_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hotspot_gene_cor.md)
   **\[experimental\]** : Calculate gene to gene spatial correlations
   (for meta cells)
+- [`rs_mc_fit_residuals()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_fit_residuals.md)
+  **\[experimental\]** : Fits a residual model for meta cells
 - [`rs_mc_hvg()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hvg.md)
   **\[experimental\]** : Meta cells highly variable genes
 - [`rs_mc_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_pca.md)
   **\[experimental\]** : PCA on MetaCells (sparse data)
+- [`rs_mc_pca_residuals()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_pca_residuals.md)
+  **\[experimental\]** : Calculates PCA on Pearson residuals for meta
+  cells
+- [`rs_mc_residual_variance()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_residual_variance.md)
+  **\[experimental\]** : Residual variance and variable features for
+  meta cells
 - [`rs_mc_scenic()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_scenic.md)
   **\[experimental\]** : SCENIC on MetaCells
 - [`rs_mc_vision()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_vision.md)
   **\[experimental\]** : Calculate VISION pathway scores in Rust (for
   meta cells)
 - [`rs_mc_vision_with_autocorrelation()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_vision_with_autocorrelation.md)
-  **\[experimental\]** : Calculate VISION pathway scores in Rust with
+  **\[experimental\]** : Calculate VISION pathway scores with
   auto-correlation (for meta cells)
 - [`rs_mitch_calc()`](https://gregorlueg.github.io/bixverse/reference/rs_mitch_calc.md)
-  : Calculate mitch enrichment leveraging Rust under the hood
+  **\[experimental\]** : Calculate mitch enrichment leveraging Rust
+  under the hood
 - [`rs_nebula_mc()`](https://gregorlueg.github.io/bixverse/reference/rs_nebula_mc.md)
   **\[experimental\]** : Fit the NEBULA negative binomial gamma mixed
   model over meta cells
@@ -1469,11 +1535,13 @@ There is a lot more under the hood…
 - [`rs_ot_harmonic_sum()`](https://gregorlueg.github.io/bixverse/reference/rs_ot_harmonic_sum.md)
   **\[experimental\]** : Calculate the OT harmonic sum
 - [`rs_page_rank()`](https://gregorlueg.github.io/bixverse/reference/rs_page_rank.md)
-  **\[experimental\]** : Rust version of calcaluting the personalised
+  **\[experimental\]** : Rust version of calculating the personalised
   page rank
 - [`rs_page_rank_parallel()`](https://gregorlueg.github.io/bixverse/reference/rs_page_rank_parallel.md)
   **\[experimental\]** : Calculate massively parallelised personalised
   page rank scores
+- [`rs_pcr()`](https://gregorlueg.github.io/bixverse/reference/rs_pcr.md)
+  **\[experimental\]** : Principal component regression on batch
 - [`rs_phyper()`](https://gregorlueg.github.io/bixverse/reference/rs_phyper.md)
   **\[experimental\]** : Calculate the hypergeometric test in Rust
 - [`rs_pointwise_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_pointwise_mutual_info.md)
@@ -1500,6 +1568,9 @@ There is a lot more under the hood…
 - [`rs_rbh_sets()`](https://gregorlueg.github.io/bixverse/reference/rs_rbh_sets.md)
   **\[experimental\]** : Generate reciprocal best hits based on set
   similarities
+- [`rs_remove_batch_effect()`](https://gregorlueg.github.io/bixverse/reference/rs_remove_batch_effect.md)
+  **\[experimental\]** : Remove batch effects from a log-expression
+  matrix
 - [`rs_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn.md)
   **\[experimental\]** : Generates the kNN graph
 - [`rs_sc_knn_w_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_w_dist.md)
@@ -1544,5 +1615,7 @@ There is a lot more under the hood…
   triangle vector
 - [`rs_upper_triangle_to_sparse()`](https://gregorlueg.github.io/bixverse/reference/rs_upper_triangle_to_sparse.md)
   **\[experimental\]** : Generate sparse data from an upper triangle
+- [`rs_voom_normalise()`](https://gregorlueg.github.io/bixverse/reference/rs_voom_normalise.md)
+  **\[experimental\]** : Voom-transform a count matrix
 - [`rs_wnn()`](https://gregorlueg.github.io/bixverse/reference/rs_wnn.md)
   **\[experimental\]** : Run the weighted nearest neighbour algorithm

@@ -5,7 +5,7 @@ Helper plot function for boxplot of normalised data
 ## Usage
 
 ``` r
-plot_boxplot_normalization(samples, voom_object, group_col)
+plot_boxplot_normalization(samples, norm_counts, group_col)
 ```
 
 ## Arguments
@@ -15,9 +15,10 @@ plot_boxplot_normalization(samples, voom_object, group_col)
   data.table with sample information with perc_detected_genes and a
   column specifying the cohort.
 
-- voom_object:
+- norm_counts:
 
-  `EList`. Voom object with normalised counts.
+  Numeric matrix. The normalised log2 expression, genes x samples, with
+  the samples in the same order as the rows of `samples`.
 
 - group_col:
 
@@ -36,10 +37,7 @@ samples <- data.table::data.table(
   sample_id = colnames(syn$counts),
   cohort = rep(c("case", "control"), each = 50)
 )
-dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
-voom_obj <- limma::voom(
-  dge_list,
-  stats::model.matrix(~ samples$cohort)
-)
-plot_boxplot_normalization(samples, voom_obj, group_col = "cohort")
+norm_counts <- rs_cpm(syn$counts, lib_size = NULL, log = TRUE,
+  prior_count = 0.5)
+plot_boxplot_normalization(samples, norm_counts, group_col = "cohort")
 ```

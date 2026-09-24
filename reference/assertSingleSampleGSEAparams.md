@@ -1,24 +1,22 @@
-# Assert ssGSEA parameter
+# Assert ssGSEA params
 
-Checkmate extension for asserting single sample gene set enrichment
-analysis parameters.
+Assert ssGSEA params
 
 ## Usage
 
 ``` r
-assertSingleSampleGSEAparams(x, .var.name = checkmate::vname(x), add = NULL)
+assertSingleSampleGSEAParams(x, .var.name = checkmate::vname(x), add = NULL)
 ```
 
 ## Arguments
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 - .var.name:
 
-  Name of the checked object to print in assertions. Defaults to the
-  heuristic implemented in checkmate.
+  Name of the checked object to print in assertions.
 
 - add:
 

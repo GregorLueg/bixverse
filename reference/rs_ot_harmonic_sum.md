@@ -1,6 +1,8 @@
 # Calculate the OT harmonic sum
 
-**\[experimental\]**
+**\[experimental\]** Sorts `x` in decreasing order and sums
+`x[i] / i^2`, normalised by the same sum over a vector of ones of equal
+length.
 
 ## Usage
 
@@ -17,4 +19,4 @@ rs_ot_harmonic_sum(x)
 
 ## Value
 
-Returns the harmonic sum according to the OT calculation.
+The normalised harmonic sum according to the OT calculation.

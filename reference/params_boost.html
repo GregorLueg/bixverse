@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -115,8 +120,8 @@
 
 
 <dl><dt id="arg-boost-rate">boost_rate<a class="anchor" aria-label="anchor" href="#arg-boost-rate"></a></dt>
-<dd><p>Numeric. Boosting rate for the algorithm. Must be between
-0 and 1. Defaults to <code>0.25</code>.</p></dd>
+<dd><p>Numeric. Boosting rate for the algorithm. Must be between 0
+and 1. Defaults to <code>0.25</code>.</p></dd>
 
 
 <dt id="arg-replace">replace<a class="anchor" aria-label="anchor" href="#arg-replace"></a></dt>
@@ -136,7 +141,7 @@ to <code>20L</code>.</p></dd>
 
 <dt id="arg-p-thresh">p_thresh<a class="anchor" aria-label="anchor" href="#arg-p-thresh"></a></dt>
 <dd><p>Numeric. P-value threshold for significance testing. Defaults
-to <code>1e-7</code>.</p></dd>
+to <code>1e-07</code>.</p></dd>
 
 
 <dt id="arg-voter-thresh">voter_thresh<a class="anchor" aria-label="anchor" href="#arg-voter-thresh"></a></dt>
@@ -147,29 +152,31 @@ Must be between 0 and 1. Defaults to <code>0.9</code>.</p></dd>
 
 <dt id="arg-fast-cluster">fast_cluster<a class="anchor" aria-label="anchor" href="#arg-fast-cluster"></a></dt>
 <dd><p>Boolean. Shall fast Louvain clustering be applied, i.e.,
-k-means clustering and use the centroids for kNN graph generation and
-Louvain clustering with then backpropagating the membership based on centroid
-proximity.</p></dd>
+k-means clustering and use the centroids for kNN graph generation and Louvain
+clustering with then backpropagating the membership based on centroid
+proximity. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-normalisation">normalisation<a class="anchor" aria-label="anchor" href="#arg-normalisation"></a></dt>
 <dd><p>List. Optional overrides for normalisation parameters.
-See <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code> for available
-parameters: <code>log_transform</code>, <code>mean_center</code>, <code>normalise_variance</code>,
-<code>target_size</code>. Note: Boost uses different defaults (<code>log_transform = FALSE</code>,
-<code>mean_center = TRUE</code>, <code>normalise_variance = TRUE</code>, <code>target_size = NULL</code>).</p></dd>
+See <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code> for available parameters:
+<code>log_transform</code>, <code>mean_center</code>, <code>normalise_variance</code>, <code>target_size</code>. See
+<code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code> for the available elements. Defaults to
+<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 
 <dt id="arg-hvg">hvg<a class="anchor" aria-label="anchor" href="#arg-hvg"></a></dt>
 <dd><p>List. Optional overrides for highly variable gene selection
 parameters. See <code><a href="params_hvg_defaults.html">params_hvg_defaults()</a></code> for available parameters:
-<code>min_gene_var_pctl</code>, <code>hvg_method</code>, <code>loess_span</code>, <code>clip_max</code>.</p></dd>
+<code>min_gene_var_pctl</code>, <code>hvg_method</code>, <code>loess_span</code>, <code>clip_max</code>. See
+<code><a href="params_hvg_defaults.html">params_hvg_defaults()</a></code> for the available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 
 <dt id="arg-pca">pca<a class="anchor" aria-label="anchor" href="#arg-pca"></a></dt>
 <dd><p>List. Optional overrides for PCA parameters. See
 <code><a href="params_pca_defaults.html">params_pca_defaults()</a></code> for available parameters: <code>no_pcs</code>,
-<code>random_svd</code>.</p></dd>
+<code>random_svd</code>. See <code><a href="params_pca_defaults.html">params_pca_defaults()</a></code> for the available elements.
+Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
@@ -177,23 +184,50 @@ parameters. See <code><a href="params_hvg_defaults.html">params_hvg_defaults()</
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
 <code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. Note: this function defaults to
-<code>k = 0L</code> (automatic neighbour detection).</p></dd>
+<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. Note: this function defaults to <code>k = 0L</code>
+(automatic neighbour detection). See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the
+available elements. Defaults to <code>list(k = 0L)</code>.</p></dd>
 
 
 <dt id="arg-fast-cluster-params">fast_cluster_params<a class="anchor" aria-label="anchor" href="#arg-fast-cluster-params"></a></dt>
 <dd><p>List. Optional overrides for the fast clustering
 parameters. Only relevant if <code>fast_cluster = TRUE</code>. See
 <code><a href="params_fast_cluster_default.html">params_fast_cluster_default()</a></code> for available parameters: <code>km_type</code>,
-<code>n_centroids</code>, <code>kmeans_iters</code> and <code>batch_size</code>.</p></dd>
+<code>n_centroids</code>, <code>kmeans_iters</code> and <code>batch_size</code>. See
+<code><a href="params_fast_cluster_default.html">params_fast_cluster_default()</a></code> for the available elements. Defaults to
+<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list with all Boost parameters, combining defaults with
-any user-specified overrides.</p>
-<p>A list with the Boost parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>The elements of <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code>, overridden by
+<code>normalisation</code>, spliced in at this position.</p></li>
+<li><p>The elements of <code><a href="params_hvg_defaults.html">params_hvg_defaults()</a></code>, overridden by <code>hvg</code>, spliced
+in at this position.</p></li>
+<li><p>The elements of <code><a href="params_pca_defaults.html">params_pca_defaults()</a></code>, overridden by <code>pca</code>, spliced
+in at this position.</p></li>
+<li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
+in at this position.</p></li>
+<li><p>The elements of <code><a href="params_fast_cluster_default.html">params_fast_cluster_default()</a></code>, overridden by
+<code>fast_cluster_params</code>, spliced in at this position.</p></li>
+<li><p>boost_rate - Numeric. Boosting rate for the algorithm. Must be between
+0 and 1. Defaults to <code>0.25</code>.</p></li>
+<li><p>replace - Boolean. Whether to use replacement during boosting.
+Defaults to <code>FALSE</code>.</p></li>
+<li><p>resolution - Numeric. Resolution parameter for graph-based clustering.
+Higher values lead to more clusters. Defaults to <code>1.0</code>.</p></li>
+<li><p>fast_cluster - Boolean. Shall fast Louvain clustering be applied,
+i.e., k-means clustering and use the centroids for kNN graph generation and
+Louvain clustering with then backpropagating the membership based on
+centroid proximity. Defaults to <code>FALSE</code>.</p></li>
+<li><p>n_iters - Integer. Number of iterations to run the algorithm. Defaults
+to <code>20L</code>.</p></li>
+<li><p>p_thresh - Numeric. P-value threshold for significance testing.
+Defaults to <code>1e-07</code>.</p></li>
+<li><p>voter_thresh - Numeric. Voter threshold across iterations. Proportion
+of iterations a cell must be assigned to a cluster to be considered a
+member. Must be between 0 and 1. Defaults to <code>0.9</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

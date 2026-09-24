@@ -18,26 +18,42 @@ params_gsva(
 
 - tau:
 
-  Float. Tau parameter, usual recommendation is to use `1.0` here.
-  Larger values emphasise the tails more.
+  Numeric. Tau parameter, usual recommendation is to use `1.0` here.
+  Larger values emphasise the tails more. Defaults to `1.0`.
 
 - min_size:
 
-  Integer. Minimum number of genes per gene set.
+  Integer. Minimum number of genes per gene set. Defaults to `5L`.
 
 - max_size:
 
-  Integer. Maximum number of genes per gene set.
+  Integer. Maximum number of genes per gene set. Defaults to `500L`.
 
 - max_diff:
 
   Boolean. Scoring mode for GSVA, if `TRUE` = difference; if `FALSE` =
-  larger absolute value.
+  larger absolute value. Defaults to `TRUE`.
 
 - abs_rank:
 
-  Boolean. If `TRUE` = pos - neg, `FALSE` = pos + neg.
+  Boolean. If `TRUE` = pos - neg, `FALSE` = pos + neg. Defaults to
+  `FALSE`.
 
 ## Value
 
-List with parameters for usage in subsequent function.
+A named list with the following elements:
+
+- tau - Numeric. Tau parameter, usual recommendation is to use `1.0`
+  here. Larger values emphasise the tails more. Defaults to `1.0`.
+
+- min_size - Integer. Minimum number of genes per gene set. Defaults to
+  `5L`.
+
+- max_size - Integer. Maximum number of genes per gene set. Defaults to
+  `500L`.
+
+- max_diff - Boolean. Scoring mode for GSVA, if `TRUE` = difference; if
+  `FALSE` = larger absolute value. Defaults to `TRUE`.
+
+- abs_rank - Boolean. If `TRUE` = pos - neg, `FALSE` = pos + neg.
+  Defaults to `FALSE`.

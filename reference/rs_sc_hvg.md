@@ -1,4 +1,4 @@
-# Calculate the percentage of gene sets in the cells
+# Calculate the highly variable genes
 
 **\[experimental\]** This function identifies highly variable genes with
 the three methods known in Seurat.
@@ -38,22 +38,22 @@ rs_sc_hvg(
 
 - loess_span:
 
-  Numeric. The span parameter for the loess function. Must be within
-  `(0, 1]`.
+  Numeric. The span parameter for the loess function (`"vst"` only).
+  Must be within `(0, 1]`.
 
 - binning:
 
-  String. The binning strategy for the `meanvarbin` method. One of
-  `c("equal_width", "equal_frequency")`.
+  String. The binning strategy for the `meanvarbin` and `dispersion`
+  methods. One of `c("equal_width", "equal_frequency")`.
 
 - n_bins:
 
-  Integer. Number of bins for the `meanvarbin` method.
+  Integer. Number of bins for the `meanvarbin` and `dispersion` methods.
 
 - clip_max:
 
-  Optional clipping number. Defaults to `sqrt(no_cells)` if not
-  provided.
+  Optional clipping number (`"vst"` only). Defaults to `sqrt(no_cells)`
+  if not provided.
 
 - streaming:
 

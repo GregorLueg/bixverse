@@ -18,12 +18,12 @@ rs_calc_gsea_stats(
 
 - stats:
 
-  Numeric vector. The gene level statistic. Needs to sorted in
+  Numeric vector. The gene level statistic. Needs to be sorted in
   descending nature.
 
 - gs_idx:
 
-  Integer vector. The indices of the gene set genes.
+  Integer vector. The 1-based indices of the gene set genes.
 
 - gsea_param:
 
@@ -41,9 +41,9 @@ rs_calc_gsea_stats(
 
 List with the following elements
 
-- gene_stat Enrichment score for that gene set
+- es Enrichment score for that gene set
 
-- leading_edge Indicies of the leading edge genes.
+- leading_edge 1-based indices of the leading edge genes.
 
 - top Top values of the curve.
 

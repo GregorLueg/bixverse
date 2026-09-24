@@ -76,7 +76,7 @@ A list with
   scores for the observed cells.
 
 - z_scores - Z-scores for the observed cells. Represents:
-  `score - threshold / error`.
+  `(score - threshold) / error`.
 
 - threshold - Used threshold.
 

@@ -1,7 +1,8 @@
-# Run ICA with cross-validation and random initialsiation
+# Run ICA with cross-validation and random initialisation
 
 **\[experimental\]** This function will split the data into `no_folds`
-and apply ICA with `no_random_inits` over that fold.
+and apply ICA with `no_random_init` random initialisations over each
+fold.
 
 ## Usage
 
@@ -34,11 +35,11 @@ rs_ica_iters_cv(
 
 - no_random_init:
 
-  Integer. Number of random initialisations.
+  Integer. Number of random initialisations per fold.
 
 - ica_type:
 
-  String. Which type of ICA shall be run.
+  String. One of `c("logcosh", "exp")`.
 
 - random_seed:
 
@@ -66,7 +67,7 @@ rs_ica_iters_cv(
 A list containing:
 
 - s_combined - The combined matrices for S. Dimensions are nrows =
-  features; and ncols = ncomp \* no_random_init.
+  features; and ncols = no_comp \* no_random_init \* no_folds.
 
 - converged - Boolean vector indicating if the respective run reached
-  convergence. Length = no_random_init
+  convergence. Length = no_random_init \* no_folds

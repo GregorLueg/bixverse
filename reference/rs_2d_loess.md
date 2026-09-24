@@ -1,6 +1,7 @@
 # Rust implementation of a Loess function
 
-**\[experimental\]**
+**\[experimental\]** Fits a Loess regression of `y` on `x`. Points where
+either value is non-finite are dropped from the fit.
 
 ## Usage
 
@@ -20,7 +21,7 @@ rs_2d_loess(x, y, span, degree)
 
 - span:
 
-  Numeric. The span parameter. Needs to be between 0.1 and 1.
+  Numeric. The span parameter. Needs to be in `(0, 1]`.
 
 - degree:
 
@@ -31,8 +32,9 @@ rs_2d_loess(x, y, span, degree)
 
 A list with the following items
 
-- predicted - The predicted values.
+- predicted - The predicted values, `0` for dropped points.
 
-- residuals - The residuals for every data point.
+- residuals - The residuals for every data point, `0` for dropped
+  points.
 
-- valid_idx - Which data indices were included.
+- valid_idx - 1-based indices of the points included in the fit.

@@ -28,4 +28,4 @@ rs_phyper(q, m, n, k)
 
 ## Value
 
-P-value (with lower.tail set to False)
+P-value, i.e. `P(X > q)` (equivalent to `lower.tail = FALSE`).

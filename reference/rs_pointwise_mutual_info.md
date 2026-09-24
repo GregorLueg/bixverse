@@ -23,4 +23,5 @@ rs_pointwise_mutual_info(x, normalise)
 
 ## Value
 
-The (normalised) pointwise mutual information matrix.
+The (normalised) pointwise mutual information matrix between the
+columns. Pairs without co-occurrence are `-Inf`.

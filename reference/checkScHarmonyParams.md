@@ -1,6 +1,7 @@
-# Check Harmony parameters
+# Check Harmony params
 
-Checkmate extension for checking Harmony parameters.
+Checkmate extension for the output of
+[`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkScHarmonyParams(x)
 
 - x:
 
-  The list to check/assert.
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

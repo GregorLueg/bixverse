@@ -1,7 +1,8 @@
 # Calculate the Wang similarity for specific terms
 
 **\[experimental\]** This function calculates the Wang similarities
-between all permutations of a given set of terms.
+between all unique pairs of a given set of terms. Terms not found in the
+ontology get `NaN`.
 
 ## Usage
 
@@ -21,8 +22,8 @@ rs_onto_sim_wang(terms, parents, children, w)
 
 - children:
 
-  String vector. The names of the childs. The length of `parents` needs
-  to be equal to `children`.
+  String vector. The names of the children. The length of `parents`
+  needs to be equal to `children`.
 
 - w:
 

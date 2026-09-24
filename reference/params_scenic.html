@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -97,8 +102,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_scenic</span><span class="op">(</span></span>
 <span>  min_counts <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  min_cells <span class="op">=</span> <span class="fl">0.03</span>,</span>
-<span>  learner_type <span class="op">=</span> <span class="st">"randomforest"</span>,</span>
-<span>  gene_batch_strategy <span class="op">=</span> <span class="st">"correlated"</span>,</span>
+<span>  learner_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"randomforest"</span>, <span class="st">"extratrees"</span>, <span class="st">"grnboost2"</span><span class="op">)</span>,</span>
+<span>  gene_batch_strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"correlated"</span>, <span class="st">"random"</span><span class="op">)</span>,</span>
 <span>  gene_batch_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_pcs <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  n_subsample <span class="op">=</span> <span class="fl">100000L</span>,</span>
@@ -121,22 +126,21 @@ must express a gene for it to be considered. Defaults to <code>0.03</code>.</p><
 
 
 <dt id="arg-learner-type">learner_type<a class="anchor" aria-label="anchor" href="#arg-learner-type"></a></dt>
-<dd><p>Character. Regression learner to use. One of
-<code>"randomforest"</code>, <code>"extratrees"</code>, or <code>"grnboost2"</code>. Defaults to
-<code>"randomforest"</code>.</p></dd>
+<dd><p>String. Regression learner to use. One of
+<code>c("randomforest", "extratrees", "grnboost2")</code>. Defaults to <code>"randomforest"</code>.</p></dd>
 
 
 <dt id="arg-gene-batch-strategy">gene_batch_strategy<a class="anchor" aria-label="anchor" href="#arg-gene-batch-strategy"></a></dt>
-<dd><p>Character. Strategy for grouping target genes into
-batches. One of <code>"random"</code> or <code>"correlated"</code>. Only used for <code>"randomforest"</code>
-and <code>"extratrees"</code> learners; ignored for <code>"grnboost2"</code>. Defaults to
+<dd><p>String. Strategy for grouping target genes into
+batches. Only used for <code>"randomforest"</code> and <code>"extratrees"</code> learners; ignored
+for <code>"grnboost2"</code>. One of <code>c("correlated", "random")</code>. Defaults to
 <code>"correlated"</code>.</p></dd>
 
 
 <dt id="arg-gene-batch-size">gene_batch_size<a class="anchor" aria-label="anchor" href="#arg-gene-batch-size"></a></dt>
-<dd><p>Optional integer. Number of genes per batch. If <code>NULL</code>
-(default), the batch size is determined automatically. Ignored for
-<code>"grnboost2"</code>.</p></dd>
+<dd><p>Integer or <code>NULL</code>. Number of genes per batch. If
+<code>NULL</code> (default), the batch size is determined automatically. Ignored for
+<code>"grnboost2"</code>. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-n-pcs">n_pcs<a class="anchor" aria-label="anchor" href="#arg-n-pcs"></a></dt>
@@ -156,13 +160,34 @@ Defaults to <code>100000L</code>.</p></dd>
 parameters. For <code>"randomforest"</code>, see
 <code><a href="params_scenic_random_forest_defaults.html">params_scenic_random_forest_defaults()</a></code>. For <code>"extratrees"</code>, see
 <code><a href="params_scenic_extra_trees_defaults.html">params_scenic_extra_trees_defaults()</a></code>. For <code>"grnboost2"</code>, see
-<code><a href="params_scenic_gradient_boosting_defaults.html">params_scenic_gradient_boosting_defaults()</a></code>.</p></dd>
+<code><a href="params_scenic_gradient_boosting_defaults.html">params_scenic_gradient_boosting_defaults()</a></code>. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named flat list with all SCENIC parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>min_counts - Integer. Minimum total counts a gene needs to be included
+in the analysis. Defaults to <code>50L</code>.</p></li>
+<li><p>min_cells - Numeric. Minimum proportion of cells (between 0 and 1)
+that must express a gene for it to be considered. Defaults to <code>0.03</code>.</p></li>
+<li><p>learner_type - String. Regression learner to use. One of
+<code>c("randomforest", "extratrees", "grnboost2")</code>. Defaults to
+<code>"randomforest"</code>.</p></li>
+<li><p>gene_batch_strategy - String. Strategy for grouping target genes into
+batches. Only used for <code>"randomforest"</code> and <code>"extratrees"</code> learners; ignored
+for <code>"grnboost2"</code>. One of <code>c("correlated", "random")</code>. Defaults to
+<code>"correlated"</code>.</p></li>
+<li><p>gene_batch_size - Integer or <code>NULL</code>. Number of genes per batch. If
+<code>NULL</code> (default), the batch size is determined automatically. Ignored for
+<code>"grnboost2"</code>. Defaults to <code>NULL</code>.</p></li>
+<li><p>n_pcs - Integer. Number of PCs to use for the correlated gene batch
+strategy. Defaults to <code>50L</code>.</p></li>
+<li><p>n_subsample - Integer. Cell subsampling threshold for the correlated
+gene batch strategy. If the number of cells meets or exceeds this value,
+<code>n_subsample</code> cells are randomly selected prior to running randomised SVD.
+Defaults to <code>100000L</code>.</p></li>
+<li><p>The elements of the base list, overridden by <code>learner_params</code>, spliced
+in at this position.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

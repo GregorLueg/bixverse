@@ -19,31 +19,55 @@ params_snf(
 
 - k:
 
-  Integer. Number of neighbours to consider.
+  Integer. Number of neighbours to consider. Defaults to `20L`.
 
 - t:
 
-  Integer. Number of iterations for the SNF algorithm.
+  Integer. Number of iterations for the SNF algorithm. Defaults to
+  `20L`.
 
 - mu:
 
-  Float. Normalisation factor for the Gaussian kernel width.
+  Numeric. Normalisation factor for the Gaussian kernel width. Defaults
+  to `0.5`.
 
 - alpha:
 
-  Float. Normalisation parameter controlling the fusion strength.
+  Numeric. Normalisation parameter controlling the fusion strength.
+  Defaults to `1.0`.
 
 - normalise:
 
-  Boolean. Shall continuous values be Z-scored.
+  Boolean. Shall continuous values be Z-scored. Defaults to `TRUE`.
 
 - distance_metric:
 
-  String. One of `c("euclidean", "manhattan", "canberra", "cosine")`.
-  Which distance metric to use for the continuous calculations. In case
-  of pure categorical, Hamming will be used, for mixed data types Gower
-  distance is used.
+  String. Which distance metric to use for the continuous calculations.
+  In case of pure categorical, Hamming will be used, for mixed data
+  types Gower distance is used. One of
+  `c("euclidean", "manhattan", "canberra", "cosine")`. Defaults to
+  `"euclidean"`.
 
 ## Value
 
-List with parameters for usage in subsequent function.
+A named list with the following elements:
+
+- k - Integer. Number of neighbours to consider. Defaults to `20L`.
+
+- t - Integer. Number of iterations for the SNF algorithm. Defaults to
+  `20L`.
+
+- mu - Numeric. Normalisation factor for the Gaussian kernel width.
+  Defaults to `0.5`.
+
+- alpha - Numeric. Normalisation parameter controlling the fusion
+  strength. Defaults to `1.0`.
+
+- distance_metric - String. Which distance metric to use for the
+  continuous calculations. In case of pure categorical, Hamming will be
+  used, for mixed data types Gower distance is used. One of
+  `c("euclidean", "manhattan", "canberra", "cosine")`. Defaults to
+  `"euclidean"`.
+
+- normalise - Boolean. Shall continuous values be Z-scored. Defaults to
+  `TRUE`.

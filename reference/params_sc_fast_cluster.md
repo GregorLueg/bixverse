@@ -22,46 +22,52 @@ params_sc_fast_cluster(
 
 - kmeans_iters:
 
-  Integer. Number of iterations for k-means clustering.
+  Integer. Number of iterations for k-means clustering. Defaults to
+  `100L`.
 
 - batch_size:
 
-  Integer. Batch size for mini batch k-means clustering.
+  Integer. Batch size for mini batch k-means clustering. Defaults to
+  `4096L`.
 
 - drift_threshold:
 
   Numeric. The drift for the mini batch k-means clustering. If the
   centroid drift is below this, the mini batch k-means terminates.
+  Defaults to `1e-04`.
 
 - lr_alpha:
 
   Numeric. Learning rate alpha parameter for mini batch k-means.
+  Defaults to `1.0`.
 
 - full_snn:
 
   Boolean. Shall the full shared nearest neighbour graph be generated
   that generates edges between all cells instead of between only
-  neighbours.
+  neighbours. Defaults to `FALSE`.
 
 - pruning:
 
-  Optional numeric. Weights below this threshold will be set to 0 in the
-  generation of the sNN graph. If not provided, defaults to
-  `1 / ceil(k * 0.8)`.
+  Numeric or `NULL`. Weights below this threshold will be set to 0 in
+  the generation of the sNN graph. If not provided, defaults to
+  `1 / ceil(k * 0.8)`. Defaults to `NULL`.
 
 - snn_similarity:
 
-  String. One of `c("rank", "jaccard")`. The Jaccard similarity
-  calculates the Jaccard between the neighbours, whereas the rank method
-  calculates edge weights based on the ranking of shared neighbours. For
-  the rank method, the weight is determined by finding the shared
-  neighbour with the lowest combined rank across both cells, where
-  lower-ranked (closer) shared neighbours result in higher edge weights
-  Both methods produce weights normalised to the range `[0, 1]`.
+  String. The Jaccard similarity calculates the Jaccard between the
+  neighbours, whereas the rank method calculates edge weights based on
+  the ranking of shared neighbours. For the rank method, the weight is
+  determined by finding the shared neighbour with the lowest combined
+  rank across both cells, where lower-ranked (closer) shared neighbours
+  result in higher edge weights Both methods produce weights normalised
+  to the range `[0, 1]`. One of `c("jaccard", "rank")`. Defaults to
+  `"jaccard"`.
 
 - louvain_iters:
 
-  Integer. Number of iterations for Louvain clustering.
+  Integer. Number of iterations for Louvain clustering. Defaults to
+  `10L`.
 
 - knn:
 
@@ -70,8 +76,47 @@ params_sc_fast_cluster(
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`. Sets the default `k = 5L`.
+  `n_probe`. Sets the default `k = 5L`. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to `list(k = 5L)`.
 
 ## Value
 
-A named list with the single cell fast clustering parameters.
+A named list with the following elements:
+
+- kmeans_iters - Integer. Number of iterations for k-means clustering.
+  Defaults to `100L`.
+
+- batch_size - Integer. Batch size for mini batch k-means clustering.
+  Defaults to `4096L`.
+
+- drift_threshold - Numeric. The drift for the mini batch k-means
+  clustering. If the centroid drift is below this, the mini batch
+  k-means terminates. Defaults to `1e-04`.
+
+- lr_alpha - Numeric. Learning rate alpha parameter for mini batch
+  k-means. Defaults to `1.0`.
+
+- louvain_iters - Integer. Number of iterations for Louvain clustering.
+  Defaults to `10L`.
+
+- full_snn - Boolean. Shall the full shared nearest neighbour graph be
+  generated that generates edges between all cells instead of between
+  only neighbours. Defaults to `FALSE`.
+
+- pruning - Numeric or `NULL`. Weights below this threshold will be set
+  to 0 in the generation of the sNN graph. If not provided, defaults to
+  `1 / ceil(k * 0.8)`. Defaults to `NULL`.
+
+- snn_similarity - String. The Jaccard similarity calculates the Jaccard
+  between the neighbours, whereas the rank method calculates edge
+  weights based on the ranking of shared neighbours. For the rank
+  method, the weight is determined by finding the shared neighbour with
+  the lowest combined rank across both cells, where lower-ranked
+  (closer) shared neighbours result in higher edge weights Both methods
+  produce weights normalised to the range `[0, 1]`. One of
+  `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.

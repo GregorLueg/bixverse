@@ -10,7 +10,7 @@ Values near 0 indicate good batch mixing, values near 1 indicate batch
 separation, and negative values suggest overcorrection. This metric is
 best suited for embedding-based correction methods (e.g. Harmony,
 fastMNN). For graph-based methods like BBKNN, consider using
-[`calculate_batch_lisi_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_lisi_sc.md)
+[`calculate_lisi_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_lisi_sc.md)
 instead.
 
 ## Usage

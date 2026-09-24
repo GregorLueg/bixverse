@@ -17,20 +17,21 @@ rs_ligand_activity_scores(ligand_influence, in_gene_sets)
 
 - in_gene_sets:
 
-  A list of logicals with the genes of interest being set to `TRUE` and
-  the background genes set to `FALSE`.
+  List of logical vectors, one per gene set, each of length
+  `ncol(ligand_influence)`. Genes of interest are `TRUE`, the background
+  genes `FALSE`.
 
 ## Value
 
-A list with internal lists with:
+A list with one element per gene set, each a list of per-ligand vectors
+(`NaN` where the metric is undefined):
 
-- `auroc` - The Area Under the Receiver Operating Characteristic for
-  that ligand
+- `auroc` - The Area Under the Receiver Operating Characteristic.
 
-- `aupr` - The Area Under the Precision-Recall curve for that ligand.
+- `aupr` - The Area Under the Precision-Recall curve.
 
-- `aupr_corrected` - The corrected AUPR
+- `aupr_corrected` - The corrected AUPR.
 
-- `pearson` - The Pearson correlations
+- `pearson` - The Pearson correlations.
 
-- `spearman` - The Spearman correlations
+- `spearman` - The Spearman correlations.

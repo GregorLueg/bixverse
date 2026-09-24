@@ -51,7 +51,7 @@ rs_nmf_k_sweep_bulk(
 
 - seed:
 
-  Integer. Base random seed.
+  Integer. Base random seed. The i-th k uses `seed + i * n_runs`.
 
 - verbose:
 

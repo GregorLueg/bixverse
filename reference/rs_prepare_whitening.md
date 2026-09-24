@@ -1,6 +1,6 @@
 # Prepare the data for whitening
 
-**\[experimental\]** Prepares the data for subsequent usag in ICA.
+**\[experimental\]** Prepares the data for subsequent usage in ICA.
 Incorrect use can cause kernel crashes. Wrapper around the Rust
 functions with type checks are provided in the package.
 
@@ -14,7 +14,8 @@ rs_prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter)
 
 - x:
 
-  The matrix to whiten. The whitening will happen over the columns.
+  Numeric matrix to whiten. The columns are centred and the whitening
+  happens over the columns.
 
 - fast_svd:
 
@@ -39,13 +40,15 @@ rs_prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter)
 
 - n_power_iter:
 
-  Integer. How much shall the QR low rank approximation be powered. If
-  you supply `NULL`, it will default to `2L`.
+  Integer. Number of power iterations for the randomised SVD. If you
+  supply `NULL`, it will default to `2L`. Only relevant with fast_svd is
+  set to `TRUE`.
 
 ## Value
 
 A list containing:
 
-- x - The preprocessed matrix.
+- x - The column-centred input, transposed.
 
-- k - The pre-whitening matrix k.
+- k - The whitening matrix K. With `fast_svd = TRUE` it can carry more
+  than `rank` rows; the caller trims it.

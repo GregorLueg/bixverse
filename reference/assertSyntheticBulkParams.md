@@ -1,6 +1,6 @@
-# Assert synthetic bulk RNAseq parameters
+# Assert synthetic bulk params
 
-Checkmate extension for asserting the synthetic bulk RNAseq parameters.
+Assert synthetic bulk params
 
 ## Usage
 
@@ -12,12 +12,11 @@ assertSyntheticBulkParams(x, .var.name = checkmate::vname(x), add = NULL)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 - .var.name:
 
-  Name of the checked object to print in assertions. Defaults to the
-  heuristic implemented in checkmate.
+  Name of the checked object to print in assertions.
 
 - add:
 

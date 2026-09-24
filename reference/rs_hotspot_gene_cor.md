@@ -38,10 +38,10 @@ rs_hotspot_gene_cor(
 
 - knn_data:
 
-  Optional list. This contains pre-computed kNN data (including
-  distances) and the `dist_metric` it was built with. The user has to
-  ensure consistency! If provided, this will be used rather than a graph
-  built from the parameter list.
+  Optional list. This contains pre-computed kNN data (`indices`
+  (0-indexed), `dist`, `dist_metric` and `k`). The user has to ensure
+  consistency! If provided, this will be used rather than a graph built
+  from the parameter list.
 
 - hotspot_params:
 
@@ -83,11 +83,11 @@ rs_hotspot_gene_cor(
 
 A list with the following elements.
 
-- cor - A matrix of the N x N genes_to_use length with the auto-
+- cor - Symmetric `genes_to_use x genes_to_use` matrix with the local
   correlation coefficients.
 
-- z - A matrix of N x N genes_to_use length with the Z-scores of the
-  local correlations between two genes.
+- z - Symmetric `genes_to_use x genes_to_use` matrix with the Z-scores
+  of the local correlations between two genes.
 
 ## References
 

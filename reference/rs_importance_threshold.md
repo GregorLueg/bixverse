@@ -1,8 +1,8 @@
 # SCENIC: Select TF-gene pairs by per-gene importance threshold
 
-**\[experimental\]** For each gene (row), computes mean + n_sd \* SD of
-the importance scores across all TFs and retains only pairs exceeding
-that threshold.
+**\[experimental\]** For each gene (row), computes `mean + n_sd * SD`
+(population SD) of the importance scores across all TFs and retains only
+pairs at or above that threshold.
 
 ## Usage
 
@@ -15,6 +15,7 @@ rs_importance_threshold(matrix, n_sd, min_value)
 - matrix:
 
   Numeric matrix with genes (rows) x TFs (columns) importance values.
+  Must carry row and column names.
 
 - n_sd:
 
@@ -28,4 +29,4 @@ rs_importance_threshold(matrix, n_sd, min_value)
 
 ## Value
 
-A list with three vectors: tf, gene, importance
+A list with three vectors: `tf`, `gene`, `importance`.

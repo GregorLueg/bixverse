@@ -35,5 +35,5 @@ apply_choice_rules(x, rules, label, hint = NULL)
 
 ## Value
 
-`TRUE` if all checked fields pass, otherwise a string of the form
-`` "The element `<field>` in <label> is not one of the expected choices. <hint>" ``.
+`TRUE` if all checked fields pass, otherwise a string naming the first
+offending element.

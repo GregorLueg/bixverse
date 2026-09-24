@@ -29,11 +29,11 @@ rs_singscore_permutation_test(
 
 - up_set:
 
-  Integer vector. Zero-indexed.
+  Integer vector. One-indexed (shifted internally).
 
 - down_set:
 
-  Integer vector or NULL.
+  Integer vector or NULL. One-indexed (shifted internally).
 
 - center_score, known_direction, stable:
 
@@ -52,5 +52,5 @@ rs_singscore_permutation_test(
 ## Value
 
 A named list with `observed_scores` (length n_samples),
-`null_distribution` (B × n_samples matrix), and `p_values` (length
+`null_distribution` (B x n_samples matrix), and `p_values` (length
 n_samples).

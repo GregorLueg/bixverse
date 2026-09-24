@@ -17,6 +17,8 @@
   detections](https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.md):
 - [Contrastive
   PCA](https://gregorlueg.github.io/bixverse/articles/cpca.md):
+- [Bulk differential expression with
+  BulkDge](https://gregorlueg.github.io/bixverse/articles/bulk_dge.md):
 - [Bulk co-expression
   modules](https://gregorlueg.github.io/bixverse/articles/bulk_coexpression_modules.md):
 - [Ontologies](https://gregorlueg.github.io/bixverse/articles/ontologies.md):
@@ -29,8 +31,12 @@
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_io.md):
 - [Analysing PBMCs with
   bixverse](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.md):
+- [Pearson residuals and
+  scTransform](https://gregorlueg.github.io/bixverse/articles/single_cell_residuals.md):
 - [Doublet detection with
   bixverse](https://gregorlueg.github.io/bixverse/articles/doublet_detection.md):
+- [Ambient RNA removal with
+  CellSweep](https://gregorlueg.github.io/bixverse/articles/cell_sweep.md):
 - [Batch correction with
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_batch_corrections.md):
 - [Gene set analysis and GRN inference on

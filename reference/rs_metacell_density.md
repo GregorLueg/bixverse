@@ -1,8 +1,9 @@
 # Calculates diffusion maps for density calculations for meta cells
 
-**\[experimental\]** Generates diffusion maps and identifies in which
-density region a given cell sits (defined as distance to k-nearest
-neighbours quite).
+**\[experimental\]** Builds multiscale diffusion components from the kNN
+graph and uses the distance to the `k_density`-th neighbour in that
+space as a density proxy. The lower quartile of these distances is
+tagged high density, the upper quartile low density, the rest mid.
 
 ## Usage
 
@@ -14,7 +15,8 @@ rs_metacell_density(knn_data, n_dcs, k_density, knn_params, verbose, seed)
 
 - knn_data:
 
-  Named list. Needs to have the relevant data from the kNN graph.
+  Named list. The kNN data with `indices` (0-indexed!), `dist`, `k` and
+  `dist_metric`.
 
 - n_dcs:
 
@@ -29,7 +31,8 @@ rs_metacell_density(knn_data, n_dcs, k_density, knn_params, verbose, seed)
 - knn_params:
 
   List. The kNN parameters defined by
-  [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md).
+  [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md),
+  used for the search in diffusion space.
 
 - verbose:
 
@@ -44,11 +47,14 @@ rs_metacell_density(knn_data, n_dcs, k_density, knn_params, verbose, seed)
 
 A list with the following items
 
-- dcs - Density coordinates
+- dcs - Numerical matrix of cells x `n_dcs` with the multiscale
+  diffusion components.
 
-- density_distances - Density distances at `k_density` neighbours.
+- density_distances - Numerical vector. Distance to the `k_density`-th
+  neighbour in diffusion space per cell.
 
-- regions - Region of the manifold where this given cell is.
+- regions - Character vector. `"high"`, `"mid"` or `"low"` density per
+  cell.
 
 ## References
 

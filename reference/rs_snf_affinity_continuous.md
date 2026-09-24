@@ -16,8 +16,10 @@ rs_snf_affinity_continuous(data, distance_type, k, mu, normalise)
 
 - distance_type:
 
-  String. One of `c("euclidean", "manhattan", "canberra", "cosine")`.
-  Which distance metric to use here.
+  String. One of
+  `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`.
+  Which distance metric to use here. Unknown strings default to
+  `"euclidean"`.
 
 - k:
 

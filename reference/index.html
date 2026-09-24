@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -868,6 +873,13 @@
 
         </dt>
         <dd>Wrapper function for parameters for the edgeR quasi-likelihood workflow</dd>
+
+        <dt>
+
+          <code><a href="params_limma_voom.html">params_limma_voom()</a></code>
+
+        </dt>
+        <dd>Wrapper function for parameters for the limma-voom workflow</dd>
 
         <dt>
 
@@ -2007,6 +2019,13 @@
 
         <dt>
 
+          <code><a href="cellsweep_sc.html">cellsweep_sc()</a></code>
+
+        </dt>
+        <dd>Remove ambient and bulk contamination with CellSweep</dd>
+
+        <dt>
+
           <code><a href="per_cell_qc_outlier.html">per_cell_qc_outlier()</a></code>
 
         </dt>
@@ -2070,6 +2089,41 @@
 
         <dt>
 
+          <code><a href="fit_residuals_sc.html">fit_residuals_sc()</a></code>
+
+        </dt>
+        <dd>Fit a residual model for single cell data</dd>
+
+        <dt>
+
+          <code><a href="sct_corrected_counts_sc.html">sct_corrected_counts_sc()</a></code>
+
+        </dt>
+        <dd>Write scTransform-corrected counts to a new store</dd>
+
+        <dt>
+
+          <code><a href="get_residual_fit.html">get_residual_fit()</a></code>
+
+        </dt>
+        <dd>Get the fitted residual model</dd>
+
+        <dt>
+
+          <code><a href="set_residual_fit.html">set_residual_fit()</a></code>
+
+        </dt>
+        <dd>Set/add the fitted residual model</dd>
+
+        <dt>
+
+          <code><a href="remove_residual_fit.html">remove_residual_fit()</a></code>
+
+        </dt>
+        <dd>Remove the fitted residual model</dd>
+
+        <dt>
+
           <code><a href="generate_sc_knn.html">generate_sc_knn()</a></code>
 
         </dt>
@@ -2105,6 +2159,20 @@
 
         <dt>
 
+          <code><a href="params_sc_cellsweep.html">params_sc_cellsweep()</a></code>
+
+        </dt>
+        <dd>Default parameters for CellSweep denoising</dd>
+
+        <dt>
+
+          <code><a href="params_sc_empty_droplets.html">params_sc_empty_droplets()</a></code>
+
+        </dt>
+        <dd>Parameters for identifying empty droplets</dd>
+
+        <dt>
+
           <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code>
 
         </dt>
@@ -2130,6 +2198,20 @@
 
         </dt>
         <dd>Wrapper for PCA specifically designed for single cells</dd>
+
+        <dt>
+
+          <code><a href="params_sc_sctransform.html">params_sc_sctransform()</a></code>
+
+        </dt>
+        <dd>Wrapper function for scTransform (v2) parameters</dd>
+
+        <dt>
+
+          <code><a href="params_sc_apr.html">params_sc_apr()</a></code>
+
+        </dt>
+        <dd>Wrapper function for analytic Pearson residual parameters</dd>
 
         <dt>
 
@@ -2268,10 +2350,38 @@
 
         <dt>
 
-          <code><a href="calculate_batch_lisi_sc.html">calculate_batch_lisi_sc()</a></code>
+          <code><a href="calculate_lisi_sc.html">calculate_lisi_sc()</a></code>
 
         </dt>
-        <dd>Calculate batch LISI scores</dd>
+        <dd>Calculate LISI scores (iLISI or cLISI)</dd>
+
+        <dt>
+
+          <code><a href="calculate_pcr_sc.html">calculate_pcr_sc()</a></code>
+
+        </dt>
+        <dd>Calculate the principal component regression on batch</dd>
+
+        <dt>
+
+          <code><a href="calculate_cell_type_asw_sc.html">calculate_cell_type_asw_sc()</a></code>
+
+        </dt>
+        <dd>Calculate cell type average silhouette width</dd>
+
+        <dt>
+
+          <code><a href="calculate_graph_connectivity_sc.html">calculate_graph_connectivity_sc()</a></code>
+
+        </dt>
+        <dd>Calculate the graph connectivity per cell type</dd>
+
+        <dt>
+
+          <code><a href="calculate_integration_metrics_sc.html">calculate_integration_metrics_sc()</a></code>
+
+        </dt>
+        <dd>Calculate a summary of integration metrics</dd>
 
         <dt>
 
@@ -3420,6 +3530,13 @@
 
         <dt>
 
+          <code><a href="download_pbmc_1k_5p.html">download_pbmc_1k_5p()</a></code>
+
+        </dt>
+        <dd>Download the raw PBMC 1k 5' matrix from 10x Genomics</dd>
+
+        <dt>
+
           <code><a href="calculate_sparsity_stats.html">calculate_sparsity_stats()</a></code>
 
         </dt>
@@ -3452,6 +3569,13 @@
 
         </dt>
         <dd>Single cell test data with a planted multicellular programme</dd>
+
+        <dt>
+
+          <code><a href="generate_cellsweep_test_data.html">generate_cellsweep_test_data()</a></code>
+
+        </dt>
+        <dd>Single cell test data with a planted ambient profile</dd>
 
         <dt>
 
@@ -3490,10 +3614,24 @@
 
         <dt>
 
+          <code><a href="params_sc_synthetic_data_adt.html">params_sc_synthetic_data_adt()</a></code>
+
+        </dt>
+        <dd>Default parameters for generation of synthetic single cell data (ADT)</dd>
+
+        <dt>
+
           <code><a href="params_sc_synthetic_dialogue.html">params_sc_synthetic_dialogue()</a></code>
 
         </dt>
         <dd>Default parameters for generation of synthetic DIALOGUE data</dd>
+
+        <dt>
+
+          <code><a href="params_sc_synthetic_cellsweep.html">params_sc_synthetic_cellsweep()</a></code>
+
+        </dt>
+        <dd>Default parameters for generation of synthetic CellSweep data</dd>
 
         <dt>
 
@@ -3620,13 +3758,6 @@
 
         <dt>
 
-          <code><a href="rs_batch_lisi.html">rs_batch_lisi()</a></code>
-          <span class="badge lifecycle lifecycle-experimental">experimental</span>
-        </dt>
-        <dd>Calculate batch LISI scores</dd>
-
-        <dt>
-
           <code><a href="rs_batch_silhouette_width.html">rs_batch_silhouette_width()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -3645,6 +3776,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Score gene sets against a calibrated blitzGSEA null</dd>
+
+        <dt>
+
+          <code><a href="rs_calc_norm_factors.html">rs_calc_norm_factors()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate normalisation factors</dd>
+
+        <dt>
+
+          <code><a href="rs_cell_type_asw.html">rs_cell_type_asw()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate cell type silhouette width from an embedding</dd>
 
         <dt>
 
@@ -3732,6 +3877,13 @@
 
         <dt>
 
+          <code><a href="rs_cpm.html">rs_cpm()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Counts per million</dd>
+
+        <dt>
+
           <code><a href="rs_dense_to_upper_triangle.html">rs_dense_to_upper_triangle()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -3774,6 +3926,13 @@
 
         <dt>
 
+          <code><a href="rs_filter_by_expr.html">rs_filter_by_expr()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Filter lowly expressed genes</dd>
+
+        <dt>
+
           <code><a href="rs_gene_trends.html">rs_gene_trends()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -3792,6 +3951,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the Gower distance for a given matrix</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_connectivity.html">rs_graph_connectivity()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate graph connectivity per cell type</dd>
 
         <dt>
 
@@ -3868,21 +4034,21 @@
           <code><a href="rs_ica_iters.html">rs_ica_iters()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Run ICA over a given no_comp with random initilisations of w_init</dd>
+        <dd>Run ICA over a given no_comp with random initialisations of w_init</dd>
 
         <dt>
 
           <code><a href="rs_ica_iters_cv.html">rs_ica_iters_cv()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Run ICA with cross-validation and random initialsiation</dd>
+        <dd>Run ICA with cross-validation and random initialisation</dd>
 
         <dt>
 
           <code><a href="rs_jaccard_row_integers.html">rs_jaccard_row_integers()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Calculate rapidbly Jaccard similarities between rows</dd>
+        <dd>Calculate rapidly Jaccard similarities between rows</dd>
 
         <dt>
 
@@ -3918,6 +4084,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the NicheNet ligand activity scores</dd>
+
+        <dt>
+
+          <code><a href="rs_limma_voom.html">rs_limma_voom()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run the limma linear model chain on a count matrix</dd>
+
+        <dt>
+
+          <code><a href="rs_lisi.html">rs_lisi()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate LISI scores on any label</dd>
 
         <dt>
 
@@ -3963,6 +4143,13 @@
 
         <dt>
 
+          <code><a href="rs_mc_fit_residuals.html">rs_mc_fit_residuals()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Fits a residual model for meta cells</dd>
+
+        <dt>
+
           <code><a href="rs_mc_hvg.html">rs_mc_hvg()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -3974,6 +4161,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>PCA on MetaCells (sparse data)</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_pca_residuals.html">rs_mc_pca_residuals()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates PCA on Pearson residuals for meta cells</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_residual_variance.html">rs_mc_residual_variance()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Residual variance and variable features for meta cells</dd>
 
         <dt>
 
@@ -3994,12 +4195,12 @@
           <code><a href="rs_mc_vision_with_autocorrelation.html">rs_mc_vision_with_autocorrelation()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)</dd>
+        <dd>Calculate VISION pathway scores with auto-correlation (for meta cells)</dd>
 
         <dt>
 
           <code><a href="rs_mitch_calc.html">rs_mitch_calc()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate mitch enrichment leveraging Rust under the hood</dd>
 
@@ -4057,7 +4258,7 @@
           <code><a href="rs_page_rank.html">rs_page_rank()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Rust version of calcaluting the personalised page rank</dd>
+        <dd>Rust version of calculating the personalised page rank</dd>
 
         <dt>
 
@@ -4065,6 +4266,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate massively parallelised personalised page rank scores</dd>
+
+        <dt>
+
+          <code><a href="rs_pcr.html">rs_pcr()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Principal component regression on batch</dd>
 
         <dt>
 
@@ -4149,6 +4357,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate reciprocal best hits based on set similarities</dd>
+
+        <dt>
+
+          <code><a href="rs_remove_batch_effect.html">rs_remove_batch_effect()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Remove batch effects from a log-expression matrix</dd>
 
         <dt>
 
@@ -4289,6 +4504,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate sparse data from an upper triangle</dd>
+
+        <dt>
+
+          <code><a href="rs_voom_normalise.html">rs_voom_normalise()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Voom-transform a count matrix</dd>
 
         <dt>
 

@@ -1,8 +1,8 @@
 # Calculate the semantic similarity in an ontology
 
 **\[experimental\]** This function calculates the specified semantic
-similarity and returns the full vector (only calculating the upper
-triangle) for the given similarity.
+similarity between all unique pairs of `terms` (upper triangle, no
+diagonal) and returns them in long format.
 
 ## Usage
 

@@ -1,10 +1,10 @@
 # Calculate the contrastive PCA
 
-**\[experimental\]** This function calculate the contrastive PCA given a
-target covariance matrix and the background covariance matrix you wish
+**\[experimental\]** This function calculates the contrastive PCA given
+a target covariance matrix and the background covariance matrix you wish
 to subtract. The alpha parameter controls how much of the background
 covariance you wish to remove. You have the options to return the
-feature loadings and you can specificy the number of cPCAs to return.
+feature loadings and you can specify the number of cPCAs to return.
 
 ## Usage
 
@@ -31,7 +31,8 @@ rs_contrastive_pca(
 
 - target_mat:
 
-  The original values of the target matrix.
+  The original values of the target matrix. Rows = samples, columns =
+  features.
 
 - alpha:
 
@@ -49,7 +50,8 @@ rs_contrastive_pca(
 
 A list containing:
 
-- factors - The factors of the contrastive PCA.
+- factors - The factors of the contrastive PCA, i.e. `target_mat`
+  multiplied by the loadings. Samples x `n_pcs`.
 
-- loadings - The loadings of the contrastive PCA. Will be NULL if
-  return_loadings is set to FALSE.
+- loadings - The loadings (top eigenvectors) of the contrastive PCA.
+  Features x `n_pcs`. Will be `NULL` if `return_loadings = FALSE`.

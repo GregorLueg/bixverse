@@ -1,21 +1,21 @@
-# Check SNF parameters
+# Check SNF params
 
-Checkmate extension for checking the SNF parameters.
+Checkmate extension for the output of
+[`params_snf()`](https://gregorlueg.github.io/bixverse/reference/params_snf.md).
 
 ## Usage
 
 ``` r
 checkSNFParams(x)
-
-testSNFParams(x)
 ```
 
 ## Arguments
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

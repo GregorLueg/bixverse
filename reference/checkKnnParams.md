@@ -1,23 +1,21 @@
-# Check kNN parameters
+# Check kNN params
 
-Checkmate extension for checking kNN parameters.
+Checkmate extension for the output of
+[`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md).
 
 ## Usage
 
 ``` r
-checkKnnParams(x, required_params = NULL)
+checkKnnParams(x)
 ```
 
 ## Arguments
 
 - x:
 
-  The list to check/assert
-
-- required_params:
-
-  Character vector of required kNN parameter names
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

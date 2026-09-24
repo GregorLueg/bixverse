@@ -1,6 +1,7 @@
-# Check MELD parameters
+# Check MELD params
 
-Checkmate extension for checking MELD parameters.
+Checkmate extension for the output of
+[`params_meld()`](https://gregorlueg.github.io/bixverse/reference/params_meld.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkMeldParams(x)
 
 - x:
 
-  The list to check/assert.
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -76,7 +79,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -121,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Trajectory inference with Palantir and PAGA</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-06</p>
+      <p class="date">2026-09-24</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -193,6 +198,7 @@
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
 <span><span class="co">#&gt;   SNN generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
+<span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
 </div>
 <p>The data ships pre-filtered, so there is no QC step here. On your own data you would run <code><a href="../reference/run_cell_qc.html">run_cell_qc()</a></code> and <code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> first, as in the <a href="https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html">PBMC vignette</a>.</p>
@@ -307,18 +313,18 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality  artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;    &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; ab13715b680f3d56</span></span>
-<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; eb43c38f249ad2d1</span></span>
-<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 4b0226bb05eb4549</span></span>
-<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 46f7f1f1090edeb2</span></span>
-<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 0f388a22cd2886c6</span></span>
+<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; d0c58f79ed991c50</span></span>
+<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; a699b1349cb0fb7f</span></span>
+<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 5aeb8d19c35a753f</span></span>
+<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 04bd365c4caa88c5</span></span>
+<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; e520362efb100110</span></span>
 <span><span class="co">#&gt;                                 from</span></span>
 <span><span class="co">#&gt;                               &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                  </span></span>
-<span><span class="co">#&gt; 2: ab13715b680f3d56,4b0226bb05eb4549</span></span>
-<span><span class="co">#&gt; 3:                  ab13715b680f3d56</span></span>
-<span><span class="co">#&gt; 4:                  4b0226bb05eb4549</span></span>
-<span><span class="co">#&gt; 5:                  4b0226bb05eb4549</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: d0c58f79ed991c50,5aeb8d19c35a753f</span></span>
+<span><span class="co">#&gt; 3:                  d0c58f79ed991c50</span></span>
+<span><span class="co">#&gt; 4:                  5aeb8d19c35a753f</span></span>
+<span><span class="co">#&gt; 5:                  5aeb8d19c35a753f</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="paga">PAGA<a class="anchor" aria-label="anchor" href="#paga"></a>
 </h2>

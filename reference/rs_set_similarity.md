@@ -1,7 +1,7 @@
 # Set similarities
 
-**\[experimental\]** This function calculates the Jaccard or similarity
-index between a two given string vector and a of other string vectors.
+**\[experimental\]** This function calculates the Jaccard similarity or
+overlap coefficient between two string vectors.
 
 ## Usage
 
@@ -13,13 +13,17 @@ rs_set_similarity(s_1, s_2, overlap_coefficient)
 
 - s_1:
 
-  The String vector against which to calculate the set similarities.
+  Character vector. The first set.
 
 - s_2:
 
-  The String vector against which to calculate the set similarities.
+  Character vector. The second set.
 
 - overlap_coefficient:
 
-  Boolean. Use the overlap coefficient instead of the Jaccard similarity
-  be calculated.
+  Boolean. Use the overlap coefficient instead of the Jaccard
+  similarity.
+
+## Value
+
+The Jaccard similarity or overlap coefficient.

@@ -1,7 +1,7 @@
-# Check GSVA parameters
+# Check GSVA params
 
-Checkmate extension for checking the gene set variation analysis (GSVA)
-parameters.
+Checkmate extension for the output of
+[`params_gsva()`](https://gregorlueg.github.io/bixverse/reference/params_gsva.md).
 
 ## Usage
 
@@ -13,8 +13,9 @@ checkGSVAParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

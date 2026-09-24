@@ -1,7 +1,7 @@
 # Run a hypergeometric test over a list of target genes
 
 **\[experimental\]** Given a list of target gene sets, this function
-will test for each of the individual target genes the hypergeoemetric
+will test for each of the individual target gene sets the hypergeometric
 enrichment against the specified gene sets.
 
 ## Usage
@@ -20,7 +20,7 @@ rs_hypergeom_test_list(
 
 - target_genes_list:
 
-  A character vector representing the target gene set.
+  A list of character vectors, each representing a target gene set.
 
 - gene_sets:
 
@@ -34,7 +34,7 @@ rs_hypergeom_test_list(
 - min_overlap:
 
   Optional integer. Shall a filter be applied on the minimum of
-  overlappign genes.
+  overlapping genes.
 
 - fdr_threshold:
 
@@ -43,20 +43,21 @@ rs_hypergeom_test_list(
 
 ## Value
 
-A list containing:
+A list containing (results of all target sets concatenated, only for the
+tests passing the filters):
 
 - pvals - The p-values from the hypergeometric test.
 
-- fdr - The FDRs for each target gene calculated across all gene sets.
+- fdr - The FDRs for each target set calculated across all gene sets.
 
-- odds ratios - The calculated odds ratios
+- odds_ratios - The calculated odds ratios
 
 - hits - The size of the overlap between the target gene set and
   individual gene sets.
 
 - gene_set_lengths - The length of the gene sets.
 
-- to_keep - Indices of the tests that passed.
+- to_keep - 1-based indices (into `gene_sets`) of the tests that passed.
 
 - tests_passed - How many tests passed the filter criteria for that
   target set.

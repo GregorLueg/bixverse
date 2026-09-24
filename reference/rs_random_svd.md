@@ -31,19 +31,21 @@ rs_random_svd(x, scale, rank, seed, oversampling, n_power_iter)
 
 - oversampling:
 
-  Integer. Defaults to `10L` if nothing is provided.
+  Optional integer. Defaults to `10L` if `NULL`.
 
 - n_power_iter:
 
-  Integer. How often shall the QR decomposition be applied. Defaults to
-  `2L` if nothing is provided.
+  Optional integer. Number of power iterations (each with a QR
+  decomposition). Defaults to `2L` if `NULL`.
 
 ## Value
 
 A list with:
 
-- u - u matrix of the SVD.
+- scores - u matrix of the SVD multiplied by the singular values.
 
 - v - v matrix of the SVD.
 
-- s - Eigenvalues of the SVD.
+- s - Singular values of the SVD.
+
+- scaled - Boolean. Was the matrix scaled.

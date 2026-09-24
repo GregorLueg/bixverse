@@ -27,24 +27,25 @@ rs_extract_grouped_gene_stats(
 
 - gene_indices:
 
-  Integer. Gene index position to return (0-indexed!).
+  Integer vector. Gene index positions to return (0-indexed!).
 
 - group_ids:
 
-  Integer. The levels of the data. (0-indexed!)
+  Integer vector. Group of each cell in `cell_indices`, as an index into
+  `group_levels` (0-indexed!). Same length as `cell_indices`.
 
 - group_levels:
 
-  String. Name of the factors.
+  Character vector. The group labels.
 
 ## Value
 
 A list with the following elements:
 
-- grp_label - The label of that group
+- grp_label - The group labels, i.e. `group_levels`.
 
-- mean_exp - Vector of mean expression values in row major (genes x
-  n_levels)
+- mean_exp - Mean normalised expression per gene and group over all
+  cells of the group (zeros included), row-major (genes x groups).
 
-- perc_exp - Vector of proportions of cells with expression in row major
-  (genes x n_levels)
+- perc_exp - Fraction (`[0, 1]`) of cells in the group with a non-zero
+  count, row-major (genes x groups).

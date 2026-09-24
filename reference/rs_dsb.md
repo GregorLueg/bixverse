@@ -6,10 +6,12 @@ Two variants are supported. When `background_counts` is provided,
 per-protein ambient background is estimated from empty droplets ("Step
 I" of the original paper). When `background_counts` is `NULL`,
 per-protein background is estimated by a two-component k-means on the
-log-transformed cell counts, with the lower centroid taken as the
+`log(x + pseudocount)` cell counts, with the lower centroid taken as the
 background level. An optional second step removes cell-to-cell technical
 noise by regressing out PC1 of a noise matrix built from isotype
-controls (if available) and the per-cell background mean.
+controls (if used) and the per-cell background mean; without isotype
+controls the per-cell background mean itself is regressed out. Optional
+per-protein quantile clipping runs last.
 
 ## Usage
 
@@ -54,11 +56,12 @@ rs_dsb(
   String. One of `"standardise"` or `"mean_subtract"`. Only used when
   `background_counts` is provided. `"standardise"` subtracts the
   per-protein background mean and divides by the per-protein background
-  SD. `"mean_subtract"` subtracts the mean only.
+  SD. `"mean_subtract"` subtracts the mean only. Unrecognised values
+  fall back to `"standardise"`.
 
 - seed:
 
-  Integer. Random seed for k-means initialisation.
+  Integer. Random seed for the k-means initialisations.
 
 - verbose:
 
@@ -80,9 +83,11 @@ A list with the following elements:
   SD used in Step I.
 
 - technical_component - Numeric vector of length `n_cells`, or empty
-  vector if `dsb_params$denoise_counts = FALSE`. Per-cell technical
-  component regressed out in Step II.
+  vector if `dsb_params$denoise_counts = FALSE`. Per-cell covariate
+  regressed out in Step II: PC1 of the noise matrix, or the per-cell
+  background mean if no isotype controls are used.
 
 - cellwise_background_mean - Numeric vector of length `n_cells`, or
   empty vector if `dsb_params$denoise_counts = FALSE`. Per-cell
-  background mean from the 2-component k-means clustering.
+  background mean from a 2-component k-means on each cell's protein
+  vector.

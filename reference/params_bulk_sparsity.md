@@ -12,7 +12,7 @@ gene is binomially thinned towards that target.
 
 ``` r
 params_bulk_sparsity(
-  strategy = c("seq_depth"),
+  strategy = "seq_depth",
   target_library_size = 20000,
   capture_efficiency_sigma = 0.5,
   seed = 123L
@@ -24,23 +24,37 @@ params_bulk_sparsity(
 - strategy:
 
   String. Which dropout strategy to apply. Currently only `"seq_depth"`.
+  One of `"seq_depth"`. Defaults to `"seq_depth"`.
 
 - target_library_size:
 
-  Float. Reference library size per sample.
+  Numeric. Reference library size per sample. Defaults to `20000.0`.
 
 - capture_efficiency_sigma:
 
-  Float. Standard deviation of the LogNormal size-factor distribution.
-  Larger values spread the library sizes further apart.
+  Numeric. Standard deviation of the LogNormal size-factor distribution.
+  Larger values spread the library sizes further apart. Defaults to
+  `0.5`.
 
 - seed:
 
-  Integer. Seed for reproducibility purposes.
+  Integer. Seed for reproducibility purposes. Defaults to `123L`.
 
 ## Value
 
-A list with the parameters for usage in subsequent functions.
+A named list with the following elements:
+
+- strategy - String. Which dropout strategy to apply. Currently only
+  `"seq_depth"`. One of `"seq_depth"`. Defaults to `"seq_depth"`.
+
+- target_library_size - Numeric. Reference library size per sample.
+  Defaults to `20000.0`.
+
+- capture_efficiency_sigma - Numeric. Standard deviation of the
+  LogNormal size-factor distribution. Larger values spread the library
+  sizes further apart. Defaults to `0.5`.
+
+- seed - Integer. Seed for reproducibility purposes. Defaults to `123L`.
 
 ## References
 

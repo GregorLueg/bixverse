@@ -4,14 +4,14 @@ The function will take in a list of gene sets that contains lists of &quot;pos&q
 and &quot;neg&quot; gene indices (0-indexed). You don't have to provide the &quot;neg&quot;,
 but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 Additionally, it will take a random gene list and calculate an
-auto-correlation score based on Gaery's C to identify pathways that show
-significant patterns on the kNN graph generate on the provided embedding."><meta property="og:description" content="
+auto-correlation score based on Geary's C to identify pathways that show
+significant patterns on the kNN graph generated on the provided embedding."><meta property="og:description" content="
 The function will take in a list of gene sets that contains lists of &quot;pos&quot;
 and &quot;neg&quot; gene indices (0-indexed). You don't have to provide the &quot;neg&quot;,
 but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 Additionally, it will take a random gene list and calculate an
-auto-correlation score based on Gaery's C to identify pathways that show
-significant patterns on the kNN graph generate on the provided embedding."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+auto-correlation score based on Geary's C to identify pathways that show
+significant patterns on the kNN graph generated on the provided embedding."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +19,7 @@ significant patterns on the kNN graph generate on the provided embedding."><meta
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,9 @@ significant patterns on the kNN graph generate on the provided embedding."><meta
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -60,7 +63,9 @@ significant patterns on the kNN graph generate on the provided embedding."><meta
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -106,8 +111,8 @@ The function will take in a list of gene sets that contains lists of <code>"pos"
 and <code>"neg"</code> gene indices (0-indexed). You don't have to provide the <code>"neg"</code>,
 but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 Additionally, it will take a random gene list and calculate an
-auto-correlation score based on Gaery's C to identify pathways that show
-significant patterns on the kNN graph generate on the provided embedding.</p>
+auto-correlation score based on Geary's C to identify pathways that show
+significant patterns on the kNN graph generated on the provided embedding.</p>
     </div>
 
     <div class="section level2">
@@ -137,25 +142,25 @@ significant patterns on the kNN graph generate on the provided embedding.</p>
 
 <dt id="arg-embd">embd<a class="anchor" aria-label="anchor" href="#arg-embd"></a></dt>
 <dd><p>Numerical matrix. The embedding matrix to use to generate the
-kNN graph.</p></dd>
+kNN graph. Rows must align with <code>cells_to_keep</code>.</p></dd>
 
 
 <dt id="arg-knn-data">knn_data<a class="anchor" aria-label="anchor" href="#arg-knn-data"></a></dt>
 <dd><p>Optional list. This contains pre-computed kNN data
-(including distances) and the <code>dist_metric</code> it was built with. The user has
-to ensure consistency! If provided, this will be used rather than a graph
+(<code>indices</code> (0-indexed), <code>dist</code>, <code>dist_metric</code> and <code>k</code>). The user has to
+ensure consistency! If provided, this will be used rather than a graph
 built from the parameter list.</p></dd>
 
 
 <dt id="arg-gs-list">gs_list<a class="anchor" aria-label="anchor" href="#arg-gs-list"></a></dt>
-<dd><p>Nested list. Each sublist contains the (0-indexed!) positive
-and negative gene indices of that specific gene set.</p></dd>
+<dd><p>Nested list. Each sublist contains the (0-indexed!) <code>pos</code>
+and <code>neg</code> gene indices of that specific gene set.</p></dd>
 
 
 <dt id="arg-random-gs-list">random_gs_list<a class="anchor" aria-label="anchor" href="#arg-random-gs-list"></a></dt>
 <dd><p>Double-nested list. The outer list represents the
-clusters of clusters and the inner list represents the permutations within
-that cluster.</p></dd>
+gene set clusters and the inner list the permuted gene sets (same structure
+as <code>gs_list</code>) of that cluster.</p></dd>
 
 
 <dt id="arg-vision-params">vision_params<a class="anchor" aria-label="anchor" href="#arg-vision-params"></a></dt>
@@ -164,12 +169,13 @@ of the kNN generation.</p></dd>
 
 
 <dt id="arg-cells-to-keep">cells_to_keep<a class="anchor" aria-label="anchor" href="#arg-cells-to-keep"></a></dt>
-<dd><p>Integer. Vector of indices of the cells to keep.</p></dd>
+<dd><p>Integer. Vector of indices (0-indexed) of the cells to
+keep.</p></dd>
 
 
 <dt id="arg-cluster-membership">cluster_membership<a class="anchor" aria-label="anchor" href="#arg-cluster-membership"></a></dt>
 <dd><p>Integer. Vector that indicates to which of the
-permuted gene set clusters the given gene set belongs.</p></dd>
+permuted gene set clusters (1-indexed) the given gene set belongs.</p></dd>
 
 
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
@@ -187,8 +193,9 @@ detailed verbosity.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the following items:</p><ul><li><p>autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
-FDR.</p></li>
+    <p>A list with the following items:</p><ul><li><p>autocor_res - List with <code>auto_cor</code> (1 - Geary's C), <code>p_val</code>
+(empirical, against the permuted gene sets of the same cluster) and
+<code>fdr</code>.</p></li>
 <li><p>vision_mat - A matrix of cells x vision scores per gene set.</p></li>
 </ul></div>
 

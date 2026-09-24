@@ -26,4 +26,5 @@ rs_range_norm(x, max_val, min_val)
 
 ## Value
 
-Normalised values
+Normalised values. A constant vector returns `max_val` for every
+element.

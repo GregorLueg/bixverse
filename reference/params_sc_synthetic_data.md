@@ -12,8 +12,8 @@ params_sc_synthetic_data(
   n_cells = 1000L,
   n_genes = 100L,
   n_batches = 1L,
-  marker_genes = list(cell_type_1 = list(marker_genes = 0:9L), cell_type_2 =
-    list(marker_genes = 10:19L), cell_type_3 = list(marker_genes = 20:29L)),
+  marker_genes = list(cell_type_1 = list(marker_genes = 0:9), cell_type_2 =
+    list(marker_genes = 10:19), cell_type_3 = list(marker_genes = 20:29)),
   batch_effect_strength = c("strong", "medium", "weak"),
   n_samples = NULL,
   sample_bias = NULL
@@ -24,36 +24,58 @@ params_sc_synthetic_data(
 
 - n_cells:
 
-  Integer. Number of cells.
+  Integer. Number of cells. Defaults to `1000L`.
 
 - n_genes:
 
-  Integer. Number of genes.
+  Integer. Number of genes. Defaults to `100L`.
 
 - n_batches:
 
-  Integer. Number of batches.
+  Integer. Number of batches. Defaults to `1L`.
 
 - marker_genes:
 
-  List. A nested list that indicates which gene indices are markers for
-  which cell.
+  Any. A nested list that indicates which gene indices are markers for
+  which cell. Defaults to
+  `list(cell_type_1 = list(marker_genes = 0:9), cell_type_2 = list(marker_genes = 10:19), cell_type_3 = list(marker_genes = 20:29))`.
 
 - batch_effect_strength:
 
-  String. One of `c("strong", "medium", "weak")`. The strength of the
-  batch effect to add.
+  String. The strength of the batch effect to add. One of
+  `c("strong", "medium", "weak")`. Defaults to `"strong"`.
 
 - n_samples:
 
-  Optional integer. Shall sample membership be added to the synthetic
+  Integer or `NULL`. Shall sample membership be added to the synthetic
   data. If you want sample information you need to provide `n_samples`
-  and `sample_bias`.
+  and `sample_bias`. Defaults to `NULL`.
 
 - sample_bias:
 
-  Optional string. One of `c("even", "slightly_uneven", "very_uneven")`
+  Any. One of `c("even", "slightly_uneven", "very_uneven")` Defaults to
+  `NULL`.
 
 ## Value
 
-A list with the parameters.
+A named list with the following elements:
+
+- n_cells - Integer. Number of cells. Defaults to `1000L`.
+
+- n_genes - Integer. Number of genes. Defaults to `100L`.
+
+- marker_genes - Any. A nested list that indicates which gene indices
+  are markers for which cell. Defaults to
+  `list(cell_type_1 = list(marker_genes = 0:9), cell_type_2 = list(marker_genes = 10:19), cell_type_3 = list(marker_genes = 20:29))`.
+
+- n_batches - Integer. Number of batches. Defaults to `1L`.
+
+- batch_effect_strength - String. The strength of the batch effect to
+  add. One of `c("strong", "medium", "weak")`. Defaults to `"strong"`.
+
+- n_samples - Integer or `NULL`. Shall sample membership be added to the
+  synthetic data. If you want sample information you need to provide
+  `n_samples` and `sample_bias`. Defaults to `NULL`.
+
+- sample_bias - Any. One of
+  `c("even", "slightly_uneven", "very_uneven")` Defaults to `NULL`.

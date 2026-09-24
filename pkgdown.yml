@@ -4,6 +4,8 @@ pkgdown_sha: ~
 articles:
   bag_of_genes_single_cells: bag_of_genes_single_cells.html
   bulk_coexpression_modules: bulk_coexpression_modules.html
+  bulk_dge: bulk_dge.html
+  cell_sweep: cell_sweep.html
   cpca: cpca.html
   design_single_cell: design_single_cell.html
   dialogue: dialogue.html
@@ -23,12 +25,13 @@ articles:
   single_cell_batch_corrections: single_cell_batch_corrections.html
   single_cell_big_data: single_cell_big_data.html
   single_cell_io: single_cell_io.html
+  single_cell_residuals: single_cell_residuals.html
   single_cell_subsets: single_cell_subsets.html
   single_cell_visualisation: single_cell_visualisation.html
   symphony: symphony.html
   thinking_single_cell: thinking_single_cell.html
   trajectory_inference: trajectory_inference.html
-last_built: 2026-09-06T12:24Z
+last_built: 2026-09-24T09:53Z
 urls:
   reference: https://gregorlueg.github.io/bixverse/reference
   article: https://gregorlueg.github.io/bixverse/articles

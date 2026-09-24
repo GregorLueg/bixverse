@@ -25,4 +25,4 @@ rs_cor2(x, y, spearman)
 
 ## Value
 
-The correlation matrix.
+The correlation matrix of dimension `ncol(x)` by `ncol(y)`.

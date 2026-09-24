@@ -3,6 +3,8 @@
 **\[experimental\]** Calculates highly variable genes for MetaCells or
 more generally speaking sparse data. This is happening in-memory
 compared to the (usually much) larger single cell data sets.
+`"meanvarbin"` and `"dispersion"` compute the same statistics; they
+differ only in how the R side selects from them.
 
 ## Usage
 
@@ -23,7 +25,8 @@ rs_mc_hvg(
 - sparse_data:
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
-  `ncol` and `format`.
+  `ncol` and `cs_type`. Shape is (metacells, genes). Pass raw counts for
+  `"vst"` and normalised counts otherwise.
 
 - hvg_method:
 
@@ -38,7 +41,7 @@ rs_mc_hvg(
 - binning:
 
   String. The binning strategy for the `meanvarbin` and `dispersion`
-  methods. One of `c("equal_width", "equal_frequency")`.
+  methods. One of `c("equal_width", "equal_freq")`.
 
 - n_bins:
 

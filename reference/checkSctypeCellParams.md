@@ -1,7 +1,6 @@
-# Check per-cell ScType parameters
+# Check ScType cell params
 
-Checkmate extension for checking the per-cell ScType parameters as
-returned by
+Checkmate extension for the output of
 [`params_sctype_cells()`](https://gregorlueg.github.io/bixverse/reference/params_sctype_cells.md).
 
 ## Usage
@@ -14,8 +13,9 @@ checkSctypeCellParams(x)
 
 - x:
 
-  The list to check.
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

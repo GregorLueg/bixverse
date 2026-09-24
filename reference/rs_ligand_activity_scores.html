@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -107,18 +112,19 @@ ligand to target gene influence.</p></dd>
 
 
 <dt id="arg-in-gene-sets">in_gene_sets<a class="anchor" aria-label="anchor" href="#arg-in-gene-sets"></a></dt>
-<dd><p>A list of logicals with the genes of interest being set
-to <code>TRUE</code> and the background genes set to <code>FALSE</code>.</p></dd>
+<dd><p>List of logical vectors, one per gene set, each of
+length <code>ncol(ligand_influence)</code>. Genes of interest are <code>TRUE</code>, the
+background genes <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with internal lists with:</p><ul><li><p><code>auroc</code> - The Area Under the Receiver Operating Characteristic for
-that ligand</p></li>
-<li><p><code>aupr</code> - The Area Under the Precision-Recall curve for that ligand.</p></li>
-<li><p><code>aupr_corrected</code> - The corrected AUPR</p></li>
-<li><p><code>pearson</code> - The Pearson correlations</p></li>
-<li><p><code>spearman</code> - The Spearman correlations</p></li>
+    <p>A list with one element per gene set, each a list of per-ligand
+vectors (<code>NaN</code> where the metric is undefined):</p><ul><li><p><code>auroc</code> - The Area Under the Receiver Operating Characteristic.</p></li>
+<li><p><code>aupr</code> - The Area Under the Precision-Recall curve.</p></li>
+<li><p><code>aupr_corrected</code> - The corrected AUPR.</p></li>
+<li><p><code>pearson</code> - The Pearson correlations.</p></li>
+<li><p><code>spearman</code> - The Spearman correlations.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

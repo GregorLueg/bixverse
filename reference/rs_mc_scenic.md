@@ -1,7 +1,9 @@
 # SCENIC on MetaCells
 
 **\[experimental\]** Assumes that the sparse data is pre-filtered for
-the genes you wish to include. The indices need to be 0-indexed.
+the cells and genes you wish to include: every column is a target gene.
+The regressors read the second layer, which here is an `f32` cast of the
+supplied counts.
 
 ## Usage
 
@@ -14,15 +16,17 @@ rs_mc_scenic(sparse_data, tf_indices, scenic_params, seed, verbose)
 - sparse_data:
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
-  `ncol` and `format`.
+  `ncol` and `cs_type`. Shape is (metacells, genes).
 
 - tf_indices:
 
-  Integer vector. The indices of the transcription factors.
+  Integer vector. 0-indexed(!) column positions of the transcription
+  factors within `sparse_data`.
 
 - scenic_params:
 
-  Named list. Contains all of the parameters need for SCENIC.
+  Named list. Contains all of the parameters needed for SCENIC, see
+  [`params_scenic()`](https://gregorlueg.github.io/bixverse/reference/params_scenic.md).
 
 - seed:
 
@@ -35,4 +39,5 @@ rs_mc_scenic(sparse_data, tf_indices, scenic_params, seed, verbose)
 
 ## Value
 
-A gene x TF importance matrix
+A genes x TFs importance matrix, rows in column order of `sparse_data`,
+columns in the order of `tf_indices`.

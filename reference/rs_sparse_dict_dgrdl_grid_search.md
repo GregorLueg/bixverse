@@ -26,14 +26,14 @@ rs_sparse_dict_dgrdl_grid_search(
 
 - dgrdl_params:
 
-  A list with the parameters for the algorithm. Expects the following
-  items.
+  A list with the parameters for the algorithm. Missing items fall back
+  to defaults. Expects the following items.
 
-  - sparsity - Sparsity constraint (max non-zero coefficients per
-    signal).
+  - sparsity - Integer. Sparsity constraint (max non-zero coefficients
+    per signal).
 
-  - dict_size - Size of the dictionary. This parameter will be ignored
-    for this function and `dict_sizes` will be used.
+  - dict_size - Integer. Size of the dictionary. Ignored here,
+    `dict_sizes` is used instead.
 
   - alpha - Float. Sample context regularisation weight. The higher the
     stronger the regularisation.
@@ -44,17 +44,17 @@ rs_sparse_dict_dgrdl_grid_search(
   - max_iter - Integer. Maximum iteration for the algorithm.
 
   - k_neighbours - Integer. Number of k neighbours for the sample and
-    feature Laplacian matrix for the regularisation. This parameter will
-    be ignored and `k_neighbours_vec` will be used.
+    feature Laplacian matrix. Ignored here, `k_neighbours_vec` is used
+    instead.
 
-  - admm_iter Integer. Number of iterations for using alternating
+  - admm_iter - Integer. Number of iterations for using alternating
     direction method of multipliers (ADMM).
 
-  - rho Float. ADMM step size.
+  - rho - Float. ADMM step size.
 
 - seeds:
 
-  Integer vectors. The random seeds to include in the grid search.
+  Integer vector. The random seeds to include in the grid search.
 
 - dict_sizes:
 
@@ -62,7 +62,7 @@ rs_sparse_dict_dgrdl_grid_search(
 
 - k_neighbours_vec:
 
-  Integer vector. The number of neighbours for the KNN graph generation
+  Integer vector. The number of neighbours for the kNN graph generation
   to test in the grid search.
 
 - verbose:
@@ -71,14 +71,16 @@ rs_sparse_dict_dgrdl_grid_search(
 
 ## Value
 
-A list with the following elements:
+A list with the following elements, one entry per tested combination:
 
 - seed - The tested seeds.
 
 - dict_size - The tested dictionary sizes.
 
-- reconstruction_errs - The reconstruction errors for these hyper
-  parameters.
+- k_neighbours - The tested numbers of neighbours.
+
+- reconstruction_errs - The reconstruction errors (squared Frobenius
+  norm) for these hyperparameters.
 
 - feature_laplacian_objective - The objective values of the feature
   Laplacian term for these hyperparameters.

@@ -27,20 +27,20 @@ rs_mc_hotspot_autocor(
 - sparse_data:
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
-  `ncol` and `format`. Shape is (metacells, genes) and the data are the
+  `ncol` and `cs_type`. Shape is (metacells, genes) and the data are the
   raw counts.
 
 - embd:
 
   Numerical matrix. The embedding matrix from which to generate the kNN
-  graph.
+  graph. Needs one row per entry of `cells_to_keep`.
 
 - knn_data:
 
-  Optional list. This contains pre-computed kNN data (including
-  distances) and the `dist_metric` it was built with. The user has to
-  ensure consistency! If provided, this will be used rather than a graph
-  built from the parameter list.
+  Optional list. This contains pre-computed kNN data (`indices`, `dist`,
+  `k`) and the `dist_metric` it was built with. The user has to ensure
+  consistency! If provided, this will be used rather than a graph built
+  from the parameter list.
 
 - hotspot_params:
 
@@ -72,7 +72,7 @@ A list with the following elements.
 
 - gene_idx - 0-based integer indicating the gene index.
 
-- gaerys_c - Gaery's C calculation for the autocorrelation coefficient.
+- gaerys_c - Geary's C calculation for the autocorrelation coefficient.
 
 - z_score - Z-score of the auto-correlation.
 

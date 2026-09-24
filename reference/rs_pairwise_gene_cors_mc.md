@@ -1,6 +1,7 @@
 # Calculate the pairwise gene-correlation for meta cells
 
-**\[experimental\]**
+**\[experimental\]** Correlates `gene_indices_1[i]` against
+`gene_indices_2[i]` over the meta cells, in memory.
 
 ## Usage
 
@@ -19,7 +20,8 @@ rs_pairwise_gene_cors_mc(
 - sparse_data:
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
-  `ncol` and `format`.
+  `ncol` and `cs_type`. Shape is (metacells, genes), holding the
+  normalised counts.
 
 - gene_indices_1:
 
@@ -28,12 +30,12 @@ rs_pairwise_gene_cors_mc(
 
 - gene_indices_2:
 
-  Integer. The gene indices for the first set of genes. Must be
-  0-indexed!
+  Integer. The gene indices for the second set of genes, same length as
+  `gene_indices_1`. Must be 0-indexed!
 
 - spearman:
 
-  Boolean. Shall the spearman correlation be calculated.
+  Boolean. Shall the Spearman correlation be calculated.
 
 - verbose:
 
@@ -42,5 +44,5 @@ rs_pairwise_gene_cors_mc(
 
 ## Value
 
-The vector of correlations between the pairs of gene_indices_1 and
-gene_indices_2
+Numeric vector with one correlation per pair of `gene_indices_1` and
+`gene_indices_2`.

@@ -58,18 +58,18 @@ A list with the following elements:
   neighbourhood.
 
 - nhoods_i - Integer. 0-indexed positions of the cells in the
-  neighbourhood.
+  neighbourhood, the index cell included.
 
-- nhoods_j - Integer. To which neighbourhood the cell belongs.
+- nhoods_j - Integer. 0-indexed neighbourhood the cell belongs to.
 
-- nhoods_x - Numeric. The x-value of the COO type matrix, i.e., defaults
-  to `1.0`.
+- nhoods_x - Numeric. The x-value of the COO type matrix, always `1.0`.
 
 - nrows - Integer. Number of cells in the matrix
 
 - ncols - Integer. Number of refined neighbourhoods.
 
-- kth_distances - The k-th distances for spatial FDR calculations.
+- kth_distances - Numeric. Distance of each index cell to its last kNN
+  neighbour, for the spatial FDR.
 
 - sample_counts - Numeric matrix of neighbourhoods x samples. The cells
   of each sample found in each neighbourhood.

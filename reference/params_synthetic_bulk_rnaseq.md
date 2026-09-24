@@ -49,11 +49,11 @@ params_synthetic_bulk_rnaseq(
 
 - num_samples:
 
-  Integer. Number of samples (columns) to simulate.
+  Integer. Number of samples (columns) to simulate. Defaults to `100L`.
 
 - num_genes:
 
-  Integer. Number of genes (rows) to simulate.
+  Integer. Number of genes (rows) to simulate. Defaults to `1000L`.
 
 - module_sizes:
 
@@ -61,62 +61,151 @@ params_synthetic_bulk_rnaseq(
   smaller or equal to `num_genes`. Genes are assigned in contiguous
   blocks from the first gene onwards, any remainder is background. Use
   `integer(0)` for no modules. Must be an integer vector, see the note
-  below.
+  below. Defaults to `c(100L, 100L, 100L)`.
 
 - generator:
 
-  String. Which topology and distribution family to plant. One of
-  `c("hub_modular", "modular", "non_negative_factor", "non_gaussian_factor")`,
-  see the description. Defaults to `"hub_modular"`.
+  String. Which topology and distribution family to plant., see the
+  description. One of
+  `c("hub_modular", "modular", "non_negative_factor", "non_gaussian_factor")`.
+  Defaults to `"hub_modular"`.
 
 - seed:
 
-  Integer. Seed for reproducibility purposes.
+  Integer. Seed for reproducibility purposes. Defaults to `123L`.
 
-- mean_exp_gamma_shape, mean_exp_gamma_scale:
+- mean_exp_gamma_shape:
 
-  Float. Shape and scale of the Gamma the per-gene mean expression is
-  drawn from.
+  Numeric. Shape and scale of the Gamma the per-gene mean expression is
+  drawn from. Defaults to `5.0`.
 
-- disp_intercept, disp_slope:
+- mean_exp_gamma_scale:
 
-  Float. Intercept and slope of the negative binomial dispersion trend
+  Numeric. Shape and scale of the Gamma the per-gene mean expression is
+  drawn from. Defaults to `10.0`.
+
+- disp_intercept:
+
+  Numeric. Intercept and slope of the negative binomial dispersion trend
   `disp = 1 / (a + b * mean)`. This is what gives you
   heteroskedasticity: lowly expressed genes show higher variance.
+  Defaults to `0.2`.
+
+- disp_slope:
+
+  Numeric. Intercept and slope of the negative binomial dispersion trend
+  `disp = 1 / (a + b * mean)`. This is what gives you
+  heteroskedasticity: lowly expressed genes show higher variance.
+  Defaults to `0.3`.
 
 - noise_std:
 
-  Float. Per-gene per-sample noise standard deviation on the latent
+  Numeric. Per-gene per-sample noise standard deviation on the latent
   log-signal. Smaller values track the module factor more tightly and
-  give stronger within-module correlation. Defaults to `0.1` rather than
-  the crate's `0.3`, see the note below.
+  give stronger within-module correlation. Defaults to `0.1`.
 
 - factor_std:
 
-  Float. Standard deviation of the Normal factor. Only used by
+  Numeric. Standard deviation of the Normal factor. Only used by
   `"hub_modular"` and `"modular"`; the other two generators draw their
-  factor from `factor_shape`/`factor_scale` instead. Defaults to `0.5`
-  rather than the crate's `0.3`, see the note below.
+  factor from `factor_shape`/`factor_scale` instead. Defaults to `0.5`.
 
-- factor_shape, factor_scale:
+- factor_shape:
 
-  Float. Shape and scale of the Gamma factor for
+  Numeric. Shape and scale of the Gamma factor for
   `"non_negative_factor"`. `factor_scale` doubles as the Laplace scale
-  for `"non_gaussian_factor"`.
+  for `"non_gaussian_factor"`. Defaults to `2.0`.
 
-- loading_mu, loading_sigma:
+- factor_scale:
 
-  Float. Location and scale of the LogNormal the loadings are drawn
-  from. Unused by `"modular"`, which draws Beta(5, 2).
+  Numeric. Shape and scale of the Gamma factor for
+  `"non_negative_factor"`. `factor_scale` doubles as the Laplace scale
+  for `"non_gaussian_factor"`. Defaults to `0.3`.
+
+- loading_mu:
+
+  Numeric. Location and scale of the LogNormal the loadings are drawn
+  from. Unused by `"modular"`, which draws Beta(5, 2). Defaults to
+  `0.0`.
+
+- loading_sigma:
+
+  Numeric. Location and scale of the LogNormal the loadings are drawn
+  from. Unused by `"modular"`, which draws Beta(5, 2). Defaults to
+  `0.7`.
 
 - hub_percentile:
 
-  Float. Top fraction of module genes flagged as hubs by loading rank.
-  Must be in `(0, 1]`.
+  Numeric. Top fraction of module genes flagged as hubs by loading rank.
+  Must be in `(0, 1]`. Defaults to `0.1`.
 
 ## Value
 
-A list with the parameters for usage in subsequent functions.
+A named list with the following elements:
+
+- num_samples - Integer. Number of samples (columns) to simulate.
+  Defaults to `100L`.
+
+- num_genes - Integer. Number of genes (rows) to simulate. Defaults to
+  `1000L`.
+
+- module_sizes - Integer vector. Sizes of the co-expression modules. The
+  sum must be smaller or equal to `num_genes`. Genes are assigned in
+  contiguous blocks from the first gene onwards, any remainder is
+  background. Use `integer(0)` for no modules. Must be an integer
+  vector, see the note below. Defaults to `c(100L, 100L, 100L)`.
+
+- generator - String. Which topology and distribution family to plant.,
+  see the description. One of
+  `c("hub_modular", "modular", "non_negative_factor", "non_gaussian_factor")`.
+  Defaults to `"hub_modular"`.
+
+- seed - Integer. Seed for reproducibility purposes. Defaults to `123L`.
+
+- mean_exp_gamma_shape - Numeric. Shape and scale of the Gamma the
+  per-gene mean expression is drawn from. Defaults to `5.0`.
+
+- mean_exp_gamma_scale - Numeric. Shape and scale of the Gamma the
+  per-gene mean expression is drawn from. Defaults to `10.0`.
+
+- disp_intercept - Numeric. Intercept and slope of the negative binomial
+  dispersion trend `disp = 1 / (a + b * mean)`. This is what gives you
+  heteroskedasticity: lowly expressed genes show higher variance.
+  Defaults to `0.2`.
+
+- disp_slope - Numeric. Intercept and slope of the negative binomial
+  dispersion trend `disp = 1 / (a + b * mean)`. This is what gives you
+  heteroskedasticity: lowly expressed genes show higher variance.
+  Defaults to `0.3`.
+
+- noise_std - Numeric. Per-gene per-sample noise standard deviation on
+  the latent log-signal. Smaller values track the module factor more
+  tightly and give stronger within-module correlation. Defaults to
+  `0.1`.
+
+- factor_std - Numeric. Standard deviation of the Normal factor. Only
+  used by `"hub_modular"` and `"modular"`; the other two generators draw
+  their factor from `factor_shape`/`factor_scale` instead. Defaults to
+  `0.5`.
+
+- factor_shape - Numeric. Shape and scale of the Gamma factor for
+  `"non_negative_factor"`. `factor_scale` doubles as the Laplace scale
+  for `"non_gaussian_factor"`. Defaults to `2.0`.
+
+- factor_scale - Numeric. Shape and scale of the Gamma factor for
+  `"non_negative_factor"`. `factor_scale` doubles as the Laplace scale
+  for `"non_gaussian_factor"`. Defaults to `0.3`.
+
+- loading_mu - Numeric. Location and scale of the LogNormal the loadings
+  are drawn from. Unused by `"modular"`, which draws Beta(5, 2).
+  Defaults to `0.0`.
+
+- loading_sigma - Numeric. Location and scale of the LogNormal the
+  loadings are drawn from. Unused by `"modular"`, which draws Beta(5,
+  2). Defaults to `0.7`.
+
+- hub_percentile - Numeric. Top fraction of module genes flagged as hubs
+  by loading rank. Must be in `(0, 1]`. Defaults to `0.1`.
 
 ## Details
 

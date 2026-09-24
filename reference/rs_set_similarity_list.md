@@ -17,12 +17,12 @@ rs_set_similarity_list(list, overlap_coefficient)
 
 - overlap_coefficient:
 
-  Boolean. Use the overlap coefficient instead of the Jaccard similarity
-  be calculated.
+  Boolean. Use the overlap coefficient instead of the Jaccard
+  similarity.
 
 ## Value
 
-A list with the following items:
+A list with the following items, one entry per unordered pair:
 
 - from - Name of element i
 

@@ -95,6 +95,7 @@ sc_object
 #>   KNN generated: FALSE
 #>   SNN generated: FALSE
 #>   MAGIC imputed: none
+#>   Residual model: none
 #>   Stale artefacts: none
 ```
 
@@ -248,18 +249,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> ab13715b680f3d56
-#> 2:      rna embedding   umap    TRUE  FALSE   <NA> eb43c38f249ad2d1
-#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 4b0226bb05eb4549
-#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 46f7f1f1090edeb2
-#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> 0f388a22cd2886c6
+#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> d0c58f79ed991c50
+#> 2:      rna embedding   umap    TRUE  FALSE   <NA> a699b1349cb0fb7f
+#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 5aeb8d19c35a753f
+#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 04bd365c4caa88c5
+#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> e520362efb100110
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: ab13715b680f3d56,4b0226bb05eb4549
-#> 3:                  ab13715b680f3d56
-#> 4:                  4b0226bb05eb4549
-#> 5:                  4b0226bb05eb4549
+#> 2: d0c58f79ed991c50,5aeb8d19c35a753f
+#> 3:                  d0c58f79ed991c50
+#> 4:                  5aeb8d19c35a753f
+#> 5:                  5aeb8d19c35a753f
 ```
 
 ## PAGA

@@ -20,36 +20,64 @@ params_community_detection(
 
 - max_nodes:
 
-  Integer. Maximum number of nodes in a given community.
+  Integer. Maximum number of nodes in a given community. Defaults to
+  `300L`.
 
 - min_nodes:
 
-  Integer. Minimum number of nodes in a given community.
+  Integer. Minimum number of nodes in a given community. Defaults to
+  `10L`.
 
 - min_seed_nodes:
 
-  Integer. Minimum number of seed nodes within a community.
+  Integer. Minimum number of seed nodes within a community. Defaults to
+  `2L`.
 
 - initial_res:
 
-  Float. Initial resolution parameter to start with.
+  Numeric. Initial resolution parameter to start with. Defaults to
+  `0.5`.
 
 - threshold_type:
 
-  String. One of `c("prop_based", "pval_based")`. You can chose to
-  include a certain proportion of the network with the highest diffusion
-  scores, or use p-values based on permutations.
+  String. You can chose to include a certain proportion of the network
+  with the highest diffusion scores, or use p-values based on
+  permutations. One of `c("prop_based", "pval_based")`. Defaults to
+  `"prop_based"`.
 
 - network_threshold:
 
-  Float. The proportion of the network to include. Used if
-  `threshold_type = "prop_based"`.
+  Numeric. The proportion of the network to include. Used if
+  `threshold_type = "prop_based"`. Defaults to `0.5`.
 
 - pval_threshold:
 
-  Float. The maximum p-value for nodes to be included. Used if
-  `threshold_type = "pval_based"`.
+  Numeric. The maximum p-value for nodes to be included. Used if
+  `threshold_type = "pval_based"`. Defaults to `0.1`.
 
 ## Value
 
-List with parameters for usage in subsequent function.
+A named list with the following elements:
+
+- max_nodes - Integer. Maximum number of nodes in a given community.
+  Defaults to `300L`.
+
+- min_nodes - Integer. Minimum number of nodes in a given community.
+  Defaults to `10L`.
+
+- min_seed_nodes - Integer. Minimum number of seed nodes within a
+  community. Defaults to `2L`.
+
+- initial_res - Numeric. Initial resolution parameter to start with.
+  Defaults to `0.5`.
+
+- threshold_type - String. You can chose to include a certain proportion
+  of the network with the highest diffusion scores, or use p-values
+  based on permutations. One of `c("prop_based", "pval_based")`.
+  Defaults to `"prop_based"`.
+
+- network_threshold - Numeric. The proportion of the network to include.
+  Used if `threshold_type = "prop_based"`. Defaults to `0.5`.
+
+- pval_threshold - Numeric. The maximum p-value for nodes to be
+  included. Used if `threshold_type = "pval_based"`. Defaults to `0.1`.

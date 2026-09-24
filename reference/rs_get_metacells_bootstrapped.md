@@ -42,14 +42,16 @@ rs_get_metacells_bootstrapped(
 
 - cells_to_keep:
 
-  Optional indices of the cells to keep, i.e., the cells used for the
-  generation of the embedding.
+  Optional integer vector. Original cell indices (0-indexed!) of the
+  rows of `knn_mat` / `embd`, in row order. If `NULL`, the rows are
+  assumed to map one-to-one onto the count file.
 
 - cells_to_use:
 
-  Optional indices of cells to use for meta cell generation. Useful if
-  you wish to generate meta cells in specific cell types. If this is
-  provided, the kNN graph will be regenerated.
+  Optional integer vector. Original cell indices (0-indexed!) to
+  restrict the meta cell generation to, e.g. specific cell types. Needs
+  `cells_to_keep` and `embd`; the kNN graph is then regenerated on the
+  subset. Cells not in `cells_to_keep` are dropped silently.
 
 - meta_cell_params:
 
@@ -73,9 +75,11 @@ rs_get_metacells_bootstrapped(
 
 A list with the following elements:
 
-- assignments - A list containing assignment information with elements:
-  assignments (vector), metacells (list), unassigned (vector),
-  n_metacells, n_cells, n_unassigned
+- assignments - A list with `assignments` (list with one integer vector
+  of 1-indexed meta cell ids per cell, as meta cells can overlap),
+  `metacells` (list of 1-indexed original cell indices per meta cell),
+  `unassigned` (1-indexed cells in no meta cell), `n_metacells`,
+  `n_cells` and `n_unassigned`.
 
-- aggregated - A list with indptr, indices, raw_counts, norm_counts,
-  nrow, ncol in sparse format.
+- aggregated - A CSR list (meta cells x genes) with indptr, indices,
+  raw_counts, norm_counts, nrow and ncol.

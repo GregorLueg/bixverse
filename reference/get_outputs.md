@@ -40,6 +40,6 @@ meta <- data.table::data.table(
 object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
 object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
 names(get_outputs(object))
-#> [1] "dge_list"            "sample_info"         "group_col"          
-#> [4] "raw_counts_filtered"
+#> [1] "dge_counts"          "lib_size"            "group"              
+#> [4] "sample_info"         "group_col"           "raw_counts_filtered"
 ```

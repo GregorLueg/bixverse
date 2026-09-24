@@ -50,5 +50,6 @@ rs_singscore_single(
 
 ## Value
 
-A named list with `TotalScore`, `TotalDispersion`, and (when `down_set`
-is provided) `UpScore`, `UpDispersion`, `DownScore`, `DownDispersion`.
+A named list with `total_score`, `total_dispersion`, `up_score`,
+`up_dispersion`, `down_score` and `down_dispersion`. The last four are
+`NULL` unless `down_set` is provided.

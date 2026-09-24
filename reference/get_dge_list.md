@@ -1,8 +1,12 @@
 # Return the DGEList
 
-Getter function to extract the DGEList from the
+Builds an edgeR `DGEList` from the filtered counts, library sizes and
+normalisation factors stored in the
 [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md)
-class.
+class. bixverse does not need edgeR itself, so this requires edgeR to be
+installed. Normalisation factors are one until
+[`normalise_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/normalise_bulk_dge.md)
+has run.
 
 ## Usage
 
@@ -18,7 +22,9 @@ get_dge_list(object)
 
 ## Value
 
-Returns the DGEList stored in the class.
+An edgeR `DGEList`, or `NULL` with a warning if
+[`qc_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/qc_bulk_dge.md)
+has not been run.
 
 ## Examples
 
@@ -31,6 +37,8 @@ meta <- data.table::data.table(
 )
 object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
 object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
-dim(get_dge_list(object))
+if (requireNamespace("edgeR", quietly = TRUE)) {
+  dim(get_dge_list(object))
+}
 #> [1] 997  98
 ```

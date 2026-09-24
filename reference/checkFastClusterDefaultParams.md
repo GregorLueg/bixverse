@@ -1,6 +1,7 @@
-# Check FastCluster default parameters
+# Check FastCluster params
 
-Checkmate extension for checking FastCluster parameters.
+Checkmate extension for the output of
+[`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkFastClusterDefaultParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

@@ -1,7 +1,7 @@
 # Score the individual clusters based on ScType
 
-**\[experimental\]** This Rust function implements the cell type scoring
-approach from Ianevski et al. (2022).
+**\[experimental\]** Aggregates the per-cell ScType scores into one cell
+type call per cluster, see Ianevski et al. (2022).
 
 ## Usage
 
@@ -13,20 +13,21 @@ rs_sc_type_cluster_assignment(sc_type_res, cluster_labels)
 
 - sc_type_res:
 
-  List. The ScType results.
+  List. The ScType results, see
+  [`rs_sc_type()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_type.md).
 
 - cluster_labels:
 
-  Integer. Cluster assignment. Needs to be of length of scored cells.
+  Integer vector. Cluster assignment per scored cell.
 
 ## Value
 
 A list with
 
-- cluster_id - The cluster id/integer
+- cluster_id - Integer. The cluster id.
 
-- cell_type - String; the predicted cell type
+- cell_type - Character. The predicted cell type.
 
-- score - The final score for the clsuter.
+- scores - Numeric. The final score for the cluster.
 
-- n_cells - The number of cells in the cluster.
+- n_cells - Integer. The number of cells in the cluster.

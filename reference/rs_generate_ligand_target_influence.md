@@ -19,19 +19,20 @@ rs_generate_ligand_target_influence(
 
 - ligand_seeds:
 
-  List. Contains the indices of the seeds, i.e., ligands.
+  List of integer vectors. The 0-indexed seed node(s) per ligand or
+  ligand combination.
 
 - ppi_network:
 
   Named list. Contains the PPI network with the ligand to receptor to
-  signalling to TFs. Must contain from (indices), to (indices), and edge
-  weights.
+  signalling to TFs. Must contain `from` and `to` (0-indexed node
+  indices) and `weight`.
 
 - grn_network:
 
   Named list. Contains the gene regulatory network with the TF to target
-  gene network. Must contain from (indices), to (indices), and edge
-  weights.
+  gene network. Must contain `from` and `to` (0-indexed node indices)
+  and `weight`.
 
 - n_nodes:
 
@@ -39,9 +40,9 @@ rs_generate_ligand_target_influence(
 
 - params:
 
-  Named list.
+  Named list. The ligand-target diffusion parameters.
 
 ## Value
 
-A dense matrix of ligands x genes that contains the influence scores of
-each
+A dense matrix of ligands x `n_nodes`, rows in `ligand_seeds` order,
+with the ligand to target influence scores.

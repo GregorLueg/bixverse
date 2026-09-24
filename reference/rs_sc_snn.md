@@ -14,12 +14,12 @@ rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 - knn_mat:
 
   Integer matrix. Rows represent cells and the columns represent the
-  neighbours.
+  neighbours (0-indexed!).
 
 - snn_method:
 
   String. Which method to use to calculate the similarity. Choice of
-  `c("jaccard", "rank")`.
+  `c("jaccard", "rank")`; anything else errors.
 
 - limited_graph:
 
@@ -28,8 +28,7 @@ rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 
 - pruning:
 
-  Float. Below which value for the Jaccard similarity to prune the
-  weight to 0.
+  Float. Below which similarity value to prune the weight to 0.
 
 - verbose:
 
@@ -40,6 +39,8 @@ rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 
 A list with the following items:
 
-- edges - sNN edges as edge pairs.
+- edges - Integer vector with the flattened sNN edge pairs (1-indexed!),
+  ready for
+  [`igraph::add_edges()`](https://r.igraph.org/reference/add_edges.html).
 
 - weights - sNN weights of the pairs above.

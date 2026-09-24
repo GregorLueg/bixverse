@@ -10,7 +10,7 @@ params_pca_defaults()
 
 ## Value
 
-A list with the following parameters for PCA.
+A named list with the following elements:
 
 - no_pcs - Integer. Number of PCs to consider. Defaults to `30L`.
 
@@ -22,4 +22,4 @@ A list with the following parameters for PCA.
   are used to solve the sparse SVD. With `random_svd = TRUE`, the sparse
   initial matrix is multiplied with the random matrix, yielding a much
   smaller dense matrix that does not increase the memory pressure
-  massively.
+  massively. Defaults to `FALSE`.

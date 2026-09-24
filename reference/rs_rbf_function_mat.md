@@ -1,7 +1,7 @@
 # Apply a Radial Basis Function (to a matrix)
 
 **\[experimental\]** Applies a radial basis function (RBF) to a given
-distance matrix. Has at the option to apply a Gaussian, Bump or Inverse
+distance matrix. Has the option to apply a Gaussian, Bump or Inverse
 Quadratic RBF.
 
 ## Usage
@@ -14,8 +14,7 @@ rs_rbf_function_mat(x, epsilon, rbf_type)
 
 - x:
 
-  Numeric Matrix. The distances you wish to apply the Gaussian kernel
-  onto.
+  Numeric Matrix. The distances you wish to apply the RBF onto.
 
 - epsilon:
 
@@ -24,6 +23,7 @@ rs_rbf_function_mat(x, epsilon, rbf_type)
 - rbf_type:
 
   String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+  Other values raise an error.
 
 ## Value
 

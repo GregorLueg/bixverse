@@ -15,7 +15,7 @@ separation indicates how well the different metacells span the manifold."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,9 @@ separation indicates how well the different metacells span the manifold."><meta 
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -56,7 +59,9 @@ separation indicates how well the different metacells span the manifold."><meta 
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -144,12 +149,12 @@ separation indicates how well the different metacells span the manifold.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mc</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"compactness"</span>, <span class="st">"separation"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    compactness separation</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;num&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  0.02674035 0.17462617</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  0.03287052 0.15380448</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  0.01897743 0.22679596</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:  0.04910118 0.27503037</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:  0.03481250 0.04071459</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  0.01309141 0.17024054</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  0.02674035 0.17462616</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  0.03287054 0.15380450</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  0.01897744 0.22679588</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:  0.04910120 0.27503031</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:  0.03481251 0.04071457</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  0.01309142 0.17024069</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

@@ -1,6 +1,8 @@
 # Calculates the Gower distance for a given matrix
 
-**\[experimental\]**
+**\[experimental\]** Calculates the pairwise Gower distance between the
+rows. Continuous columns contribute the range-normalised absolute
+difference, categorical columns a simple mismatch.
 
 ## Usage
 
@@ -13,12 +15,13 @@ rs_gower_dist(x, is_cat)
 - x:
 
   Numerical matrix. Converted matrix of continuous and categorical
-  variables as numerical values.
+  variables as numerical values. Rows = samples, columns = features.
 
 - is_cat:
 
-  Boolean. Which of the columns represent categorical values.
+  Logical vector of length `ncol(x)`. Which of the columns represent
+  categorical values.
 
 ## Value
 
-The Gower distance matrix between the rows
+The Gower distance matrix between the rows, values in `[0, 1]`.

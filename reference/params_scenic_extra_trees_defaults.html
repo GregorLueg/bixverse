@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -99,16 +104,12 @@
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the following parameters:</p><ul><li><p>n_trees - Integer. Number of trees to build. Defaults to <code>500L</code>.</p></li>
-<li><p>min_samples_leaf - Integer. Minimum number of samples required at a
-leaf node. Defaults to <code>50L</code>.</p></li>
-<li><p>n_features_split - Integer. Number of features considered per split.
-<code>0L</code> resolves to <code>sqrt(n_features)</code> at runtime. Defaults to <code>0L</code>.</p></li>
-<li><p>n_thresholds - Integer. Number of random thresholds to evaluate per
-feature per node. Defaults to <code>1L</code>.</p></li>
-<li><p>max_depth - Integer. Maximum depth of each tree. Defaults to <code>8L</code>.</p></li>
-<li><p>subsample_frac - Optional numeric. Fraction of cells to subsample per
-tree. Defaults to <code>NULL</code>.</p></li>
+    <p>A named list with the following elements:</p><ul><li><p>n_trees - Any. TODO Defaults to <code>500L</code>.</p></li>
+<li><p>min_samples_leaf - Any. TODO Defaults to <code>50L</code>.</p></li>
+<li><p>n_features_split - Any. TODO Defaults to <code>0L</code>.</p></li>
+<li><p>n_thresholds - Any. TODO Defaults to <code>1L</code>.</p></li>
+<li><p>max_depth - Any. TODO Defaults to <code>8L</code>.</p></li>
+<li><p>subsample_frac - Any. TODO Defaults to <code>NULL</code>.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

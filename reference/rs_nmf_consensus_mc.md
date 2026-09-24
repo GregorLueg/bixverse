@@ -4,7 +4,9 @@
 components, drops unstable ones by local density, k-means clusters the
 survivors and refits the partner factor against the per-cluster median.
 Assumes that the sparse data is pre-filtered for the cells/genes you
-wish to include. Indices in the sparse data need to be 0-indexed.
+wish to include. Indices in the sparse data need to be 0-indexed. Both
+data layers hold the supplied values, so which assay NMF runs on is
+decided by what is passed in, not by `use_second_layer`.
 
 ## Usage
 
@@ -27,7 +29,7 @@ rs_nmf_consensus_mc(
 - sparse_data:
 
   A named list with `data`, `indptr`, `indices`, `nrow`, `ncol` and
-  `format`.
+  `cs_type`. Shape is (metacells, genes).
 
 - k:
 
@@ -39,16 +41,19 @@ rs_nmf_consensus_mc(
 
 - use_second_layer:
 
-  Boolean. If `TRUE`, runs NMF on normalised counts.
+  Boolean. Shall the second data layer be used.
 
 - nmf_hals_params:
 
-  Named list. Contains the NMF parameters. The `nmf_init` field is
-  ignored, restarts always use random initialisation.
+  Named list. Contains the NMF parameters, see
+  [`params_nmf_hals()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.md).
+  The `nmf_init` field is ignored, restarts always use random
+  initialisation.
 
 - nmf_consensus_params:
 
-  Named list. Contains the consensus parameters.
+  Named list. Contains the consensus parameters, see
+  [`params_nmf_consensus()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_consensus.md).
 
 - n_runs:
 

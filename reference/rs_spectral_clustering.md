@@ -1,7 +1,8 @@
 # Rust implementation of spectral clustering
 
 **\[experimental\]** This version can take in data as is and will
-calculate the distance matrix internally.
+calculate the distance matrix internally and convert it into
+similarities with a Gaussian RBF.
 
 ## Usage
 
@@ -26,7 +27,9 @@ rs_spectral_clustering(
 
 - distance_type:
 
-  String. One of `c("euclidean", "manhattan", "canberra", "cosine")`.
+  String. One of
+  `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`.
+  Unknown strings raise an error.
 
 - epsilon:
 
@@ -51,4 +54,4 @@ rs_spectral_clustering(
 
 ## Value
 
-A vector with the membership of the samples
+A vector with the 1-based cluster membership of the samples.

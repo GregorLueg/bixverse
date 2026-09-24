@@ -20,7 +20,7 @@ rs_calc_gsea_stat_cumulative_batch(
 
 - stats:
 
-  Numeric vector. The gene level statistic. Needs to sorted in
+  Numeric vector. The gene level statistic. Needs to be sorted in
   descending nature.
 
 - pathway_scores:
@@ -63,7 +63,7 @@ List with the following elements
 
 - size Pathway size.
 
-If `return_add_stats` is set to true, there is additional elements in
+If `return_add_stats` is set to `TRUE`, there are additional elements in
 the list:
 
 - le_zero Number of times the permutation was less than zero.

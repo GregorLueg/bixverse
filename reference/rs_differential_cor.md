@@ -15,19 +15,21 @@ rs_differential_cor(x_a, x_b, spearman)
 
 - x_a:
 
-  R matrix a to be used for the differential correlation analysis.
+  Numeric matrix a, samples x features.
 
 - x_b:
 
-  R matrix a to be used for the differential correlation analysis.
+  Numeric matrix b, samples x features. Needs the same number of columns
+  as `x_a`.
 
 - spearman:
 
-  Shall the Spearman correlation be calculated instead of Pearson.
+  Boolean. Shall the Spearman correlation be calculated instead of
+  Pearson.
 
 ## Value
 
-A list containing:
+A list containing, one entry per upper-triangle feature pair:
 
 - r_a - The correlation coefficients in the upper triangle of matrix a.
 
@@ -35,4 +37,4 @@ A list containing:
 
 - z_score - The z-scores of the difference in correlation coefficients.
 
-- p_val - The z-scores transformed to p-values.
+- p_val - The z-scores transformed to two-sided p-values.

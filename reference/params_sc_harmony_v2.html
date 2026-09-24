@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -118,88 +123,129 @@
 
 
 <dl><dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Optional integer. Number of clusters for k-means clustering. If
-not provided, it will be automatically determined as
-<code>min(round(N / 30), 100)</code>.</p></dd>
+<dd><p>Integer or <code>NULL</code>. Number of clusters for k-means clustering. If not
+provided, it will be automatically determined as <code>min(round(N / 30), 100)</code>.
+Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>
 <dd><p>Numeric vector. Per-cluster diversity weights. Either a single
-value (broadcast to all clusters) or a vector of length k.</p></dd>
+value (broadcast to all clusters) or a vector of length k. Defaults to <code>0.1</code>.</p></dd>
 
 
 <dt id="arg-theta">theta<a class="anchor" aria-label="anchor" href="#arg-theta"></a></dt>
 <dd><p>Numeric vector. Per-variable diversity penalties. Either a
 single value (broadcast to all variables) or a vector of length equal to the
-number of batch variables.</p></dd>
+number of batch variables. Defaults to <code>2.0</code>.</p></dd>
 
 
 <dt id="arg-lambda">lambda<a class="anchor" aria-label="anchor" href="#arg-lambda"></a></dt>
 <dd><p>Numeric vector. Ridge regression penalty for the linear model.
 Typically a single value that is broadcast to all design matrix columns.
-Ignored when <code>use_dynamic_lambda = TRUE</code>.</p></dd>
+Ignored when <code>use_dynamic_lambda = TRUE</code>. Defaults to <code>1.0</code>.</p></dd>
 
 
 <dt id="arg-block-size">block_size<a class="anchor" aria-label="anchor" href="#arg-block-size"></a></dt>
 <dd><p>Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
-computation time.</p></dd>
+computation time. Defaults to <code>0.2</code>.</p></dd>
 
 
 <dt id="arg-max-iter-kmeans">max_iter_kmeans<a class="anchor" aria-label="anchor" href="#arg-max-iter-kmeans"></a></dt>
 <dd><p>Integer. Maximum number of k-means iterations per
-Harmony round.</p></dd>
+Harmony round. Defaults to <code>4L</code>.</p></dd>
 
 
 <dt id="arg-max-iter-harmony">max_iter_harmony<a class="anchor" aria-label="anchor" href="#arg-max-iter-harmony"></a></dt>
-<dd><p>Integer. Maximum number of Harmony outer iterations.</p></dd>
+<dd><p>Integer. Maximum number of Harmony outer iterations.
+Defaults to <code>10L</code>.</p></dd>
 
 
 <dt id="arg-epsilon-kmeans">epsilon_kmeans<a class="anchor" aria-label="anchor" href="#arg-epsilon-kmeans"></a></dt>
 <dd><p>Numeric. Convergence threshold for k-means clustering.
-Stops when the relative change in cluster assignments falls below this value.</p></dd>
+Stops when the relative change in cluster assignments falls below this value.
+Defaults to <code>0.001</code>.</p></dd>
 
 
 <dt id="arg-epsilon-harmony">epsilon_harmony<a class="anchor" aria-label="anchor" href="#arg-epsilon-harmony"></a></dt>
 <dd><p>Numeric. Convergence threshold for Harmony. Stops when
-the relative change in the objective function falls below this value.</p></dd>
+the relative change in the objective function falls below this value.
+Defaults to <code>0.01</code>.</p></dd>
 
 
 <dt id="arg-window-size">window_size<a class="anchor" aria-label="anchor" href="#arg-window-size"></a></dt>
 <dd><p>Integer. Number of previous iterations to consider when
-checking convergence.</p></dd>
+checking convergence. Defaults to <code>3L</code>.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
 <dd><p>Numeric. Scaling factor for dynamic lambda estimation. Must be
-in (0, 1). Only relevant when <code>use_dynamic_lambda = TRUE</code>.</p></dd>
+in (0, 1). Only relevant when <code>use_dynamic_lambda = TRUE</code>. Defaults to <code>0.2</code>.</p></dd>
 
 
 <dt id="arg-tau">tau<a class="anchor" aria-label="anchor" href="#arg-tau"></a></dt>
 <dd><p>Numeric. Scaling factor for theta based on batch size. A value of
-0 disables batch-size scaling of theta.</p></dd>
+0 disables batch-size scaling of theta. Defaults to <code>0.0</code>.</p></dd>
 
 
 <dt id="arg-batch-proportion-cutoff">batch_proportion_cutoff<a class="anchor" aria-label="anchor" href="#arg-batch-proportion-cutoff"></a></dt>
 <dd><p>Numeric. Cutoff for pruning batches with small
-proportions during ridge regression.</p></dd>
+proportions during ridge regression. Defaults to <code>1e-05</code>.</p></dd>
 
 
 <dt id="arg-use-dynamic-lambda">use_dynamic_lambda<a class="anchor" aria-label="anchor" href="#arg-use-dynamic-lambda"></a></dt>
 <dd><p>Boolean. If <code>TRUE</code>, lambda is estimated dynamically
-per cluster instead of using the fixed <code>lambda</code> value.</p></dd>
+per cluster instead of using the fixed <code>lambda</code> value. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-kmeans">kmeans<a class="anchor" aria-label="anchor" href="#arg-kmeans"></a></dt>
 <dd><p>List. Optional overrides for the k-means clustering algorithm
 Possible parameters are <code>"k_means_iter"</code>, <code>"k_means_init"</code>, <code>"gemm"</code> and
-<code>"hamerly"</code>, see <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>.</p></dd>
+<code>"hamerly"</code>, see <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>. See <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>
+for the available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>k - Integer or <code>NULL</code>. Number of clusters for k-means clustering. If
+not provided, it will be automatically determined as <code>min(round(N / 30), 100)</code>. Defaults to <code>NULL</code>.</p></li>
+<li><p>sigma - Numeric vector. Per-cluster diversity weights. Either a single
+value (broadcast to all clusters) or a vector of length k. Defaults to
+<code>0.1</code>.</p></li>
+<li><p>theta - Numeric vector. Per-variable diversity penalties. Either a
+single value (broadcast to all variables) or a vector of length equal to the
+number of batch variables. Defaults to <code>2.0</code>.</p></li>
+<li><p>lambda - Numeric vector. Ridge regression penalty for the linear
+model. Typically a single value that is broadcast to all design matrix
+columns. Ignored when <code>use_dynamic_lambda = TRUE</code>. Defaults to <code>1.0</code>.</p></li>
+<li><p>block_size - Numeric. Fraction of cells to update per block during
+optimisation (0.0-1.0). Lower values reduce memory usage but increase
+computation time. Defaults to <code>0.2</code>.</p></li>
+<li><p>max_iter_kmeans - Integer. Maximum number of k-means iterations per
+Harmony round. Defaults to <code>4L</code>.</p></li>
+<li><p>max_iter_harmony - Integer. Maximum number of Harmony outer
+iterations. Defaults to <code>10L</code>.</p></li>
+<li><p>epsilon_kmeans - Numeric. Convergence threshold for k-means
+clustering. Stops when the relative change in cluster assignments falls
+below this value. Defaults to <code>0.001</code>.</p></li>
+<li><p>epsilon_harmony - Numeric. Convergence threshold for Harmony. Stops
+when the relative change in the objective function falls below this value.
+Defaults to <code>0.01</code>.</p></li>
+<li><p>window_size - Integer. Number of previous iterations to consider when
+checking convergence. Defaults to <code>3L</code>.</p></li>
+<li><p>alpha - Numeric. Scaling factor for dynamic lambda estimation. Must be
+in (0, 1). Only relevant when <code>use_dynamic_lambda = TRUE</code>. Defaults to
+<code>0.2</code>.</p></li>
+<li><p>tau - Numeric. Scaling factor for theta based on batch size. A value
+of 0 disables batch-size scaling of theta. Defaults to <code>0.0</code>.</p></li>
+<li><p>batch_proportion_cutoff - Numeric. Cutoff for pruning batches with
+small proportions during ridge regression. Defaults to <code>1e-05</code>.</p></li>
+<li><p>use_dynamic_lambda - Boolean. If <code>TRUE</code>, lambda is estimated
+dynamically per cluster instead of using the fixed <code>lambda</code> value. Defaults
+to <code>FALSE</code>.</p></li>
+<li><p>The elements of <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>, overridden by <code>kmeans</code>,
+spliced in at this position.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

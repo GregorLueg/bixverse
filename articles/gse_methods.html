@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -76,7 +79,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -121,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-06</p>
+      <p class="date">2026-09-24</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -278,7 +283,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.168 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.649 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -375,7 +380,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.271 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.772 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -566,8 +571,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.209884 2.339467 2.495893 2.518937 2.536158 2.875021     5</span></span>
-<span><span class="co">#&gt;   rust 1.462361 1.467389 1.474873 1.472826 1.475919 1.495869     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.898659 3.056003 3.281289 3.351422 3.385161 3.715201     5</span></span>
+<span><span class="co">#&gt;   rust 2.150215 2.156587 2.167708 2.161272 2.184153 2.186312     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -673,10 +678,10 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr        min         lq      mean     median         uq       max</span></span>
-<span><span class="co">#&gt;       fgsea 1439.09966 1465.74932 1492.9116 1469.84666 1536.48756 1553.3750</span></span>
-<span><span class="co">#&gt;  blitz_cold  642.36221  644.98215  647.1558  645.63802  649.71179  653.0848</span></span>
-<span><span class="co">#&gt;  blitz_warm   10.95529   12.67466   12.5824   12.73331   12.86415   13.6846</span></span>
+<span><span class="co">#&gt;        expr        min         lq      mean     median         uq        max</span></span>
+<span><span class="co">#&gt;       fgsea 2168.93552 2171.19554 2174.8050 2174.71900 2174.75508 2184.41988</span></span>
+<span><span class="co">#&gt;  blitz_cold  889.12332  890.88379  893.7227  894.31068  895.48095  898.81495</span></span>
+<span><span class="co">#&gt;  blitz_warm   13.12132   13.87871   13.9593   13.96636   14.27158   14.55854</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span>
@@ -714,12 +719,12 @@
 <span><span class="co">#&gt; 6: GO:0072675 -0.8744512 -1.865588     6 0.0005371770              0</span></span>
 <span><span class="co">#&gt;                                                                                               leading_edge</span></span>
 <span><span class="co">#&gt;                                                                                                     &lt;list&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                         ENSG00000110844,ENSG00000180370,ENSG00000160685</span></span>
-<span><span class="co">#&gt; 2:  ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...[7]</span></span>
-<span><span class="co">#&gt; 3: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...[19]</span></span>
-<span><span class="co">#&gt; 4:  ENSG00000023516,ENSG00000136011,ENSG00000198821,ENSG00000239080,ENSG00000280498,ENSG00000173442,...[9]</span></span>
-<span><span class="co">#&gt; 5:  ENSG00000197540,ENSG00000176732,ENSG00000196109,ENSG00000144230,ENSG00000152642,ENSG00000079385,...[8]</span></span>
-<span><span class="co">#&gt; 6:                                                                                         ENSG00000170613</span></span>
+<span><span class="co">#&gt; 1:                                                         ENSG00000158290,ENSG00000167986,ENSG00000143476</span></span>
+<span><span class="co">#&gt; 2:  ENSG00000111012,ENSG00000140459,ENSG00000160882,ENSG00000186684,ENSG00000006534,ENSG00000122787,...[7]</span></span>
+<span><span class="co">#&gt; 3: ENSG00000205495,ENSG00000004139,ENSG00000183269,ENSG00000007372,ENSG00000084093,ENSG00000105993,...[19]</span></span>
+<span><span class="co">#&gt; 4:  ENSG00000182310,ENSG00000163357,ENSG00000183560,ENSG00000165457,ENSG00000110195,ENSG00000174529,...[9]</span></span>
+<span><span class="co">#&gt; 5:  ENSG00000090905,ENSG00000123908,ENSG00000159388,ENSG00000070756,ENSG00000125107,ENSG00000128016,...[8]</span></span>
+<span><span class="co">#&gt; 6:                                                                                         ENSG00000110651</span></span>
 <span><span class="co">#&gt;      log2err       fdr</span></span>
 <span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: 0.5188481 0.6767902</span></span>

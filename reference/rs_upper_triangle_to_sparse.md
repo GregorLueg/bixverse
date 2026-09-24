@@ -1,7 +1,8 @@
 # Generate sparse data from an upper triangle
 
 **\[experimental\]** This function takes the values from an upper
-triangle matrix the shift and the nrows/ncols and returns a list.
+triangle matrix, the shift and the nrows/ncols and returns the full
+symmetric matrix as a compressed sparse list.
 
 ## Usage
 
@@ -17,8 +18,8 @@ rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 
 - shift:
 
-  Boolean. Was the matrix shifted up (false = diagonal included; true
-  diagonal not incldued).
+  Boolean. Was the matrix shifted up (`FALSE` = diagonal included;
+  `TRUE` = diagonal not included).
 
 - n:
 
@@ -26,15 +27,21 @@ rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 
 - cs_type:
 
-  String. One of `c("csr", "csc")`. Which type of list to return.
+  String. One of `c("csr", "csc")`. Which type of list to return. Other
+  values raise an error.
 
 ## Value
 
 A list containing:
 
-- data - A vector of lists with the elements. (Related to the way Robj
-  are stored in Rust.)
+- data - Numeric vector with the non-zero values.
 
-- row_indices - A vector of integers with the row indices.
+- indptr - Integer vector with the index pointers.
 
-- col_ptr - A vector of integers with the column pointers.
+- indices - Integer vector with the 0-based indices.
+
+- nrow - Number of rows.
+
+- ncol - Number of columns.
+
+- cs_type - `"csr"` or `"csc"`.

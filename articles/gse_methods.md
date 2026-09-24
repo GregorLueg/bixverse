@@ -208,7 +208,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.168 sec elapsed
+#> 1.649 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -333,7 +333,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.271 sec elapsed
+#> 1.772 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -553,8 +553,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.209884 2.339467 2.495893 2.518937 2.536158 2.875021     5
-#>   rust 1.462361 1.467389 1.474873 1.472826 1.475919 1.495869     5
+#>  fgsea 2.898659 3.056003 3.281289 3.351422 3.385161 3.715201     5
+#>   rust 2.150215 2.156587 2.167708 2.161272 2.184153 2.186312     5
 ```
 
 ## blitzGSEA
@@ -681,10 +681,10 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: milliseconds
-#>        expr        min         lq      mean     median         uq       max
-#>       fgsea 1439.09966 1465.74932 1492.9116 1469.84666 1536.48756 1553.3750
-#>  blitz_cold  642.36221  644.98215  647.1558  645.63802  649.71179  653.0848
-#>  blitz_warm   10.95529   12.67466   12.5824   12.73331   12.86415   13.6846
+#>        expr        min         lq      mean     median         uq        max
+#>       fgsea 2168.93552 2171.19554 2174.8050 2174.71900 2174.75508 2184.41988
+#>  blitz_cold  889.12332  890.88379  893.7227  894.31068  895.48095  898.81495
+#>  blitz_warm   13.12132   13.87871   13.9593   13.96636   14.27158   14.55854
 #>  neval
 #>      5
 #>      5
@@ -741,12 +741,12 @@ head(go_gsea_res)
 #> 6: GO:0072675 -0.8744512 -1.865588     6 0.0005371770              0
 #>                                                                                               leading_edge
 #>                                                                                                     <list>
-#> 1:                                                         ENSG00000110844,ENSG00000180370,ENSG00000160685
-#> 2:  ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...[7]
-#> 3: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...[19]
-#> 4:  ENSG00000023516,ENSG00000136011,ENSG00000198821,ENSG00000239080,ENSG00000280498,ENSG00000173442,...[9]
-#> 5:  ENSG00000197540,ENSG00000176732,ENSG00000196109,ENSG00000144230,ENSG00000152642,ENSG00000079385,...[8]
-#> 6:                                                                                         ENSG00000170613
+#> 1:                                                         ENSG00000158290,ENSG00000167986,ENSG00000143476
+#> 2:  ENSG00000111012,ENSG00000140459,ENSG00000160882,ENSG00000186684,ENSG00000006534,ENSG00000122787,...[7]
+#> 3: ENSG00000205495,ENSG00000004139,ENSG00000183269,ENSG00000007372,ENSG00000084093,ENSG00000105993,...[19]
+#> 4:  ENSG00000182310,ENSG00000163357,ENSG00000183560,ENSG00000165457,ENSG00000110195,ENSG00000174529,...[9]
+#> 5:  ENSG00000090905,ENSG00000123908,ENSG00000159388,ENSG00000070756,ENSG00000125107,ENSG00000128016,...[8]
+#> 6:                                                                                         ENSG00000110651
 #>      log2err       fdr
 #>        <num>     <num>
 #> 1: 0.5188481 0.6767902

@@ -58,7 +58,7 @@ rs_sc_pca_sparse(
 
 ## Value
 
-A list with with the following items
+A list with the following items
 
 - scores - The samples projected on the PCA space (solved via sparse
   SVD).

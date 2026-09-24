@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -109,34 +114,50 @@
 
 <dl><dt id="arg-denoise-counts">denoise_counts<a class="anchor" aria-label="anchor" href="#arg-denoise-counts"></a></dt>
 <dd><p>Boolean. Run Step II (cell-to-cell technical noise
-removal).</p></dd>
+removal). Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-use-isotype-controls">use_isotype_controls<a class="anchor" aria-label="anchor" href="#arg-use-isotype-controls"></a></dt>
 <dd><p>Boolean. Include isotype controls in the noise
-matrix in Step II. Requires <code>isotype_indices</code> to be passed at call time.</p></dd>
+matrix in Step II. Requires <code>isotype_indices</code> to be passed at call time.
+Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-pseudocount">pseudocount<a class="anchor" aria-label="anchor" href="#arg-pseudocount"></a></dt>
-<dd><p>Numeric. Pseudocount added before the log transform.
-The DSB paper recommends <code>10</code> with empty droplets and <code>1</code> without.</p></dd>
+<dd><p>Numeric. Pseudocount added before the log transform. The
+DSB paper recommends <code>10</code> with empty droplets and <code>1</code> without. Defaults to
+<code>10.0</code>.</p></dd>
 
 
 <dt id="arg-quantile-low">quantile_low<a class="anchor" aria-label="anchor" href="#arg-quantile-low"></a></dt>
-<dd><p>Optional numeric in <code>[0, 1)</code>. Lower quantile for
-per-protein output clipping. If <code>NULL</code> (and <code>quantile_high</code> is also <code>NULL</code>),
-no clipping is applied.</p></dd>
+<dd><p>Numeric or <code>NULL</code>. Optional numeric in <code>[0, 1)</code>. Lower
+quantile for per-protein output clipping. If <code>NULL</code> (and <code>quantile_high</code> is
+also <code>NULL</code>), no clipping is applied. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-quantile-high">quantile_high<a class="anchor" aria-label="anchor" href="#arg-quantile-high"></a></dt>
-<dd><p>Optional numeric in <code>(0, 1]</code>. Upper quantile for
-per-protein output clipping. If <code>NULL</code> (and <code>quantile_low</code> is also <code>NULL</code>),
-no clipping is applied.</p></dd>
+<dd><p>Numeric or <code>NULL</code>. Optional numeric in <code>(0, 1]</code>. Upper
+quantile for per-protein output clipping. If <code>NULL</code> (and <code>quantile_low</code> is
+also <code>NULL</code>), no clipping is applied. Defaults to <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the parameters.</p>
+    <p>A named list with the following elements:</p><ul><li><p>denoise_counts - Boolean. Run Step II (cell-to-cell technical noise
+removal). Defaults to <code>TRUE</code>.</p></li>
+<li><p>use_isotype_controls - Boolean. Include isotype controls in the noise
+matrix in Step II. Requires <code>isotype_indices</code> to be passed at call time.
+Defaults to <code>TRUE</code>.</p></li>
+<li><p>pseudocount - Numeric. Pseudocount added before the log transform. The
+DSB paper recommends <code>10</code> with empty droplets and <code>1</code> without. Defaults to
+<code>10.0</code>.</p></li>
+<li><p>quantile_low - Numeric or <code>NULL</code>. Optional numeric in <code>[0, 1)</code>. Lower
+quantile for per-protein output clipping. If <code>NULL</code> (and <code>quantile_high</code> is
+also <code>NULL</code>), no clipping is applied. Defaults to <code>NULL</code>.</p></li>
+<li><p>quantile_high - Numeric or <code>NULL</code>. Optional numeric in <code>(0, 1]</code>. Upper
+quantile for per-protein output clipping. If <code>NULL</code> (and <code>quantile_low</code> is
+also <code>NULL</code>), no clipping is applied. Defaults to <code>NULL</code>.</p></li>
+</ul><p>[0, 1)<code>. Lower quantile for per-protein output clipping. If </code>NULL<code>(and</code>quantile_high<code>is also</code>NULL<code>), no clipping is applied. Defaults to </code>NULL<code>. \item quantile_high - Numeric or </code>NULL<code>. Optional numeric in </code>(0, 1]: R:0,%201)%60.%20Lower%0A%20quantile%20for%20per-protein%20output%20clipping.%20If%20%60NULL%60%20(and%20%60quantile_high%60%20is%0A%20also%20%60NULL%60),%20no%20clipping%20is%20applied.%20Defaults%20to%20%60NULL%60.%0A%20%5C%5Citem%20quantile_high%20-%20Numeric%20or%20%60NULL%60.%20Optional%20numeric%20in%20%60(0,%201</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

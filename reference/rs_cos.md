@@ -17,4 +17,4 @@ rs_cos(x)
 
 ## Value
 
-The correlation matrix.
+The cosine similarity matrix.

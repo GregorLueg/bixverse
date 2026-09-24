@@ -11,8 +11,7 @@ params_norm_doublets_defaults()
 
 ## Value
 
-A list with the following parameters for normalisation specifically
-designed for doublet detection methods:
+A named list with the following elements:
 
 - log_transform - Boolean. Shall the counts be log-normalised. Defaults
   to `TRUE`.
@@ -23,4 +22,4 @@ designed for doublet detection methods:
 - normalise_variance - Boolean. Shall the variance be normalised.
   Defaults to `FALSE`.
 
-- target_size - Target library size. Defaults to `1e6`
+- target_size - Numeric. Target library size. Defaults to `1000000.0`.

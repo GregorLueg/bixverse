@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -114,7 +119,7 @@
 
 
 <dl><dt id="arg-n-sea-cells">n_sea_cells<a class="anchor" aria-label="anchor" href="#arg-n-sea-cells"></a></dt>
-<dd><p>Integer. Number of SEA cells to detect.</p></dd>
+<dd><p>Integer. Number of SEA cells to detect. Required.</p></dd>
 
 
 <dt id="arg-max-fw-iters">max_fw_iters<a class="anchor" aria-label="anchor" href="#arg-max-fw-iters"></a></dt>
@@ -124,7 +129,7 @@ algorithm. Defaults to <code>50L</code>.</p></dd>
 
 <dt id="arg-convergence-epsilon">convergence_epsilon<a class="anchor" aria-label="anchor" href="#arg-convergence-epsilon"></a></dt>
 <dd><p>Numeric. Convergence threshold. Algorithm stops
-when RSS change &lt; epsilon * RSS(0). Defaults to <code>1e-3</code>.</p></dd>
+when RSS change &lt; epsilon * RSS(0). Defaults to <code>0.001</code>.</p></dd>
 
 
 <dt id="arg-max-iter">max_iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
@@ -152,13 +157,14 @@ updates. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-pruning-threshold">pruning_threshold<a class="anchor" aria-label="anchor" href="#arg-pruning-threshold"></a></dt>
-<dd><p>Float. If <code>pruning = TRUE</code> values below which
-threshold shall be pruned.</p></dd>
+<dd><p>Numeric. If <code>pruning = TRUE</code> values below which
+threshold shall be pruned. Defaults to <code>1e-07</code>.</p></dd>
 
 
 <dt id="arg-n-landmarks">n_landmarks<a class="anchor" aria-label="anchor" href="#arg-n-landmarks"></a></dt>
-<dd><p>Optional integer. If provided, it will use the Nystroem
-extension during the archetype finding. Useful for larger data sets.</p></dd>
+<dd><p>Integer or <code>NULL</code>. If provided, it will use the Nystroem
+extension during the archetype finding. Useful for larger data sets. Defaults
+to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
@@ -166,13 +172,34 @@ extension during the archetype finding. Useful for larger data sets.</p></dd>
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
 <code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>.</p></dd>
+<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the
+available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the SEACells parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>n_sea_cells - Integer. Number of SEA cells to detect. Required.</p></li>
+<li><p>max_fw_iters - Integer. Maximum iterations for the Franke-Wolfe
+algorithm. Defaults to <code>50L</code>.</p></li>
+<li><p>convergence_epsilon - Numeric. Convergence threshold. Algorithm stops
+when RSS change &lt; epsilon * RSS(0). Defaults to <code>0.001</code>.</p></li>
+<li><p>max_iter - Integer. Maximum iterations to run SEACells for. Defaults
+to <code>100L</code>.</p></li>
+<li><p>min_iter - Integer. Minimum iterations to run SEACells for. Defaults
+to <code>10L</code>.</p></li>
+<li><p>greedy_threshold - Integer. Maximum number of cells before defaulting
+to rapid random selection of archetypes. Defaults to <code>20000L</code>.</p></li>
+<li><p>graph_building - String. Graph building method. Defaults to <code>"union"</code>.</p></li>
+<li><p>pruning - Boolean. Shall tiny values be pruned during Franke-Wolfe
+updates. Defaults to <code>TRUE</code>.</p></li>
+<li><p>pruning_threshold - Numeric. If <code>pruning = TRUE</code> values below which
+threshold shall be pruned. Defaults to <code>1e-07</code>.</p></li>
+<li><p>n_landmarks - Integer or <code>NULL</code>. If provided, it will use the Nystroem
+extension during the archetype finding. Useful for larger data sets.
+Defaults to <code>NULL</code>.</p></li>
+<li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
+in at this position.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

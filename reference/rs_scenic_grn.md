@@ -38,7 +38,7 @@ rs_scenic_grn(
 
 - scenic_params:
 
-  Named list. Contains all of the parameters need for SCENIC.
+  Named list. Contains all of the parameters needed for SCENIC.
 
 - seed:
 

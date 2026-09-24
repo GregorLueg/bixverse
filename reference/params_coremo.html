@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -110,40 +115,61 @@
 
 
 <dl><dt id="arg-epsilon">epsilon<a class="anchor" aria-label="anchor" href="#arg-epsilon"></a></dt>
-<dd><p>Float. Epsilon parameter for the chosen RBF function, see
+<dd><p>Numeric. Epsilon parameter for the chosen RBF function, see
 <code>rbf_func</code>. The higher, the more aggressively low correlations will be
-shrunk.</p></dd>
+shrunk. Defaults to <code>2.0</code>.</p></dd>
 
 
-<dt id="arg-k-min-k-max">k_min, k_max<a class="anchor" aria-label="anchor" href="#arg-k-min-k-max"></a></dt>
+<dt id="arg-k-min">k_min<a class="anchor" aria-label="anchor" href="#arg-k-min"></a></dt>
 <dd><p>Integer. Minimum and maximum number of cuts to use for the
-hierarchical clustering.</p></dd>
+hierarchical clustering. Defaults to <code>2L</code>.</p></dd>
+
+
+<dt id="arg-k-max">k_max<a class="anchor" aria-label="anchor" href="#arg-k-max"></a></dt>
+<dd><p>Integer. Minimum and maximum number of cuts to use for the
+hierarchical clustering. Defaults to <code>150L</code>.</p></dd>
 
 
 <dt id="arg-min-size">min_size<a class="anchor" aria-label="anchor" href="#arg-min-size"></a></dt>
-<dd><p>Optional integer. Minimum size of the clusters. Smaller
-clusters will be combined together.</p></dd>
+<dd><p>Integer or <code>NULL</code>. Minimum size of the clusters. Smaller
+clusters will be combined together. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-junk-module-threshold">junk_module_threshold<a class="anchor" aria-label="anchor" href="#arg-junk-module-threshold"></a></dt>
-<dd><p>Float. Threshold for the minimum correlation
+<dd><p>Numeric. Threshold for the minimum correlation
 to be observed in a module. Defaults to <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-rbf-func">rbf_func<a class="anchor" aria-label="anchor" href="#arg-rbf-func"></a></dt>
 <dd><p>String. Type of RBF you wish to apply to down-weigh weak
-correlations. Defaults to <code>"gaussian"</code>.</p></dd>
+correlations. One of <code>c("gaussian", "inverse_quadratic", "bump")</code>. Defaults
+to <code>"gaussian"</code>.</p></dd>
 
 
 <dt id="arg-cor-method">cor_method<a class="anchor" aria-label="anchor" href="#arg-cor-method"></a></dt>
-<dd><p>String. The type of correlation to use. Defaults to
-<code>"spearman"</code>.</p></dd>
+<dd><p>String. The type of correlation to use. One of
+<code>c("spearman", "pearson")</code>. Defaults to <code>"spearman"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>List with parameters for usage in subsequent function.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>epsilon - Numeric. Epsilon parameter for the chosen RBF function, see
+<code>rbf_func</code>. The higher, the more aggressively low correlations will be
+shrunk. Defaults to <code>2.0</code>.</p></li>
+<li><p>k_min - Integer. Minimum and maximum number of cuts to use for the
+hierarchical clustering. Defaults to <code>2L</code>.</p></li>
+<li><p>k_max - Integer. Minimum and maximum number of cuts to use for the
+hierarchical clustering. Defaults to <code>150L</code>.</p></li>
+<li><p>min_size - Integer or <code>NULL</code>. Minimum size of the clusters. Smaller
+clusters will be combined together. Defaults to <code>NULL</code>.</p></li>
+<li><p>junk_module_threshold - Numeric. Threshold for the minimum correlation
+to be observed in a module. Defaults to <code>0.05</code>.</p></li>
+<li><p>rbf_func - String. Type of RBF you wish to apply to down-weigh weak
+correlations. One of <code>c("gaussian", "inverse_quadratic", "bump")</code>. Defaults
+to <code>"gaussian"</code>.</p></li>
+<li><p>cor_method - String. The type of correlation to use. One of
+<code>c("spearman", "pearson")</code>. Defaults to <code>"spearman"</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

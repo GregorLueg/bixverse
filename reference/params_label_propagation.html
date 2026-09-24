@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -99,7 +104,7 @@
 <span>  iter <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  tolerance <span class="op">=</span> <span class="fl">1e-06</span>,</span>
 <span>  symmetrise <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  symmetry_strategy <span class="op">=</span> <span class="st">"average"</span>,</span>
+<span>  symmetry_strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"average"</span>, <span class="st">"avg"</span>, <span class="st">"min"</span>, <span class="st">"max"</span><span class="op">)</span>,</span>
 <span>  max_hops <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -119,30 +124,45 @@ labelled nodes more strongly to their original label. Defaults to <code>0.9</cod
 
 <dt id="arg-tolerance">tolerance<a class="anchor" aria-label="anchor" href="#arg-tolerance"></a></dt>
 <dd><p>Numeric. Convergence threshold. Stops early if the maximum
-change across all nodes falls below this value. Defaults to <code>1e-6</code>.</p></dd>
+change across all nodes falls below this value. Defaults to <code>1e-06</code>.</p></dd>
 
 
 <dt id="arg-symmetrise">symmetrise<a class="anchor" aria-label="anchor" href="#arg-symmetrise"></a></dt>
-<dd><p>Logical. Whether to symmetrise the graph. Defaults to
+<dd><p>Boolean. Whether to symmetrise the graph. Defaults to
 <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-symmetry-strategy">symmetry_strategy<a class="anchor" aria-label="anchor" href="#arg-symmetry-strategy"></a></dt>
-<dd><p>Character. Strategy to resolve weight conflicts when
-symmetrising. One of <code>"average"</code>, <code>"min"</code>, or <code>"max"</code>. Only relevant when
-<code>symmetrise = TRUE</code> and edge weights are provided. Defaults to <code>"average"</code>.</p></dd>
+<dd><p>String. Strategy to resolve weight conflicts when
+symmetrising. Only relevant when <code>symmetrise = TRUE</code> and edge weights are
+provided. One of <code>c("average", "avg", "min", "max")</code>. Defaults to
+<code>"average"</code>.</p></dd>
 
 
 <dt id="arg-max-hops">max_hops<a class="anchor" aria-label="anchor" href="#arg-max-hops"></a></dt>
-<dd><p>Integer or NULL. If provided, restricts label spreading to
+<dd><p>Integer or <code>NULL</code>. If provided, restricts label spreading to
 nodes within this many hops of any labelled node. Nodes beyond this limit
 remain all-zeroes. Defaults to <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list of label propagation parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>alpha - Numeric. Controls the spreading strength. Higher values anchor
+labelled nodes more strongly to their original label. Defaults to <code>0.9</code>.</p></li>
+<li><p>iter - Integer. Maximum number of iterations to run. Defaults to
+<code>100L</code>.</p></li>
+<li><p>tolerance - Numeric. Convergence threshold. Stops early if the maximum
+change across all nodes falls below this value. Defaults to <code>1e-06</code>.</p></li>
+<li><p>symmetrise - Boolean. Whether to symmetrise the graph. Defaults to
+<code>TRUE</code>.</p></li>
+<li><p>symmetry_strategy - String. Strategy to resolve weight conflicts when
+symmetrising. Only relevant when <code>symmetrise = TRUE</code> and edge weights are
+provided. One of <code>c("average", "avg", "min", "max")</code>. Defaults to
+<code>"average"</code>.</p></li>
+<li><p>max_hops - Integer or <code>NULL</code>. If provided, restricts label spreading
+to nodes within this many hops of any labelled node. Nodes beyond this limit
+remain all-zeroes. Defaults to <code>NULL</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

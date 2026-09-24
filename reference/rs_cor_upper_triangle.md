@@ -21,11 +21,10 @@ rs_cor_upper_triangle(x, spearman, shift)
 
 - shift:
 
-  Boolean. If you applied a shift, i.e. included the diagonal values. If
-  `true`, assumes the diagonal values are `1`, otherwise derives them
-  from the data.
+  Boolean. If `TRUE`, the diagonal is excluded, otherwise it is
+  included.
 
 ## Value
 
 The upper triangle of the correlation matrix iterating through the rows,
-shifted by one (the diagonal will not be returned).
+with or without the diagonal depending on `shift`.

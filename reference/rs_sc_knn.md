@@ -37,5 +37,6 @@ rs_sc_knn(embd, knn_params, validate_index, verbose, seed)
 
 ## Value
 
-A integer matrix of N x k with N being the number of cells and k the
-number of neighbours.
+An integer matrix of N x k with the neighbour indices (0-indexed!), N
+being the number of cells and k the number of neighbours. Rows the
+search left short are padded by repeating their last neighbour.

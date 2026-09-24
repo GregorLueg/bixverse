@@ -27,57 +27,100 @@ params_lda(
 
 - alpha:
 
-  Float. Dirichlet prior on the document-topic distributions.
+  Numeric. Dirichlet prior on the document-topic distributions. Defaults
+  to `50.0`.
 
 - alpha_by_topic:
 
-  Boolean. Shall `alpha` be divided by the topic count.
+  Boolean. Shall `alpha` be divided by the topic count. Defaults to
+  `TRUE`.
 
 - eta:
 
-  Float. Dirichlet prior on the topic-term distributions.
+  Numeric. Dirichlet prior on the topic-term distributions. Defaults to
+  `0.1`.
 
 - eta_by_topic:
 
-  Boolean. Shall `eta` be divided by the topic count.
+  Boolean. Shall `eta` be divided by the topic count. Defaults to
+  `FALSE`.
 
 - max_iter:
 
   Integer. Maximum outer iterations. Ignored by the online variant,
-  which counts epochs instead.
+  which counts epochs instead. Defaults to `150L`.
 
 - tol:
 
-  Float. Relative change in the bound below which the solver stops.
+  Numeric. Relative change in the bound below which the solver stops.
+  Defaults to `0.001`.
 
 - inner_max_iter:
 
   Integer. Maximum fixed-point iterations of the per-document E-step.
+  Defaults to `100L`.
 
 - inner_tol:
 
-  Float. Relative L1 change in the variational parameters below which
-  the per-document E-step stops.
+  Numeric. Relative L1 change in the variational parameters below which
+  the per-document E-step stops. Defaults to `0.001`.
 
 - check_every:
 
-  Integer. Iterations between bound evaluations.
+  Integer. Iterations between bound evaluations. Defaults to `10L`.
 
 - learning:
 
-  String. One of `c("batch", "online")`.
+  String. Batch or online variational inference. One of
+  `c("batch", "online")`. Defaults to `"batch"`.
 
 - batch_size:
 
-  Integer. Documents per mini-batch. Online only.
+  Integer. Documents per mini-batch. Online only. Defaults to `1024L`.
 
 - n_epochs:
 
-  Integer. Passes over the corpus. Online only.
+  Integer. Passes over the corpus. Online only. Defaults to `10L`.
 
 ## Value
 
-A list with the LDA parameters.
+A named list with the following elements:
+
+- alpha - Numeric. Dirichlet prior on the document-topic distributions.
+  Defaults to `50.0`.
+
+- alpha_by_topic - Boolean. Shall `alpha` be divided by the topic count.
+  Defaults to `TRUE`.
+
+- eta - Numeric. Dirichlet prior on the topic-term distributions.
+  Defaults to `0.1`.
+
+- eta_by_topic - Boolean. Shall `eta` be divided by the topic count.
+  Defaults to `FALSE`.
+
+- max_iter - Integer. Maximum outer iterations. Ignored by the online
+  variant, which counts epochs instead. Defaults to `150L`.
+
+- tol - Numeric. Relative change in the bound below which the solver
+  stops. Defaults to `0.001`.
+
+- inner_max_iter - Integer. Maximum fixed-point iterations of the
+  per-document E-step. Defaults to `100L`.
+
+- inner_tol - Numeric. Relative L1 change in the variational parameters
+  below which the per-document E-step stops. Defaults to `0.001`.
+
+- check_every - Integer. Iterations between bound evaluations. Defaults
+  to `10L`.
+
+- learning - String. Batch or online variational inference. One of
+  `c("batch", "online")`. Defaults to `"batch"`.
+
+- batch_size - Integer. Documents per mini-batch. Online only. Defaults
+  to `1024L`.
+
+- n_epochs - Integer. Passes over the corpus. Online only. Defaults to
+  `10L`.
 
 ## Details
 

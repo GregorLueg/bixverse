@@ -39,10 +39,13 @@ rs_sc_knn_w_dist(embd, knn_params, validate_index, verbose, seed)
 
 A list with:
 
-- indices - An integer matrix representing the indices of the
-  approximate nearest neighbours.
+- indices - An integer matrix (cells x k) representing the indices
+  (0-indexed!) of the approximate nearest neighbours.
 
-- dist - An numerical matrix representing the distances to the nearest
-  neighbours.
+- dist - A numerical matrix (cells x k) representing the distances to
+  the nearest neighbours.
 
 - dist_metric - String representing the used distance metric.
+
+Rows the search left short are padded by repeating their last neighbour
+and distance.

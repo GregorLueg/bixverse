@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -110,42 +115,61 @@
 
 
 <dl><dt id="arg-max-nodes">max_nodes<a class="anchor" aria-label="anchor" href="#arg-max-nodes"></a></dt>
-<dd><p>Integer. Maximum number of nodes in a given community.</p></dd>
+<dd><p>Integer. Maximum number of nodes in a given community.
+Defaults to <code>300L</code>.</p></dd>
 
 
 <dt id="arg-min-nodes">min_nodes<a class="anchor" aria-label="anchor" href="#arg-min-nodes"></a></dt>
-<dd><p>Integer. Minimum number of nodes in a given community.</p></dd>
+<dd><p>Integer. Minimum number of nodes in a given community.
+Defaults to <code>10L</code>.</p></dd>
 
 
 <dt id="arg-min-seed-nodes">min_seed_nodes<a class="anchor" aria-label="anchor" href="#arg-min-seed-nodes"></a></dt>
 <dd><p>Integer. Minimum number of seed nodes within a
-community.</p></dd>
+community. Defaults to <code>2L</code>.</p></dd>
 
 
 <dt id="arg-initial-res">initial_res<a class="anchor" aria-label="anchor" href="#arg-initial-res"></a></dt>
-<dd><p>Float. Initial resolution parameter to start with.</p></dd>
+<dd><p>Numeric. Initial resolution parameter to start with.
+Defaults to <code>0.5</code>.</p></dd>
 
 
 <dt id="arg-threshold-type">threshold_type<a class="anchor" aria-label="anchor" href="#arg-threshold-type"></a></dt>
-<dd><p>String. One of <code>c("prop_based", "pval_based")</code>.
-You can chose to include a certain proportion of the network with the highest
-diffusion scores, or use p-values based on permutations.</p></dd>
+<dd><p>String. You can chose to include a certain proportion
+of the network with the highest diffusion scores, or use p-values based on
+permutations. One of <code>c("prop_based", "pval_based")</code>. Defaults to
+<code>"prop_based"</code>.</p></dd>
 
 
 <dt id="arg-network-threshold">network_threshold<a class="anchor" aria-label="anchor" href="#arg-network-threshold"></a></dt>
-<dd><p>Float. The proportion of the network to include.
-Used if <code>threshold_type = "prop_based"</code>.</p></dd>
+<dd><p>Numeric. The proportion of the network to include.
+Used if <code>threshold_type = "prop_based"</code>. Defaults to <code>0.5</code>.</p></dd>
 
 
 <dt id="arg-pval-threshold">pval_threshold<a class="anchor" aria-label="anchor" href="#arg-pval-threshold"></a></dt>
-<dd><p>Float. The maximum p-value for nodes to be included.
-Used if <code>threshold_type = "pval_based"</code>.</p></dd>
+<dd><p>Numeric. The maximum p-value for nodes to be included.
+Used if <code>threshold_type = "pval_based"</code>. Defaults to <code>0.1</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>List with parameters for usage in subsequent function.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>max_nodes - Integer. Maximum number of nodes in a given community.
+Defaults to <code>300L</code>.</p></li>
+<li><p>min_nodes - Integer. Minimum number of nodes in a given community.
+Defaults to <code>10L</code>.</p></li>
+<li><p>min_seed_nodes - Integer. Minimum number of seed nodes within a
+community. Defaults to <code>2L</code>.</p></li>
+<li><p>initial_res - Numeric. Initial resolution parameter to start with.
+Defaults to <code>0.5</code>.</p></li>
+<li><p>threshold_type - String. You can chose to include a certain proportion
+of the network with the highest diffusion scores, or use p-values based on
+permutations. One of <code>c("prop_based", "pval_based")</code>. Defaults to
+<code>"prop_based"</code>.</p></li>
+<li><p>network_threshold - Numeric. The proportion of the network to include.
+Used if <code>threshold_type = "prop_based"</code>. Defaults to <code>0.5</code>.</p></li>
+<li><p>pval_threshold - Numeric. The maximum p-value for nodes to be
+included. Used if <code>threshold_type = "pval_based"</code>. Defaults to <code>0.1</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

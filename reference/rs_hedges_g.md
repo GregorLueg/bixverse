@@ -28,4 +28,8 @@ rs_hedges_g(mat_a, mat_b, small_sample_correction)
 
 ## Value
 
-Returns the harmonic sum according to the OT calculation.
+A list with the following items:
+
+- effect_sizes - Hedge's G effect size per feature.
+
+- standard_errors - Standard error of the effect size per feature.

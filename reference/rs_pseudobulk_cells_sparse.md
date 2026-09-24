@@ -2,8 +2,8 @@
 
 **\[experimental\]** This function will return a sparse matrix of
 `length(cell_indices_ls) x number of genes` (in list form in CSR). The
-function has the option to return the sum of the sum of the raw counts
-or the average of the normalised counts.
+function has the option to return the sum of the raw counts or the
+average of the normalised counts.
 
 ## Usage
 
@@ -19,12 +19,14 @@ rs_pseudobulk_cells_sparse(f_path, cell_indices_ls, assay, verbose)
 
 - cell_indices_ls:
 
-  List. Must contains 0-indexed positions of the cells to aggregate per
-  element.
+  List. Each element contains the 0-indexed positions of the cells to
+  aggregate.
 
 - assay:
 
-  String. One of `c("raw", "norm")`. Which counts to normalise.
+  String. One of `c("raw", "norm")`. `"raw"` sums the raw counts,
+  `"norm"` averages the normalised counts. Unrecognised values fall back
+  to `"raw"`.
 
 - verbose:
 
@@ -35,7 +37,7 @@ rs_pseudobulk_cells_sparse(f_path, cell_indices_ls, assay, verbose)
 
 A list with the following elements (easy to convert into CSR in R)
 
-- indptr - The index pointers (representing cells)
+- indptr - The index pointers (representing pseudo-bulked samples)
 
 - indices - The indices (representing genes)
 

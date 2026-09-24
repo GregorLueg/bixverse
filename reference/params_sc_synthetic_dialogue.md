@@ -24,38 +24,65 @@ params_sc_synthetic_dialogue(
 - n_samples:
 
   Integer. Samples the experiment spans. DIALOGUE needs at least 5.
+  Defaults to `14L`.
 
 - cells_per_sample:
 
-  Integer. Cells per sample per cell type.
+  Integer. Cells per sample per cell type. Defaults to `25L`.
 
 - n_cell_types:
 
-  Integer. Number of cell types. Must be at least 2.
+  Integer. Number of cell types. Must be at least 2. Defaults to `3L`.
 
 - n_features:
 
-  Integer. Feature columns per cell type. Must be at least 2.
+  Integer. Feature columns per cell type. Must be at least 2. Defaults
+  to `8L`.
 
 - n_sample_features:
 
   Integer. Feature columns carrying a per-sample component. The first of
   those is the shared programme, the rest are cell-type-specific
   nuisance; anything past this count is pure noise and exists so the
-  ANOVA filter has something to reject.
+  ANOVA filter has something to reject. Defaults to `5L`.
 
 - n_genes:
 
-  Integer. Number of genes.
+  Integer. Number of genes. Defaults to `400L`.
 
 - n_planted:
 
   Integer. Planted genes per cell type. The blocks are contiguous, so
-  `n_planted * n_cell_types` has to fit into `n_genes`.
+  `n_planted * n_cell_types` has to fit into `n_genes`. Defaults to
+  `8L`.
 
 ## Value
 
-A list with the parameters.
+A named list with the following elements:
+
+- n_samples - Integer. Samples the experiment spans. DIALOGUE needs at
+  least 5. Defaults to `14L`.
+
+- cells_per_sample - Integer. Cells per sample per cell type. Defaults
+  to `25L`.
+
+- n_cell_types - Integer. Number of cell types. Must be at least 2.
+  Defaults to `3L`.
+
+- n_features - Integer. Feature columns per cell type. Must be at
+  least 2. Defaults to `8L`.
+
+- n_sample_features - Integer. Feature columns carrying a per-sample
+  component. The first of those is the shared programme, the rest are
+  cell-type-specific nuisance; anything past this count is pure noise
+  and exists so the ANOVA filter has something to reject. Defaults to
+  `5L`.
+
+- n_genes - Integer. Number of genes. Defaults to `400L`.
+
+- n_planted - Integer. Planted genes per cell type. The blocks are
+  contiguous, so `n_planted * n_cell_types` has to fit into `n_genes`.
+  Defaults to `8L`.
 
 ## Details
 

@@ -142,9 +142,9 @@ object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
 object <- calculate_pca_adt_sc(object, no_pcs = 10L)
 object <- generate_wnn_graph_sc(object, .verbose = FALSE)
 get_snn_graph(object, modality = "wnn")
-#> IGRAPH a01ce5a U-W- 1000 35379 -- 
+#> IGRAPH 36076bb U-W- 1000 35379 -- 
 #> + attr: weight (e/n)
-#> + edges from a01ce5a:
+#> + edges from 36076bb:
 #>  [1]  1-- 4  5-- 8  3-- 9  1--13  4--13 13--16  1--16 14--17  3--18 10--19
 #> [11] 14--20 17--20  5--20 12--21  1--22 16--22  5--23 20--23  8--23 15--24
 #> [21] 12--24  9--24 21--24  4--25  5--26 20--26 23--26 17--26 12--27 21--27

@@ -5,9 +5,10 @@ on disk in two complementary binary representations: a CSR-like layout
 (`f_path_cells`) for fast cell-wise access and a CSC-like layout
 (`f_path_genes`) for fast gene-wise access. Both raw counts and
 log-normalised counts are stored side by side. Provides methods for
-ingesting data from R, `h5ad`, and `mtx` sources (including multi-file
-workflows), converting between layouts, retrieving slices of the matrix,
-and merging existing binary objects.
+ingesting data from R, `h5ad`, `mtx` and 10x CellRanger h5 sources
+(including multi-file workflows), converting between layouts, retrieving
+slices of the matrix, merging existing binary objects and writing
+CellSweep-denoised counts.
 
 ## Arguments
 
@@ -89,9 +90,9 @@ Write a CSR matrix from R to the cells binary file
 - `r_data`:
 
   (`list`)  
-  A list convertible into `CompressedSparseData2`. Must contain the
-  elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and
-  `"cs_type"`.
+  A named list convertible into `CompressedSparseData2`. Must contain
+  `"indptr"`, `"indices"` (0-indexed), `"data"`, `"nrow"`, `"ncol"` and
+  `"cs_type"` (`"csr"` or `"csc"`).
 
 - `qc_params`:
 
@@ -110,7 +111,8 @@ the result to `f_path_cells`.
 
 #### returns
 
-A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+A list with `cell_indices` and `gene_indices` (0-indexed, surviving QC),
+`lib_size` and `nnz`.
 
 ### Method `h5ad_to_file`
 
@@ -146,8 +148,9 @@ Write an h5ad file to the cells binary file
 - `slot`:
 
   (`character`)  
-  Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
-  data).
+  Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for
+  CellXGene data) or `"layers.counts"`. Unmatched values fall back to
+  `"X"`.
 
 - `verbose`:
 
@@ -156,7 +159,8 @@ Write an h5ad file to the cells binary file
 
 #### returns
 
-A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+A list with `cell_indices` and `gene_indices` (0-indexed, surviving QC),
+`lib_size` and `nnz`.
 
 ### Method `norm_h5ad_to_file`
 
@@ -213,7 +217,8 @@ before writing.
 
 #### returns
 
-A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+A list with `cell_indices` and `gene_indices` (0-indexed, surviving QC),
+`lib_size` and `nnz`.
 
 ### Method `h5ad_to_file_streaming`
 
@@ -249,8 +254,9 @@ Write an h5ad file to disk using streaming
 - `slot`:
 
   (`character`)  
-  Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
-  data).
+  Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for
+  CellXGene data) or `"layers.counts"`. Unmatched values fall back to
+  `"X"`.
 
 - `verbose`:
 
@@ -264,7 +270,8 @@ where possible.
 
 #### returns
 
-A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+A list with `cell_indices` and `gene_indices` (0-indexed, surviving QC),
+`lib_size` and `nnz`.
 
 ### Method `multi_h5ad_to_file`
 
@@ -277,7 +284,8 @@ Load multiple h5ad files into a single binary
   (`list`)  
   A list of lists, each produced by the R prescan function. Each inner
   list must contain `exp_id`, `h5_path`, `cs_type`, `no_cells`,
-  `no_genes` and `gene_local_to_universe`.
+  `no_genes` and `gene_local_to_universe` (0-indexed integer vector,
+  `NA` for unmapped genes), plus an optional `raw_slot`.
 
 - `universe_size`:
 
@@ -298,8 +306,8 @@ Load multiple h5ad files into a single binary
 #### returns
 
 A list with `global_gene_indices`, `total_cells`, `total_genes` and
-`per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
-`nnz`).
+`per_file` (a list of lists with `exp_id`, `cell_indices` (file-local,
+0-indexed), `lib_size`, `nnz`).
 
 ### Method `mtx_to_file`
 
@@ -330,7 +338,8 @@ Write an mtx file to the cells binary file
 
 #### returns
 
-A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+A list with `cell_indices` and `gene_indices` (0-indexed, surviving QC),
+`lib_size` and `nnz`.
 
 ### Method `mtx_to_file_streaming`
 
@@ -361,7 +370,8 @@ Write an mtx file to the cells binary file using streaming
 
 #### returns
 
-A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+A list with `cell_indices` and `gene_indices` (0-indexed, surviving QC),
+`lib_size` and `nnz`.
 
 ### Method `multi_mtx_to_file`
 
@@ -394,8 +404,8 @@ Load multiple mtx files into a single binary
 #### returns
 
 A list with `global_gene_indices`, `total_cells`, `total_genes` and
-`per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
-`nnz`).
+`per_file` (a list of lists with `exp_id`, `cell_indices` (file-local,
+0-indexed), `lib_size`, `nnz`).
 
 ### Method `tenx_h5_to_file_streaming`
 
@@ -411,8 +421,8 @@ Write a 10x CellRanger h5 file to the cells binary file using streaming
 - `version`:
 
   (`character`)  
-  One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from
-  the file.
+  One of `"auto"`, `"v2"` or `"v3"`. `"auto"`, and any unmatched value,
+  detects the layout from the file.
 
 - `no_cells`:
 
@@ -447,7 +457,8 @@ Other modalities (e.g. Antibody Capture) are filtered out via
 
 #### returns
 
-A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+A list with `cell_indices` and `gene_indices` (0-indexed, surviving QC),
+`lib_size` and `nnz`.
 
 ### Method `multi_tenx_h5_to_file`
 
@@ -483,8 +494,8 @@ Load multiple 10x CellRanger h5 files into a single binary
 #### returns
 
 A list with `global_gene_indices`, `total_cells`, `total_genes` and
-`per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
-`nnz`).
+`per_file` (a list of lists with `exp_id`, `cell_indices` (file-local,
+0-indexed), `lib_size`, `nnz`).
 
 ### Method `return_full_mat`
 
@@ -511,8 +522,9 @@ Return the full count matrix
 
 #### returns
 
-A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
-parseable into a sparse matrix in R.
+A list with `indptr`, `indices` (0-indexed), `data`, `no_cells` and
+`no_genes`, parseable into a sparse matrix in R. `data` is integer for
+`"raw"` and double for `"norm"`.
 
 ### Method `get_cells_by_indices`
 
@@ -536,8 +548,9 @@ Leverages the CSR-stored data for fast cell retrieval.
 
 #### returns
 
-A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
-parseable into a CSR matrix in R.
+A list with `indptr`, `indices` (0-indexed gene positions), `data`,
+`no_cells` (number of returned cells) and `no_genes`, parseable into a
+CSR matrix in R.
 
 ### Method `generate_gene_based_data`
 
@@ -648,8 +661,9 @@ Leverages the CSC-stored data for fast gene retrieval.
 
 #### returns
 
-A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
-parseable into a CSC matrix in R.
+A list with `indptr`, `indices` (0-indexed cell positions), `data`,
+`no_cells` and `no_genes` (number of returned genes), parseable into a
+CSC matrix in R.
 
 ### Method `get_nnz_genes`
 
@@ -678,8 +692,8 @@ Merge multiple existing bin files into the cells binary file
   (`list`)  
   A list of lists. Each inner list must contain `exp_id`,
   `bin_cells_path`, `cells_to_keep` (0-indexed integer vector) and
-  `gene_local_to_universe` (integer vector, `-1` for genes absent from
-  the universe).
+  `gene_local_to_universe` (0-indexed integer vector, `NA` for genes
+  absent from the universe).
 
 - `universe_size`:
 
@@ -709,3 +723,54 @@ Merge multiple existing bin files into the cells binary file
 
 A list with `total_cells`, `total_genes` and `per_file` (a list of lists
 with `exp_id`, `lib_size`, `nnz`).
+
+### Method `cellsweep`
+
+Run CellSweep and write the denoised barcodes into the cells binary
+
+One independent EM fit per sample, since the ambient profile is a
+property of a single emulsion. Only the real barcodes are written: the
+empty droplets exist to train the ambient profile, and barcodes that are
+neither empty nor annotated are not part of the model.
+
+Writes the cell-based file only; regenerate the gene-based companion
+afterwards, as for a merge.
+
+#### Arguments
+
+- `f_path_source`:
+
+  (`character`)  
+  Path to the raw `counts_cells.bin`, which must still contain the empty
+  droplets.
+
+- `samples`:
+
+  (`list`)  
+  A list of lists. Each inner list must contain `sample_id`,
+  `real_cells` and `empty_cells` (0-indexed integer vectors of store
+  indices), `celltype_idx` (0-indexed integer vector, one entry per
+  `real_cells` entry) and `n_celltypes`.
+
+- `cellsweep_params`:
+
+  (`list`)  
+  The CellSweep model parameters. Missing entries fall back to the
+  reference implementation's defaults.
+
+- `target_size`:
+
+  (`numeric`)  
+  Library size the normalised layer is scaled to.
+
+- `verbose`:
+
+  (`integer`)  
+  `0` silent, `1` per-sample progress, `2` per-EM-iteration.
+
+#### returns
+
+A list with `cell_order` (0-indexed source indices in output order),
+`lib_size`, `nnz` and `fits` (one list per sample with `sample_id`,
+`alpha`, `z_hat` (1-indexed), `beta`, `ambient`, `celltype_profiles`,
+`n_celltypes`, `log_likelihood`, `n_iter` and `converged`).

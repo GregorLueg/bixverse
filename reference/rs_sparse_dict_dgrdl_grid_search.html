@@ -13,7 +13,7 @@ helper function is designed to run a grid search over the data."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,9 @@ helper function is designed to run a grid search over the data."><meta property=
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -54,7 +57,9 @@ helper function is designed to run a grid search over the data."><meta property=
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -122,26 +127,28 @@ helper function is designed to run a grid search over the data.</p>
 
 
 <dt id="arg-dgrdl-params">dgrdl_params<a class="anchor" aria-label="anchor" href="#arg-dgrdl-params"></a></dt>
-<dd><p>A list with the parameters for the algorithm. Expects
-the following items.</p><ul><li><p>sparsity - Sparsity constraint (max non-zero coefficients per signal).</p></li>
-<li><p>dict_size - Size of the dictionary. This parameter will be ignored
-for this function and <code>dict_sizes</code> will be used.</p></li>
-<li><p>alpha - Float. Sample context regularisation weight. The higher the stronger
-the regularisation.</p></li>
-<li><p>beta - Float. Feature context regularisation weight. The higher the stronger
-the regularisation.</p></li>
+<dd><p>A list with the parameters for the algorithm. Missing
+items fall back to defaults. Expects the following items.</p><ul><li><p>sparsity - Integer. Sparsity constraint (max non-zero coefficients
+per signal).</p></li>
+<li><p>dict_size - Integer. Size of the dictionary. Ignored here,
+<code>dict_sizes</code> is used instead.</p></li>
+<li><p>alpha - Float. Sample context regularisation weight. The higher
+the stronger the regularisation.</p></li>
+<li><p>beta - Float. Feature context regularisation weight. The higher
+the stronger the regularisation.</p></li>
 <li><p>max_iter - Integer. Maximum iteration for the algorithm.</p></li>
-<li><p>k_neighbours - Integer. Number of k neighbours for the sample and feature
-Laplacian matrix for the regularisation. This parameter will be ignored and
-<code>k_neighbours_vec</code> will be used.</p></li>
-<li><p>admm_iter Integer. Number of iterations for using alternating direction
-method of multipliers (ADMM).</p></li>
-<li><p>rho Float. ADMM step size.</p></li>
+<li><p>k_neighbours - Integer. Number of k neighbours for the sample and
+feature Laplacian matrix. Ignored here, <code>k_neighbours_vec</code> is used
+instead.</p></li>
+<li><p>admm_iter - Integer. Number of iterations for using alternating
+direction method of multipliers (ADMM).</p></li>
+<li><p>rho - Float. ADMM step size.</p></li>
 </ul></dd>
 
 
 <dt id="arg-seeds">seeds<a class="anchor" aria-label="anchor" href="#arg-seeds"></a></dt>
-<dd><p>Integer vectors. The random seeds to include in the grid search.</p></dd>
+<dd><p>Integer vector. The random seeds to include in the grid
+search.</p></dd>
 
 
 <dt id="arg-dict-sizes">dict_sizes<a class="anchor" aria-label="anchor" href="#arg-dict-sizes"></a></dt>
@@ -150,7 +157,7 @@ search.</p></dd>
 
 
 <dt id="arg-k-neighbours-vec">k_neighbours_vec<a class="anchor" aria-label="anchor" href="#arg-k-neighbours-vec"></a></dt>
-<dd><p>Integer vector. The number of neighbours for the KNN
+<dd><p>Integer vector. The number of neighbours for the kNN
 graph generation to test in the grid search.</p></dd>
 
 
@@ -160,10 +167,12 @@ graph generation to test in the grid search.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the following elements:</p><ul><li><p>seed - The tested seeds.</p></li>
+    <p>A list with the following elements, one entry per tested
+combination:</p><ul><li><p>seed - The tested seeds.</p></li>
 <li><p>dict_size - The tested dictionary sizes.</p></li>
-<li><p>reconstruction_errs - The reconstruction errors for these hyper
-parameters.</p></li>
+<li><p>k_neighbours - The tested numbers of neighbours.</p></li>
+<li><p>reconstruction_errs - The reconstruction errors (squared Frobenius
+norm) for these hyperparameters.</p></li>
 <li><p>feature_laplacian_objective - The objective values of the feature
 Laplacian term for these hyperparameters.</p></li>
 <li><p>sample_laplacian_objective - The objective values of the sample

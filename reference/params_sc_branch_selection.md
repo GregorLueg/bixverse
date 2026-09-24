@@ -32,7 +32,16 @@ params_sc_branch_selection(q = 0.01, eps = 0.01, resolution = 500L)
 
 ## Value
 
-A named flat list with all branch selection parameters.
+A named list with the following elements:
+
+- q - Numeric. Upper-tail quantile of the fate probability used as the
+  threshold. Defaults to `0.01`.
+
+- eps - Numeric. Slack subtracted from the threshold before the
+  comparison. Defaults to `0.01`.
+
+- resolution - Integer. Number of pseudotime buckets, capped at the cell
+  count. Defaults to `500L`.
 
 ## References
 

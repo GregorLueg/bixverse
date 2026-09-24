@@ -4,12 +4,12 @@ The function will take in a list of gene set indices (0-indexed!) and
 calculate an AUCell type statistic. Three options here: the recovery-curve
 AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 Mann-Whitney statistic, or average precision. Data can be streamed in
-chunks of 50k cells per or loaded in in one go."><meta property="og:description" content="
+chunks of 50k cells or loaded in one go."><meta property="og:description" content="
 The function will take in a list of gene set indices (0-indexed!) and
 calculate an AUCell type statistic. Three options here: the recovery-curve
 AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 Mann-Whitney statistic, or average precision. Data can be streamed in
-chunks of 50k cells per or loaded in in one go."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+chunks of 50k cells or loaded in one go."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +17,7 @@ chunks of 50k cells per or loaded in in one go."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,9 @@ chunks of 50k cells per or loaded in in one go."><meta property="og:image" conte
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -58,7 +61,9 @@ chunks of 50k cells per or loaded in in one go."><meta property="og:image" conte
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -104,7 +109,7 @@ The function will take in a list of gene set indices (0-indexed!) and
 calculate an AUCell type statistic. Three options here: the recovery-curve
 AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 Mann-Whitney statistic, or average precision. Data can be streamed in
-chunks of 50k cells per or loaded in in one go.</p>
+chunks of 50k cells or loaded in one go.</p>
     </div>
 
     <div class="section level2">
@@ -126,7 +131,8 @@ genes of interest.</p></dd>
 
 
 <dt id="arg-cells-to-keep">cells_to_keep<a class="anchor" aria-label="anchor" href="#arg-cells-to-keep"></a></dt>
-<dd><p>Integer. Vector of indices of the cells to keep.</p></dd>
+<dd><p>Integer. Vector of indices (0-indexed) of the cells to
+keep.</p></dd>
 
 
 <dt id="arg-aucell-params">aucell_params<a class="anchor" aria-label="anchor" href="#arg-aucell-params"></a></dt>

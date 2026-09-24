@@ -57,9 +57,8 @@ calculate_all_dges(
 
 - ...:
 
-  Additional parameters to forward to
-  [`limma::eBayes()`](https://rdrr.io/pkg/limma/man/ebayes.html) or
-  [`limma::voom()`](https://rdrr.io/pkg/limma/man/voom.html).
+  Additional parameters that used to go to limma's `eBayes()` or
+  `voom()`.
 
 - .verbose:
 

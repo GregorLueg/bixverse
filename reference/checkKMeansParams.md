@@ -1,7 +1,7 @@
-# Check k-means method parameters
+# Check k-means params
 
-Checkmate extension for checking the run parameters of the k-means
-clustering methods.
+Checkmate extension for the output of
+[`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md).
 
 ## Usage
 
@@ -13,8 +13,9 @@ checkKMeansParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

@@ -1,7 +1,7 @@
 # Set similarities over two list
 
-**\[experimental\]** This function calculates the Jaccard or similarity
-index between two lists.
+**\[experimental\]** This function calculates the Jaccard similarity or
+overlap coefficient between all elements of two lists.
 
 ## Usage
 
@@ -22,10 +22,10 @@ rs_set_similarity_list2(s_1_list, s_2_list, overlap_coefficient)
 
 - overlap_coefficient:
 
-  Boolean. Use the overlap coefficient instead of the Jaccard similarity
-  be calculated.
+  Boolean. Use the overlap coefficient instead of the Jaccard
+  similarity.
 
 ## Value
 
-A matrix of the Jaccard similarities between the elements. The rows
-represent `s_1_list` and the column `s_2_list`.
+A matrix of the similarities between the elements. The rows represent
+`s_1_list` and the columns `s_2_list`.

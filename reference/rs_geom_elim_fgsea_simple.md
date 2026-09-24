@@ -48,7 +48,7 @@ rs_geom_elim_fgsea_simple(
     multi-level implementation of fgsea.
 
   - eps - Float. Boundary for calculating the p-value. Used for the
-    multi- level implementation of fgsea.
+    multi-level implementation of fgsea.
 
 - elim_threshold:
 
@@ -68,11 +68,11 @@ rs_geom_elim_fgsea_simple(
 
 List with the following elements
 
-- go_ids The name of the tested gene ontology identifer.
+- go_id The name of the tested gene ontology identifier.
 
 - es The enrichment scores for the pathway
 
-- nes The normalised enrichment scores for the pathway
+- nes The normalised enrichment scores for the pathway. Can be `NA`.
 
 - size The pathway sizes (after elimination!).
 
@@ -85,5 +85,5 @@ List with the following elements
 
 - ge_zero Number of times the permutation was greater than zero.
 
-- leading_edge A list of the index positions of the leading edge genes
-  for this given GO term.
+- leading_edge A list of the 1-based index positions (in `stats`) of the
+  leading edge genes for this given GO term.

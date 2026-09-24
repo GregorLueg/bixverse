@@ -24,7 +24,7 @@ params_sc_seacells(
 
 - n_sea_cells:
 
-  Integer. Number of SEA cells to detect.
+  Integer. Number of SEA cells to detect. Required.
 
 - max_fw_iters:
 
@@ -34,7 +34,7 @@ params_sc_seacells(
 - convergence_epsilon:
 
   Numeric. Convergence threshold. Algorithm stops when RSS change \<
-  epsilon \* RSS(0). Defaults to `1e-3`.
+  epsilon \* RSS(0). Defaults to `0.001`.
 
 - max_iter:
 
@@ -60,13 +60,14 @@ params_sc_seacells(
 
 - pruning_threshold:
 
-  Float. If `pruning = TRUE` values below which threshold shall be
-  pruned.
+  Numeric. If `pruning = TRUE` values below which threshold shall be
+  pruned. Defaults to `1e-07`.
 
 - n_landmarks:
 
-  Optional integer. If provided, it will use the Nystroem extension
-  during the archetype finding. Useful for larger data sets.
+  Integer or `NULL`. If provided, it will use the Nystroem extension
+  during the archetype finding. Useful for larger data sets. Defaults to
+  `NULL`.
 
 - knn:
 
@@ -75,8 +76,44 @@ params_sc_seacells(
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`.
+  `n_probe`. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 ## Value
 
-A list with the SEACells parameters.
+A named list with the following elements:
+
+- n_sea_cells - Integer. Number of SEA cells to detect. Required.
+
+- max_fw_iters - Integer. Maximum iterations for the Franke-Wolfe
+  algorithm. Defaults to `50L`.
+
+- convergence_epsilon - Numeric. Convergence threshold. Algorithm stops
+  when RSS change \< epsilon \* RSS(0). Defaults to `0.001`.
+
+- max_iter - Integer. Maximum iterations to run SEACells for. Defaults
+  to `100L`.
+
+- min_iter - Integer. Minimum iterations to run SEACells for. Defaults
+  to `10L`.
+
+- greedy_threshold - Integer. Maximum number of cells before defaulting
+  to rapid random selection of archetypes. Defaults to `20000L`.
+
+- graph_building - String. Graph building method. Defaults to `"union"`.
+
+- pruning - Boolean. Shall tiny values be pruned during Franke-Wolfe
+  updates. Defaults to `TRUE`.
+
+- pruning_threshold - Numeric. If `pruning = TRUE` values below which
+  threshold shall be pruned. Defaults to `1e-07`.
+
+- n_landmarks - Integer or `NULL`. If provided, it will use the Nystroem
+  extension during the archetype finding. Useful for larger data sets.
+  Defaults to `NULL`.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.

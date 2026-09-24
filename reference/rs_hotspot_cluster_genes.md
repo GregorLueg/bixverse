@@ -1,6 +1,7 @@
 # Cluster the genes by Z-score together
 
-**\[experimental\]**
+**\[experimental\]** Builds an average-linkage dendrogram over the pair
+Z-scores and assigns modules as HotSpot's `compute_modules` does.
 
 ## Usage
 
@@ -12,17 +13,21 @@ rs_hotspot_cluster_genes(z_matrix, fdr_threshold, min_size)
 
 - z_matrix:
 
-  Numerical matrix representing the Z-scores.
+  Numerical matrix. Symmetric gene x gene Z-scores with a zero diagonal,
+  as returned by
+  [`rs_hotspot_gene_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_hotspot_gene_cor.md).
+  Must be finite.
 
 - fdr_threshold:
 
-  Float. The FDR thresholds in terms of the Z-scores.
+  Float. BH level at which a pair Z-score counts as significant.
 
 - min_size:
 
-  Integer. Minimum cluster size.
+  Integer. Minimum number of genes per module.
 
 ## Value
 
-An assignment vector. NA indicates that the gene did not pass the
-thresholds and has not been assigned.
+Numeric vector with one module label per gene, 0-indexed and numbered
+densely. `NaN` indicates that the gene did not pass the thresholds and
+has not been assigned.

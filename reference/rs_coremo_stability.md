@@ -1,9 +1,10 @@
 # Helper function to assess CoReMo cluster stability
 
-**\[experimental\]** This function is a helper for the leave-on-out
+**\[experimental\]** This function is a helper for the leave-one-out
 stability assessment of CoReMo clusters. The function will generate the
 distance vectors based on leaving out the samples defined in indices one
-by one.
+by one. Distances are `1 - rbf(1 - |cor|)` over the feature
+correlations.
 
 ## Usage
 
@@ -15,12 +16,12 @@ rs_coremo_stability(data, indices, epsilon, rbf_type, spearman)
 
 - data:
 
-  Numeric matrix. The original processed matrix.
+  Numeric matrix. The original processed matrix, samples x features.
 
 - indices:
 
-  Integer vector. The sample indices to remove to re-calculate the
-  distances.
+  Integer vector. The 1-based sample (row) indices to remove, one at a
+  time, to re-calculate the distances.
 
 - epsilon:
 
@@ -36,5 +37,5 @@ rs_coremo_stability(data, indices, epsilon, rbf_type, spearman)
 
 ## Value
 
-A list with `length(indices)` elements, each containing the distance
-minus the given sample.
+A list with `length(indices)` elements, each containing the flattened
+upper-triangle feature distances with that sample removed.

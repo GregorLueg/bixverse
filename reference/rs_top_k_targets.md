@@ -12,7 +12,8 @@ rs_top_k_targets(matrix, k, margin, min_value)
 
 - matrix:
 
-  Numeric matrix with genes x TF importance values
+  Numeric matrix with genes (rows) x TFs (columns) importance values.
+  Must carry row and column names.
 
 - k:
 
@@ -20,13 +21,15 @@ rs_top_k_targets(matrix, k, margin, min_value)
 
 - margin:
 
-  If set to 1, the top k TFs per gene are used. If set to 2, the top k
-  genes per TF are used. Both versions were used in the original paper.
+  Integer. If set to 1, the top k TFs per gene are used. If set to 2,
+  the top k genes per TF are used. Both versions were used in the
+  original paper. Any other value errors.
 
 - min_value:
 
-  Float. An
+  Optional float. Pairs with an importance below this are never
+  selected.
 
 ## Value
 
-A list with three vectors: tf, gene, importance
+A list with three vectors: `tf`, `gene`, `importance`.

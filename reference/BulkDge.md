@@ -1,10 +1,10 @@
 # Bulk RNAseq differential gene expression class
 
 Class for coordinating differential gene expression analyses with
-subsequent GSE in a structured format. Additionally, the class will
-store the counts in
-[`edgeR::DGEList()`](https://rdrr.io/pkg/edgeR/man/DGEList.html) for
-subsequent processing.
+subsequent GSE in a structured format. The filtered counts, library
+sizes and normalisation factors are stored in the class;
+[`get_dge_list()`](https://gregorlueg.github.io/bixverse/reference/get_dge_list.md)
+turns them into an edgeR `DGEList` on demand.
 
 ## Usage
 

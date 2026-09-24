@@ -9,7 +9,7 @@ BulkDge() class."><meta property="og:image" content="https://gregorlueg.github.i
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,9 @@ BulkDge() class."><meta property="og:image" content="https://gregorlueg.github.i
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -50,7 +53,9 @@ BulkDge() class."><meta property="og:image" content="https://gregorlueg.github.i
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -128,7 +133,6 @@ BulkDge() class."><meta property="og:image" content="https://gregorlueg.github.i
 <span class="r-in"><span>  group_col <span class="op">=</span> <span class="st">"case_control"</span>,</span></span>
 <span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> calcNormFactors has been renamed to normLibSizes</span>
 <span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_dge_hedges.html">calculate_dge_hedges</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">object</span>,</span></span>
 <span class="r-in"><span>  contrast_column <span class="op">=</span> <span class="st">"case_control"</span>,</span></span>
@@ -137,12 +141,12 @@ BulkDge() class."><meta property="og:image" content="https://gregorlueg.github.i
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_dge_effect_sizes</span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    effect_sizes standard_errors gene_id     combination subgroup</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;num&gt;           &lt;num&gt;  &lt;char&gt;          &lt;char&gt;   &lt;lgcl&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:   -0.4697988       0.2048400  gene_1 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:   -0.2772216       0.2030405  gene_2 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:   -0.4859485       0.2050321  gene_3 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:   -0.4060705       0.2041436  gene_4 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:   -0.3226046       0.2033822  gene_5 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:   -0.4768077       0.2049226  gene_6 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:   -0.4541874       0.2046602  gene_1 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:   -0.2674739       0.2029738  gene_2 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:   -0.4256828       0.2043474  gene_3 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:   -0.3793411       0.2038811  gene_4 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:   -0.2601789       0.2029254  gene_5 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:   -0.4551123       0.2046707  gene_6 case_vs_control       NA</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

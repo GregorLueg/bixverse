@@ -1,7 +1,6 @@
-# Assert LDA parameters
+# Assert LDA params
 
-Checkmate extension for asserting the LDA solver parameters, see
-[`params_lda()`](https://gregorlueg.github.io/bixverse/reference/params_lda.md).
+Assert LDA params
 
 ## Usage
 
@@ -13,7 +12,7 @@ assertLdaParams(x, .var.name = checkmate::vname(x), add = NULL)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 - .var.name:
 
@@ -21,7 +20,8 @@ assertLdaParams(x, .var.name = checkmate::vname(x), add = NULL)
 
 - add:
 
-  Collection to store assertion messages.
+  Collection to store assertion messages. See
+  [`checkmate::makeAssertCollection()`](https://mllg.github.io/checkmate/reference/AssertCollection.html).
 
 ## Value
 

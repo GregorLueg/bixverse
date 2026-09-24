@@ -58,19 +58,51 @@ params_sc_seurat_rpca(
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
   `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
-  from `k_anchor`, `k_score` and `k_weight`.
+  from `k_anchor`, `k_score` and `k_weight`. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 - pca:
 
-  Named list. Parameters to feed through to the optional recalculation
-  of the PCA, see
+  List. Parameters to feed through to the optional recalculation of the
+  PCA, see
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md).
+  See
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  for the available elements. Defaults to
   [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md).
 
 ## Value
 
-A list with the Seurat rPCA parameters. Note that rPCA has no `num_cc`,
-`k_filter` or `n_top_features`, the gene-space anchor filter is CCA-only
-in Seurat.
+A named list with the following elements:
+
+- dims - Integer. Number of dimensions used for the per-batch PCA
+  projections, the anchor kNN queries and the size of the returned
+  embedding. Defaults to `30L`.
+
+- k_anchor - Integer. Neighbourhood size for the mutual nearest
+  neighbour anchor search. Defaults to `5L`.
+
+- k_score - Integer. Neighbourhood size for the shared-neighbour anchor
+  scoring. Defaults to `30L`.
+
+- k_weight - Integer. Neighbourhood size for the kernel weights applied
+  during the correction. Defaults to `100L`.
+
+- l2_norm - Boolean. Shall the projected embeddings be L2-normalised per
+  cell. Defaults to `TRUE`.
+
+- sd - Numeric. Bandwidth divisor of the Gaussian kernel used for the
+  anchor weights. Defaults to `1.0`.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.
+
+- The elements of
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md),
+  overridden by `pca`, spliced in at this position.
 
 ## References
 

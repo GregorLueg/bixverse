@@ -9,7 +9,7 @@ onto them.
 ``` r
 params_dialogue_refine(
   support_p = 0.1,
-  min_support_fraction = 1/3,
+  min_support_fraction = 0.333333333333333,
   min_stratum = 5L,
   early_stop_cor = 0.95,
   permissive_p = 0.001,
@@ -22,36 +22,61 @@ params_dialogue_refine(
 - support_p:
 
   Numeric. Adjusted p below which one partner counts as supporting a
-  gene. Must be in `(0, 1]`.
+  gene. Must be in `(0, 1]`. Defaults to `0.1`.
 
 - min_support_fraction:
 
   Numeric. Minimum supporting fraction for a stratum to enter the staged
-  fit. Must be in `[0, 1]`.
+  fit. Must be in `[0, 1]`. Defaults to `0.3333333333333333`.
 
 - min_stratum:
 
   Integer. Minimum genes in a stratum before it is worth fitting.
+  Defaults to `5L`.
 
 - early_stop_cor:
 
   Numeric. Correlation between the original score and the running fit at
-  which the staged fit stops early. Must be in `(0, 1]`.
+  which the staged fit stops early. Must be in `(0, 1]`. Defaults to
+  `0.95`.
 
 - permissive_p:
 
   Numeric. Fisher-combined p for the permissive gene list, where a gene
   is carried by partner support rather than by a positive coefficient.
-  Must be in `(0, 1]`.
+  Must be in `(0, 1]`. Defaults to `0.001`.
 
 - strict_p:
 
   Numeric. Fisher-combined p for the strict gene list, which also
   demands that every partner supports the gene. Must be in `(0, 1]`.
+  Defaults to `0.05`.
 
 ## Value
 
-A list with the stage three DIALOGUE parameters.
+A named list with the following elements:
+
+- support_p - Numeric. Adjusted p below which one partner counts as
+  supporting a gene. Must be in `(0, 1]`. Defaults to `0.1`.
+
+- min_support_fraction - Numeric. Minimum supporting fraction for a
+  stratum to enter the staged fit. Must be in `[0, 1]`. Defaults to
+  `0.3333333333333333`.
+
+- min_stratum - Integer. Minimum genes in a stratum before it is worth
+  fitting. Defaults to `5L`.
+
+- early_stop_cor - Numeric. Correlation between the original score and
+  the running fit at which the staged fit stops early. Must be in
+  `(0, 1]`. Defaults to `0.95`.
+
+- permissive_p - Numeric. Fisher-combined p for the permissive gene
+  list, where a gene is carried by partner support rather than by a
+  positive coefficient. Must be in `(0, 1]`. Defaults to `0.001`.
+
+- strict_p - Numeric. Fisher-combined p for the strict gene list, which
+  also demands that every partner supports the gene. Must be in
+  `(0, 1]`. Defaults to `0.05`.
 
 ## Details
 

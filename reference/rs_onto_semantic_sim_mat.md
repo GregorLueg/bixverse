@@ -1,8 +1,9 @@
 # Calculate the semantic similarity in an ontology
 
 **\[experimental\]** This function calculates the specified semantic
-similarity and returns the full vector (only calculating the upper
-triangle) for the given similarity.
+similarity between all terms in `ic_list` (only calculating the upper
+triangle) and returns it either as the flat upper triangle or as the
+full matrix.
 
 ## Usage
 
@@ -28,12 +29,15 @@ rs_onto_semantic_sim_mat(sim_type, ancestor_list, ic_list, flat_matrix)
 
 - flat_matrix:
 
-  Boolean. Shall only the upper triangle be returned.
+  Boolean. Shall only the upper triangle (row-wise, diagonal excluded)
+  be returned.
 
 ## Value
 
 A list with:
 
-- sim_mat - the semantic similarity matrix (flat or as matrix.)
+- sim_mat - the semantic similarity matrix (flat or as matrix). The
+  diagonal of the full matrix is `1`.
 
-- names - the row and column names for the calculated matrix.
+- names - the row and column names for the calculated matrix, i.e. the
+  names of `ic_list` sorted alphabetically.

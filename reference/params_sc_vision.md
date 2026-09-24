@@ -12,12 +12,13 @@ params_sc_vision(n_perm = 500L, n_cluster = 5L, knn = list())
 
 - n_perm:
 
-  Integer. Number of random gene sets to generate per cluster.
+  Integer. Number of random gene sets to generate per cluster. Defaults
+  to `500L`.
 
 - n_cluster:
 
   Integer. Number of clusters for the random gene set clustering
-  generation.
+  generation. Defaults to `5L`.
 
 - knn:
 
@@ -26,9 +27,21 @@ params_sc_vision(n_perm = 500L, n_cluster = 5L, knn = list())
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`.
+  `n_probe`. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 ## Value
 
-A list with the VISION parameters when you wish to use the
-auto-correlation version.
+A named list with the following elements:
+
+- n_perm - Integer. Number of random gene sets to generate per cluster.
+  Defaults to `500L`.
+
+- n_cluster - Integer. Number of clusters for the random gene set
+  clustering generation. Defaults to `5L`.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.

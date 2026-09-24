@@ -25,11 +25,13 @@ rs_compare_knn(knn_data_a, knn_data_b)
 
 A list with the following elements:
 
-- all_matches - Matching neighbours for this sample.
+- all_matches - Integer vector. Number of shared neighbours per sample.
 
-- all_ratios - Distance ratio for this sample (with b / a).
+- all_ratios - Numerical vector. Ratio of the summed distances (b / a)
+  per sample. Samples whose summed distance in a is ~0 are skipped, so
+  this can be shorter than `all_matches`.
 
-- final_recall - The final recall of assuming a being the ground truth
-  across all samples
+- final_recall - The mean recall across all samples, with a as the
+  ground truth.
 
-- final_ratio - The final distance ratio across all samples
+- final_ratio - The mean distance ratio across the retained samples.

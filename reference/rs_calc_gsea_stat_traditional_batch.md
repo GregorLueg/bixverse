@@ -18,7 +18,7 @@ rs_calc_gsea_stat_traditional_batch(
 
 - stats:
 
-  Numeric vector. The gene level statistic. Needs to sorted in
+  Numeric vector. The gene level statistic. Needs to be sorted in
   descending nature.
 
 - pathway_scores:
@@ -35,7 +35,7 @@ rs_calc_gsea_stat_traditional_batch(
 
 - seed:
 
-  Integer For reproducibility purposes
+  Integer. For reproducibility purposes
 
 ## Value
 

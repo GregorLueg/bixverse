@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -76,7 +79,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -121,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Batch correction with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-09-06</p>
+      <p class="date">2026-09-24</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -142,15 +147,28 @@
 <li><p><strong>BBKNN</strong> (<a href="https://doi.org/10.1093/bioinformatics/btz625" class="external-link">Polanski, et al., 2020</a>) takes a fundamentally different approach. Rather than correcting an embedding, it constructs a batch-balanced k-nearest neighbour graph by building separate neighbour indices per batch. The corrected graph can then be used directly for clustering and visualisation.</p></li>
 <li><p><strong>Seurat anchors</strong> (<a href="https://doi.org/10.1016/j.cell.2019.05.031" class="external-link">Stuart, et al., 2019</a>) find pairs of cells that are mutual nearest neighbours in a space shared by two batches, score them by how much of their neighbourhood they share, and use them to pull one batch onto the other. Two flavours are available. CCA builds the shared space from canonical correlations and corrects hardest, which suits batches that don’t share their cell types. rPCA projects each batch into the other’s PCA basis instead: cheaper, gentler, and the better default when the batches broadly match. Both need batch-aware HVGs.</p></li>
 </ul>
-<p><code>bixverse</code> also provides three metrics for assessing batch correction quality:</p>
+<p>A correction has two jobs: mix the batches and keep the biology intact. Going too hard on the first ruins the second, so <code>bixverse</code> scores both, following the scIB benchmark (<a href="https://doi.org/10.1038/s41592-021-01336-8" class="external-link">Luecken, et al., 2022</a>).</p>
+<p>Batch mixing:</p>
 <ul>
 <li>
-<strong>kBET</strong>: tests whether neighbourhood batch proportions match global proportions (best for embedding-based methods).</li>
+<strong>kBET</strong>: tests whether neighbourhood batch proportions match the global ones.</li>
 <li>
-<strong>Batch ASW</strong>: measures batch separation in the embedding space (best for embedding-based methods).</li>
+<strong>Batch ASW</strong>: silhouette width on batch labels in the embedding.</li>
 <li>
-<strong>LISI</strong>: measures the effective number of batches per neighbourhood (works on any kNN graph).</li>
+<strong>iLISI</strong>: effective number of batches per neighbourhood. Works on any kNN graph.</li>
+<li>
+<strong>PCR</strong>: how much of the embedding variance batch explains, before versus after correction.</li>
 </ul>
+<p>Bio conservation, which needs cell type labels:</p>
+<ul>
+<li>
+<strong>cLISI</strong>: effective number of cell types per neighbourhood. You want one.</li>
+<li>
+<strong>Cell type ASW</strong>: silhouette width on cell type labels.</li>
+<li>
+<strong>Graph connectivity</strong>: whether each cell type stays one connected piece of the kNN graph.</li>
+</ul>
+<p><code><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc()</a></code> runs the lot and returns one row, every column rescaled so that higher is better.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse">bixverse</a></span><span class="op">)</span></span>
@@ -161,7 +179,8 @@
 <span><span class="co">#&gt; The following object is masked from 'package:base':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     %notin%</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="preparing-the-data">Preparing the data<a class="anchor" aria-label="anchor" href="#preparing-the-data"></a>
 </h2>
@@ -278,6 +297,68 @@
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
 </details>
 </div>
+</section><section class="level3"><h3 id="cell-type-labels">Cell type labels<a class="anchor" aria-label="anchor" href="#cell-type-labels"></a>
+</h3>
+<p>The bio conservation metrics need cell types. We cluster the uncorrected data and annotate the clusters with scType (<a href="https://doi.org/10.1038/s41467-022-28803-w" class="external-link">Ianevski, et al., 2022</a>) on a handful of canonical PBMC markers, same as in the PBMC vignette. The labels are deliberately coarse: T cells stay lumped, since splitting CD4 from CD8 on uncorrected data is asking for trouble.</p>
+<p>One caveat: the labels come from uncorrected data, so they carry whatever the batch effect did to the clusters. Good enough to spot a method that smears cell types together, not a ground truth.</p>
+<div class="cell">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">1</span>, name <span class="op">=</span> <span class="st">"leiden_uncorrected"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cell_markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  CD3D <span class="op">=</span> <span class="st">"T cells"</span>,</span>
+<span>  CD3E <span class="op">=</span> <span class="st">"T cells"</span>,</span>
+<span>  IL7R <span class="op">=</span> <span class="st">"T cells"</span>,</span>
+<span>  CD8A <span class="op">=</span> <span class="st">"T cells"</span>,</span>
+<span>  MS4A1 <span class="op">=</span> <span class="st">"B cells"</span>,</span>
+<span>  CD79A <span class="op">=</span> <span class="st">"B cells"</span>,</span>
+<span>  CD14 <span class="op">=</span> <span class="st">"Monocytes"</span>,</span>
+<span>  LYZ <span class="op">=</span> <span class="st">"Monocytes"</span>,</span>
+<span>  FCGR3A <span class="op">=</span> <span class="st">"Monocytes"</span>,</span>
+<span>  GNLY <span class="op">=</span> <span class="st">"NK"</span>,</span>
+<span>  NKG7 <span class="op">=</span> <span class="st">"NK"</span>,</span>
+<span>  FCER1A <span class="op">=</span> <span class="st">"DC"</span>,</span>
+<span>  CD1C <span class="op">=</span> <span class="st">"DC"</span>,</span>
+<span>  PPBP <span class="op">=</span> <span class="st">"Platelets"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cell_markers_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span>  gene_symbol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_markers</span><span class="op">)</span>,</span>
+<span>  cell_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">cell_markers</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="va">.</span><span class="op">[</span>, <span class="va">gene_id</span> <span class="op">:=</span> <span class="va">var</span><span class="op">$</span><span class="va">gene_id</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">gene_symbol</span>, <span class="va">var</span><span class="op">$</span><span class="va">gene_symbol</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="va">.</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">gene_id</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">marker_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/prepare_cell_markers.html">prepare_cell_markers</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="va">cell_markers_dt</span><span class="op">)</span></span>
+<span><span class="va">sctype_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_sc_type_scores.html">calc_sc_type_scores</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  cell_marker_list <span class="op">=</span> <span class="va">marker_list</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cell_type_anno</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score_clusters.html">score_clusters</a></span><span class="op">(</span></span>
+<span>  <span class="va">sctype_scores</span>,</span>
+<span>  <span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="st">"leiden_uncorrected"</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span></span>
+<span>  <span class="va">cell_idx</span>,</span>
+<span>  <span class="va">leiden_uncorrected</span></span>
+<span><span class="op">)</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="va">.</span><span class="op">[</span>,</span>
+<span>    <span class="va">cell_type</span> <span class="op">:=</span> <span class="va">cell_type_anno</span><span class="op">$</span><span class="va">cell_type</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span></span>
+<span>      <span class="va">leiden_uncorrected</span>,</span>
+<span>      <span class="va">cell_type_anno</span><span class="op">$</span><span class="va">cluster_id</span></span>
+<span>    <span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="op">]</span></span>
+<span></span>
+<span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"cell_type"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">obs</span><span class="op">$</span><span class="va">cell_type</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_type</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   B cells        DC Monocytes        NK Platelets   T cells </span></span>
+<span><span class="co">#&gt;       874        79      1016       331        12      3529</span></span></code></pre></div>
+</details>
+</div>
 </section></section><section class="level2"><h2 id="comparing-the-different-methods">Comparing the different methods<a class="anchor" aria-label="anchor" href="#comparing-the-different-methods"></a>
 </h2>
 <p>Let’s check out the different methods and how they behave.</p>
@@ -285,13 +366,13 @@
 </h3>
 <p>Before applying any correction, we can visualise the batch effect and compute baseline metrics.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span></code></pre></div>
 </div>
 <p>tSNE plot (tSNE’s usually look prettier… It’s anyway not a good way to assess batch effect correction, so at least let’s make it pleasant on the eye).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne"</span>,</span>
@@ -310,36 +391,41 @@
 </div>
 </div>
 </div>
-<p>Batch correction stats:</p>
+<p>Each metric has its own function with its own print method. Here’s kBET on its own:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kbet_score_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, batch_column <span class="op">=</span> <span class="st">"exp_id"</span><span class="op">)</span></span>
-<span><span class="va">asw_score_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_asw_sc.html">calculate_batch_asw_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, batch_column <span class="op">=</span> <span class="st">"exp_id"</span><span class="op">)</span></span>
-<span><span class="va">lisi_score_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_lisi_sc.html">calculate_batch_lisi_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, batch_column <span class="op">=</span> <span class="st">"exp_id"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">kbet_score_prior</span></span>
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, batch_column <span class="op">=</span> <span class="st">"exp_id"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; kBET Scores</span></span>
 <span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
 <span><span class="co">#&gt;   Rejection rate:      0.9885 (5774 / 5841)</span></span>
 <span><span class="co">#&gt;   Mean Chi-Square:     12.8259 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   8.7578</span></span>
-<span><span class="va">asw_score_prior</span></span>
-<span><span class="co">#&gt; Batch Silhouette Width</span></span>
-<span><span class="co">#&gt;   Cells: 5000 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean ASW:    0.1073 (-1 = strong intermixing, 0 = mixed, 1 = separated)</span></span>
-<span><span class="co">#&gt;   Median ASW:  0.1194</span></span>
-<span><span class="va">lisi_score_prior</span></span>
-<span><span class="co">#&gt; Batch LISI Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.0125 (1 = no mixing, 2 = perfect mixing)</span></span>
-<span><span class="co">#&gt;   Median LISI:  1.0000</span></span></code></pre></div>
+<span><span class="co">#&gt;   Median Chi-Square:   8.7578</span></span></code></pre></div>
 </div>
-<p>The high kBET rejection rate and mean chi-square well above the expected value of 1 confirm a substantial batch effect. LISI scores also indicate very poor batch matching and the tSNE shows clear separation by batch.</p>
+<p>In practice, you’d want all of them at once. <code><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc()</a></code> gives one row per call, and we’ll stack one row per method into <code>metrics_dt</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc</a></span><span class="op">(</span></span>
+<span>  <span class="va">sc_object</span>,</span>
+<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
+<span>  cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="va">.</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"Uncorrected"</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">metrics_dt</span><span class="op">[</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw</span></span>
+<span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt; &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:       pca  0.01147064 0.8909914     0             NA     1     0.6758695</span></span>
+<span><span class="co">#&gt;    graph_connectivity      method</span></span>
+<span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:          0.9894515 Uncorrected</span></span></code></pre></div>
+</div>
+<p>The high kBET rejection rate (so a low <code>kbet_accept</code>) and a low <code>ilisi</code> confirm a substantial batch effect, and the tSNE shows clear separation by batch. <code>pcr_comparison</code> is <code>NA</code> here: it compares a corrected embedding against this PCA, so the PCA has nothing to compare against.</p>
 </section><section class="level3"><h3 id="fastmnn">fastMNN<a class="anchor" aria-label="anchor" href="#fastmnn"></a>
 </h3>
 <p>fastMNN works on batch-aware HVGs and produces a corrected embedding. It identifies mutual nearest neighbours across batches to compute correction vectors. For it to work best, we need the batch-aware HVGs. We will calculate these, provide them to fastMNN (which regenerates the PCA embedding based on the batch-aware HVG) and run then the actual algorithm</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch_aware_hvg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_batch_aware_sc.html">find_hvg_batch_aware_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
@@ -361,47 +447,36 @@
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kbet_score_post_mnn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">asw_score_post_mnn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_asw_sc.html">calculate_batch_asw_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"mnn"</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">lisi_score_post_mnn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_lisi_sc.html">calculate_batch_lisi_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">metrics_dt</span>,</span>
+<span>  <span class="fu"><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc</a></span><span class="op">(</span></span>
+<span>    <span class="va">sc_object</span>,</span>
+<span>    batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
+<span>    cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    embd_to_use <span class="op">=</span> <span class="st">"mnn"</span>,</span>
+<span>    .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="va">.</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"fastMNN"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">kbet_score_post_mnn</span></span>
-<span><span class="co">#&gt; kBET Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.3551 (2074 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     3.6749 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   3.6444</span></span>
-<span><span class="va">asw_score_post_mnn</span></span>
-<span><span class="co">#&gt; Batch Silhouette Width</span></span>
-<span><span class="co">#&gt;   Cells: 5000 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean ASW:    0.0192 (-1 = strong intermixing, 0 = mixed, 1 = separated)</span></span>
-<span><span class="co">#&gt;   Median ASW:  0.0423</span></span>
-<span><span class="va">lisi_score_post_mnn</span></span>
-<span><span class="co">#&gt; Batch LISI Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.4394 (1 = no mixing, 2 = perfect mixing)</span></span>
-<span><span class="co">#&gt;   Median LISI:  1.3006</span></span></code></pre></div>
+<span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"fastMNN"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
+<span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:       mnn   0.6449238 0.9378912 0.3005779      0.8858816     1     0.6544492</span></span>
+<span><span class="co">#&gt;    graph_connectivity  method</span></span>
+<span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:          0.9972923 fastMNN</span></span></code></pre></div>
 </div>
-<p>We can see clear improvements across all scores. Lower kBET scores, better mean AWS scores and LISI scores also closer to 2 (i.e., number of batches).</p>
+<p>We can see clear improvements on the batch side: kBET acceptance, batch ASW and iLISI all go up.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, slot_name <span class="op">=</span> <span class="st">"tsne_mnn"</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne_mnn"</span>,</span>
@@ -428,7 +503,7 @@
 <section class="level4"><h4 id="version-1">Version 1<a class="anchor" aria-label="anchor" href="#version-1"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_sc.html">harmony_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
@@ -447,41 +522,30 @@
 </div>
 <p>Let’s calculate the batch correction-related scores</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kbet_score_post_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">asw_score_post_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_asw_sc.html">calculate_batch_asw_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony"</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">lisi_score_post_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_lisi_sc.html">calculate_batch_lisi_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">metrics_dt</span>,</span>
+<span>  <span class="fu"><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc</a></span><span class="op">(</span></span>
+<span>    <span class="va">sc_object</span>,</span>
+<span>    batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
+<span>    cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    embd_to_use <span class="op">=</span> <span class="st">"harmony"</span>,</span>
+<span>    .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="va">.</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"Harmony"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">kbet_score_post_harmony</span></span>
-<span><span class="co">#&gt; kBET Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.1364 (797 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     1.9905 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   0.7374</span></span>
-<span><span class="va">asw_score_post_harmony</span></span>
-<span><span class="co">#&gt; Batch Silhouette Width</span></span>
-<span><span class="co">#&gt;   Cells: 5000 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean ASW:    0.0194 (-1 = strong intermixing, 0 = mixed, 1 = separated)</span></span>
-<span><span class="co">#&gt;   Median ASW:  0.0359</span></span>
-<span><span class="va">lisi_score_post_harmony</span></span>
-<span><span class="co">#&gt; Batch LISI Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.6112 (1 = no mixing, 2 = perfect mixing)</span></span>
-<span><span class="co">#&gt;   Median LISI:  1.6423</span></span></code></pre></div>
+<span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
+<span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:   harmony   0.8635508 0.9270982 0.6423357      0.9235815     1      0.647598</span></span>
+<span><span class="co">#&gt;    graph_connectivity  method</span></span>
+<span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:           0.989357 Harmony</span></span></code></pre></div>
 </div>
 <p>Also here, we observe improvements across the board.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_harm"</span>,</span>
@@ -491,7 +555,7 @@
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne_harm"</span>,</span>
@@ -521,7 +585,7 @@
 </ul>
 <p>Overall, this makes v2 more amenable and faster on big data sets than v1 (if you wish to use Harmony, maybe use the version 2 over the v2?).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
@@ -540,40 +604,29 @@
 </div>
 <p>Let’s calculate the batch correction-related scores</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kbet_score_post_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">asw_score_post_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_asw_sc.html">calculate_batch_asw_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_v2"</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">lisi_score_post_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_lisi_sc.html">calculate_batch_lisi_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">metrics_dt</span>,</span>
+<span>  <span class="fu"><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc</a></span><span class="op">(</span></span>
+<span>    <span class="va">sc_object</span>,</span>
+<span>    batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
+<span>    cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    embd_to_use <span class="op">=</span> <span class="st">"harmony_v2"</span>,</span>
+<span>    .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="va">.</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"Harmony v2"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">kbet_score_post_harmony</span></span>
-<span><span class="co">#&gt; kBET Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.1395 (815 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     2.0085 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   0.7374</span></span>
-<span><span class="va">asw_score_post_harmony</span></span>
-<span><span class="co">#&gt; Batch Silhouette Width</span></span>
-<span><span class="co">#&gt;   Cells: 5000 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean ASW:    0.0208 (-1 = strong intermixing, 0 = mixed, 1 = separated)</span></span>
-<span><span class="co">#&gt;   Median ASW:  0.0511</span></span>
-<span><span class="va">lisi_score_post_harmony</span></span>
-<span><span class="co">#&gt; Batch LISI Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.6148 (1 = no mixing, 2 = perfect mixing)</span></span>
-<span><span class="co">#&gt;   Median LISI:  1.6423</span></span></code></pre></div>
+<span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony v2"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
+<span><span class="co">#&gt;        &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: harmony_v2   0.8604691 0.9189611 0.6423357      0.8947806     1</span></span>
+<span><span class="co">#&gt;    cell_type_asw graph_connectivity     method</span></span>
+<span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;     &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:     0.6957046          0.9879408 Harmony v2</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_harm_v2"</span>,</span>
@@ -583,7 +636,7 @@
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne_harm_v2"</span>,</span>
@@ -616,7 +669,7 @@
 </ul>
 <p>Anchor structure comes out close to identical. Like fastMNN, CCA wants batch-aware HVGs, so we reuse the ones computed above.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/seurat_cca_sc.html">seurat_cca_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  batch_hvg_genes <span class="op">=</span> <span class="va">batch_aware_hvg</span><span class="op">$</span><span class="va">hvg_gene_idx</span>,</span>
@@ -633,46 +686,35 @@
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kbet_score_post_cca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">asw_score_post_cca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_asw_sc.html">calculate_batch_asw_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"cca"</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">lisi_score_post_cca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_lisi_sc.html">calculate_batch_lisi_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">metrics_dt</span>,</span>
+<span>  <span class="fu"><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc</a></span><span class="op">(</span></span>
+<span>    <span class="va">sc_object</span>,</span>
+<span>    batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
+<span>    cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    embd_to_use <span class="op">=</span> <span class="st">"cca"</span>,</span>
+<span>    .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="va">.</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"Seurat CCA"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">kbet_score_post_cca</span></span>
-<span><span class="co">#&gt; kBET Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.3143 (1836 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     3.2870 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   1.9151</span></span>
-<span><span class="va">asw_score_post_cca</span></span>
-<span><span class="co">#&gt; Batch Silhouette Width</span></span>
-<span><span class="co">#&gt;   Cells: 5000 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean ASW:    0.0328 (-1 = strong intermixing, 0 = mixed, 1 = separated)</span></span>
-<span><span class="co">#&gt;   Median ASW:  0.0503</span></span>
-<span><span class="va">lisi_score_post_cca</span></span>
-<span><span class="co">#&gt; Batch LISI Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.4757 (1 = no mixing, 2 = perfect mixing)</span></span>
-<span><span class="co">#&gt;   Median LISI:  1.4706</span></span></code></pre></div>
+<span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Seurat CCA"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
+<span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:       cca   0.6856703 0.8886744 0.4705881      0.8693617     1     0.6997823</span></span>
+<span><span class="co">#&gt;    graph_connectivity     method</span></span>
+<span><span class="co">#&gt;                 &lt;num&gt;     &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:          0.9894515 Seurat CCA</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, slot_name <span class="op">=</span> <span class="st">"tsne_cca"</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne_cca"</span>,</span>
@@ -696,7 +738,7 @@
 <p>rPCA runs the same anchor pipeline on a cheaper shared space. Instead of computing canonical correlations, each batch keeps its own PCA basis and the other batch’s expression is projected into it. Cross-batch neighbour queries then happen in these projected bases.</p>
 <p>The trade-off is the usual one: rPCA is faster and corrects less aggressively, which makes it the safer choice when your batches share most of their cell types. CCA is the one to reach for when they don’t. As in Seurat, no gene-space anchor filter runs here, that step is CCA-only.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/seurat_rpca_sc.html">seurat_rpca_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  batch_hvg_genes <span class="op">=</span> <span class="va">batch_aware_hvg</span><span class="op">$</span><span class="va">hvg_gene_idx</span>,</span>
@@ -713,40 +755,29 @@
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kbet_score_post_rpca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">asw_score_post_rpca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_asw_sc.html">calculate_batch_asw_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"rpca"</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">lisi_score_post_rpca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_lisi_sc.html">calculate_batch_lisi_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">metrics_dt</span>,</span>
+<span>  <span class="fu"><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc</a></span><span class="op">(</span></span>
+<span>    <span class="va">sc_object</span>,</span>
+<span>    batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
+<span>    cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    embd_to_use <span class="op">=</span> <span class="st">"rpca"</span>,</span>
+<span>    .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="va">.</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"Seurat rPCA"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">kbet_score_post_rpca</span></span>
-<span><span class="co">#&gt; kBET Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.2248 (1313 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     2.6978 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   1.9151</span></span>
-<span><span class="va">asw_score_post_rpca</span></span>
-<span><span class="co">#&gt; Batch Silhouette Width</span></span>
-<span><span class="co">#&gt;   Cells: 5000 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean ASW:    0.0299 (-1 = strong intermixing, 0 = mixed, 1 = separated)</span></span>
-<span><span class="co">#&gt;   Median ASW:  0.0616</span></span>
-<span><span class="va">lisi_score_post_rpca</span></span>
-<span><span class="co">#&gt; Batch LISI Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.5944 (1 = no mixing, 2 = perfect mixing)</span></span>
-<span><span class="co">#&gt;   Median LISI:  1.6423</span></span></code></pre></div>
+<span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Seurat rPCA"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
+<span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      rpca   0.7752097 0.9051192 0.6423357       0.810686     1      0.691866</span></span>
+<span><span class="co">#&gt;    graph_connectivity      method</span></span>
+<span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:          0.9894043 Seurat rPCA</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_rpca"</span>,</span>
@@ -756,7 +787,7 @@
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne_rpca"</span>,</span>
@@ -779,9 +810,9 @@
 </section><section class="level3"><h3 id="bbknn">BBKNN<a class="anchor" aria-label="anchor" href="#bbknn"></a>
 </h3>
 <p>BBKNN constructs a batch-balanced kNN graph rather than correcting an embedding. The key parameter is <code>neighbours_within_batch</code>, which controls how many neighbours are found per batch. Setting <code>no_neighbours_to_keep</code> below the total generated neighbours (here 10 from 2 batches = 20 total) ensures the distance-based filtering introduces genuine variation, making downstream metrics informative.</p>
-<p>Note that kBET and ASW are not well suited for evaluating BBKNN: kBET compares neighbourhood proportions against global proportions, which BBKNN manipulates by design, and ASW requires an embedding. LISI on the stored kNN is the most appropriate metric here.</p>
+<p>Note that kBET and the embedding metrics are not well suited for evaluating BBKNN: kBET compares neighbourhood proportions against global proportions, which BBKNN manipulates by design, and ASW and PCR need an embedding. BBKNN only hands back a graph, so we pass <code>embd_to_use = NULL</code> and those columns come back <code>NA</code>. iLISI, cLISI and graph connectivity on the stored kNN are the ones to read here.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bbknn_sc.html">bbknn_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
@@ -794,36 +825,35 @@
 <span><span class="co">#&gt; Generating graph based on BBKNN connectivities. Weights will be based on the connectivities and not shared nearest neighbour calculations.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kbet_score_post_bbknn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">lisi_score_post_bbknn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_batch_lisi_sc.html">calculate_batch_lisi_sc</a></span><span class="op">(</span></span>
-<span>  <span class="va">sc_object</span>,</span>
-<span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span></span>
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">metrics_dt</span>,</span>
+<span>  <span class="fu"><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc</a></span><span class="op">(</span></span>
+<span>    <span class="va">sc_object</span>,</span>
+<span>    batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
+<span>    cell_type_column <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
+<span>    embd_to_use <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>    .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="va">.</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"BBKNN"</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">kbet_score_post_bbknn</span></span>
-<span><span class="co">#&gt; kBET Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.0000 (0 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     3.1228 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   3.1228</span></span>
-<span><span class="va">lisi_score_post_bbknn</span></span>
-<span><span class="co">#&gt; Batch LISI Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.7999 (1 = no mixing, 2 = perfect mixing)</span></span>
-<span><span class="co">#&gt;   Median LISI:  1.8000</span></span></code></pre></div>
+<span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"BBKNN"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw</span></span>
+<span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt; &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      &lt;NA&gt;           1        NA   0.8             NA     1            NA</span></span>
+<span><span class="co">#&gt;    graph_connectivity method</span></span>
+<span><span class="co">#&gt;                 &lt;num&gt; &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:          0.9755626  BBKNN</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne"</span>,</span>
@@ -844,6 +874,79 @@
 </div>
 </section></section><section class="level2"><h2 id="choosing-a-method">Choosing a method<a class="anchor" aria-label="anchor" href="#choosing-a-method"></a>
 </h2>
+<p>Here’s everything side by side:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics_dt</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span></span>
+<span>  <span class="va">method</span>,</span>
+<span>  <span class="va">kbet_accept</span>,</span>
+<span>  <span class="va">batch_asw</span>,</span>
+<span>  <span class="va">ilisi</span>,</span>
+<span>  <span class="va">pcr_comparison</span>,</span>
+<span>  <span class="va">clisi</span>,</span>
+<span>  <span class="va">cell_type_asw</span>,</span>
+<span>  <span class="va">graph_connectivity</span></span>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;         method kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
+<span><span class="co">#&gt;         &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: Uncorrected  0.01147064 0.8909914 0.0000000             NA     1</span></span>
+<span><span class="co">#&gt; 2:     fastMNN  0.64492381 0.9378912 0.3005779      0.8858816     1</span></span>
+<span><span class="co">#&gt; 3:     Harmony  0.86355076 0.9270982 0.6423357      0.9235815     1</span></span>
+<span><span class="co">#&gt; 4:  Harmony v2  0.86046910 0.9189611 0.6423357      0.8947806     1</span></span>
+<span><span class="co">#&gt; 5:  Seurat CCA  0.68567026 0.8886744 0.4705881      0.8693617     1</span></span>
+<span><span class="co">#&gt; 6: Seurat rPCA  0.77520972 0.9051192 0.6423357      0.8106860     1</span></span>
+<span><span class="co">#&gt; 7:       BBKNN  1.00000000        NA 0.8000000             NA     1</span></span>
+<span><span class="co">#&gt;    cell_type_asw graph_connectivity</span></span>
+<span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:     0.6758695          0.9894515</span></span>
+<span><span class="co">#&gt; 2:     0.6544492          0.9972923</span></span>
+<span><span class="co">#&gt; 3:     0.6475980          0.9893570</span></span>
+<span><span class="co">#&gt; 4:     0.6957046          0.9879408</span></span>
+<span><span class="co">#&gt; 5:     0.6997823          0.9894515</span></span>
+<span><span class="co">#&gt; 6:     0.6918660          0.9894043</span></span>
+<span><span class="co">#&gt; 7:            NA          0.9755626</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bio_metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"clisi"</span>, <span class="st">"cell_type_asw"</span>, <span class="st">"graph_connectivity"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">metrics_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/melt.data.table.html" class="external-link">melt</a></span><span class="op">(</span></span>
+<span>  <span class="va">metrics_dt</span><span class="op">[</span>, <span class="op">-</span><span class="st">"embedding"</span><span class="op">]</span>,</span>
+<span>  id.vars <span class="op">=</span> <span class="st">"method"</span>,</span>
+<span>  variable.name <span class="op">=</span> <span class="st">"metric"</span>,</span>
+<span>  value.name <span class="op">=</span> <span class="st">"score"</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="va">.</span><span class="op">[</span>, <span class="fu">`:=`</span><span class="op">(</span></span>
+<span>    method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">method</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rev.html" class="external-link">rev</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">metrics_dt</span><span class="op">$</span><span class="va">method</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fifelse.html" class="external-link">fifelse</a></span><span class="op">(</span><span class="va">metric</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">bio_metrics</span>, <span class="st">"Bio conservation"</span>, <span class="st">"Batch mixing"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">metrics_long</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">metric</span>, y <span class="op">=</span> <span class="va">method</span>, fill <span class="op">=</span> <span class="va">score</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_tile</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"white"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fifelse.html" class="external-link">fifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.2f"</span>, <span class="va">score</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">3</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html" class="external-link">facet_grid</a></span><span class="op">(</span><span class="op">~</span><span class="va">type</span>, scales <span class="op">=</span> <span class="st">"free_x"</span>, space <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span></span>
+<span>    palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
+<span>    direction <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    na.value <span class="op">=</span> <span class="st">"grey90"</span>,</span>
+<span>    limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    oob <span class="op">=</span> <span class="fu">scales</span><span class="fu">::</span><span class="va"><a href="https://scales.r-lib.org/reference/oob.html" class="external-link">squish</a></span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="cn">NULL</span>, y <span class="op">=</span> <span class="cn">NULL</span>, fill <span class="op">=</span> <span class="st">"Score"</span>, title <span class="op">=</span> <span class="st">"Integration metrics"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="single_cell_batch_corrections_files/figure-html/metrics%20plot-1.png" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Read the two panels together. A method that tops batch mixing but drops on bio conservation has merged cell types along with the batches, which is worse than doing nothing.</p>
+<p>Two of these tell you little on this data set. cLISI sits at 1 for every method: six coarse, well separated cell types keep their neighbourhoods pure no matter what. Batch ASW barely moves either, since two PBMC batches of the same tissue never separate much on silhouette to begin with. Both earn their keep on finer labels and nastier batch effects. On two PBMC runs, kBET, iLISI and PCR do the talking. And BBKNN’s perfect kBET is the artefact mentioned above, not a win.</p>
 <p>There is no universally best batch correction method. Some practical guidance:</p>
 <ul>
 <li><p><strong>Harmony</strong> is a good default. It is fast, operates on the PCA embedding directly, and handles multiple batch variables simultaneously. It tends to work well when batch effects are moderate and cell type composition is broadly similar across batches. Version 2 is quite an improvement and necessitates less that the same cells are available across the batches and is substantially faster when you provide only one batch effect to regress out.</p></li>
@@ -851,11 +954,11 @@
 <li><p><strong>Seurat CCA and rPCA</strong> are the anchor-based options. Like fastMNN they only align cells with a plausible match in another batch, so they hold up when cell type composition differs. They are the heaviest of the five though, and on data that already mixes well they can make the batch metrics slightly worse. rPCA is the cheaper and gentler of the two and a sensible default; go to CCA when the batches genuinely don’t share their cell types.</p></li>
 <li><p><strong>BBKNN</strong> is useful when you want to avoid modifying the embedding at all. The batch-balanced graph can be passed directly to graph-based clustering algorithms. It is the lightest-touch approach but provides less control over the degree of correction.</p></li>
 </ul>
-<p>In practice, running multiple methods and looking at quantitative metrics is the most reliable approach. No single metric captures everything – kBET and ASW measure different aspects of embedding-based correction, and LISI is most informative for graph-based methods. UMAPs and tSNE assessments should be taken with a big pinch of salt, see <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288" class="external-link">Chari, et al.</a> Admittedly, they do look pretty however.</p>
+<p>In practice, running multiple methods and looking at quantitative metrics is the most reliable approach. No single metric captures everything: kBET and PCR only see batch, cLISI and cell type ASW only see biology, and the ones built on the kNN graph are the only fair comparison for graph-based methods like BBKNN. UMAPs and tSNE assessments should be taken with a big pinch of salt, see <a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288" class="external-link">Chari, et al.</a> Admittedly, they do look pretty however.</p>
 </section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_batch_cor</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

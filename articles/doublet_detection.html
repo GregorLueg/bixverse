@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -76,7 +79,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -121,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Doublet detection with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-06</p>
+      <p class="date">2026-09-24</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -197,6 +202,7 @@
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
 <span><span class="co">#&gt;   SNN generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
+<span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
 </div>
 <p>We also define a small helper to compute precision, recall and F1 against the demuxlet calls.</p>
@@ -378,13 +384,13 @@
 <span>  actual <span class="op">=</span> <span class="va">boosted_fast_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.7121771</span></span>
+<span><span class="co">#&gt; [1] 0.710988</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.4951892</span></span>
+<span><span class="co">#&gt; [1] 0.4939064</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.5841846</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.5828917</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="scdblfinder">scDblFinder<a class="anchor" aria-label="anchor" href="#scdblfinder"></a>
 </h3>

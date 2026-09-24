@@ -17,8 +17,8 @@ rs_onto_sim_wang_mat(parents, children, w, flat_matrix)
 
 - children:
 
-  String vector. The names of the childs. The length of `parents` needs
-  to be equal to `children`.
+  String vector. The names of the children. The length of `parents`
+  needs to be equal to `children`.
 
 - w:
 
@@ -27,7 +27,8 @@ rs_onto_sim_wang_mat(parents, children, w, flat_matrix)
 
 - flat_matrix:
 
-  Boolean. Shall only the upper triangle be returned.
+  Boolean. Shall only the upper triangle (row-wise, diagonal excluded)
+  be returned.
 
 ## Value
 

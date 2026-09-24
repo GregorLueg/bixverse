@@ -5,19 +5,23 @@ This function applies the DSB algorithm to normalise antibody-derived tag
 background_counts is provided, per-protein ambient background is estimated
 from empty droplets ("Step I" of the original paper). When
 background_counts is NULL, per-protein background is estimated by a
-two-component k-means on the log-transformed cell counts, with the lower
-centroid taken as the background level. An optional second step removes
-cell-to-cell technical noise by regressing out PC1 of a noise matrix built
-from isotype controls (if available) and the per-cell background mean.'><meta property="og:description" content='
+two-component k-means on the log(x + pseudocount) cell counts, with the
+lower centroid taken as the background level. An optional second step
+removes cell-to-cell technical noise by regressing out PC1 of a noise
+matrix built from isotype controls (if used) and the per-cell background
+mean; without isotype controls the per-cell background mean itself is
+regressed out. Optional per-protein quantile clipping runs last.'><meta property="og:description" content='
 This function applies the DSB algorithm to normalise antibody-derived tag
 (ADT) counts from CITE-seq experiments. Two variants are supported. When
 background_counts is provided, per-protein ambient background is estimated
 from empty droplets ("Step I" of the original paper). When
 background_counts is NULL, per-protein background is estimated by a
-two-component k-means on the log-transformed cell counts, with the lower
-centroid taken as the background level. An optional second step removes
-cell-to-cell technical noise by regressing out PC1 of a noise matrix built
-from isotype controls (if available) and the per-cell background mean.'><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+two-component k-means on the log(x + pseudocount) cell counts, with the
+lower centroid taken as the background level. An optional second step
+removes cell-to-cell technical noise by regressing out PC1 of a noise
+matrix built from isotype controls (if used) and the per-cell background
+mean; without isotype controls the per-cell background mean itself is
+regressed out. Optional per-protein quantile clipping runs last.'><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -25,7 +29,7 @@ from isotype controls (if available) and the per-cell background mean.'><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,6 +56,9 @@ from isotype controls (if available) and the per-cell background mean.'><meta pr
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -66,7 +73,9 @@ from isotype controls (if available) and the per-cell background mean.'><meta pr
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -113,10 +122,12 @@ This function applies the DSB algorithm to normalise antibody-derived tag
 <code>background_counts</code> is provided, per-protein ambient background is estimated
 from empty droplets ("Step I" of the original paper). When
 <code>background_counts</code> is <code>NULL</code>, per-protein background is estimated by a
-two-component k-means on the log-transformed cell counts, with the lower
-centroid taken as the background level. An optional second step removes
-cell-to-cell technical noise by regressing out PC1 of a noise matrix built
-from isotype controls (if available) and the per-cell background mean.</p>
+two-component k-means on the <code>log(x + pseudocount)</code> cell counts, with the
+lower centroid taken as the background level. An optional second step
+removes cell-to-cell technical noise by regressing out PC1 of a noise
+matrix built from isotype controls (if used) and the per-cell background
+mean; without isotype controls the per-cell background mean itself is
+regressed out. Optional per-protein quantile clipping runs last.</p>
     </div>
 
     <div class="section level2">
@@ -163,11 +174,12 @@ if there are no isotype controls.</p></dd>
 <dd><p>String. One of <code>"standardise"</code> or <code>"mean_subtract"</code>.
 Only used when <code>background_counts</code> is provided. <code>"standardise"</code> subtracts
 the per-protein background mean and divides by the per-protein background
-SD. <code>"mean_subtract"</code> subtracts the mean only.</p></dd>
+SD. <code>"mean_subtract"</code> subtracts the mean only. Unrecognised values fall
+back to <code>"standardise"</code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Integer. Random seed for k-means initialisation.</p></dd>
+<dd><p>Integer. Random seed for the k-means initialisations.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -186,10 +198,12 @@ empty vector if <code>background_counts</code> was <code>NULL</code>. Per-protei
 SD used in Step I.</p></li>
 <li><p>technical_component - Numeric vector of length <code>n_cells</code>, or
 empty vector if <code>dsb_params$denoise_counts = FALSE</code>. Per-cell
-technical component regressed out in Step II.</p></li>
+covariate regressed out in Step II: PC1 of the noise matrix, or the
+per-cell background mean if no isotype controls are used.</p></li>
 <li><p>cellwise_background_mean - Numeric vector of length <code>n_cells</code>,
 or empty vector if <code>dsb_params$denoise_counts = FALSE</code>. Per-cell
-background mean from the 2-component k-means clustering.</p></li>
+background mean from a 2-component k-means on each cell's protein
+vector.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

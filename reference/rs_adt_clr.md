@@ -2,6 +2,8 @@
 
 **\[experimental\]**
 
+Normalises each cell (row) separately.
+
 ## Usage
 
 ``` r
@@ -12,13 +14,14 @@ rs_adt_clr(counts, seurat_clr)
 
 - counts:
 
-  R matrix of shape cells x features.
+  Numerical matrix of shape cells x features.
 
 - seurat_clr:
 
-  Logical; if TRUE uses the Seurat variant (non-negative), if FALSE uses
-  proper CLR (mean-centred log, can be negative).
+  Boolean. If `TRUE` uses the Seurat variant `log1p(x / g)`
+  (non-negative); if `FALSE` uses the proper CLR
+  `log1p(x) - mean(log1p(x))` (mean-centred, can be negative).
 
 ## Value
 
-CLR-transformed matrix.
+Numerical matrix of cells x features with the CLR-transformed values.

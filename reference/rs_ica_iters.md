@@ -1,4 +1,4 @@
-# Run ICA over a given no_comp with random initilisations of w_init
+# Run ICA over a given no_comp with random initialisations of w_init
 
 **\[experimental\]** This function implements a stabilised ICA like
 algorithm in Rust. Briefly, it generates random w_init matrices (total
@@ -20,7 +20,8 @@ rs_ica_iters(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 
 - k:
 
-  Numerical matrix. The whitening matrix.
+  Numerical matrix. The whitening matrix. Needs at least `no_comp` rows,
+  only the first `no_comp` are used.
 
 - no_comp:
 
@@ -32,11 +33,11 @@ rs_ica_iters(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 
 - ica_type:
 
-  String. One of 'logcosh' or 'exp'.
+  String. One of `c("logcosh", "exp")`.
 
 - random_seed:
 
-  Integer. Seed for randomisations.
+  Integer. Seed for randomisations. Run `i` uses `random_seed + i`.
 
 - ica_params:
 

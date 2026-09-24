@@ -78,17 +78,14 @@ changelog](https://gregorlueg.github.io/bixverse/news/index.html).
 | Gene set enrichment | Hypergeometric tests, fgsea, GSVA, ssGSEA, singscore, mitch, plus GO-aware elim methods | [GSE methods](https://gregorlueg.github.io/bixverse/articles/gse_methods.html), [pathway activity](https://gregorlueg.github.io/bixverse/articles/pathway_activity.html) |
 | (Single cell) Regulons | SCENIC, CisTarget motif enrichment, regulon binarisation | [bag of genes](https://gregorlueg.github.io/bixverse/articles/bag_of_genes_single_cells.html) |
 | Bulk co-expression | CoReMo, stabilised ICA, contrastive PCA, NMF and consensus NMF, DGRDL | [co-expression modules](https://gregorlueg.github.io/bixverse/articles/bulk_coexpression_modules.html), [contrastive PCA](https://gregorlueg.github.io/bixverse/articles/cpca.html) |
-| Bulk DGE | limma-voom, Hedges’ g effect sizes, batch correction, TPM and RPKM, structured handling of many contrasts | [reference](https://gregorlueg.github.io/bixverse/reference/index.html) |
+| Bulk DGE | limma-voom via [edge-rs](https://crates.io/crates/edge-rs) (no limma or edgeR needed), Hedges’ g effect sizes, batch correction, TPM and RPKM, structured handling of many contrasts | [bulk DGE](https://gregorlueg.github.io/bixverse/articles/bulk_dge.html) |
 | Ontologies | Resnik, Lin and Wang semantic similarities over disease, phenotype and gene ontologies | [semantic similarities](https://gregorlueg.github.io/bixverse/articles/ontologies.html) |
 | Graphs | Network diffusion, constrained page rank, reciprocal best hit graphs, similarity network fusion, community detection | [diffusions and communities](https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.html) |
-| Single cell | Streaming i/o, QC, doublet detection, HVG, PCA, Harmony, fastMNN, BBKNN, kNN and clustering, markers, pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA | [start here](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html), then the Single Cells menu |
+| Single cell | Streaming i/o, QC, doublet detection, HVG, PCA, Harmony, fastMNN, BBKNN, LISI and ASW integration metrics, kNN and clustering, markers, pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA | [start here](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html), then the Single Cells menu |
+| Single cell, counts | CellSweep ambient RNA removal, analytic Pearson residuals and scTransform v2 for HVG selection and PCA. Fit and HVG stream; residual PCA is dense, so it caps out before atlas scale | [CellSweep](https://gregorlueg.github.io/bixverse/articles/cell_sweep.html), [residuals](https://gregorlueg.github.io/bixverse/articles/single_cell_residuals.html) |
 | Single cell, advanced | Symphony reference mapping, NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories | [Symphony](https://gregorlueg.github.io/bixverse/articles/symphony.html), [NicheNet](https://gregorlueg.github.io/bixverse/articles/nichenet.html), [DIALOGUE](https://gregorlueg.github.io/bixverse/articles/dialogue.html), [trajectories](https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html) |
 | Meta cells | Generation, purity and entropy diagnostics, the full downstream analysis surface | [meta cells](https://gregorlueg.github.io/bixverse/articles/meta_cells.html) |
 | Multi-modal | ADT counts, DSB normalisation, WNN graphs | [multi-modal analysis](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html) |
-
-Bulk DGE is the one row pointing at the reference index rather than a
-vignette. It works, it just doesn’t have a written walk-through yet. On
-the roadmap.
 
 ## The “bixverse ecosystem”
 
@@ -225,7 +222,7 @@ active development.
 
 There are already quite a few vignettes, but the amount of code in the
 package is… quite substantial and there are methods hidden here and
-there that lack any vignettes for now. Bulk DGE is the most obvious gap.
+there that lack any vignettes for now.
 
 ## For developers
 

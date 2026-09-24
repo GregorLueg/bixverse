@@ -60,6 +60,7 @@ sc_object
 #>   KNN generated: FALSE
 #>   SNN generated: FALSE
 #>   MAGIC imputed: none
+#>   Residual model: none
 #>   Stale artefacts: none
 ```
 
@@ -220,6 +221,7 @@ sc_object
 #>   KNN generated: FALSE
 #>   SNN generated: FALSE
 #>   MAGIC imputed: none
+#>   Residual model: none
 #>   Stale artefacts: none
 ```
 

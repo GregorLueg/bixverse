@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -116,25 +121,24 @@ to <code>3L</code>.</p></dd>
 <dt id="arg-graining-factor">graining_factor<a class="anchor" aria-label="anchor" href="#arg-graining-factor"></a></dt>
 <dd><p>Numeric. Graining level of data (proportion of number
 of single cells in the initial dataset to the number of metacells in the
-final dataset). Defaults to <code>20.0</code>. (One meta cell per 20 cells.)</p></dd>
+final dataset). (One meta cell per 20 cells.) Defaults to <code>20.0</code>.</p></dd>
 
 
 <dt id="arg-use-kernel">use_kernel<a class="anchor" aria-label="anchor" href="#arg-use-kernel"></a></dt>
 <dd><p>Boolean. Shall a kernel function akin to MAGIC be applied
 akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
-van Dijk, et al., Cell, 2018.</p></dd>
+van Dijk, et al., Cell, 2018. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-k-ith">k_ith<a class="anchor" aria-label="anchor" href="#arg-k-ith"></a></dt>
-<dd><p>Optional integer. The k-ith neighbour to use for the kernel.
-Defaults to <code>k %/% 2</code>.</p></dd>
+<dd><p>Integer or <code>NULL</code>. The k-ith neighbour to use for the kernel.
+Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-max-support">max_support<a class="anchor" aria-label="anchor" href="#arg-max-support"></a></dt>
-<dd><p>Optional integer. Caps each cell's walk-probability vector
-to its top entries by mass, bounding memory at ~<code>max_support * n_cells</code> on
-large data. Makes the result an approximation. <code>NULL</code> (default) keeps the
-walks exact.</p></dd>
+<dd><p>Integer or <code>NULL</code>. Caps each cell's walk-probability
+vector to its top entries by mass, bounding memory at ~<code>max_support * n_cells</code> on large data. Makes the result an approximation. <code>NULL</code> (default)
+keeps the walks exact. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
@@ -142,13 +146,28 @@ walks exact.</p></dd>
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
 <code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>.</p></dd>
+<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the
+available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the SuperCell parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>walk_length - Integer. Walk length for the Walktrap algorithm.
+Defaults to <code>3L</code>.</p></li>
+<li><p>graining_factor - Numeric. Graining level of data (proportion of
+number of single cells in the initial dataset to the number of metacells in
+the final dataset). (One meta cell per 20 cells.) Defaults to <code>20.0</code>.</p></li>
+<li><p>use_kernel - Boolean. Shall a kernel function akin to MAGIC be applied
+akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
+van Dijk, et al., Cell, 2018. Defaults to <code>TRUE</code>.</p></li>
+<li><p>k_ith - Integer or <code>NULL</code>. The k-ith neighbour to use for the kernel.
+Defaults to <code>NULL</code>.</p></li>
+<li><p>max_support - Integer or <code>NULL</code>. Caps each cell's walk-probability
+vector to its top entries by mass, bounding memory at ~<code>max_support * n_cells</code> on large data. Makes the result an approximation. <code>NULL</code> (default)
+keeps the walks exact. Defaults to <code>NULL</code>.</p></li>
+<li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
+in at this position.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

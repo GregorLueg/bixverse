@@ -1,13 +1,13 @@
 # Check that a value is a list with the required names
 
-Boilerplate guard used at the top of most parameter checkers in this
-file: verifies `x` is a list and that all `required_names` are present
-in `names(x)`.
+Boilerplate guard at the top of every generated parameter checker:
+verifies `x` is a list and that `required_names` are present in
+`names(x)`.
 
 ## Usage
 
 ``` r
-check_list_shape(x, required_names)
+check_list_shape(x, required_names, strict = FALSE)
 ```
 
 ## Arguments
@@ -19,6 +19,11 @@ check_list_shape(x, required_names)
 - required_names:
 
   Character vector of names that must be present in `names(x)`.
+
+- strict:
+
+  Boolean. `TRUE` additionally rejects names that are not in
+  `required_names`. Defaults to `FALSE`.
 
 ## Value
 

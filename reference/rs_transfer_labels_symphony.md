@@ -1,6 +1,7 @@
 # Transfer labels from a Symphony reference to a query via kNN vote
 
-**\[experimental\]**
+**\[experimental\]** Finds the reference neighbours of every query cell
+and assigns the majority label. Ties go to the lowest label index.
 
 ## Usage
 
@@ -20,19 +21,19 @@ rs_transfer_labels_symphony(
 
 - reference_z_corr:
 
-  Reference Harmony-corrected embedding (N_ref x d).
+  Numerical matrix. Reference Harmony-corrected embedding (N_ref x d).
 
 - query_z_corr:
 
-  Query Symphony-corrected embedding (N_q x d).
+  Numerical matrix. Query Symphony-corrected embedding (N_q x d).
 
 - reference_labels:
 
-  0-based integer-encoded reference labels.
+  Integer vector. 0-based integer-encoded reference labels.
 
 - n_labels:
 
-  Number of distinct labels.
+  Integer. Number of distinct labels.
 
 - knn_params:
 
@@ -41,13 +42,17 @@ rs_transfer_labels_symphony(
 
 - seed:
 
-  Integer.
+  Integer. Seed for the kNN search.
 
 - verbose:
 
-  Integer. 0/1/2.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 
-A list with `predicted` (0-based integer per query cell) and
-`confidence` (vote share of the winning label).
+A list with
+
+- predicted - Integer vector. Predicted label per query cell (0-based).
+
+- confidence - Numerical vector. Vote share of the winning label.

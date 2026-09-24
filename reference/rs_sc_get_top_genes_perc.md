@@ -42,5 +42,5 @@ rs_sc_get_top_genes_perc(
 
 ## Value
 
-A list with the cumulative percentages of the Top X genes defined as in
-`top_n_vals`.
+A list with one numerical vector per value in `top_n_vals`, each holding
+the cumulative proportion of counts per cell.

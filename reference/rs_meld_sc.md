@@ -18,9 +18,9 @@ rs_meld_sc(embd, knn_data, meld_params, labels, n_labels, seed, verbose)
 
 - knn_data:
 
-  Optional named list. This contains pre-computed kNN data (including
-  distances). The user has to ensure consistency! If provided, this will
-  be used.
+  Optional named list. This contains pre-computed kNN data (`indices`
+  (0-indexed), `dist`, `dist_metric` and `k`). The user has to ensure
+  consistency! If provided, this will be used.
 
 - meld_params:
 
@@ -28,7 +28,7 @@ rs_meld_sc(embd, knn_data, meld_params, labels, n_labels, seed, verbose)
 
 - labels:
 
-  Integer. The labels of the different groups. (1-indexed!)
+  Integer. The group label per cell (1-indexed!), in `1..n_labels`.
 
 - n_labels:
 
@@ -47,7 +47,7 @@ rs_meld_sc(embd, knn_data, meld_params, labels, n_labels, seed, verbose)
 
 A list with the following items
 
-- raw_scores - The raw MELD scores
+- raw_scores - Matrix of cells x labels with the raw MELD scores.
 
-- norm_scores - Negative values were clamped to 0 and the rows L1
-  normalised. This yields probability-like values.
+- norm_scores - Same shape. Negative values were clamped to 0 and the
+  rows L1 normalised. This yields probability-like values.

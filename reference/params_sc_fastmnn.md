@@ -24,7 +24,7 @@ params_sc_fastmnn(
 
 - cos_norm:
 
-  Logical. Apply cosine normalisation before computing distances.
+  Boolean. Apply cosine normalisation before computing distances.
   Defaults to `TRUE`.
 
 - no_pcs:
@@ -33,7 +33,7 @@ params_sc_fastmnn(
 
 - sparse_svd:
 
-  Boolean. Shall the sparse SVD be used.
+  Boolean. Shall the sparse SVD be used. Defaults to `TRUE`.
 
 - knn:
 
@@ -42,14 +42,40 @@ params_sc_fastmnn(
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`.
+  `n_probe`. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to `list(k = 20L)`.
 
 - pca:
 
-  Named list. Parameters to feed through to the optional recalculation
-  of the PCA, see
+  List. Parameters to feed through to the optional recalculation of the
+  PCA, see
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md).
+  See
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  for the available elements. Defaults to
   [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md).
 
 ## Value
 
-A list with the fastMNN parameters.
+A named list with the following elements:
+
+- ndist - Numeric. Number of median distances for the tricube kernel
+  bandwidth. Defaults to `3.0`.
+
+- cos_norm - Boolean. Apply cosine normalisation before computing
+  distances. Defaults to `TRUE`.
+
+- no_pcs - Integer. Number of PCs to use for MNN calculations. Defaults
+  to `30L`.
+
+- sparse_svd - Boolean. Shall the sparse SVD be used. Defaults to
+  `TRUE`.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.
+
+- The elements of
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md),
+  overridden by `pca`, spliced in at this position.

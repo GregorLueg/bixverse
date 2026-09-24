@@ -33,8 +33,8 @@ rs_calculate_dge_mann_whitney(
 
 - min_prop:
 
-  Minimum proportion of expression in at least one of the two groups to
-  be tested.
+  Numeric. Minimum proportion of expression in at least one of the two
+  groups to be tested.
 
 - alternative:
 

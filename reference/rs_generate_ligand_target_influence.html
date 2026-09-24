@@ -11,7 +11,7 @@ NicheNet like approach."><meta property="og:image" content="https://gregorlueg.g
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,9 @@ NicheNet like approach."><meta property="og:image" content="https://gregorlueg.g
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -52,7 +55,9 @@ NicheNet like approach."><meta property="og:image" content="https://gregorlueg.g
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -114,19 +119,20 @@ NicheNet like approach.</p>
 
 
 <dl><dt id="arg-ligand-seeds">ligand_seeds<a class="anchor" aria-label="anchor" href="#arg-ligand-seeds"></a></dt>
-<dd><p>List. Contains the indices of the seeds, i.e., ligands.</p></dd>
+<dd><p>List of integer vectors. The 0-indexed seed node(s) per
+ligand or ligand combination.</p></dd>
 
 
 <dt id="arg-ppi-network">ppi_network<a class="anchor" aria-label="anchor" href="#arg-ppi-network"></a></dt>
 <dd><p>Named list. Contains the PPI network with the ligand
-to receptor to signalling to TFs. Must contain from (indices), to
-(indices), and edge weights.</p></dd>
+to receptor to signalling to TFs. Must contain <code>from</code> and <code>to</code> (0-indexed
+node indices) and <code>weight</code>.</p></dd>
 
 
 <dt id="arg-grn-network">grn_network<a class="anchor" aria-label="anchor" href="#arg-grn-network"></a></dt>
 <dd><p>Named list. Contains the gene regulatory network with the
-TF to target gene network. Must contain from (indices), to (indices), and
-edge weights.</p></dd>
+TF to target gene network. Must contain <code>from</code> and <code>to</code> (0-indexed node
+indices) and <code>weight</code>.</p></dd>
 
 
 <dt id="arg-n-nodes">n_nodes<a class="anchor" aria-label="anchor" href="#arg-n-nodes"></a></dt>
@@ -134,13 +140,13 @@ edge weights.</p></dd>
 
 
 <dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
-<dd><p>Named list.</p></dd>
+<dd><p>Named list. The ligand-target diffusion parameters.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A dense matrix of ligands x genes that contains the influence
-scores of each</p>
+    <p>A dense matrix of ligands x <code>n_nodes</code>, rows in <code>ligand_seeds</code>
+order, with the ligand to target influence scores.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

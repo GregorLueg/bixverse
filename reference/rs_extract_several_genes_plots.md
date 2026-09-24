@@ -1,7 +1,7 @@
 # Helper to extract single cell counts for several genes
 
-**\[experimental\]** Extract the single cell counts of several genes at
-ones.
+**\[experimental\]** Extract the normalised single cell counts of
+several genes at once.
 
 ## Usage
 
@@ -21,16 +21,19 @@ rs_extract_several_genes_plots(f_path, cell_indices, gene_indices, scale, clip)
 
 - gene_indices:
 
-  Integer. Gene index position to return (0-indexed!).
+  Integer vector. Gene index positions to return (0-indexed!).
 
 - scale:
 
-  Boolean. Shall the normalised counts be scaled.
+  Boolean. Shall the normalised counts be z-scored per gene across the
+  selected cells.
 
 - clip:
 
-  Optional float. Clipping for the Z-scores if scale is set to `TRUE`
+  Optional float. Clips the Z-scores to `[-clip, clip]`. Only used if
+  `scale = TRUE`.
 
 ## Value
 
-A list of dense vectors of the normalised counts.
+A list of numerical vectors, one per gene in `gene_indices`, each with
+one normalised value per cell in `cell_indices`.

@@ -44,16 +44,19 @@ params_scrublet(
 
 - manual_threshold:
 
-  Optional numeric. Manual doublet score threshold. If `NULL` (default),
-  threshold is automatically detected from simulated doublet score
-  distribution.
+  Numeric or `NULL`. Manual doublet score threshold. If `NULL`
+  (default), threshold is automatically detected from simulated doublet
+  score distribution. Defaults to `NULL`.
 
 - normalisation:
 
   List. Optional overrides for normalisation parameters. See
   [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
   for available parameters: `log_transform`, `mean_center`,
-  `normalise_variance`, `target_size`.
+  `normalise_variance`, `target_size`. See
+  [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 - hvg:
 
@@ -61,14 +64,20 @@ params_scrublet(
   parameters. See
   [`params_hvg_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_defaults.md)
   for available parameters: `min_gene_var_pctl`, `hvg_method`,
-  `loess_span`, `clip_max`.
+  `loess_span`, `clip_max`. See
+  [`params_hvg_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 - pca:
 
   List. Optional overrides for PCA parameters. See
   [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
   for available parameters: `no_pcs`, `random_svd`, `sparse` and
-  `skip_first_pc`.
+  `skip_first_pc`. See
+  [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 - knn:
 
@@ -78,9 +87,44 @@ params_scrublet(
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
   `n_probe`. Note: this function defaults to `k = 0L` (automatic
-  neighbour detection).
+  neighbour detection). See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for the available elements. Defaults to `list(k = 0L)`.
 
 ## Value
 
-A named list with all Scrublet parameters, combining defaults with any
-user-specified overrides.
+A named list with the following elements:
+
+- The elements of
+  [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md),
+  overridden by `normalisation`, spliced in at this position.
+
+- The elements of
+  [`params_hvg_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_defaults.md),
+  overridden by `hvg`, spliced in at this position.
+
+- The elements of
+  [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md),
+  overridden by `pca`, spliced in at this position.
+
+- The elements of
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),
+  overridden by `knn`, spliced in at this position.
+
+- sim_doublet_ratio - Numeric. Number of doublets to simulate relative
+  to the number of observed cells. For example, 2.0 simulates twice as
+  many doublets as there are cells. Defaults to `1.5`.
+
+- expected_doublet_rate - Numeric. Expected doublet rate for the
+  experiment, typically 0.05-0.10 depending on cell loading. Must be
+  between 0 and 1. Defaults to `0.1`.
+
+- stdev_doublet_rate - Numeric. Uncertainty in the expected doublet
+  rate. Defaults to `0.02`.
+
+- n_bins_histogram - Integer. Number of bins for histogram-based
+  automatic threshold detection. Typically 50-100. Defaults to `100L`.
+
+- manual_threshold - Numeric or `NULL`. Manual doublet score threshold.
+  If `NULL` (default), threshold is automatically detected from
+  simulated doublet score distribution. Defaults to `NULL`.

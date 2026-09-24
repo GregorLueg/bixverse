@@ -42,7 +42,6 @@ object <- normalise_bulk_dge(
   gene_lengths = gene_lengths,
   .verbose = FALSE
 )
-#> calcNormFactors has been renamed to normLibSizes
 get_tpm_counts(object)[1:3, 1:3]
 #>         sample_1 sample_10 sample_100
 #> gene_1 726.28034 498.21473   506.6152

@@ -150,8 +150,8 @@ object from the raw counts for it.
 
 ``` r
 
-norm_counts <- edgeR::cpm(synth$counts, log = TRUE)
-raw_cpm <- edgeR::cpm(synth$counts, log = FALSE)
+norm_counts <- rs_cpm(synth$counts, lib_size = NULL, log = TRUE, prior_count = 2)
+raw_cpm <- rs_cpm(synth$counts, lib_size = NULL, log = FALSE, prior_count = 2)
 
 data_log <- t(norm_counts)
 data_raw <- t(raw_cpm)
@@ -215,7 +215,7 @@ plot_epsilon_res(coexp_coremo)
 
 epsilon_sf <- get_epsilon_res(coexp_coremo)[r2_vals == max(r2_vals), epsilon][1]
 epsilon_sf
-#> [1] 9
+#> [1] 7.5
 ```
 
 Here is a wrinkle worth knowing about, and one the ground truth lets us
@@ -246,12 +246,12 @@ epsilon_scan <- rbindlist(lapply(c(1, 2, 3, 4, 6, epsilon_sf), \(eps) {
 epsilon_scan
 #>    epsilon n_modules genes_assigned
 #>      <num>     <int>          <int>
-#> 1:       1         4            254
-#> 2:       2         5            253
-#> 3:       3         4            207
-#> 4:       4         4            184
-#> 5:       6         2             58
-#> 6:       9         7            110
+#> 1:     1.0         4            254
+#> 2:     2.0         5            253
+#> 3:     3.0         4            207
+#> 4:     4.0         4            167
+#> 5:     6.0         2             55
+#> 6:     7.5         4            103
 ```
 
 The scale-free fit and “keep as many real module genes as possible” pull
@@ -338,7 +338,7 @@ coexp_leiden <- cor_module_graph_check_res(
   .verbose = TRUE
 )
 #> Generating data.table format of the symmetric matrix.
-#> Generating correlation-based graph with 8566 edges.
+#> Generating correlation-based graph with 8567 edges.
 #> Iterating through 15 resolutions
 #> Using sequential computation.
 
@@ -346,12 +346,12 @@ plot_resolution_res(coexp_leiden)
 #> Key: <resolution>
 #>    resolution no_clusters modularity good_clusters avg_size max_size
 #>         <num>       <int>      <num>         <int>    <num>    <int>
-#> 1:  0.1000000           3  0.6555233             3 83.66667       88
-#> 2:  0.1389495           3  0.6555233             3 83.66667       88
-#> 3:  0.1930698           3  0.6555233             3 83.66667       88
-#> 4:  0.2682696           3  0.6555233             3 83.66667       88
-#> 5:  0.3727594           3  0.6555233             3 83.66667       88
-#> 6:  0.5179475           3  0.6555233             3 83.66667       88
+#> 1:  0.1000000           3  0.6559388             3 83.66667       88
+#> 2:  0.1389495           3  0.6559388             3 83.66667       88
+#> 3:  0.1930698           3  0.6559388             3 83.66667       88
+#> 4:  0.2682696           3  0.6559388             3 83.66667       88
+#> 5:  0.3727594           3  0.6559388             3 83.66667       88
+#> 6:  0.5179475           3  0.6559388             3 83.66667       88
 #> Warning in sqrt(x): NaNs produced
 #> Warning: Removed 3 rows containing missing values or values outside the scale range
 #> (`geom_point()`).
@@ -438,11 +438,11 @@ ica_modules <- get_modules(ica_res)
 ica_modules[, .N, by = module_id][order(-N)]
 #>    module_id     N
 #>       <char> <int>
-#> 1:      IC_2    77
-#> 2:      IC_3    68
-#> 3:      IC_5    67
-#> 4:      IC_1    65
-#> 5:      IC_4    28
+#> 1:      IC_5    90
+#> 2:      IC_1    58
+#> 3:      IC_4    48
+#> 4:      IC_2    38
+#> 5:      IC_3    35
 
 # Sparse and overlapping, which is the whole point of a factorisation.
 data.table(
@@ -452,7 +452,7 @@ data.table(
 )
 #>     rows unique_genes in_multiple_modules
 #>    <int>        <int>               <int>
-#> 1:   305          169                  77
+#> 1:   269          151                  63
 ```
 
 ## Method 4: DGRDL
@@ -636,7 +636,7 @@ coexp_nmf_stab <- stabilised_nmf_bulk(
 stab <- get_nmf_stability(coexp_nmf_stab)
 stab
 #> $losses
-#> [1] 6901265227 6885273325 6903864064 6878840099 6887485166
+#> [1] 6901265228 6885273325 6903864049 6878840096 6887485166
 #> 
 #> $converged
 #> [1] TRUE TRUE TRUE TRUE TRUE
@@ -685,11 +685,11 @@ k_sweep
 #>    <int>     <num>      <num>        <num>           <lgcl>     <int>
 #> 1:     2 0.7546717 0.13438072   0.13449627            FALSE         0
 #> 2:     3 0.7082610 0.09671029   0.09806779            FALSE         0
-#> 3:     4 0.9751884 0.06291160   0.06299967            FALSE         0
+#> 3:     4 0.9751885 0.06291160   0.06299967            FALSE         0
 #> 4:     5 0.8993866 0.05916342   0.06091455            FALSE         0
-#> 5:     6 0.7649854 0.05695935   0.05906541            FALSE         0
-#> 6:     7 0.7087603 0.05512724   0.05638576            FALSE         0
-#> 7:     8 0.6015527 0.05385696   0.05448819            FALSE         0
+#> 5:     6 0.7649848 0.05695935   0.05906541            FALSE         0
+#> 6:     7 0.7087608 0.05512725   0.05638576            FALSE         0
+#> 7:     8 0.6015507 0.05385696   0.05448819            FALSE         0
 #>    n_empty_clusters n_converged
 #>               <int>       <int>
 #> 1:                0          10
@@ -764,12 +764,12 @@ line up directly.
 head(consensus_stab$clusters)
 #>      component_id   run component pooled_idx cluster local_density silhouette
 #>            <char> <int>     <int>      <int>   <int>         <num>      <num>
-#> 1: run_01.comp_01     1         1          1       3  5.220121e-06  0.9999714
-#> 2: run_01.comp_02     1         2          2       4  9.438180e-03  0.9763555
+#> 1: run_01.comp_01     1         1          1       3  5.220118e-06  0.9999714
+#> 2: run_01.comp_02     1         2          2       4  9.438175e-03  0.9763555
 #> 3: run_01.comp_03     1         3          3       1  7.572240e-03  0.9526643
-#> 4: run_01.comp_04     1         4          4       2  1.848404e-04  0.9952859
-#> 5: run_02.comp_01     2         1          5       2  5.203961e-05  0.9968476
-#> 6: run_02.comp_02     2         2          6       3  6.306890e-07  0.9999903
+#> 4: run_01.comp_04     1         4          4       2  1.848401e-04  0.9952859
+#> 5: run_02.comp_01     2         1          5       2  5.203952e-05  0.9968476
+#> 6: run_02.comp_02     2         2          6       3  6.306892e-07  0.9999903
 #>      kept
 #>    <lgcl>
 #> 1:   TRUE
@@ -838,7 +838,7 @@ recovery
 #> 2:        CoReMo 0.7500000
 #> 3:           NMF 0.6811551
 #> 4: Consensus NMF 0.5900000
-#> 5:           ICA 0.4974674
+#> 5:           ICA 0.4809684
 #> 6:         DGRDL 0.1505952
 ```
 
@@ -948,13 +948,23 @@ run_methods <- function(generator) {
   meta_g <- data.table(sample_id = colnames(synth_g$counts))
 
   log_obj <- BulkCoExp(
-    raw_data = t(edgeR::cpm(synth_g$counts, log = TRUE)),
+    raw_data = t(rs_cpm(
+      synth_g$counts,
+      lib_size = NULL,
+      log = TRUE,
+      prior_count = 2
+    )),
     meta_data = meta_g
   ) %>%
     preprocess_bulk_coexp(hvg = 0.5, .verbose = FALSE)
 
   raw_obj <- BulkCoExp(
-    raw_data = t(edgeR::cpm(synth_g$counts, log = FALSE)),
+    raw_data = t(rs_cpm(
+      synth_g$counts,
+      lib_size = NULL,
+      log = FALSE,
+      prior_count = 2
+    )),
     meta_data = meta_g
   ) %>%
     preprocess_bulk_coexp(hvg = 0.5, .verbose = FALSE)
@@ -1022,14 +1032,14 @@ grid_res <- rbindlist(lapply(
 grid_res
 #>              generator     metric CoReMo   ICA   NMF
 #>                 <char>     <char>  <num> <num> <num>
-#> 1:         hub_modular    jaccard  0.750 0.497 0.681
-#> 2:         hub_modular factor_cor  0.985 0.520 0.988
-#> 3:             modular    jaccard  0.790 0.211 0.690
-#> 4:             modular factor_cor  0.983 0.599 0.986
-#> 5: non_negative_factor    jaccard  0.560 0.511 0.486
-#> 6: non_negative_factor factor_cor  0.959 0.401 0.966
-#> 7: non_gaussian_factor    jaccard  0.617 0.507 0.596
-#> 8: non_gaussian_factor factor_cor  0.978 0.516 0.979
+#> 1:         hub_modular    jaccard  0.750 0.481 0.681
+#> 2:         hub_modular factor_cor  0.985 0.523 0.988
+#> 3:             modular    jaccard  0.790 0.200 0.690
+#> 4:             modular factor_cor  0.983 0.635 0.986
+#> 5: non_negative_factor    jaccard  0.563 0.495 0.486
+#> 6: non_negative_factor factor_cor  0.959 0.440 0.966
+#> 7: non_gaussian_factor    jaccard  0.617 0.526 0.596
+#> 8: non_gaussian_factor factor_cor  0.978 0.567 0.979
 ```
 
 ``` r

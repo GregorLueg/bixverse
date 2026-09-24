@@ -15,7 +15,7 @@ other."><meta property="og:image" content="https://gregorlueg.github.io/bixverse
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,9 @@ other."><meta property="og:image" content="https://gregorlueg.github.io/bixverse
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -56,7 +59,9 @@ other."><meta property="og:image" content="https://gregorlueg.github.io/bixverse
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -112,8 +117,7 @@ other.</p>
 <span>  contrast_list <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  co_variates <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  quantile_norm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  <span class="va">...</span>,</span>
+<span>  limma_params <span class="op">=</span> <span class="fu"><a href="params_limma_voom.html">params_limma_voom</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -149,14 +153,9 @@ separately in the data.</p></dd>
 consider during the Limma Voom modelling.</p></dd>
 
 
-<dt id="arg-quantile-norm">quantile_norm<a class="anchor" aria-label="anchor" href="#arg-quantile-norm"></a></dt>
-<dd><p>Boolean. Shall the data also be quantile normalised.
-Defaults to <code>FALSE</code>.</p></dd>
-
-
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional parameters to forward to <code><a href="https://rdrr.io/pkg/limma/man/ebayes.html" class="external-link">limma::eBayes()</a></code> or
-<code><a href="https://rdrr.io/pkg/limma/man/voom.html" class="external-link">limma::voom()</a></code>.</p></dd>
+<dt id="arg-limma-params">limma_params<a class="anchor" aria-label="anchor" href="#arg-limma-params"></a></dt>
+<dd><p>List. The limma parameters, see
+<code><a href="params_limma_voom.html">params_limma_voom()</a></code>.</p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
@@ -183,29 +182,28 @@ Defaults to <code>FALSE</code>.</p></dd>
 <span class="r-in"><span>  group_col <span class="op">=</span> <span class="st">"case_control"</span>,</span></span>
 <span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> calcNormFactors has been renamed to normLibSizes</span>
 <span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu">calculate_dge_limma</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">object</span>,</span></span>
 <span class="r-in"><span>  contrast_column <span class="op">=</span> <span class="st">"case_control"</span>,</span></span>
 <span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_dge_limma_voom.html">get_dge_limma_voom</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     gene_id      logFC       CI.L        CI.R   AveExpr         t     P.Value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;      &lt;num&gt;      &lt;num&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;       &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  gene_25 -0.6397658 -1.0498106 -0.22972104  9.230661 -3.094264 0.002538899</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  gene_24 -0.2766326 -0.4614834 -0.09178174 10.247703 -2.967901 0.003726954</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_649 -0.2592920 -0.4354871 -0.08309685 10.033452 -2.918521 0.004317106</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_754 -0.2463135 -0.4141150 -0.07851200 10.039387 -2.911119 0.004412630</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_461 -0.2253523 -0.3791305 -0.07157408 10.468820 -2.906262 0.004476363</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  gene_30 -0.3027633 -0.5170655 -0.08846100  9.576105 -2.801844 0.006068301</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     gene_id      logFC        CI.L        CI.R   AveExpr         t     P.Value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;      &lt;num&gt;       &lt;num&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;       &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: gene_589  0.2246372  0.08408076  0.36519360 10.469973  3.169891 0.002011843</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  gene_25 -0.6156898 -1.03578573 -0.19559385  9.230661 -2.906878 0.004475873</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_894  0.2106366  0.05376385  0.36750934 10.165859  2.663175 0.008992482</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_691  0.1905472  0.04817933  0.33291502 10.089603  2.654630 0.009208069</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_649 -0.2152072 -0.37767245 -0.05274193 10.033452 -2.627300 0.009929367</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  gene_24 -0.2383683 -0.42102215 -0.05571450 10.247703 -2.588410 0.011043868</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    adj.P.Val         B        contrast subgroup</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;num&gt;     &lt;num&gt;          &lt;char&gt;   &lt;lgcl&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: 0.5821864 -3.118852 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: 0.5821864 -2.709253 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: 0.5821864 -2.876284 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: 0.5821864 -2.883107 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: 0.5821864 -2.702562 case_vs_control       NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: 0.5821864 -3.231806 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: 0.7339682 -2.136281 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: 0.7339682 -3.252944 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: 0.7339682 -3.072213 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: 0.7339682 -3.113507 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: 0.7339682 -3.175555 case_vs_control       NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: 0.7339682 -3.150449 case_vs_control       NA</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

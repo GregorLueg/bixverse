@@ -40,8 +40,8 @@ rs_fast_cluster_sc_grid(
 
 - n_centroids:
 
-  Optional integer. The number of clusters to find. If not provided,
-  defaults to `sqrt(nrow(embd))`.
+  Optional integer. The number of k-means centroids. If not provided,
+  defaults to `floor(sqrt(nrow(embd)))`.
 
 - fc_params:
 
@@ -74,7 +74,13 @@ rs_fast_cluster_sc_grid(
 
 A list with the following elements:
 
-- memberships - The memberships across the different resolutions. The
-  membership from the random seed with the best conductance is returned.
+- membership - A list with `memberships` (one integer vector per
+  resolution, from the seed with the best conductance) and `stats` (list
+  with `mean_ari`, `median_ari`, `mean_conductance`,
+  `median_conductance` and `mean_n_comms`, one value per resolution).
 
-- stats - The statistics per given resolution run.
+- k_means_cluster - Integer vector with the k-means cluster per cell if
+  `return_kmeans = TRUE`, otherwise `NULL`.
+
+- centroids - Numerical matrix with the k-means centroids if
+  `return_kmeans = TRUE`, otherwise `NULL`.

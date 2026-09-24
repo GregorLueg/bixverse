@@ -1,6 +1,6 @@
-# Check bulk sparsification parameters
+# Check bulk sparsity params
 
-Checkmate extension for checking the bulk sparsification parameters, see
+Checkmate extension for the output of
 [`params_bulk_sparsity()`](https://gregorlueg.github.io/bixverse/reference/params_bulk_sparsity.md).
 
 ## Usage
@@ -13,8 +13,9 @@ checkBulkSparsityParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

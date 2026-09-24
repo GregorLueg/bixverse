@@ -35,7 +35,7 @@ embedding via the &quot;wnn&quot; modality."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,6 +62,9 @@ embedding via the &quot;wnn&quot; modality."><meta property="og:image" content="
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -76,7 +79,9 @@ embedding via the &quot;wnn&quot; modality."><meta property="og:image" content="
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -256,9 +261,9 @@ modality weights added to <code>other_data[["wnn"]]</code>.</p>
 <span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_pca_adt_sc.html">calculate_pca_adt_sc</a></span><span class="op">(</span><span class="va">object</span>, no_pcs <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu">generate_wnn_graph_sc</span><span class="op">(</span><span class="va">object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="get_snn_graph.html">get_snn_graph</a></span><span class="op">(</span><span class="va">object</span>, modality <span class="op">=</span> <span class="st">"wnn"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> IGRAPH a01ce5a U-W- 1000 35379 -- </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IGRAPH 36076bb U-W- 1000 35379 -- </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> + attr: weight (e/n)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> + edges from a01ce5a:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> + edges from 36076bb:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  1-- 4  5-- 8  3-- 9  1--13  4--13 13--16  1--16 14--17  3--18 10--19</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [11] 14--20 17--20  5--20 12--21  1--22 16--22  5--23 20--23  8--23 15--24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [21] 12--24  9--24 21--24  4--25  5--26 20--26 23--26 17--26 12--27 21--27</span>

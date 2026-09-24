@@ -1,8 +1,6 @@
-# Assert per-cell ScType parameters
+# Assert ScType cell params
 
-Checkmate extension for asserting the per-cell ScType parameters as
-returned by
-[`params_sctype_cells()`](https://gregorlueg.github.io/bixverse/reference/params_sctype_cells.md).
+Assert ScType cell params
 
 ## Usage
 
@@ -14,12 +12,11 @@ assertSctypeCellParams(x, .var.name = checkmate::vname(x), add = NULL)
 
 - x:
 
-  The list to assert.
+  The object to check.
 
 - .var.name:
 
-  Name of the checked object to print in assertions. Defaults to the
-  heuristic implemented in checkmate.
+  Name of the checked object to print in assertions.
 
 - add:
 
@@ -28,4 +25,4 @@ assertSctypeCellParams(x, .var.name = checkmate::vname(x), add = NULL)
 
 ## Value
 
-Invisibly returns `x` if the assertion is successful.
+Invisibly returns the checked object if the assertion is successful.

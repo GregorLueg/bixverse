@@ -18,10 +18,10 @@ rs_cluster_stability(data)
 
 ## Value
 
-A list containing:
+A list containing, one entry per feature:
 
-- mean_jaccard - mean Jaccard similarities for this feature across all
-  the bootstraps, resamplings.
+- mean_jaccard - mean Jaccard similarity of the feature's cluster across
+  all pairs of bootstraps/resamplings.
 
-- std_jaccard - the standard deviation of the Jaccard similarities for
-  this feature across all the bootstraps, resamplings.
+- std_jaccard - the (population) standard deviation of these Jaccard
+  similarities.

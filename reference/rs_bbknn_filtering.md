@@ -1,6 +1,7 @@
 # Reduce BBKNN results to Top X neighbours
 
-**\[experimental\]**
+**\[experimental\]** Keeps the first `no_neighbours_to_keep` stored
+entries of each CSR row.
 
 ## Usage
 
@@ -28,6 +29,6 @@ rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 
 ## Value
 
-A list with `indices` (integer matrix) and `dist` (numeric matrix), each
-with shape (n_cells, no_neighbours_to_keep). Positions without
-neighbours are filled with -1 (indices) or NaN (distances).
+A list with `indices` and `dist`, both numeric (double) matrices of
+shape (n_cells, no_neighbours_to_keep). Positions without neighbours are
+`NaN` in both.

@@ -11,17 +11,18 @@ params_kmeans_defaults()
 
 ## Value
 
-A list with the following parameters
+A named list with the following elements:
 
 - k_means_iter - Integer. The number of iterations to use for the
-  clustering.
+  clustering. Defaults to `30L`.
 
-- k_means_init - String. The initialisation. Options are `"random"` and
-  `"parallel"`. Defaults to `"parallel"`.
+- k_means_init - String. The initialisation. One of
+  `c("parallel", "random")`. Defaults to `"parallel"`.
 
-- gemm - Optional boolean. Controls which CPU implementation is used by
-  the method. GEMM is faster with large dimensionality.
+- gemm - Boolean or `NULL`. Controls which CPU implementation is used by
+  the method. GEMM is faster with large dimensionality. Defaults to
+  `FALSE`.
 
-- hamerly - Optional boolean. Shall a faster exact method be used
+- hamerly - Boolean or `NULL`. Shall a faster exact method be used
   leveraging the triangle inequality. Faster on large data sets with
-  large numbers of centroids.
+  large numbers of centroids. Defaults to `TRUE`.

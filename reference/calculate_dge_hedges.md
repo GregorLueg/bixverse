@@ -68,7 +68,6 @@ object <- normalise_bulk_dge(
   group_col = "case_control",
   .verbose = FALSE
 )
-#> calcNormFactors has been renamed to normLibSizes
 object <- calculate_dge_hedges(
   object,
   contrast_column = "case_control",
@@ -77,10 +76,10 @@ object <- calculate_dge_hedges(
 head(get_dge_effect_sizes(object))
 #>    effect_sizes standard_errors gene_id     combination subgroup
 #>           <num>           <num>  <char>          <char>   <lgcl>
-#> 1:   -0.4697988       0.2048400  gene_1 case_vs_control       NA
-#> 2:   -0.2772216       0.2030405  gene_2 case_vs_control       NA
-#> 3:   -0.4859485       0.2050321  gene_3 case_vs_control       NA
-#> 4:   -0.4060705       0.2041436  gene_4 case_vs_control       NA
-#> 5:   -0.3226046       0.2033822  gene_5 case_vs_control       NA
-#> 6:   -0.4768077       0.2049226  gene_6 case_vs_control       NA
+#> 1:   -0.4541874       0.2046602  gene_1 case_vs_control       NA
+#> 2:   -0.2674739       0.2029738  gene_2 case_vs_control       NA
+#> 3:   -0.4256828       0.2043474  gene_3 case_vs_control       NA
+#> 4:   -0.3793411       0.2038811  gene_4 case_vs_control       NA
+#> 5:   -0.2601789       0.2029254  gene_5 case_vs_control       NA
+#> 6:   -0.4551123       0.2046707  gene_6 case_vs_control       NA
 ```

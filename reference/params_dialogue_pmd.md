@@ -29,70 +29,115 @@ params_dialogue_pmd(
 - k:
 
   Integer. Number of multicellular programmes to extract. Must be at
-  least 1.
+  least 1. Defaults to `2L`.
 
 - n_permutations:
 
   Integer. Permutations backing the empirical p-value per programme.
-  Must be at least 2.
+  Must be at least 2. Defaults to `100L`.
 
 - extra_sparse:
 
   Boolean. Tune the L1 bound by permutation instead of fixing it at
-  `sqrt(p_1) / 2`. Costs ten more fits per permutation.
+  `sqrt(p_1) / 2`. Costs ten more fits per permutation. Defaults to
+  `FALSE`.
 
 - abn_c:
 
   Integer. Minimum cells a sample must contribute, within a cell type,
-  before it counts towards the feature-level ANOVA.
+  before it counts towards the feature-level ANOVA. Defaults to `15L`.
 
 - p_anova:
 
   Numeric. BH-adjusted ANOVA cutoff for keeping a feature. Must be in
-  `(0, 1]`.
+  `(0, 1]`. Defaults to `0.05`.
 
 - centre:
 
   Boolean. Centre and scale the sample-level feature matrix, then
-  winsorise it.
+  winsorise it. Defaults to `TRUE`.
 
 - cap:
 
   Numeric. Winsorising tail fraction applied to each column. Must be in
-  `[0, 0.5)`.
+  `[0, 0.5)`. Defaults to `0.01`.
 
 - spatial:
 
   Boolean. Spatial data: skip the ANOVA feature filter entirely. Niches
-  are small, so a feature need not vary across them to be real.
+  are small, so a feature need not vary across them to be real. Defaults
+  to `FALSE`.
 
 - n_genes:
 
   Integer. Genes taken per programme per direction when building a
-  signature.
+  signature. Defaults to `200L`.
 
 - min_ci:
 
   Numeric. Minimum absolute correlation for a gene to enter a signature.
-  Must be in `[0, 1]`.
+  Must be in `[0, 1]`. Defaults to `0.05`.
 
 - averaging:
 
-  String. One of `c("median", "mean")`. How cell-level features are
-  collapsed per sample.
+  String. How cell-level features are collapsed per sample. One of
+  `c("median", "mean")`. Defaults to `"median"`.
 
 - mcp_assignment_p:
 
   Numeric. Empirical p below which a cell type pair counts as connected
   when deciding which cell types a programme spans. Must be in `(0, 1]`.
+  Defaults to `0.1`.
 
 - seed:
 
-  Integer. Seed for the permutation null.
+  Integer. Seed for the permutation null. Defaults to `1234L`.
 
 ## Value
 
-A list with the stage one DIALOGUE parameters.
+A named list with the following elements:
+
+- k - Integer. Number of multicellular programmes to extract. Must be at
+  least 1. Defaults to `2L`.
+
+- n_permutations - Integer. Permutations backing the empirical p-value
+  per programme. Must be at least 2. Defaults to `100L`.
+
+- extra_sparse - Boolean. Tune the L1 bound by permutation instead of
+  fixing it at `sqrt(p_1) / 2`. Costs ten more fits per permutation.
+  Defaults to `FALSE`.
+
+- abn_c - Integer. Minimum cells a sample must contribute, within a cell
+  type, before it counts towards the feature-level ANOVA. Defaults to
+  `15L`.
+
+- p_anova - Numeric. BH-adjusted ANOVA cutoff for keeping a feature.
+  Must be in `(0, 1]`. Defaults to `0.05`.
+
+- centre - Boolean. Centre and scale the sample-level feature matrix,
+  then winsorise it. Defaults to `TRUE`.
+
+- cap - Numeric. Winsorising tail fraction applied to each column. Must
+  be in `[0, 0.5)`. Defaults to `0.01`.
+
+- spatial - Boolean. Spatial data: skip the ANOVA feature filter
+  entirely. Niches are small, so a feature need not vary across them to
+  be real. Defaults to `FALSE`.
+
+- n_genes - Integer. Genes taken per programme per direction when
+  building a signature. Defaults to `200L`.
+
+- min_ci - Numeric. Minimum absolute correlation for a gene to enter a
+  signature. Must be in `[0, 1]`. Defaults to `0.05`.
+
+- averaging - String. How cell-level features are collapsed per sample.
+  One of `c("median", "mean")`. Defaults to `"median"`.
+
+- mcp_assignment_p - Numeric. Empirical p below which a cell type pair
+  counts as connected when deciding which cell types a programme spans.
+  Must be in `(0, 1]`. Defaults to `0.1`.
+
+- seed - Integer. Seed for the permutation null. Defaults to `1234L`.
 
 ## Details
 

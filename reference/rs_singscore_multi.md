@@ -24,25 +24,26 @@ rs_singscore_multi(
 
 - up_list:
 
-  List. Up gene sets as zero-indexed indices. See
+  List. Up gene sets as 0-based indices. See
   [`rs_prepare_gsva_gs()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_gsva_gs.md).
 
 - down_list:
 
-  List or NULL. Paired down gene sets, same length and ordering as
-  `up_list`.
+  List or NULL. Paired down gene sets as 0-based indices, same length
+  and ordering as `up_list`.
 
 - center_score:
 
-  Boolean.
+  Boolean. Centre scores around 0. Disabled internally when
+  `known_direction = FALSE`.
 
 - known_direction:
 
-  Boolean.
+  Boolean. Whether the up-set direction is known.
 
 - stable:
 
-  Boolean.
+  Boolean. If `TRUE`, use stable-gene score bounds.
 
 ## Value
 
@@ -50,6 +51,6 @@ A named list with
 
 - `scores` - Numerical matrix with the scores
 
-- `dispersion` - Numerical matrix with the dispersions
+- `dispersions` - Numerical matrix with the dispersions
 
-Both matrices are of shape gene_sets × samples.
+Both matrices are of shape gene sets x samples.

@@ -1,20 +1,21 @@
-# Check ssGSEA parameters
+# Check ssGSEA params
 
-Checkmate extension for checking single sample gene set enrichment
-analysis parameters.
+Checkmate extension for the output of
+[`params_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/params_ssgsea.md).
 
 ## Usage
 
 ``` r
-checkSingleSampleGSEAparams(x)
+checkSingleSampleGSEAParams(x)
 ```
 
 ## Arguments
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

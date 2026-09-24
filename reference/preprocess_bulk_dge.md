@@ -34,8 +34,7 @@ preprocess_bulk_dge(
 - norm_method:
 
   String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`.
-  Please refer to
-  [`edgeR::normLibSizes()`](https://rdrr.io/pkg/edgeR/man/calcNormFactors.html).
+  Please refer to edgeR's `calcNormFactors()`.
 
 - outlier_threshold:
 

@@ -13,7 +13,7 @@ loss in precision."><meta property="og:image" content="https://gregorlueg.github
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,9 @@ loss in precision."><meta property="og:image" content="https://gregorlueg.github
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -54,7 +57,9 @@ loss in precision."><meta property="og:image" content="https://gregorlueg.github
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -128,19 +133,20 @@ centring will automatically occur.)</p></dd>
 
 
 <dt id="arg-oversampling">oversampling<a class="anchor" aria-label="anchor" href="#arg-oversampling"></a></dt>
-<dd><p>Integer. Defaults to <code>10L</code> if nothing is provided.</p></dd>
+<dd><p>Optional integer. Defaults to <code>10L</code> if <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-n-power-iter">n_power_iter<a class="anchor" aria-label="anchor" href="#arg-n-power-iter"></a></dt>
-<dd><p>Integer. How often shall the QR decomposition be
-applied. Defaults to <code>2L</code> if nothing is provided.</p></dd>
+<dd><p>Optional integer. Number of power iterations (each with
+a QR decomposition). Defaults to <code>2L</code> if <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with:</p><ul><li><p>u - u matrix of the SVD.</p></li>
+    <p>A list with:</p><ul><li><p>scores - u matrix of the SVD multiplied by the singular values.</p></li>
 <li><p>v - v matrix of the SVD.</p></li>
-<li><p>s - Eigenvalues of the SVD.</p></li>
+<li><p>s - Singular values of the SVD.</p></li>
+<li><p>scaled - Boolean. Was the matrix scaled.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

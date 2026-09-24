@@ -1,4 +1,4 @@
-# Flatten kNN matrix to edge list
+# Flatten kNN matrix to edge pairs
 
 **\[experimental\]** Helper function to leverage Rust to transform a kNN
 matrix into an edge list.
@@ -13,13 +13,12 @@ rs_knn_mat_to_edge_pairs(knn_mat, one_index)
 
 - knn_mat:
 
-  Integer matrix. Rows represent the samples and the columns the indices
-  of the k-nearest neighbours.
+  Integer matrix. Rows represent the samples and the columns the 0-based
+  indices of the k-nearest neighbours.
 
 - one_index:
 
-  Boolean. If the original data is 0-index, shall 1-indexed data be
-  returned.
+  Boolean. Shall 1-based indices be returned.
 
 ## Value
 

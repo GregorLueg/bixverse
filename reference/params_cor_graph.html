@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -107,29 +112,38 @@
 
 
 <dl><dt id="arg-epsilon">epsilon<a class="anchor" aria-label="anchor" href="#arg-epsilon"></a></dt>
-<dd><p>Float. Defines the epsilon parameter for the radial basis
-function. Defaults to 2, but should be ideally optimised.</p></dd>
+<dd><p>Numeric. Defines the epsilon parameter for the radial basis
+function. Defaults to <code>2.0</code>.</p></dd>
 
 
 <dt id="arg-min-cor">min_cor<a class="anchor" aria-label="anchor" href="#arg-min-cor"></a></dt>
-<dd><p>Float. Minimum absolute correlation that needs to be
+<dd><p>Numeric. Minimum absolute correlation that needs to be
 observed in either data set. Only relevant for differential correlation-based
-graphs.</p></dd>
+graphs. Defaults to <code>0.2</code>.</p></dd>
 
 
 <dt id="arg-fdr-threshold">fdr_threshold<a class="anchor" aria-label="anchor" href="#arg-fdr-threshold"></a></dt>
-<dd><p>Float. Maximum FDR for the differential correlation
-p-value.</p></dd>
+<dd><p>Numeric. Maximum FDR for the differential correlation
+p-value. Defaults to <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Boolean. Controls verbosity of the graph generation function.</p></dd>
+<dd><p>Boolean. Controls verbosity of the graph generation function.
+Defaults to <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>List with parameters for usage in subsequent function.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>epsilon - Numeric. Defines the epsilon parameter for the radial basis
+function. Defaults to <code>2.0</code>.</p></li>
+<li><p>min_cor - Numeric. Minimum absolute correlation that needs to be
+observed in either data set. Only relevant for differential
+correlation-based graphs. Defaults to <code>0.2</code>.</p></li>
+<li><p>fdr_threshold - Numeric. Maximum FDR for the differential correlation
+p-value. Defaults to <code>0.05</code>.</p></li>
+<li><p>verbose - Boolean. Controls verbosity of the graph generation
+function. Defaults to <code>TRUE</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -19,12 +19,12 @@ rs_vision(f_path, gs_list, cells_to_keep, streaming, verbose)
 
 - gs_list:
 
-  Nested list. Each sublist contains the (0-indexed!) positive and
-  negative gene indices of that specific gene set.
+  Nested list. Each sublist contains the (0-indexed!) `pos` and `neg`
+  gene indices of that specific gene set.
 
 - cells_to_keep:
 
-  Integer. Vector of indices of the cells to keep.
+  Integer. Vector of indices (0-indexed) of the cells to keep.
 
 - streaming:
 

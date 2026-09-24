@@ -19,8 +19,7 @@ rs_ssgsea(exp, gs_list, alpha, normalise, timings)
 
 - gs_list:
 
-  List. A list containing the indices of the pathway genes (needs to be
-  null indexed). See
+  List. A list containing the 0-based indices of the pathway genes. See
   [`rs_prepare_gsva_gs()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_gsva_gs.md).
 
 - alpha:

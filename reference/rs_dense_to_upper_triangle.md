@@ -1,8 +1,8 @@
 # Generate a vector-based representation of the upper triangle of a matrix
 
 **\[experimental\]** This function generates a vector from the upper
-triangle of a given symmetric matrix. You have the option to remove the
-diagonal with setting shift to 1.
+triangle of a given symmetric matrix, iterating through the rows. You
+have the option to remove the diagonal with setting `shift = TRUE`.
 
 ## Usage
 
@@ -14,15 +14,13 @@ rs_dense_to_upper_triangle(x, shift)
 
 - x:
 
-  Numeric vector. The vector of correlation coefficients that you want
-  to use to go back to a dense matrix.
+  Numeric matrix. The symmetric matrix to flatten.
 
 - shift:
 
-  Boolean. If you applied a shift, i.e. included the diagonal values. If
-  `true`, assumes the diagonal values are `1`, otherwise derives them
-  from the data.
+  Boolean. If `TRUE`, the diagonal is excluded, otherwise it is
+  included.
 
 ## Value
 
-The dense R matrix.
+Numeric vector with the upper triangle values.

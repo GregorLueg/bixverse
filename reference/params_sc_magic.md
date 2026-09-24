@@ -20,9 +20,9 @@ params_sc_magic(
 
 - n_steps:
 
-  Integer. Diffusion steps applied to the counts. Defaults to `3L`. Zero
-  is legal and hands back the un-imputed values, which is a cheap way to
-  compare the two.
+  Integer. Diffusion steps applied to the counts. Zero is legal and
+  hands back the un-imputed values, which is a cheap way to compare the
+  two. Defaults to `3L`.
 
 - clip_threshold:
 
@@ -37,11 +37,11 @@ params_sc_magic(
 
 - layer:
 
-  String. One of `c("norm", "raw")`. Which stored layer to impute. The
-  operator preserves per-cell mass, so imputed values sit on the scale
-  of whatever went in: imputing raw counts and imputing log-normalised
-  counts are different operations rather than the same one rescaled.
-  Defaults to `"norm"`.
+  String. Which stored layer to impute. The operator preserves per-cell
+  mass, so imputed values sit on the scale of whatever went in: imputing
+  raw counts and imputing log-normalised counts are different operations
+  rather than the same one rescaled. One of `c("norm", "raw")`. Defaults
+  to `"norm"`.
 
 - allow_large:
 
@@ -50,7 +50,27 @@ params_sc_magic(
 
 ## Value
 
-A named flat list with all MAGIC parameters.
+A named list with the following elements:
+
+- n_steps - Integer. Diffusion steps applied to the counts. Zero is
+  legal and hands back the un-imputed values, which is a cheap way to
+  compare the two. Defaults to `3L`.
+
+- clip_threshold - Numeric. Imputed values below this are zeroed after
+  the last step. Defaults to `0.01`.
+
+- gene_batch_size - Integer. Genes streamed off the binary store per
+  block. Bounds the scratch memory and is clamped to the number of
+  requested genes. Defaults to `1000L`.
+
+- layer - String. Which stored layer to impute. The operator preserves
+  per-cell mass, so imputed values sit on the scale of whatever went in:
+  imputing raw counts and imputing log-normalised counts are different
+  operations rather than the same one rescaled. One of
+  `c("norm", "raw")`. Defaults to `"norm"`.
+
+- allow_large - Boolean. Skip the output size guard. The dense output is
+  capped at 1e9 elements, i.e. 4 GB of `f32`. Defaults to `FALSE`.
 
 ## References
 

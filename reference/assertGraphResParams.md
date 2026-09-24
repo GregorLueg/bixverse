@@ -1,7 +1,6 @@
-# Assert resolution graph parameters
+# Assert resolution params
 
-Checkmate extension for asserting the resolution parameters for
-community detection with Leiden.
+Assert resolution params
 
 ## Usage
 
@@ -13,12 +12,11 @@ assertGraphResParams(x, .var.name = checkmate::vname(x), add = NULL)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 - .var.name:
 
-  Name of the checked object to print in assertions. Defaults to the
-  heuristic implemented in checkmate.
+  Name of the checked object to print in assertions.
 
 - add:
 

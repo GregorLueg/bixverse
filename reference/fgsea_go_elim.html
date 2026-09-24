@@ -23,7 +23,7 @@ al."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/lo
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,9 @@ al."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/lo
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -64,7 +67,9 @@ al."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/lo
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -195,9 +200,9 @@ level implementation of fgsea.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3: GO:0000353 0.8578760 3.360251    57 6.254944e-26              0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                               leading_edge</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                     &lt;list&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000288093,...[67]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000288093,...[62]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000162542,...[50]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: ENSG00000199568,ENSG00000283527,ENSG00000275174,ENSG00000206625,ENSG00000288093,ENSG00000101161,...[67]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: ENSG00000199568,ENSG00000283527,ENSG00000275174,ENSG00000206625,ENSG00000288093,ENSG00000101161,...[62]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: ENSG00000199568,ENSG00000283527,ENSG00000275174,ENSG00000206625,ENSG00000288093,ENSG00000283372,...[50]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    log2err          fdr                                  go_name</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;num&gt;        &lt;num&gt;                                   &lt;char&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1:      NA 3.080252e-23  spliceosomal tri-snRNP complex assembly</span>

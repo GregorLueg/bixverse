@@ -47,22 +47,22 @@ rs_sc_hvg_batch_aware(
 
 - loess_span:
 
-  Numeric. The span parameter for the loess function. Must be within
-  `(0, 1]`.
+  Numeric. The span parameter for the loess function (`"vst"` only).
+  Must be within `(0, 1]`.
 
 - binning:
 
-  String. The binning strategy for the `meanvarbin` method. One of
-  `c("equal_width", "equal_frequency")`.
+  String. The binning strategy for the `meanvarbin` and `dispersion`
+  methods. One of `c("equal_width", "equal_frequency")`.
 
 - n_bins:
 
-  Integer. Number of bins for the `meanvarbin` method.
+  Integer. Number of bins for the `meanvarbin` and `dispersion` methods.
 
 - clip_max:
 
-  Optional clipping number. Defaults to `sqrt(no_cells)` per batch if
-  not provided.
+  Optional clipping number (`"vst"` only). Defaults to `sqrt(no_cells)`
+  per batch if not provided.
 
 - streaming:
 
@@ -86,7 +86,8 @@ A list with HVG statistics concatenated across all batches. For
 
 - var_std - The standardised variance of each gene in each batch.
 
-- batch - Batch index for each gene (length = n_genes \* n_batches).
+- batch - Batch index for each entry (0-indexed, length = n_genes \*
+  n_batches).
 
 - gene_idx - Gene index for each entry (0-indexed, length = n_genes \*
   n_batches).
@@ -102,7 +103,8 @@ For the other methods
 
 - bin - The bin of the gene in each batch.
 
-- batch - Batch index for each gene (length = n_genes \* n_batches).
+- batch - Batch index for each entry (0-indexed, length = n_genes \*
+  n_batches).
 
 - gene_idx - Gene index for each entry (0-indexed, length = n_genes \*
   n_batches).

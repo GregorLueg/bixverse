@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -76,7 +79,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -121,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Bulk co-expression modules</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-06</p>
+      <p class="date">2026-09-24</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -225,8 +230,8 @@
 <p>For the correlation-based methods we work in log-CPM space (negative values are fine); NMF needs non-negative input so we’ll build a separate object from the raw counts for it.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">norm_counts</span> <span class="op">&lt;-</span> <span class="fu">edgeR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/cpm.html" class="external-link">cpm</a></span><span class="op">(</span><span class="va">synth</span><span class="op">$</span><span class="va">counts</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">raw_cpm</span> <span class="op">&lt;-</span> <span class="fu">edgeR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/cpm.html" class="external-link">cpm</a></span><span class="op">(</span><span class="va">synth</span><span class="op">$</span><span class="va">counts</span>, log <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">norm_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cpm.html">rs_cpm</a></span><span class="op">(</span><span class="va">synth</span><span class="op">$</span><span class="va">counts</span>, lib_size <span class="op">=</span> <span class="cn">NULL</span>, log <span class="op">=</span> <span class="cn">TRUE</span>, prior_count <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">raw_cpm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cpm.html">rs_cpm</a></span><span class="op">(</span><span class="va">synth</span><span class="op">$</span><span class="va">counts</span>, lib_size <span class="op">=</span> <span class="cn">NULL</span>, log <span class="op">=</span> <span class="cn">FALSE</span>, prior_count <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">data_log</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">norm_counts</span><span class="op">)</span></span>
 <span><span class="va">data_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">raw_cpm</span><span class="op">)</span></span>
@@ -282,7 +287,7 @@
 <code class="sourceCode R"><span></span>
 <span><span class="va">epsilon_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_epsilon_res.html">get_epsilon_res</a></span><span class="op">(</span><span class="va">coexp_coremo</span><span class="op">)</span><span class="op">[</span><span class="va">r2_vals</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">r2_vals</span><span class="op">)</span>, <span class="va">epsilon</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="va">epsilon_sf</span></span>
-<span><span class="co">#&gt; [1] 9</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 7.5</span></span></code></pre></div>
 </div>
 <p>Here is a wrinkle worth knowing about, and one the ground truth lets us actually diagnose. The scale-free R² criterion picks a high epsilon, but epsilon controls how aggressively the RBF suppresses weak correlations, so a high value throws genes out of modules entirely. Counting how many of the 500 features survive into a module tells the story:</p>
 <div class="cell">
@@ -307,12 +312,12 @@
 <span><span class="va">epsilon_scan</span></span>
 <span><span class="co">#&gt;    epsilon n_modules genes_assigned</span></span>
 <span><span class="co">#&gt;      &lt;num&gt;     &lt;int&gt;          &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:       1         4            254</span></span>
-<span><span class="co">#&gt; 2:       2         5            253</span></span>
-<span><span class="co">#&gt; 3:       3         4            207</span></span>
-<span><span class="co">#&gt; 4:       4         4            184</span></span>
-<span><span class="co">#&gt; 5:       6         2             58</span></span>
-<span><span class="co">#&gt; 6:       9         7            110</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:     1.0         4            254</span></span>
+<span><span class="co">#&gt; 2:     2.0         5            253</span></span>
+<span><span class="co">#&gt; 3:     3.0         4            207</span></span>
+<span><span class="co">#&gt; 4:     4.0         4            167</span></span>
+<span><span class="co">#&gt; 5:     6.0         2             55</span></span>
+<span><span class="co">#&gt; 6:     7.5         4            103</span></span></code></pre></div>
 </div>
 <p>The scale-free fit and “keep as many real module genes as possible” pull in opposite directions on this data. We go with a low epsilon deliberately, because the planted modules are what we are trying to find:</p>
 <div class="cell">
@@ -383,7 +388,7 @@
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Generating data.table format of the symmetric matrix.</span></span>
-<span><span class="co">#&gt; Generating correlation-based graph with 8566 edges.</span></span>
+<span><span class="co">#&gt; Generating correlation-based graph with 8567 edges.</span></span>
 <span><span class="co">#&gt; Iterating through 15 resolutions</span></span>
 <span><span class="co">#&gt; Using sequential computation.</span></span>
 <span></span>
@@ -391,12 +396,12 @@
 <span><span class="co">#&gt; Key: &lt;resolution&gt;</span></span>
 <span><span class="co">#&gt;    resolution no_clusters modularity good_clusters avg_size max_size</span></span>
 <span><span class="co">#&gt;         &lt;num&gt;       &lt;int&gt;      &lt;num&gt;         &lt;int&gt;    &lt;num&gt;    &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:  0.1000000           3  0.6555233             3 83.66667       88</span></span>
-<span><span class="co">#&gt; 2:  0.1389495           3  0.6555233             3 83.66667       88</span></span>
-<span><span class="co">#&gt; 3:  0.1930698           3  0.6555233             3 83.66667       88</span></span>
-<span><span class="co">#&gt; 4:  0.2682696           3  0.6555233             3 83.66667       88</span></span>
-<span><span class="co">#&gt; 5:  0.3727594           3  0.6555233             3 83.66667       88</span></span>
-<span><span class="co">#&gt; 6:  0.5179475           3  0.6555233             3 83.66667       88</span></span>
+<span><span class="co">#&gt; 1:  0.1000000           3  0.6559388             3 83.66667       88</span></span>
+<span><span class="co">#&gt; 2:  0.1389495           3  0.6559388             3 83.66667       88</span></span>
+<span><span class="co">#&gt; 3:  0.1930698           3  0.6559388             3 83.66667       88</span></span>
+<span><span class="co">#&gt; 4:  0.2682696           3  0.6559388             3 83.66667       88</span></span>
+<span><span class="co">#&gt; 5:  0.3727594           3  0.6559388             3 83.66667       88</span></span>
+<span><span class="co">#&gt; 6:  0.5179475           3  0.6559388             3 83.66667       88</span></span>
 <span><span class="co">#&gt; Warning in sqrt(x): NaNs produced</span></span>
 <span><span class="co">#&gt; Warning: Removed 3 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">#&gt; (`geom_point()`).</span></span></code></pre></div>
@@ -472,11 +477,11 @@
 <span><span class="va">ica_modules</span><span class="op">[</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">module_id</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">N</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    module_id     N</span></span>
 <span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:      IC_2    77</span></span>
-<span><span class="co">#&gt; 2:      IC_3    68</span></span>
-<span><span class="co">#&gt; 3:      IC_5    67</span></span>
-<span><span class="co">#&gt; 4:      IC_1    65</span></span>
-<span><span class="co">#&gt; 5:      IC_4    28</span></span>
+<span><span class="co">#&gt; 1:      IC_5    90</span></span>
+<span><span class="co">#&gt; 2:      IC_1    58</span></span>
+<span><span class="co">#&gt; 3:      IC_4    48</span></span>
+<span><span class="co">#&gt; 4:      IC_2    38</span></span>
+<span><span class="co">#&gt; 5:      IC_3    35</span></span>
 <span></span>
 <span><span class="co"># Sparse and overlapping, which is the whole point of a factorisation.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
@@ -486,7 +491,7 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;     rows unique_genes in_multiple_modules</span></span>
 <span><span class="co">#&gt;    &lt;int&gt;        &lt;int&gt;               &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   305          169                  77</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:   269          151                  63</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="method-4-dgrdl">Method 4: DGRDL<a class="anchor" aria-label="anchor" href="#method-4-dgrdl"></a>
 </h2>
@@ -641,7 +646,7 @@
 <span><span class="va">stab</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_nmf_stability.html">get_nmf_stability</a></span><span class="op">(</span><span class="va">coexp_nmf_stab</span><span class="op">)</span></span>
 <span><span class="va">stab</span></span>
 <span><span class="co">#&gt; $losses</span></span>
-<span><span class="co">#&gt; [1] 6901265227 6885273325 6903864064 6878840099 6887485166</span></span>
+<span><span class="co">#&gt; [1] 6901265228 6885273325 6903864049 6878840096 6887485166</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $converged</span></span>
 <span><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span>
@@ -677,11 +682,11 @@
 <span><span class="co">#&gt;    &lt;int&gt;     &lt;num&gt;      &lt;num&gt;        &lt;num&gt;           &lt;lgcl&gt;     &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:     2 0.7546717 0.13438072   0.13449627            FALSE         0</span></span>
 <span><span class="co">#&gt; 2:     3 0.7082610 0.09671029   0.09806779            FALSE         0</span></span>
-<span><span class="co">#&gt; 3:     4 0.9751884 0.06291160   0.06299967            FALSE         0</span></span>
+<span><span class="co">#&gt; 3:     4 0.9751885 0.06291160   0.06299967            FALSE         0</span></span>
 <span><span class="co">#&gt; 4:     5 0.8993866 0.05916342   0.06091455            FALSE         0</span></span>
-<span><span class="co">#&gt; 5:     6 0.7649854 0.05695935   0.05906541            FALSE         0</span></span>
-<span><span class="co">#&gt; 6:     7 0.7087603 0.05512724   0.05638576            FALSE         0</span></span>
-<span><span class="co">#&gt; 7:     8 0.6015527 0.05385696   0.05448819            FALSE         0</span></span>
+<span><span class="co">#&gt; 5:     6 0.7649848 0.05695935   0.05906541            FALSE         0</span></span>
+<span><span class="co">#&gt; 6:     7 0.7087608 0.05512725   0.05638576            FALSE         0</span></span>
+<span><span class="co">#&gt; 7:     8 0.6015507 0.05385696   0.05448819            FALSE         0</span></span>
 <span><span class="co">#&gt;    n_empty_clusters n_converged</span></span>
 <span><span class="co">#&gt;               &lt;int&gt;       &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:                0          10</span></span>
@@ -740,12 +745,12 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">consensus_stab</span><span class="op">$</span><span class="va">clusters</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      component_id   run component pooled_idx cluster local_density silhouette</span></span>
 <span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;     &lt;int&gt;      &lt;int&gt;   &lt;int&gt;         &lt;num&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       3  5.220121e-06  0.9999714</span></span>
-<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       4  9.438180e-03  0.9763555</span></span>
+<span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       3  5.220118e-06  0.9999714</span></span>
+<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       4  9.438175e-03  0.9763555</span></span>
 <span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1  7.572240e-03  0.9526643</span></span>
-<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       2  1.848404e-04  0.9952859</span></span>
-<span><span class="co">#&gt; 5: run_02.comp_01     2         1          5       2  5.203961e-05  0.9968476</span></span>
-<span><span class="co">#&gt; 6: run_02.comp_02     2         2          6       3  6.306890e-07  0.9999903</span></span>
+<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       2  1.848401e-04  0.9952859</span></span>
+<span><span class="co">#&gt; 5: run_02.comp_01     2         1          5       2  5.203952e-05  0.9968476</span></span>
+<span><span class="co">#&gt; 6: run_02.comp_02     2         2          6       3  6.306892e-07  0.9999903</span></span>
 <span><span class="co">#&gt;      kept</span></span>
 <span><span class="co">#&gt;    &lt;lgcl&gt;</span></span>
 <span><span class="co">#&gt; 1:   TRUE</span></span>
@@ -808,7 +813,7 @@
 <span><span class="co">#&gt; 2:        CoReMo 0.7500000</span></span>
 <span><span class="co">#&gt; 3:           NMF 0.6811551</span></span>
 <span><span class="co">#&gt; 4: Consensus NMF 0.5900000</span></span>
-<span><span class="co">#&gt; 5:           ICA 0.4974674</span></span>
+<span><span class="co">#&gt; 5:           ICA 0.4809684</span></span>
 <span><span class="co">#&gt; 6:         DGRDL 0.1505952</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -887,13 +892,23 @@
 <span>  <span class="va">meta_g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">synth_g</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">log_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span></span>
-<span>    raw_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu">edgeR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/cpm.html" class="external-link">cpm</a></span><span class="op">(</span><span class="va">synth_g</span><span class="op">$</span><span class="va">counts</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    raw_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="../reference/rs_cpm.html">rs_cpm</a></span><span class="op">(</span></span>
+<span>      <span class="va">synth_g</span><span class="op">$</span><span class="va">counts</span>,</span>
+<span>      lib_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>      log <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>      prior_count <span class="op">=</span> <span class="fl">2</span></span>
+<span>    <span class="op">)</span><span class="op">)</span>,</span>
 <span>    meta_data <span class="op">=</span> <span class="va">meta_g</span></span>
 <span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="../reference/preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span>hvg <span class="op">=</span> <span class="fl">0.5</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">raw_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span></span>
-<span>    raw_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu">edgeR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/cpm.html" class="external-link">cpm</a></span><span class="op">(</span><span class="va">synth_g</span><span class="op">$</span><span class="va">counts</span>, log <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    raw_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="../reference/rs_cpm.html">rs_cpm</a></span><span class="op">(</span></span>
+<span>      <span class="va">synth_g</span><span class="op">$</span><span class="va">counts</span>,</span>
+<span>      lib_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>      log <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>      prior_count <span class="op">=</span> <span class="fl">2</span></span>
+<span>    <span class="op">)</span><span class="op">)</span>,</span>
 <span>    meta_data <span class="op">=</span> <span class="va">meta_g</span></span>
 <span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="../reference/preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span>hvg <span class="op">=</span> <span class="fl">0.5</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -961,14 +976,14 @@
 <span><span class="va">grid_res</span></span>
 <span><span class="co">#&gt;              generator     metric CoReMo   ICA   NMF</span></span>
 <span><span class="co">#&gt;                 &lt;char&gt;     &lt;char&gt;  &lt;num&gt; &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         hub_modular    jaccard  0.750 0.497 0.681</span></span>
-<span><span class="co">#&gt; 2:         hub_modular factor_cor  0.985 0.520 0.988</span></span>
-<span><span class="co">#&gt; 3:             modular    jaccard  0.790 0.211 0.690</span></span>
-<span><span class="co">#&gt; 4:             modular factor_cor  0.983 0.599 0.986</span></span>
-<span><span class="co">#&gt; 5: non_negative_factor    jaccard  0.560 0.511 0.486</span></span>
-<span><span class="co">#&gt; 6: non_negative_factor factor_cor  0.959 0.401 0.966</span></span>
-<span><span class="co">#&gt; 7: non_gaussian_factor    jaccard  0.617 0.507 0.596</span></span>
-<span><span class="co">#&gt; 8: non_gaussian_factor factor_cor  0.978 0.516 0.979</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:         hub_modular    jaccard  0.750 0.481 0.681</span></span>
+<span><span class="co">#&gt; 2:         hub_modular factor_cor  0.985 0.523 0.988</span></span>
+<span><span class="co">#&gt; 3:             modular    jaccard  0.790 0.200 0.690</span></span>
+<span><span class="co">#&gt; 4:             modular factor_cor  0.983 0.635 0.986</span></span>
+<span><span class="co">#&gt; 5: non_negative_factor    jaccard  0.563 0.495 0.486</span></span>
+<span><span class="co">#&gt; 6: non_negative_factor factor_cor  0.959 0.440 0.966</span></span>
+<span><span class="co">#&gt; 7: non_gaussian_factor    jaccard  0.617 0.526 0.596</span></span>
+<span><span class="co">#&gt; 8: non_gaussian_factor factor_cor  0.978 0.567 0.979</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">

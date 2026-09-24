@@ -64,7 +64,6 @@ object <- normalise_bulk_dge(
   group_col = "case_control",
   .verbose = FALSE
 )
-#> calcNormFactors has been renamed to normLibSizes
 object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
 object <- batch_correction_bulk_dge(
   object,
@@ -74,7 +73,7 @@ object <- batch_correction_bulk_dge(
 )
 get_outputs(object)$normalised_counts_corrected[1:3, 1:3]
 #>        sample_1 sample_10 sample_100
-#> gene_1 9.570817  8.956077   8.953425
-#> gene_2 5.166529  3.941231   6.154809
-#> gene_3 6.756300  5.778638   9.272343
+#> gene_1 9.486898  8.890003   8.914310
+#> gene_2 3.838447  2.857655   5.938676
+#> gene_3 6.054164  5.771220   9.178742
 ```

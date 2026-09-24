@@ -4,18 +4,18 @@ A class for handling single cell count data stored on disk in two
 complementary binary representations: a CSR-like layout (f_path_cells)
 for fast cell-wise access and a CSC-like layout (f_path_genes) for fast
 gene-wise access. Both raw counts and log-normalised counts are stored
-side by side. Provides methods for ingesting data from R, h5ad, and
-mtx sources (including multi-file workflows), converting between
-layouts, retrieving slices of the matrix, and merging existing binary
-objects."><meta property="og:description" content="
+side by side. Provides methods for ingesting data from R, h5ad, mtx
+and 10x CellRanger h5 sources (including multi-file workflows),
+converting between layouts, retrieving slices of the matrix, merging
+existing binary objects and writing CellSweep-denoised counts."><meta property="og:description" content="
 A class for handling single cell count data stored on disk in two
 complementary binary representations: a CSR-like layout (f_path_cells)
 for fast cell-wise access and a CSC-like layout (f_path_genes) for fast
 gene-wise access. Both raw counts and log-normalised counts are stored
-side by side. Provides methods for ingesting data from R, h5ad, and
-mtx sources (including multi-file workflows), converting between
-layouts, retrieving slices of the matrix, and merging existing binary
-objects."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+side by side. Provides methods for ingesting data from R, h5ad, mtx
+and 10x CellRanger h5 sources (including multi-file workflows),
+converting between layouts, retrieving slices of the matrix, merging
+existing binary objects and writing CellSweep-denoised counts."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -23,7 +23,7 @@ objects."><meta property="og:image" content="https://gregorlueg.github.io/bixver
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,9 @@ objects."><meta property="og:image" content="https://gregorlueg.github.io/bixver
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -64,7 +67,9 @@ objects."><meta property="og:image" content="https://gregorlueg.github.io/bixver
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -110,10 +115,10 @@ A class for handling single cell count data stored on disk in two
 complementary binary representations: a CSR-like layout (<code>f_path_cells</code>)
 for fast cell-wise access and a CSC-like layout (<code>f_path_genes</code>) for fast
 gene-wise access. Both raw counts and log-normalised counts are stored
-side by side. Provides methods for ingesting data from R, <code>h5ad</code>, and
-<code>mtx</code> sources (including multi-file workflows), converting between
-layouts, retrieving slices of the matrix, and merging existing binary
-objects.</p>
+side by side. Provides methods for ingesting data from R, <code>h5ad</code>, <code>mtx</code>
+and 10x CellRanger h5 sources (including multi-file workflows),
+converting between layouts, retrieving slices of the matrix, merging
+existing binary objects and writing CellSweep-denoised counts.</p>
     </div>
 
 
@@ -204,7 +209,7 @@ to an existing object on disk.</p>
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 
 <dl><dt><code>r_data</code></dt>
-<dd><p>(<code>list</code>)<br> A list convertible into <code>CompressedSparseData2</code>. Must contain the elements <code>"indptr"</code>, <code>"indices"</code>, <code>"data"</code>, <code>"nrow"</code>, <code>"ncol"</code> and <code>"cs_type"</code>.</p></dd>
+<dd><p>(<code>list</code>)<br> A named list convertible into <code>CompressedSparseData2</code>. Must contain <code>"indptr"</code>, <code>"indices"</code> (0-indexed), <code>"data"</code>, <code>"nrow"</code>, <code>"ncol"</code> and <code>"cs_type"</code> (<code>"csr"</code> or <code>"csc"</code>).</p></dd>
 
 <dt><code>qc_params</code></dt>
 <dd><p>(<code>list</code>)<br> Quality control parameters parseable into <code>MinCellQuality</code>.</p></dd>
@@ -221,8 +226,8 @@ the result to <code>f_path_cells</code>.</p>
 </div>
 <div class="section">
 <h4 id="returns-3">returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
-<p>A list with <code>cell_indices</code>, <code>gene_indices</code>, <code>lib_size</code> and
-<code>nnz</code>.</p>
+<p>A list with <code>cell_indices</code> and <code>gene_indices</code> (0-indexed,
+surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 </div>
 
 </div>
@@ -249,7 +254,7 @@ the result to <code>f_path_cells</code>.</p>
 <dd><p>(<code>list</code>)<br> Quality control parameters parseable into <code>MinCellQuality</code>.</p></dd>
 
 <dt><code>slot</code></dt>
-<dd><p>(<code>character</code>)<br> Where to find the raw counts. One of <code>"X"</code> or <code>"raw.X"</code> (for CellXGene data).</p></dd>
+<dd><p>(<code>character</code>)<br> Where to find the raw counts. One of <code>"X"</code>, <code>"raw.X"</code> (or <code>"raw"</code>, for CellXGene data) or <code>"layers.counts"</code>. Unmatched values fall back to <code>"X"</code>.</p></dd>
 
 <dt><code>verbose</code></dt>
 <dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>
@@ -258,8 +263,8 @@ the result to <code>f_path_cells</code>.</p>
 </dl></div>
 <div class="section">
 <h4 id="returns-4">returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
-<p>A list with <code>cell_indices</code>, <code>gene_indices</code>, <code>lib_size</code> and
-<code>nnz</code>.</p>
+<p>A list with <code>cell_indices</code> and <code>gene_indices</code> (0-indexed,
+surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 </div>
 
 </div>
@@ -304,8 +309,8 @@ counts before writing.</p>
 </div>
 <div class="section">
 <h4 id="returns-5">returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
-<p>A list with <code>cell_indices</code>, <code>gene_indices</code>, <code>lib_size</code> and
-<code>nnz</code>.</p>
+<p>A list with <code>cell_indices</code> and <code>gene_indices</code> (0-indexed,
+surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 </div>
 
 </div>
@@ -332,7 +337,7 @@ counts before writing.</p>
 <dd><p>(<code>list</code>)<br> Quality control parameters parseable into <code>MinCellQuality</code>.</p></dd>
 
 <dt><code>slot</code></dt>
-<dd><p>(<code>character</code>)<br> Where to find the raw counts. One of <code>"X"</code> or <code>"raw.X"</code> (for CellXGene data).</p></dd>
+<dd><p>(<code>character</code>)<br> Where to find the raw counts. One of <code>"X"</code>, <code>"raw.X"</code> (or <code>"raw"</code>, for CellXGene data) or <code>"layers.counts"</code>. Unmatched values fall back to <code>"X"</code>.</p></dd>
 
 <dt><code>verbose</code></dt>
 <dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>
@@ -346,8 +351,8 @@ where possible.</p>
 </div>
 <div class="section">
 <h4 id="returns-6">returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
-<p>A list with <code>cell_indices</code>, <code>gene_indices</code>, <code>lib_size</code> and
-<code>nnz</code>.</p>
+<p>A list with <code>cell_indices</code> and <code>gene_indices</code> (0-indexed,
+surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 </div>
 
 </div>
@@ -359,7 +364,7 @@ where possible.</p>
 <h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 
 <dl><dt><code>file_tasks</code></dt>
-<dd><p>(<code>list</code>)<br> A list of lists, each produced by the R prescan function. Each inner list must contain <code>exp_id</code>, <code>h5_path</code>, <code>cs_type</code>, <code>no_cells</code>, <code>no_genes</code> and <code>gene_local_to_universe</code>.</p></dd>
+<dd><p>(<code>list</code>)<br> A list of lists, each produced by the R prescan function. Each inner list must contain <code>exp_id</code>, <code>h5_path</code>, <code>cs_type</code>, <code>no_cells</code>, <code>no_genes</code> and <code>gene_local_to_universe</code> (0-indexed integer vector, <code>NA</code> for unmapped genes), plus an optional <code>raw_slot</code>.</p></dd>
 
 <dt><code>universe_size</code></dt>
 <dd><p>(<code>integer</code>)<br> Total number of genes in the universe.</p></dd>
@@ -376,7 +381,7 @@ where possible.</p>
 <h4 id="returns-7">returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
 <p>A list with <code>global_gene_indices</code>, <code>total_cells</code>,
 <code>total_genes</code> and <code>per_file</code> (a list of lists with <code>exp_id</code>,
-<code>cell_indices</code>, <code>lib_size</code>, <code>nnz</code>).</p>
+<code>cell_indices</code> (file-local, 0-indexed), <code>lib_size</code>, <code>nnz</code>).</p>
 </div>
 
 </div>
@@ -403,8 +408,8 @@ where possible.</p>
 </dl></div>
 <div class="section">
 <h4 id="returns-8">returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
-<p>A list with <code>cell_indices</code>, <code>gene_indices</code>, <code>lib_size</code> and
-<code>nnz</code>.</p>
+<p>A list with <code>cell_indices</code> and <code>gene_indices</code> (0-indexed,
+surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 </div>
 
 </div>
@@ -431,8 +436,8 @@ where possible.</p>
 </dl></div>
 <div class="section">
 <h4 id="returns-9">returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
-<p>A list with <code>cell_indices</code>, <code>gene_indices</code>, <code>lib_size</code> and
-<code>nnz</code>.</p>
+<p>A list with <code>cell_indices</code> and <code>gene_indices</code> (0-indexed,
+surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 </div>
 
 </div>
@@ -461,7 +466,7 @@ where possible.</p>
 <h4 id="returns-10">returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
 <p>A list with <code>global_gene_indices</code>, <code>total_cells</code>,
 <code>total_genes</code> and <code>per_file</code> (a list of lists with <code>exp_id</code>,
-<code>cell_indices</code>, <code>lib_size</code>, <code>nnz</code>).</p>
+<code>cell_indices</code> (file-local, 0-indexed), <code>lib_size</code>, <code>nnz</code>).</p>
 </div>
 
 </div>
@@ -476,7 +481,7 @@ where possible.</p>
 <dd><p>(<code>character</code>)<br> Path to the 10x h5 file.</p></dd>
 
 <dt><code>version</code></dt>
-<dd><p>(<code>character</code>)<br> One of <code>"auto"</code>, <code>"v2"</code> or <code>"v3"</code>. <code>"auto"</code> detects the layout from the file.</p></dd>
+<dd><p>(<code>character</code>)<br> One of <code>"auto"</code>, <code>"v2"</code> or <code>"v3"</code>. <code>"auto"</code>, and any unmatched value, detects the layout from the file.</p></dd>
 
 <dt><code>no_cells</code></dt>
 <dd><p>(<code>integer</code>)<br> Number of cells (columns) in the file.</p></dd>
@@ -503,8 +508,8 @@ Other modalities (e.g. Antibody Capture) are filtered out via
 </div>
 <div class="section">
 <h4 id="returns-11">returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
-<p>A list with <code>cell_indices</code>, <code>gene_indices</code>, <code>lib_size</code> and
-<code>nnz</code>.</p>
+<p>A list with <code>cell_indices</code> and <code>gene_indices</code> (0-indexed,
+surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 </div>
 
 </div>
@@ -532,8 +537,8 @@ Other modalities (e.g. Antibody Capture) are filtered out via
 <div class="section">
 <h4 id="returns-12">returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
 <p>A list with <code>global_gene_indices</code>, <code>total_cells</code>, <code>total_genes</code>
-and <code>per_file</code> (a list of lists with <code>exp_id</code>, <code>cell_indices</code>,
-<code>lib_size</code>, <code>nnz</code>).</p>
+and <code>per_file</code> (a list of lists with <code>exp_id</code>, <code>cell_indices</code>
+(file-local, 0-indexed), <code>lib_size</code>, <code>nnz</code>).</p>
 </div>
 
 </div>
@@ -557,8 +562,9 @@ and <code>per_file</code> (a list of lists with <code>exp_id</code>, <code>cell_
 </dl></div>
 <div class="section">
 <h4 id="returns-13">returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
-<p>A list with <code>indptr</code>, <code>indices</code>, <code>data</code>, <code>no_cells</code> and
-<code>no_genes</code>, parseable into a sparse matrix in R.</p>
+<p>A list with <code>indptr</code>, <code>indices</code> (0-indexed), <code>data</code>,
+<code>no_cells</code> and <code>no_genes</code>, parseable into a sparse matrix in R. <code>data</code>
+is integer for <code>"raw"</code> and double for <code>"norm"</code>.</p>
 </div>
 
 </div>
@@ -583,8 +589,9 @@ and <code>per_file</code> (a list of lists with <code>exp_id</code>, <code>cell_
 </div>
 <div class="section">
 <h4 id="returns-14">returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
-<p>A list with <code>indptr</code>, <code>indices</code>, <code>data</code>, <code>no_cells</code> and
-<code>no_genes</code>, parseable into a CSR matrix in R.</p>
+<p>A list with <code>indptr</code>, <code>indices</code> (0-indexed gene positions),
+<code>data</code>, <code>no_cells</code> (number of returned cells) and <code>no_genes</code>,
+parseable into a CSR matrix in R.</p>
 </div>
 
 </div>
@@ -693,8 +700,9 @@ memory path is too costly.</p>
 </div>
 <div class="section">
 <h4 id="returns-18">returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
-<p>A list with <code>indptr</code>, <code>indices</code>, <code>data</code>, <code>no_cells</code> and
-<code>no_genes</code>, parseable into a CSC matrix in R.</p>
+<p>A list with <code>indptr</code>, <code>indices</code> (0-indexed cell positions),
+<code>data</code>, <code>no_cells</code> and <code>no_genes</code> (number of returned genes),
+parseable into a CSC matrix in R.</p>
 </div>
 
 </div>
@@ -724,7 +732,7 @@ memory path is too costly.</p>
 <h4 id="arguments-19">Arguments<a class="anchor" aria-label="anchor" href="#arguments-19"></a></h4>
 
 <dl><dt><code>merge_tasks</code></dt>
-<dd><p>(<code>list</code>)<br> A list of lists. Each inner list must contain <code>exp_id</code>, <code>bin_cells_path</code>, <code>cells_to_keep</code> (0-indexed integer vector) and <code>gene_local_to_universe</code> (integer vector, <code>-1</code> for genes absent from the universe).</p></dd>
+<dd><p>(<code>list</code>)<br> A list of lists. Each inner list must contain <code>exp_id</code>, <code>bin_cells_path</code>, <code>cells_to_keep</code> (0-indexed integer vector) and <code>gene_local_to_universe</code> (0-indexed integer vector, <code>NA</code> for genes absent from the universe).</p></dd>
 
 <dt><code>universe_size</code></dt>
 <dd><p>(<code>integer</code>)<br> Number of genes in the intersection universe.</p></dd>
@@ -744,6 +752,46 @@ memory path is too costly.</p>
 <h4 id="returns-20">returns<a class="anchor" aria-label="anchor" href="#returns-20"></a></h4>
 <p>A list with <code>total_cells</code>, <code>total_genes</code> and <code>per_file</code> (a
 list of lists with <code>exp_id</code>, <code>lib_size</code>, <code>nnz</code>).</p>
+</div>
+
+</div>
+
+<div class="section">
+<h3 id="method-cellsweep">Method <code>cellsweep</code><a class="anchor" aria-label="anchor" href="#method-cellsweep"></a></h3>
+<p>Run CellSweep and write the denoised barcodes into the cells binary</p>
+<p>One independent EM fit per sample, since the ambient profile is a
+property of a single emulsion. Only the real barcodes are written: the
+empty droplets exist to train the ambient profile, and barcodes that
+are neither empty nor annotated are not part of the model.</p>
+<p>Writes the cell-based file only; regenerate the gene-based companion
+afterwards, as for a merge.</p>
+<div class="section">
+<h4 id="arguments-20">Arguments<a class="anchor" aria-label="anchor" href="#arguments-20"></a></h4>
+
+<dl><dt><code>f_path_source</code></dt>
+<dd><p>(<code>character</code>)<br> Path to the raw <code>counts_cells.bin</code>, which must still contain the empty droplets.</p></dd>
+
+<dt><code>samples</code></dt>
+<dd><p>(<code>list</code>)<br> A list of lists. Each inner list must contain <code>sample_id</code>, <code>real_cells</code> and <code>empty_cells</code> (0-indexed integer vectors of store indices), <code>celltype_idx</code> (0-indexed integer vector, one entry per <code>real_cells</code> entry) and <code>n_celltypes</code>.</p></dd>
+
+<dt><code>cellsweep_params</code></dt>
+<dd><p>(<code>list</code>)<br> The CellSweep model parameters. Missing entries fall back to the reference implementation's defaults.</p></dd>
+
+<dt><code>target_size</code></dt>
+<dd><p>(<code>numeric</code>)<br> Library size the normalised layer is scaled to.</p></dd>
+
+<dt><code>verbose</code></dt>
+<dd><p>(<code>integer</code>)<br><code>0</code> silent, <code>1</code> per-sample progress, <code>2</code> per-EM-iteration.</p></dd>
+
+
+</dl></div>
+<div class="section">
+<h4 id="returns-21">returns<a class="anchor" aria-label="anchor" href="#returns-21"></a></h4>
+<p>A list with <code>cell_order</code> (0-indexed source indices in output
+order), <code>lib_size</code>, <code>nnz</code> and <code>fits</code> (one list per sample with
+<code>sample_id</code>, <code>alpha</code>, <code>z_hat</code> (1-indexed), <code>beta</code>, <code>ambient</code>,
+<code>celltype_profiles</code>, <code>n_celltypes</code>, <code>log_likelihood</code>, <code>n_iter</code> and
+<code>converged</code>).</p>
 </div>
 
 </div>

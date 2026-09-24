@@ -27,6 +27,8 @@ rs_nmf_multi_bulk(x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose)
 
   Named list. See
   [`params_nmf_hals()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.md).
+  The `nmf_init` field is ignored, restarts always use random
+  initialisation.
 
 - n_runs:
 

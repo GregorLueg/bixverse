@@ -9,7 +9,7 @@ observation/cell metadata and the feature/gene metadata."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,9 @@ observation/cell metadata and the feature/gene metadata."><meta property="og:ima
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -50,7 +53,9 @@ observation/cell metadata and the feature/gene metadata."><meta property="og:ima
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -118,6 +123,7 @@ observation/cell metadata and the feature/gene metadata.</p>
 <li><p><a href="#method-SingleCellDuckDB-populate_vars_from_tenx_h5"><code>SingleCellDuckDB$populate_vars_from_tenx_h5()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5"><code>SingleCellDuckDB$populate_obs_from_multi_tenx_h5()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_duckdb"><code>SingleCellDuckDB$populate_obs_from_multi_duckdb()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_obs_from_duckdb_subset"><code>SingleCellDuckDB$populate_obs_from_duckdb_subset()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_vars_from_duckdb_reordered"><code>SingleCellDuckDB$populate_vars_from_duckdb_reordered()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_plain_text"><code>SingleCellDuckDB$populate_obs_from_multi_plain_text()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-clone"><code>SingleCellDuckDB$clone()</code></a></p></li>
@@ -464,17 +470,47 @@ inputs, and rbindlists.</p><div class="section">
 
 </div>
 
+<p></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_duckdb_subset"></a><div class="section">
+<h3 id="singlecellduckdb-populate-obs-from-duckdb-subset-"><code>SingleCellDuckDB$populate_obs_from_duckdb_subset()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-duckdb-subset-"></a></h3>
+<p>Populate the obs table from a single source DuckDB, restricted to a
+subset of cells and reordered to match.</p>
+<p>Needed because <code>add_data_obs()</code> requires an obs table to already exist,
+so an object written from scratch out of a subset of a parent (as
+<code><a href="cellsweep_sc.html">cellsweep_sc()</a></code> does) has nothing to attach columns to.</p><div class="section">
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_duckdb_subset</span><span class="op">(</span></span>
+<span>  <span class="va">source_db_path</span>,</span>
+<span>  <span class="va">cell_idx_to_keep</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>source_db_path</code></dt>
+<dd><p>String. Path to the source DuckDB.</p></dd>
+
+      <dt><code>cell_idx_to_keep</code></dt>
+<dd><p>Integer vector. <strong>1-based</strong> source <code>cell_idx</code>
+values, in the order the new object stores them.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<p>Invisible self.</p>
+</div>
+
+</div>
+
 <p></p><hr><a id="method-SingleCellDuckDB-populate_vars_from_duckdb_reordered"></a><div class="section">
 <h3 id="singlecellduckdb-populate-vars-from-duckdb-reordered-"><code>SingleCellDuckDB$populate_vars_from_duckdb_reordered()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-vars-from-duckdb-reordered-"></a></h3>
 <p>Populate the var table from a source DuckDB, filtered and reordered
 to match a target gene set.</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_vars_from_duckdb_reordered</span><span class="op">(</span></span>
 <span>  <span class="va">source_db_path</span>,</span>
 <span>  <span class="va">final_gene_names</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
+<h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>source_db_path</code></dt>
 <dd><p>String. Path to the source DuckDB.</p></dd>
 
@@ -485,7 +521,7 @@ final order.</p></dd>
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
 <p>Invisible self.</p>
 </div>
 
@@ -497,10 +533,10 @@ final order.</p></dd>
 <p>Reads each input's barcodes file, filters to the cells that passed QC,
 prefixes <code>cell_id</code> with <code>exp_id</code>, intersects column names across inputs,
 and rbindlists.</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_multi_plain_text</span><span class="op">(</span><span class="va">per_file_info</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
+<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>per_file_info</code></dt>
 <dd><p>List of lists; each must contain <code>f_path</code> (string),
 <code>exp_id</code> (string), <code>has_hdr</code> (boolean), <code>cell_filter</code> (1-indexed integer
@@ -509,7 +545,7 @@ vector).</p></dd>
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
 <p>Invisible self.</p>
 </div>
 
@@ -518,10 +554,10 @@ vector).</p></dd>
 <p></p><hr><a id="method-SingleCellDuckDB-clone"></a><div class="section">
 <h3 id="singlecellduckdb-clone-"><code>SingleCellDuckDB$clone()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
+<h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

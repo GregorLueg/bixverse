@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -102,12 +107,13 @@
 
 
 <dl><dt id="arg-n-perm">n_perm<a class="anchor" aria-label="anchor" href="#arg-n-perm"></a></dt>
-<dd><p>Integer. Number of random gene sets to generate per cluster.</p></dd>
+<dd><p>Integer. Number of random gene sets to generate per cluster.
+Defaults to <code>500L</code>.</p></dd>
 
 
 <dt id="arg-n-cluster">n_cluster<a class="anchor" aria-label="anchor" href="#arg-n-cluster"></a></dt>
 <dd><p>Integer. Number of clusters for the random gene set
-clustering generation.</p></dd>
+clustering generation. Defaults to <code>5L</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
@@ -115,14 +121,19 @@ clustering generation.</p></dd>
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
 <code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>.</p></dd>
+<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the
+available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the VISION parameters when you wish to use the
-auto-correlation version.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>n_perm - Integer. Number of random gene sets to generate per cluster.
+Defaults to <code>500L</code>.</p></li>
+<li><p>n_cluster - Integer. Number of clusters for the random gene set
+clustering generation. Defaults to <code>5L</code>.</p></li>
+<li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
+in at this position.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

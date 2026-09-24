@@ -55,15 +55,17 @@ rs_symphony_map_query(
 - ref_to_query_gene_map:
 
   Integer vector. For each reference HVG slot, the 0-based query gene
-  index, or `NA_integer_` if absent.
+  index, or `NA_integer_` (or any negative value) if absent. Absent
+  slots are filled with zeros.
 
 - batch_labels_query:
 
-  List of 0-indexed integer vectors (empty = no batch correction).
+  List of 0-indexed integer vectors, one per batch variable. An empty
+  list skips the batch correction (`z_corr = z_pca`).
 
 - params_symphony:
 
-  Named list. Contains the parameters for the referemce generation.
+  Named list. The query mapping parameters.
 
 - verbose:
 
@@ -72,7 +74,15 @@ rs_symphony_map_query(
 
 ## Value
 
-A list with z_pca, z_corr, r.
+A list with
+
+- z_pca - Numerical matrix. Query projected into the reference PC space
+  (N_q x d).
+
+- z_corr - Numerical matrix. Query after the batch correction (N_q x d).
+
+- r - Numerical matrix. Query soft assignments onto the reference
+  centroids (K x N_q).
 
 ## References
 

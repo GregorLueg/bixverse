@@ -13,7 +13,7 @@ gene sets."><meta property="og:image" content="https://gregorlueg.github.io/bixv
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,9 @@ gene sets."><meta property="og:image" content="https://gregorlueg.github.io/bixv
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -54,7 +57,9 @@ gene sets."><meta property="og:image" content="https://gregorlueg.github.io/bixv
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -126,28 +131,29 @@ test against.</p></dd>
 
 
 <dt id="arg-gene-universe">gene_universe<a class="anchor" aria-label="anchor" href="#arg-gene-universe"></a></dt>
-<dd><p>String vector. The features representing the gene universe
-from which the target genes and gene sets are sampled from.</p></dd>
+<dd><p>String vector. The features representing the gene
+universe from which the target genes and gene sets are sampled from.</p></dd>
 
 
 <dt id="arg-min-overlap">min_overlap<a class="anchor" aria-label="anchor" href="#arg-min-overlap"></a></dt>
-<dd><p>Optional integer. Shall a filter be applied on the minimum of
-overlappign genes.</p></dd>
+<dd><p>Optional integer. Shall a filter be applied on the
+minimum of overlapping genes.</p></dd>
 
 
 <dt id="arg-fdr-threshold">fdr_threshold<a class="anchor" aria-label="anchor" href="#arg-fdr-threshold"></a></dt>
-<dd><p>Optional float. Shall a filter be applied for the maximum
-tolerated FDR.</p></dd>
+<dd><p>Optional float. Shall a filter be applied for the
+maximum tolerated FDR.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list containing:</p><ul><li><p>pvals - The p-values from the hypergeometric test</p></li>
+    <p>A list containing (only for the gene sets passing the filters):</p><ul><li><p>pvals - The p-values from the hypergeometric test</p></li>
 <li><p>odds_ratios - The calculated odds ratios</p></li>
 <li><p>hits - The size of the overlap</p></li>
 <li><p>gene_set_lengths - The length of the gene sets.</p></li>
-<li><p>fdr - The FDR calculated across the gene sets.</p></li>
-<li><p>to_keep - Indices of the gene sets that passed (optional) thresholds.</p></li>
+<li><p>fdr - The FDR calculated across all gene sets (before filtering).</p></li>
+<li><p>to_keep - 1-based indices of the gene sets that passed the
+(optional) thresholds.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

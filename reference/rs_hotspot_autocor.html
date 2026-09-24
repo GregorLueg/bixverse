@@ -13,7 +13,7 @@ generated kNN-graph from the embeddings. For details see DeTomaso, et al."><meta
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,9 @@ generated kNN-graph from the embeddings. For details see DeTomaso, et al."><meta
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -54,7 +57,9 @@ generated kNN-graph from the embeddings. For details see DeTomaso, et al."><meta
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -136,8 +141,8 @@ the kNN graph.</p></dd>
 
 <dt id="arg-knn-data">knn_data<a class="anchor" aria-label="anchor" href="#arg-knn-data"></a></dt>
 <dd><p>Optional list. This contains pre-computed kNN data
-(including distances) and the <code>dist_metric</code> it was built with. The user has
-to ensure consistency! If provided, this will be used rather than a graph
+(<code>indices</code> (0-indexed), <code>dist</code>, <code>dist_metric</code> and <code>k</code>). The user has to
+ensure consistency! If provided, this will be used rather than a graph
 built from the parameter list.</p></dd>
 
 
@@ -173,8 +178,7 @@ detailed verbosity.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with the following elements.</p><ul><li><p>gene_idx - 0-based integer indicating the gene index.</p></li>
-<li><p>gaerys_c - Gaery's C calculation for the autocorrelation
-coefficient.</p></li>
+<li><p>gaerys_c - Geary's C statistic of the gene.</p></li>
 <li><p>z_score - Z-score of the auto-correlation.</p></li>
 <li><p>pval - P-value derived from the Z-score.</p></li>
 <li><p>fdr - False discovery rate based on the p-value.</p></li>

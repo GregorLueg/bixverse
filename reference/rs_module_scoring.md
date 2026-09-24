@@ -40,7 +40,7 @@ rs_module_scoring(
 
 - cells_to_keep:
 
-  Integer. Vector of indices of the cells to keep.
+  Integer. Vector of indices (0-indexed) of the cells to keep.
 
 - nbin:
 
@@ -56,8 +56,8 @@ rs_module_scoring(
 
 - streaming:
 
-  Logical. If TRUE, processes cells and genes are read in in chunks to
-  reduce memory usage.
+  Logical. If `TRUE`, cells and genes are read in chunks to reduce
+  memory usage.
 
 - verbose:
 
@@ -66,8 +66,8 @@ rs_module_scoring(
 
 ## Value
 
-Matrix of module scores (modules x cells). Each row corresponds to a
-module from gs_list, each column to a cell from cells_to_keep.
+Matrix of module scores (cells x modules). Each row corresponds to a
+cell from `cells_to_keep`, each column to a module from `gs_list`.
 
 ## References
 

@@ -1,6 +1,7 @@
-# Check SCENIC binarisation parameters
+# Check SCENIC binarisation params
 
-Checkmate extension for checking the binarisation parameters.
+Checkmate extension for the output of
+[`params_scenic_binarise()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_binarise.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkScenicBinariseParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

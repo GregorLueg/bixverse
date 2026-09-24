@@ -18,7 +18,8 @@ rs_bbknn(embd, batch_labels, bbknn_params, seed, verbose)
 
 - batch_labels:
 
-  Integer vector. These represent to which batch a given cell belongs.
+  Integer vector. These represent to which batch a given cell belongs
+  (0-indexed!).
 
 - bbknn_params:
 
@@ -35,8 +36,11 @@ rs_bbknn(embd, batch_labels, bbknn_params, seed, verbose)
 
 ## Value
 
-A list of two lists representing the sparse matrix representation of the
-distances and the connectivities.
+A list with
+
+- distances - Sparse list representation of the kNN distances.
+
+- connectivities - Sparse list representation of the connectivities.
 
 ## References
 

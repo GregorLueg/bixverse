@@ -53,7 +53,6 @@ object <- normalise_bulk_dge(
   group_col = "case_control",
   .verbose = FALSE
 )
-#> calcNormFactors has been renamed to normLibSizes
 object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
 plot_pca_res(object, cols_to_plot = "case_control")
 ```

@@ -40,8 +40,8 @@ rs_calculate_dge_one_vs_many(
 
 - min_prop:
 
-  Minimum proportion of expression in at least one of the groups to be
-  tested.
+  Numeric. Minimum proportion of expression in at least one of the
+  groups to be tested.
 
 - alternative:
 

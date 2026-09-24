@@ -19,9 +19,8 @@ rs_upper_triangle_to_dense(data, shift, n)
 
 - shift:
 
-  Boolean. If you applied a shift, i.e. included the diagonal values. If
-  `true`, assumes the diagonal values are `1`, otherwise derives them
-  from the data.
+  Boolean. If `TRUE`, `data` excludes the diagonal and the diagonal is
+  set to `1`. If `FALSE`, `data` includes the diagonal.
 
 - n:
 

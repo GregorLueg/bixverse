@@ -1,8 +1,8 @@
 # Calculate massively parallelised tied diffusion scores
 
 **\[experimental\]** Helper function to calculate in parallel on the
-same (unweighted) network the tied diffusions as fast as possible. Can
-be used for permutation.
+same network the tied diffusions as fast as possible. Can be used for
+permutation.
 
 ## Usage
 
@@ -52,8 +52,9 @@ rs_tied_diffusion_parallel(
 
 - summarisation_fun:
 
-  String. One of `c("min", "max", "avg")`. Which type of summarisation
-  function to use to calculate the tied diffusion.
+  String. One of `c("min", "max", "mean")`. Which type of summarisation
+  function to use to calculate the tied diffusion. Other values cause a
+  panic.
 
 - undirected:
 
@@ -61,6 +62,6 @@ rs_tied_diffusion_parallel(
 
 ## Value
 
-A matrix of the scores with each row representing a tied diffusion of of
-`diffusion_scores_1` and `diffusion_scores_2` lists (in order), and each
-column representing the value of the tied diffusion for this node.
+A matrix of the scores with each row representing a tied diffusion of
+the `diffusion_scores_1` and `diffusion_scores_2` lists (in order), and
+each column representing the value of the tied diffusion for this node.

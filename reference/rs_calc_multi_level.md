@@ -16,12 +16,11 @@ rs_calc_multi_level(stats, es, pathway_size, sample_size, seed, eps, sign)
 
 - es:
 
-  Numerical vector. The enrichment scores of the pathways of that
-  specific size
+  Numerical vector. The enrichment scores of the pathways.
 
 - pathway_size:
 
-  Integer. The size of the pathways to test.
+  Integer vector. The size of each pathway, same length as `es`.
 
 - sample_size:
 
@@ -43,7 +42,7 @@ rs_calc_multi_level(stats, es, pathway_size, sample_size, seed, eps, sign)
 
 List with the following elements:
 
-- pvals The pvalues.
+- pvals The p-values.
 
-- is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5.
-  Indicates overesimation of the p-values.
+- is_cp_ge_half Flag indicating if conditional probability is `>= 0.5`.
+  Indicates overestimation of the p-values.

@@ -1,7 +1,8 @@
 # Calculates the separation of the centroids of the MetaCells based on diffusion map coordinates.
 
-**\[experimental\]** Calculates the separation of the single cells of a
-given meta cell based on the diffusion map.
+**\[experimental\]** Calculates the separation, i.e. the Euclidean
+distance from each meta cell centroid in diffusion space to the nearest
+other meta cell centroid. Higher is better.
 
 ## Usage
 
@@ -13,12 +14,14 @@ rs_metacell_separation(dc, meta_cells)
 
 - dc:
 
-  Numerical matrix. The diffusion map coordinates.
+  Numerical matrix. The diffusion map coordinates, cells x components.
 
 - meta_cells:
 
-  List. The cell indices of the meta cells.
+  List. Per meta cell, an integer vector with the row indices
+  (1-indexed!) into `dc`.
 
 ## Value
 
-The separation results
+Numerical vector with one separation value per meta cell. Empty meta
+cells yield `NaN`; a lone non-empty meta cell yields `Inf`.

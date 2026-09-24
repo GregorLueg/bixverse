@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -98,9 +103,9 @@
 <span>  beta <span class="op">=</span> <span class="fl">60</span>,</span>
 <span>  offset <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  order <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  filter <span class="op">=</span> <span class="st">"heat"</span>,</span>
+<span>  filter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"heat"</span>, <span class="st">"laplacian"</span><span class="op">)</span>,</span>
 <span>  chebyshev_order <span class="op">=</span> <span class="fl">50L</span>,</span>
-<span>  lap_type <span class="op">=</span> <span class="st">"combinatorial"</span>,</span>
+<span>  lap_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"combinatorial"</span>, <span class="st">"normalised"</span><span class="op">)</span>,</span>
 <span>  normalise_indicators <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -126,8 +131,8 @@ square low-pass. Must be strictly positive. Defaults to <code>1.0</code>.</p></d
 
 
 <dt id="arg-filter">filter<a class="anchor" aria-label="anchor" href="#arg-filter"></a></dt>
-<dd><p>Character. Filter family to use. One of <code>"heat"</code> or
-<code>"laplacian"</code>. Defaults to <code>"heat"</code>.</p></dd>
+<dd><p>String. Filter family to use. One of <code>c("heat", "laplacian")</code>.
+Defaults to <code>"heat"</code>.</p></dd>
 
 
 <dt id="arg-chebyshev-order">chebyshev_order<a class="anchor" aria-label="anchor" href="#arg-chebyshev-order"></a></dt>
@@ -136,29 +141,45 @@ terms). Must be &gt;= 2. Defaults to <code>50L</code>.</p></dd>
 
 
 <dt id="arg-lap-type">lap_type<a class="anchor" aria-label="anchor" href="#arg-lap-type"></a></dt>
-<dd><p>Character. Type of Laplacian to use for spectral filtering.
-One of <code>"combinatorial"</code> or <code>"normalised"</code>. Defaults to <code>"combinatorial"</code>.</p></dd>
+<dd><p>String. Type of Laplacian to use for spectral filtering. One
+of <code>c("combinatorial", "normalised")</code>. Defaults to <code>"combinatorial"</code>.</p></dd>
 
 
 <dt id="arg-normalise-indicators">normalise_indicators<a class="anchor" aria-label="anchor" href="#arg-normalise-indicators"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, each column of the indicator
-matrix is divided by its column sum before filtering, making
-cross-condition densities comparable regardless of cells-per-condition.
-Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Boolean. If <code>TRUE</code>, each column of the indicator
+matrix is divided by its column sum before filtering, making cross-condition
+densities comparable regardless of cells-per-condition. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
 <dd><p>List. Optional overrides for kNN parameters. See
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
-<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>,
-<code>n_list</code> and <code>n_probe</code>.</p></dd>
+<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>, <code>n_list</code>
+and <code>n_probe</code>. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the available elements.
+Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named flat list with all MELD parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
+in at this position.</p></li>
+<li><p>beta - Numeric. Smoothing strength; larger values produce smoother
+densities. Must be strictly positive. Defaults to <code>60.0</code>.</p></li>
+<li><p>offset - Numeric. Shift of the filter centre in the rescaled spectrum.
+Must be in <code>[0, 1]</code>. Defaults to <code>0.0</code>.</p></li>
+<li><p>order - Numeric. Filter falloff sharpness; larger values approach a
+square low-pass. Must be strictly positive. Defaults to <code>1.0</code>.</p></li>
+<li><p>filter - String. Filter family to use. One of <code>c("heat", "laplacian")</code>. Defaults to <code>"heat"</code>.</p></li>
+<li><p>chebyshev_order - Integer. Number of Chebyshev coefficients
+(polynomial terms). Must be &gt;= 2. Defaults to <code>50L</code>.</p></li>
+<li><p>lap_type - String. Type of Laplacian to use for spectral filtering.
+One of <code>c("combinatorial", "normalised")</code>. Defaults to <code>"combinatorial"</code>.</p></li>
+<li><p>normalise_indicators - Boolean. If <code>TRUE</code>, each column of the
+indicator matrix is divided by its column sum before filtering, making
+cross-condition densities comparable regardless of cells-per-condition.
+Defaults to <code>TRUE</code>.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

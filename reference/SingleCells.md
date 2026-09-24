@@ -73,6 +73,7 @@ sc
 #>   KNN generated: FALSE
 #>   SNN generated: FALSE
 #>   MAGIC imputed: none
+#>   Residual model: none
 #>   Stale artefacts: none
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)

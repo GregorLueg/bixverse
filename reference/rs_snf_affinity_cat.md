@@ -13,7 +13,7 @@ rs_snf_affinity_cat(data, k, mu)
 - data:
 
   Integer matrix. Needs to be oriented features x samples! The integers
-  represent the factor values of the catagories.
+  represent the factor values of the categories.
 
 - k:
 

@@ -2,7 +2,8 @@
 
 **\[experimental\]** Assumes that the sparse data is pre-filtered for
 the cells/genes you wish to include. Indices in the sparse data need to
-be 0-indexed.
+be 0-indexed. Both data layers hold the supplied values, so which assay
+NMF runs on is decided by what is passed in, not by `use_second_layer`.
 
 ## Usage
 
@@ -24,7 +25,7 @@ rs_nmf_multi_mc(
 - sparse_data:
 
   A named list with `data`, `indptr`, `indices`, `nrow`, `ncol` and
-  `format`.
+  `cs_type`. Shape is (metacells, genes).
 
 - k:
 
@@ -36,11 +37,14 @@ rs_nmf_multi_mc(
 
 - use_second_layer:
 
-  Boolean. If `TRUE`, runs NMF on normalised counts.
+  Boolean. Shall the second data layer be used.
 
 - nmf_hals_params:
 
-  Named list. Contains the NMF parameters.
+  Named list. Contains the NMF parameters, see
+  [`params_nmf_hals()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.md).
+  The `nmf_init` field is ignored, restarts always use random
+  initialisation.
 
 - n_runs:
 
@@ -57,5 +61,16 @@ rs_nmf_multi_mc(
 
 ## Value
 
-A list with `w_all`, `h_per_run`, `losses`, `converged`, `best_idx`
-(1-indexed).
+A list with the following items
+
+- w_all - Column-bound `W` matrices across all runs, shape
+  `n_meta_cells x (k * n_runs)`.
+
+- h_per_run - List of `H` matrices, each `k x n_genes`.
+
+- losses - Numeric vector. Final reconstruction loss per run.
+
+- converged - Logical vector. Convergence flag per run.
+
+- best_idx - Integer. 1-indexed position of the run with the lowest
+  final loss.

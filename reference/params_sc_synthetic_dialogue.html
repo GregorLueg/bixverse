@@ -11,7 +11,7 @@ samples x 25 cells x 3 cell types = 1050 cells over 400 genes."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,9 @@ samples x 25 cells x 3 cell types = 1050 cells over 400 genes."><meta property="
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -52,7 +55,9 @@ samples x 25 cells x 3 cell types = 1050 cells over 400 genes."><meta property="
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -117,41 +122,60 @@ samples x 25 cells x 3 cell types = 1050 cells over 400 genes.</p>
 
 <dl><dt id="arg-n-samples">n_samples<a class="anchor" aria-label="anchor" href="#arg-n-samples"></a></dt>
 <dd><p>Integer. Samples the experiment spans. DIALOGUE needs at
-least 5.</p></dd>
+least 5. Defaults to <code>14L</code>.</p></dd>
 
 
 <dt id="arg-cells-per-sample">cells_per_sample<a class="anchor" aria-label="anchor" href="#arg-cells-per-sample"></a></dt>
-<dd><p>Integer. Cells per sample per cell type.</p></dd>
+<dd><p>Integer. Cells per sample per cell type. Defaults to
+<code>25L</code>.</p></dd>
 
 
 <dt id="arg-n-cell-types">n_cell_types<a class="anchor" aria-label="anchor" href="#arg-n-cell-types"></a></dt>
-<dd><p>Integer. Number of cell types. Must be at least 2.</p></dd>
+<dd><p>Integer. Number of cell types. Must be at least 2.
+Defaults to <code>3L</code>.</p></dd>
 
 
 <dt id="arg-n-features">n_features<a class="anchor" aria-label="anchor" href="#arg-n-features"></a></dt>
-<dd><p>Integer. Feature columns per cell type. Must be at least 2.</p></dd>
+<dd><p>Integer. Feature columns per cell type. Must be at least 2.
+Defaults to <code>8L</code>.</p></dd>
 
 
 <dt id="arg-n-sample-features">n_sample_features<a class="anchor" aria-label="anchor" href="#arg-n-sample-features"></a></dt>
 <dd><p>Integer. Feature columns carrying a per-sample
 component. The first of those is the shared programme, the rest are
 cell-type-specific nuisance; anything past this count is pure noise and
-exists so the ANOVA filter has something to reject.</p></dd>
+exists so the ANOVA filter has something to reject. Defaults to <code>5L</code>.</p></dd>
 
 
 <dt id="arg-n-genes">n_genes<a class="anchor" aria-label="anchor" href="#arg-n-genes"></a></dt>
-<dd><p>Integer. Number of genes.</p></dd>
+<dd><p>Integer. Number of genes. Defaults to <code>400L</code>.</p></dd>
 
 
 <dt id="arg-n-planted">n_planted<a class="anchor" aria-label="anchor" href="#arg-n-planted"></a></dt>
 <dd><p>Integer. Planted genes per cell type. The blocks are
-contiguous, so <code>n_planted * n_cell_types</code> has to fit into <code>n_genes</code>.</p></dd>
+contiguous, so <code>n_planted * n_cell_types</code> has to fit into <code>n_genes</code>. Defaults
+to <code>8L</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>n_samples - Integer. Samples the experiment spans. DIALOGUE needs at
+least 5. Defaults to <code>14L</code>.</p></li>
+<li><p>cells_per_sample - Integer. Cells per sample per cell type. Defaults
+to <code>25L</code>.</p></li>
+<li><p>n_cell_types - Integer. Number of cell types. Must be at least 2.
+Defaults to <code>3L</code>.</p></li>
+<li><p>n_features - Integer. Feature columns per cell type. Must be at least
+2. Defaults to <code>8L</code>.</p></li>
+<li><p>n_sample_features - Integer. Feature columns carrying a per-sample
+component. The first of those is the shared programme, the rest are
+cell-type-specific nuisance; anything past this count is pure noise and
+exists so the ANOVA filter has something to reject. Defaults to <code>5L</code>.</p></li>
+<li><p>n_genes - Integer. Number of genes. Defaults to <code>400L</code>.</p></li>
+<li><p>n_planted - Integer. Planted genes per cell type. The blocks are
+contiguous, so <code>n_planted * n_cell_types</code> has to fit into <code>n_genes</code>.
+Defaults to <code>8L</code>.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>n_genes</code> defaults higher here than on the Rust side, which plants the same

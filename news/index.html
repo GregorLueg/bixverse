@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -87,6 +92,21 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.2" id="bixverse-052">bixverse 0.5.2<a class="anchor" aria-label="anchor" href="#bixverse-052"></a></h2>
+<div class="section level3">
+<h3 id="features-0-5-2">Features<a class="anchor" aria-label="anchor" href="#features-0-5-2"></a></h3>
+<ul><li>Cellsweep implementation from <a href="https://www.biorxiv.org/content/10.64898/2026.03.04.709349v1" class="external-link">Caskey et al.</a>, see <a href="https://gregorlueg.github.io/bixverse/articles/cell_sweep.html">vignette</a>.</li>
+<li>Wired in new single cell batch correction metrics (cell-type specific LISI and ASW).</li>
+<li>Also wired in from <a href="https://crates.io/crates/edge-rs" class="external-link">edge-rs</a> the limma-voom workflow.</li>
+<li>Sweep over the Rust/rextendr documentation</li>
+<li>Wired in scTransform v2 from <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8764781/" class="external-link">Choudhary</a> and the <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_residuals.html">vignette</a>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-5-2">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-5-2"></a></h3>
+<ul><li>Good old 0 to 1-index indexing issues fixed in two functions.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.1" id="bixverse-051">bixverse 0.5.1<a class="anchor" aria-label="anchor" href="#bixverse-051"></a></h2>
 <div class="section level3">

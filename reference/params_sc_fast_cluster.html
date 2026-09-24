@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,9 @@
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -48,7 +51,9 @@
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -112,48 +117,49 @@
 
 
 <dl><dt id="arg-kmeans-iters">kmeans_iters<a class="anchor" aria-label="anchor" href="#arg-kmeans-iters"></a></dt>
-<dd><p>Integer. Number of iterations for k-means clustering.</p></dd>
+<dd><p>Integer. Number of iterations for k-means clustering.
+Defaults to <code>100L</code>.</p></dd>
 
 
 <dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
-<dd><p>Integer. Batch size for mini batch k-means clustering.</p></dd>
+<dd><p>Integer. Batch size for mini batch k-means clustering.
+Defaults to <code>4096L</code>.</p></dd>
 
 
 <dt id="arg-drift-threshold">drift_threshold<a class="anchor" aria-label="anchor" href="#arg-drift-threshold"></a></dt>
 <dd><p>Numeric. The drift for the mini batch k-means
 clustering. If the centroid drift is below this, the mini batch k-means
-terminates.</p></dd>
+terminates. Defaults to <code>1e-04</code>.</p></dd>
 
 
 <dt id="arg-lr-alpha">lr_alpha<a class="anchor" aria-label="anchor" href="#arg-lr-alpha"></a></dt>
 <dd><p>Numeric. Learning rate alpha parameter for mini batch
-k-means.</p></dd>
+k-means. Defaults to <code>1.0</code>.</p></dd>
 
 
 <dt id="arg-full-snn">full_snn<a class="anchor" aria-label="anchor" href="#arg-full-snn"></a></dt>
-<dd><p>Boolean. Shall the full shared nearest neighbour graph
-be generated that generates edges between all cells instead of between
-only neighbours.</p></dd>
+<dd><p>Boolean. Shall the full shared nearest neighbour graph be
+generated that generates edges between all cells instead of between only
+neighbours. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-pruning">pruning<a class="anchor" aria-label="anchor" href="#arg-pruning"></a></dt>
-<dd><p>Optional numeric. Weights below this threshold will be set to
-0 in the generation of the sNN graph. If not provided, defaults to
-<code>1 / ceil(k * 0.8)</code>.</p></dd>
+<dd><p>Numeric or <code>NULL</code>. Weights below this threshold will be set to
+0 in the generation of the sNN graph. If not provided, defaults to <code>1 / ceil(k * 0.8)</code>. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-snn-similarity">snn_similarity<a class="anchor" aria-label="anchor" href="#arg-snn-similarity"></a></dt>
-<dd><p>String. One of <code>c("rank", "jaccard")</code>. The Jaccard
-similarity calculates the Jaccard between the neighbours, whereas the rank
-method calculates edge weights based on the ranking of shared neighbours.
-For the rank method, the weight is determined by finding the shared
-neighbour with the lowest combined rank across both cells, where
-lower-ranked (closer) shared neighbours result in higher edge weights
-Both methods produce weights normalised to the range <code>[0, 1]</code>.</p></dd>
+<dd><p>String. The Jaccard similarity calculates the Jaccard
+between the neighbours, whereas the rank method calculates edge weights based
+on the ranking of shared neighbours. For the rank method, the weight is
+determined by finding the shared neighbour with the lowest combined rank
+across both cells, where lower-ranked (closer) shared neighbours result in
+higher edge weights Both methods produce weights normalised to the range <code>[0, 1]</code>. One of <code>c("jaccard", "rank")</code>. Defaults to <code>"jaccard"</code>.</p></dd>
 
 
 <dt id="arg-louvain-iters">louvain_iters<a class="anchor" aria-label="anchor" href="#arg-louvain-iters"></a></dt>
-<dd><p>Integer. Number of iterations for Louvain clustering.</p></dd>
+<dd><p>Integer. Number of iterations for Louvain clustering.
+Defaults to <code>10L</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
@@ -161,13 +167,38 @@ Both methods produce weights normalised to the range <code>[0, 1]</code>.</p></d
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
 <code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. Sets the default <code>k = 5L</code>.</p></dd>
+<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. Sets the default <code>k = 5L</code>. See
+<code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the available elements. Defaults to <code>list(k = 5L)</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list with the single cell fast clustering parameters.</p>
-    </div>
+    <p>A named list with the following elements:</p><ul><li><p>kmeans_iters - Integer. Number of iterations for k-means clustering.
+Defaults to <code>100L</code>.</p></li>
+<li><p>batch_size - Integer. Batch size for mini batch k-means clustering.
+Defaults to <code>4096L</code>.</p></li>
+<li><p>drift_threshold - Numeric. The drift for the mini batch k-means
+clustering. If the centroid drift is below this, the mini batch k-means
+terminates. Defaults to <code>1e-04</code>.</p></li>
+<li><p>lr_alpha - Numeric. Learning rate alpha parameter for mini batch
+k-means. Defaults to <code>1.0</code>.</p></li>
+<li><p>louvain_iters - Integer. Number of iterations for Louvain clustering.
+Defaults to <code>10L</code>.</p></li>
+<li><p>full_snn - Boolean. Shall the full shared nearest neighbour graph be
+generated that generates edges between all cells instead of between only
+neighbours. Defaults to <code>FALSE</code>.</p></li>
+<li><p>pruning - Numeric or <code>NULL</code>. Weights below this threshold will be set
+to 0 in the generation of the sNN graph. If not provided, defaults to <code>1 / ceil(k * 0.8)</code>. Defaults to <code>NULL</code>.</p></li>
+<li><p>snn_similarity - String. The Jaccard similarity calculates the Jaccard
+between the neighbours, whereas the rank method calculates edge weights
+based on the ranking of shared neighbours. For the rank method, the weight
+is determined by finding the shared neighbour with the lowest combined rank
+across both cells, where lower-ranked (closer) shared neighbours result in
+higher edge weights Both methods produce weights normalised to the range
+<code>[0, 1]</code>. One of <code>c("jaccard", "rank")</code>. Defaults to <code>"jaccard"</code>.</p></li>
+<li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
+in at this position.</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

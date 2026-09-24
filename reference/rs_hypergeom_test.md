@@ -35,7 +35,7 @@ rs_hypergeom_test(
 - min_overlap:
 
   Optional integer. Shall a filter be applied on the minimum of
-  overlappign genes.
+  overlapping genes.
 
 - fdr_threshold:
 
@@ -44,7 +44,7 @@ rs_hypergeom_test(
 
 ## Value
 
-A list containing:
+A list containing (only for the gene sets passing the filters):
 
 - pvals - The p-values from the hypergeometric test
 
@@ -54,6 +54,7 @@ A list containing:
 
 - gene_set_lengths - The length of the gene sets.
 
-- fdr - The FDR calculated across the gene sets.
+- fdr - The FDR calculated across all gene sets (before filtering).
 
-- to_keep - Indices of the gene sets that passed (optional) thresholds.
+- to_keep - 1-based indices of the gene sets that passed the (optional)
+  thresholds.

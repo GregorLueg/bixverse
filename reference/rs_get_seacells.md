@@ -36,18 +36,22 @@ rs_get_seacells(
 
 - cells_to_keep:
 
-  Optional indices of the cells to keep, i.e., the cells used for the
-  generation of the embedding.
+  Optional integer vector. Original cell indices (0-indexed!) of the
+  rows of `embd`, in row order. If `NULL`, the rows are assumed to map
+  one-to-one onto the count file.
 
 - cells_to_use:
 
-  Optional indices of cells to use for meta cell generation. Useful if
-  you wish to generate meta cells in specific cell types.
+  Optional integer vector. Original cell indices (0-indexed!) to
+  restrict the meta cell generation to, e.g. specific cell types. The
+  kNN graph is then regenerated on the subset. Cells not in
+  `cells_to_keep` are dropped silently.
 
 - knn_data:
 
   Optional list. This contains pre-computed kNN data (including
-  distances). The user has to ensure consistency!
+  distances). The user has to ensure consistency! Ignored when
+  `cells_to_use` is set.
 
 - seacells_params:
 
@@ -71,16 +75,19 @@ rs_get_seacells(
 
 A list with the following elements:
 
-- assignments - A list containing assignment information with elements:
-  assignments (vector), metacells (list), unassigned (vector),
-  n_metacells, n_cells, n_unassigned
+- assignments - A list with `assignments` (integer vector with the
+  1-indexed meta cell id per original cell, `-1` if unassigned),
+  `metacells` (list of 1-indexed original cell indices per meta cell),
+  `unassigned` (1-indexed), `n_metacells`, `n_cells` and `n_unassigned`.
+  Empty archetypes are dropped and the ids renumbered.
 
-- aggregated - A list with indptr, indices, raw_counts, norm_counts,
-  nrow, ncol in sparse format.
+- aggregated - A CSR list (meta cells x genes) with indptr, indices,
+  raw_counts, norm_counts, nrow and ncol.
 
-- rss - Vector of RSS values from each iteration.
+- rss - Numerical vector of RSS values from each iteration.
 
-- archetypes - Vector of cell indices selected as archetypes.
+- archetypes - Integer vector with the original cell indices
+  (0-indexed!) of the archetypes of the retained meta cells.
 
 ## References
 

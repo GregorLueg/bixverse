@@ -4,8 +4,8 @@
 indices (0-indexed!) and calculate an AUCell type statistic. Three
 options here: the recovery-curve AUC of Aibar, et al. (the actual AUCell
 statistic), an AUC derived from the Mann-Whitney statistic, or average
-precision. Data can be streamed in chunks of 50k cells per or loaded in
-in one go.
+precision. Data can be streamed in chunks of 50k cells or loaded in one
+go.
 
 ## Usage
 
@@ -26,7 +26,7 @@ rs_aucell(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 
 - cells_to_keep:
 
-  Integer. Vector of indices of the cells to keep.
+  Integer. Vector of indices (0-indexed) of the cells to keep.
 
 - aucell_params:
 

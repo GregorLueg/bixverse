@@ -43,5 +43,5 @@ rs_sc_get_gene_set_perc(
 
 ## Value
 
-A list with the percentages of counts per gene set group detected in the
-cells.
+A list, named like `gene_set_idx`, with one numerical vector per gene
+set holding the percentage of counts per cell.

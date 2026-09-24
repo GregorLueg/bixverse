@@ -1,9 +1,9 @@
 # Generate reciprocal best hits based on set similarities
 
 **\[experimental\]** This function takes a nested list that contains
-gene modules/sets derived from various methods and generate identifies
-(k-th) reciprocal best hits between gene modules/sets across the
-different origins.
+gene modules/sets derived from various methods and identifies (k-th)
+reciprocal best hits between gene modules/sets across every pair of
+origins.
 
 ## Usage
 
@@ -28,13 +28,12 @@ rs_rbh_sets(module_list, k_best, overlap_coefficient, min_similarity)
 
 - overlap_coefficient:
 
-  Shall the overlap coefficient instead of the Jaccard similarity be
-  used.
+  Boolean. Shall the overlap coefficient instead of the Jaccard
+  similarity be used.
 
 - min_similarity:
 
-  Minimum similarity that should exist between any two given gene
-  modules to actually calculate RBH pairs.
+  Numeric. Only hits with a similarity strictly above this are returned.
 
 ## Value
 

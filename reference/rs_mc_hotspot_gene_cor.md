@@ -28,20 +28,20 @@ rs_mc_hotspot_gene_cor(
 - sparse_data:
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
-  `ncol` and `format`. Shape is (metacells, genes) and the data are the
+  `ncol` and `cs_type`. Shape is (metacells, genes) and the data are the
   raw counts.
 
 - embd:
 
   Numerical matrix. The embedding matrix from which to generate the kNN
-  graph.
+  graph. Needs one row per entry of `cells_to_keep`.
 
 - knn_data:
 
-  Optional list. This contains pre-computed kNN data (including
-  distances) and the `dist_metric` it was built with. The user has to
-  ensure consistency! If provided, this will be used rather than a graph
-  built from the parameter list.
+  Optional list. This contains pre-computed kNN data (`indices`, `dist`,
+  `k`) and the `dist_metric` it was built with. The user has to ensure
+  consistency! If provided, this will be used rather than a graph built
+  from the parameter list.
 
 - hotspot_params:
 
@@ -71,9 +71,10 @@ rs_mc_hotspot_gene_cor(
 
 A list with the following elements.
 
-- cor - The gene x gene local correlation matrix.
+- cor - The genes x genes local correlation matrix, in the order of
+  `genes_to_use`.
 
-- z - The Z-scores of these local correlations.
+- z - The Z-scores of these local correlations, same shape.
 
 ## References
 

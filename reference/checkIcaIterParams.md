@@ -1,7 +1,7 @@
-# Check ICA randomisation parameters
+# Check ICA randomisation params
 
-Checkmate extension for checking the ICA randomisation parameters for a
-version of stabilised ICA.
+Checkmate extension for the output of
+[`params_ica_randomisation()`](https://gregorlueg.github.io/bixverse/reference/params_ica_randomisation.md).
 
 ## Usage
 
@@ -13,8 +13,9 @@ checkIcaIterParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

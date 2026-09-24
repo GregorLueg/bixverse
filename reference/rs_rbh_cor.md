@@ -15,8 +15,9 @@ rs_rbh_cor(module_matrices, k_best, spearman, min_similarity)
 
 - module_matrices:
 
-  A list of named matrices. Rows represent features and columns the
-  samples you wish to calculate the correlations for.
+  A named list of matrices with row and column names. Rows represent
+  features and columns the modules you wish to calculate the
+  correlations for. Only features shared between two matrices are used.
 
 - k_best:
 
@@ -27,11 +28,12 @@ rs_rbh_cor(module_matrices, k_best, spearman, min_similarity)
 
 - spearman:
 
-  Shall Spearman correlation be used.
+  Boolean. Shall Spearman correlation be used.
 
 - min_similarity:
 
-  Minimum (absolute) correlations that needs to exist between two terms.
+  Numeric. Only hits with an absolute correlation strictly above this
+  are returned.
 
 ## Value
 
@@ -48,4 +50,5 @@ A list containing:
 
 - target_modules - Names of the gene modules from the target.
 
-- similarity - The similarities between the two respective gene modules.
+- similarity - The absolute correlations between the two respective gene
+  modules.

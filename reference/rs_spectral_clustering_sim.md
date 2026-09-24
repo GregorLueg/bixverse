@@ -39,4 +39,4 @@ rs_spectral_clustering_sim(
 
 ## Value
 
-A vector with the membership of the samples
+A vector with the 1-based cluster membership of the samples.

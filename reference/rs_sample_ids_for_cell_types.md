@@ -14,7 +14,9 @@ rs_sample_ids_for_cell_types(cell_type_indices, n_samples, sample_bias, seed)
 
 - cell_type_indices:
 
-  Integer vector. Each integer represents a cell type.
+  Integer vector. Each integer represents a cell type (0-based, as
+  returned by
+  [`rs_synthetic_sc_data_with_cell_types()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_with_cell_types.md)).
 
 - n_samples:
 
@@ -23,7 +25,8 @@ rs_sample_ids_for_cell_types(cell_type_indices, n_samples, sample_bias, seed)
 - sample_bias:
 
   String. One of `c("even", "slightly_uneven", "very_uneven")`.
-  Determins the cell type to sample id associations.
+  Determines the cell type to sample id associations. Other values raise
+  an error.
 
 - seed:
 
@@ -31,4 +34,4 @@ rs_sample_ids_for_cell_types(cell_type_indices, n_samples, sample_bias, seed)
 
 ## Value
 
-An integer vector representing the samples.
+An integer vector with the 0-based sample per cell.

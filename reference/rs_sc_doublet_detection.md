@@ -53,10 +53,10 @@ rs_sc_doublet_detection(
 
 A list with
 
-- predicted_doublets - Boolean vector indicating which observed cells
-  predicted as doublets (TRUE = doublet, FALSE = singlet).
+- doublet - Boolean vector indicating which observed cells are predicted
+  as doublets (TRUE = doublet, FALSE = singlet).
 
-- doublet_scores_obs - Numerical vector with the likelihood of being a
-  doublet for the observed cells.
+- doublet_score - Numerical vector with the doublet score per cell,
+  averaged across iterations.
 
-- voting_avg - Voting average across the different iterations.
+- voting_avg - Voting average per cell across the iterations.

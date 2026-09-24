@@ -14,9 +14,9 @@ params_sc_synthetic_data_adt(
   n_cells = 1000L,
   n_proteins = 15L,
   n_batches = 1L,
-  marker_genes = list(cell_type_1 = list(marker_genes = 0:2L), cell_type_2 =
-    list(marker_genes = 3:5L), cell_type_3 = list(marker_genes = 6:8L)),
-  isotype_controls = 12L:14L,
+  marker_genes = list(cell_type_1 = list(marker_genes = 0:2), cell_type_2 =
+    list(marker_genes = 3:5), cell_type_3 = list(marker_genes = 6:8)),
+  isotype_controls = 12:14,
   batch_effect_strength = c("strong", "medium", "weak")
 )
 ```
@@ -25,31 +25,48 @@ params_sc_synthetic_data_adt(
 
 - n_cells:
 
-  Integer. Number of cells.
+  Integer. Number of cells. Defaults to `1000L`.
 
 - n_proteins:
 
-  Integer. Number of proteins
+  Integer. Number of proteins Defaults to `15L`.
 
 - n_batches:
 
-  Integer. Number of batches.
+  Integer. Number of batches. Defaults to `1L`.
 
 - marker_genes:
 
-  List. A nested list that indicates which gene indices are markers for
-  which cell.
+  Any. A nested list that indicates which gene indices are markers for
+  which cell. Defaults to
+  `list(cell_type_1 = list(marker_genes = 0:2), cell_type_2 = list(marker_genes = 3:5), cell_type_3 = list(marker_genes = 6:8))`.
 
 - isotype_controls:
 
   Integer vector. The columns that defines the isotype controls.
-  (0-indexed!)
+  (0-indexed!) Defaults to `12:14`.
 
 - batch_effect_strength:
 
-  String. One of `c("strong", "medium", "weak")`. The strength of the
-  batch effect to add.
+  String. The strength of the batch effect to add. One of
+  `c("strong", "medium", "weak")`. Defaults to `"strong"`.
 
 ## Value
 
-A list with the parameters.
+A named list with the following elements:
+
+- n_cells - Integer. Number of cells. Defaults to `1000L`.
+
+- n_proteins - Integer. Number of proteins Defaults to `15L`.
+
+- marker_genes - Any. A nested list that indicates which gene indices
+  are markers for which cell. Defaults to
+  `list(cell_type_1 = list(marker_genes = 0:2), cell_type_2 = list(marker_genes = 3:5), cell_type_3 = list(marker_genes = 6:8))`.
+
+- n_batches - Integer. Number of batches. Defaults to `1L`.
+
+- isotype_controls - Integer vector. The columns that defines the
+  isotype controls. (0-indexed!) Defaults to `12:14`.
+
+- batch_effect_strength - String. The strength of the batch effect to
+  add. One of `c("strong", "medium", "weak")`. Defaults to `"strong"`.

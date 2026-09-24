@@ -1,7 +1,7 @@
 # Apply a Radial Basis Function
 
 **\[experimental\]** Applies a radial basis function (RBF) to a given
-distance vector. Has at the option to apply a Gaussian, Bump or Inverse
+distance vector. Has the option to apply a Gaussian, Bump or Inverse
 Quadratic RBF.
 
 ## Usage
@@ -14,8 +14,7 @@ rs_rbf_function(x, epsilon, rbf_type)
 
 - x:
 
-  Numeric vector. The distances you wish to apply the Gaussian kernel
-  onto.
+  Numeric vector. The distances you wish to apply the RBF onto.
 
 - epsilon:
 
@@ -24,6 +23,7 @@ rs_rbf_function(x, epsilon, rbf_type)
 - rbf_type:
 
   String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+  Other values raise an error.
 
 ## Value
 

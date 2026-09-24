@@ -66,7 +66,8 @@ rs_seurat_cca(
 
 ## Value
 
-The batch-corrected embedding space.
+Numerical matrix, cells x dimensions, with the batch-corrected
+embedding.
 
 ## References
 

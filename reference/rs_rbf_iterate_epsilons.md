@@ -30,16 +30,16 @@ rs_rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type)
 
 - shift:
 
-  Boolean. Was the matrix shifted up (false = diagonal included; true
-  diagonal not incldued).
+  Boolean. Was the matrix shifted up (`FALSE` = diagonal included;
+  `TRUE` = diagonal not included).
 
 - rbf_type:
 
-  String. One of `c('gaussian', 'bump', 'inverse_quadratic')` for the
-  currently implemented RBF function. Weird strings will default to
+  String. One of `c("gaussian", "bump", "inverse_quadratic")` for the
+  currently implemented RBF function. Unknown strings default to
   Gaussian.
 
 ## Value
 
-A matrix with rows being the epsilons tested, and columns representing
-the summed affinity to other features.
+A matrix with rows representing the features and columns the epsilons
+tested. Values are the summed affinity to other features.

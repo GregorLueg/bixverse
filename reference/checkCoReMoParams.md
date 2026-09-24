@@ -1,6 +1,7 @@
-# Check CoReMo parameters
+# Check CoReMo params
 
-Checkmate extension for checking the CoReMo parameters.
+Checkmate extension for the output of
+[`params_coremo()`](https://gregorlueg.github.io/bixverse/reference/params_coremo.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkCoReMoParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

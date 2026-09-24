@@ -1,6 +1,7 @@
-# Check correlation graph parameters
+# Check correlation graph params
 
-Checkmate extension for checking the graph parameters.
+Checkmate extension for the output of
+[`params_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/params_cor_graph.md).
 
 ## Usage
 
@@ -12,8 +13,9 @@ checkCorGraphParams(x)
 
 - x:
 
-  The list to check/assert
+  The object to check.
 
 ## Value
 
-`TRUE` if the check was successful, otherwise an error message.
+`TRUE` if the check was successful, otherwise a checkmate-style error
+string.

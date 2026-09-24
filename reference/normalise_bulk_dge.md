@@ -1,7 +1,10 @@
 # Normalise the count data for DGE.
 
-This function will apply the CPM + Voom normalisation and can
-additionally calculate TPM and FPKM values for plotting purposes.
+Calculates the normalisation factors and applies voom on the filtered
+counts from
+[`qc_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/qc_bulk_dge.md),
+both in Rust via the `edge-rs` crate. Can additionally calculate TPM and
+FPKM values for plotting purposes.
 
 ## Usage
 
@@ -32,8 +35,7 @@ normalise_bulk_dge(
 - norm_method:
 
   String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`.
-  Please refer to
-  [`edgeR::normLibSizes()`](https://rdrr.io/pkg/edgeR/man/calcNormFactors.html).
+  Please refer to edgeR's `calcNormFactors()`.
 
 - calc_tpm:
 
@@ -74,10 +76,9 @@ object <- normalise_bulk_dge(
   group_col = "case_control",
   .verbose = FALSE
 )
-#> calcNormFactors has been renamed to normLibSizes
 get_outputs(object)$normalised_counts[1:3, 1:3]
 #>        sample_1 sample_10 sample_100
-#> gene_1 9.529540  8.997354   8.994702
-#> gene_2 4.848276  4.259485   6.473063
-#> gene_3 6.473063  6.061875   9.555580
+#> gene_1 9.438292  8.938609   8.962916
+#> gene_2 3.372203  3.323899   6.404920
+#> gene_3 5.694131  6.131254   9.538776
 ```

@@ -1,6 +1,7 @@
-# Rust version of calcaluting the personalised page rank
+# Rust version of calculating the personalised page rank
 
-**\[experimental\]**
+**\[experimental\]** Personalised page rank with a damping factor of
+0.85, at most 1000 iterations and a tolerance of 1e-7.
 
 ## Usage
 

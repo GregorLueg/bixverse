@@ -11,7 +11,7 @@ graph based on it."><meta property="og:image" content="https://gregorlueg.github
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,9 @@ graph based on it."><meta property="og:image" content="https://gregorlueg.github
     <li><h6 class="dropdown-header" data-toc-skip>Network methods</h6></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Bulk RNA-seq</h6></li>
+    <li><a class="dropdown-item" href="../articles/bulk_dge.html">Bulk differential expression with BulkDge</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
     <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
@@ -52,7 +55,9 @@ graph based on it."><meta property="og:image" content="https://gregorlueg.github
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_sweep.html">Ambient RNA removal with CellSweep</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_residuals.html">Pearson residuals and scTransform</a></li>
     <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
@@ -109,12 +114,12 @@ graph based on it.</p>
 
 <dl><dt id="arg-knn-mat">knn_mat<a class="anchor" aria-label="anchor" href="#arg-knn-mat"></a></dt>
 <dd><p>Integer matrix. Rows represent cells and the columns
-represent the neighbours.</p></dd>
+represent the neighbours (0-indexed!).</p></dd>
 
 
 <dt id="arg-snn-method">snn_method<a class="anchor" aria-label="anchor" href="#arg-snn-method"></a></dt>
 <dd><p>String. Which method to use to calculate the similarity.
-Choice of <code>c("jaccard", "rank")</code>.</p></dd>
+Choice of <code>c("jaccard", "rank")</code>; anything else errors.</p></dd>
 
 
 <dt id="arg-limited-graph">limited_graph<a class="anchor" aria-label="anchor" href="#arg-limited-graph"></a></dt>
@@ -123,8 +128,8 @@ direct neighbours in the graph, or between all possible combinations.</p></dd>
 
 
 <dt id="arg-pruning">pruning<a class="anchor" aria-label="anchor" href="#arg-pruning"></a></dt>
-<dd><p>Float. Below which value for the Jaccard similarity to prune
-the weight to 0.</p></dd>
+<dd><p>Float. Below which similarity value to prune the weight
+to 0.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -134,7 +139,8 @@ detailed verbosity.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the following items:</p><ul><li><p>edges - sNN edges as edge pairs.</p></li>
+    <p>A list with the following items:</p><ul><li><p>edges - Integer vector with the flattened sNN edge pairs
+(1-indexed!), ready for <code><a href="https://r.igraph.org/reference/add_edges.html" class="external-link">igraph::add_edges()</a></code>.</p></li>
 <li><p>weights - sNN weights of the pairs above.</p></li>
 </ul></div>
 
