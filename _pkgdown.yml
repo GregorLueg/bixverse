@@ -767,6 +767,7 @@ reference:
       - write_h5ad_sc
       - write_h5ad_sc_dense
       - params_sc_synthetic_data
+      - params_sc_synthetic_data_adt
       - params_sc_synthetic_dialogue
       - params_sc_synthetic_cellsweep
       - params_synthetic_bulk_rnaseq

@@ -1,7 +1,6 @@
 ^.github$
 ^Cargo\.lock$
 ^Cargo\.toml$
-^CLAUDE\.md$
 ^LICENSE\.md$
 ^Meta$
 ^\.Rproj\.user$
