@@ -158,6 +158,35 @@ Ideal moment for a podcast, video of your favourite YouTuber and/or coffee -
 which ever floats your boat. Once you have passed this, things will get 
 substantially faster.
 
+### Scrublet on the GPU
+
+Got a GPU? `bixverse.gpu` ships `scrublet_gpu_sc()`, a drop-in for
+`scrublet_sc()`. Three stages move to the device: the randomised sparse SVD,
+the projection of the simulated doublets into that PC space, and the kNN over
+the combined embedding. That embedding is `(1 + sim_doublet_ratio) * n_cells`
+rows tall, so the kNN is the stage that gets painful on the CPU as samples grow.
+HVG selection, the doublet simulation and the Otsu threshold stay on the CPU.
+`group_by` works the same way and the result is the same `ScrubletRes`, so
+everything downstream is unchanged.
+
+```{r}
+#| label: doublet detection gpu
+#| eval: false
+scrublet_res <- scrublet_gpu_sc(object = sce, group_by = "sample")
+
+sce <- add_sc_new_obs(
+  object = sce,
+  obs_data = get_data(scrublet_res)
+)
+```
+
+Pick one of the two. Scores correlate (~0.99 on the demuxlet PBMCs) but do not
+match bit for bit: the randomised SVD draws a different sketch and the GPU
+index breaks neighbour ties differently, so a handful of borderline calls can
+flip. The
+[GPU Scrublet vignette](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_scrublet.html)
+has the details, including which kNN backend to pick.
+
 ## Quality control
 
 ### Gene set proportions
@@ -310,10 +339,13 @@ slight differences due to floating operation differences between CPU and GPU.
 ## Nearest neighbours (GPU-accelerated)
 
 The companion package [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)
-exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search
-that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL
-and WGPU, as long as you can fit the data into VRAM. The time the GPU version 
-takes is <30 seconds. CPU version with `NNDescent` takes ~90 seconds.
+exposes GPU-accelerated nearest neighbour search via `find_neighbours_gpu_sc()`,
+thanks to CubeCL and WGPU, as long as you can fit the data into VRAM.
+`knn_method = "nndescent"` builds a CAGRA-style graph; `"ivf"` and
+`"exhaustive"` are also on offer, see the
+[GPU single cell vignette](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html).
+The time the GPU version takes is <30 seconds. CPU version with `NNDescent`
+takes ~90 seconds.
 
 ```{r}
 #| label: cpu knn
@@ -328,10 +360,11 @@ sce <- find_neighbours_sc(
 ```{r}
 #| label: gpu knn
 #| eval: false
-sce <- find_neighbours_cagra_sc(
+sce <- find_neighbours_gpu_sc(
   object = sce,
   embd_to_use = "pca",
-  cagra_params = params_sc_cagra(),
+  knn_method = "nndescent",
+  nn_params = params_nn_gpu(),
   .verbose = TRUE
 )
 ```
@@ -454,11 +487,11 @@ Let's overwrite the kNN graph with the now batch-corrected embedding:
 ```{r}
 #| label: regeneration of the knn graph
 #| eval: false
-sce <- find_neighbours_cagra_sc(
+sce <- find_neighbours_gpu_sc(
   object = sce,
   embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
-  cagra_params = params_sc_cagra(),
-  extract_knn = FALSE,
+  knn_method = "nndescent",
+  nn_params = params_nn_gpu(),
   .verbose = TRUE
 )
 ```
@@ -541,8 +574,8 @@ meaningful differences when working at the million-cell scale are:
 4. **Doublet detection per sample.** Scrublet (or any other doublet detection) 
    can be run with `group_by`, which matters once capture rates differ between 
    batches.
-5. **GPU-accelerated PCA and kNN.** `bixverse.gpu` provides GPU paths for
-   PCA, CAGRA-based nearest neighbour search, and Harmony. The CPU versions
+5. **GPU-accelerated Scrublet, PCA, kNN and Harmony.** `bixverse.gpu`
+   provides GPU paths for Scrublet, PCA, nearest neighbour search, and Harmony. The CPU versions
    remain highly optimised with SIMD and cache-aware memory layouts, but the
    GPU paths get faster as the data scales.
 
