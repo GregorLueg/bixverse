@@ -353,7 +353,9 @@ takes ~90 seconds.
 sce <- find_neighbours_sc(
   object = sce,
   embd_to_use = "pca",
-  neighbours_params = params_sc_neighbours(knn = list(knn_method = "nndescent"))
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "nndescent", extract_knn = TRUE)
+  )
 )
 ```
 
@@ -364,7 +366,7 @@ sce <- find_neighbours_gpu_sc(
   object = sce,
   embd_to_use = "pca",
   knn_method = "nndescent",
-  nn_params = params_nn_gpu(),
+  nn_params = params_nn_gpu(extract_knn = TRUE),
   .verbose = TRUE
 )
 ```
@@ -491,7 +493,7 @@ sce <- find_neighbours_gpu_sc(
   object = sce,
   embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
   knn_method = "nndescent",
-  nn_params = params_nn_gpu(),
+  nn_params = params_nn_gpu(extract_knn = TRUE),
   .verbose = TRUE
 )
 ```
