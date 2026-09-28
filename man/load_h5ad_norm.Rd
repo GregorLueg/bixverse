@@ -10,11 +10,12 @@ load_h5ad_norm(
   obs_lib_size_col,
   target_size,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
   cell_id_col = NULL,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 }
@@ -31,21 +32,16 @@ normalisation (e.g. \code{1e4}).}
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 
-\item{streaming}{Integer. \code{0L} -> in-memory, \code{1L} -> light streaming, \code{2L}
--> heavy streaming with memory upper boundaries. Controls memory pressure
-during CSR-to-CSC conversion. Defaults to \code{1L}.}
-
 \item{cell_id_col}{Optional string. If a specific column in the h5ad obs
 data represents the cell identifiers, you can specify it here.}
 
-\item{batch_size}{Integer. Cell batch size when \code{streaming = 1L}. Defaults
-to \code{1000L}.}
+\item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.}
 
-\item{max_genes_in_memory}{Integer. Maximum genes held in memory at once
-when \code{streaming = 2L}. Defaults to \code{2000L}.}
-
-\item{cell_batch_size}{Integer. Cell batch size when \code{streaming = 2L}.
-Defaults to \code{100000L}.}
+\item{streaming, batch_size, max_genes_in_memory, cell_batch_size}{Replaced by
+\code{csc_mem_gb} and ignored. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
 \item{.verbose}{Boolean.}
 }
@@ -89,7 +85,6 @@ sc <- load_h5ad_norm(
     min_lib_size = 25L,
     min_cells = 5L
   ),
-  streaming = 0L,
   .verbose = FALSE
 )
 dim(sc)

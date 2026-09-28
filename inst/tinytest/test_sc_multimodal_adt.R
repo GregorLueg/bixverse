@@ -42,7 +42,6 @@ sc_mm <- load_r_data(
   obs = rna$obs,
   var = rna$var,
   sc_qc_param = sc_test_qc_params(rna),
-  streaming = 0L,
   .verbose = FALSE
 )
 

@@ -9,8 +9,11 @@ stream_h5ad(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 }
@@ -25,10 +28,13 @@ stream_h5ad(
 \code{\link[=detect_raw_count_slot]{detect_raw_count_slot()}}; otherwise one of \code{"X"}, \code{"raw.X"},
 \code{"layers.counts"}.}
 
-\item{max_genes_in_memory}{Integer. Genes held in memory at once. Defaults
-to \code{2000L}.}
+\item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.}
 
-\item{cell_batch_size}{Integer. Cell batch size. Defaults to \code{100000L}.}
+\item{streaming, batch_size, max_genes_in_memory, cell_batch_size}{Replaced by
+\code{csc_mem_gb} and ignored. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
 \item{.verbose}{Boolean.}
 }
@@ -36,13 +42,11 @@ to \code{2000L}.}
 The class with updated shape information.
 }
 \description{
-Convenience alias for \code{load_h5ad(streaming = 2L)}. Kept for backwards
-compatibility - forwards directly to \code{\link[=load_h5ad]{load_h5ad()}} with heavy
-streaming enabled. Prefer calling \code{load_h5ad} directly with an explicit
-\code{streaming} level.
+Convenience alias for \code{load_h5ad(h5ad_streaming = TRUE)}. Kept for
+backwards compatibility. Prefer calling \code{\link[=load_h5ad]{load_h5ad()}} directly.
 }
 \examples{
-# same as load_h5ad(streaming = 2L)
+# same as load_h5ad(h5ad_streaming = TRUE)
 data <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
 )

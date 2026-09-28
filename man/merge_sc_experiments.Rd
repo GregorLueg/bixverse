@@ -10,10 +10,11 @@ merge_sc_experiments(
   exp_ids,
   renormalise = FALSE,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 }
@@ -33,19 +34,13 @@ Must be unique.}
 Only \code{target_size} is consulted here; no QC filtering is applied during
 merge.}
 
-\item{streaming}{Integer. \code{0} -> no streaming, \code{1} -> light streaming, \code{2} ->
-heavy streaming with memory upper boundaries. This enables you to control
-the memory pressure during ingestion.}
+\item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.}
 
-\item{batch_size}{Integer. Batch size when \code{streaming = 1L}.}
-
-\item{max_genes_in_memory}{Integer. How many genes shall be held in memory
-at a given point. Defaults to \code{2000L}. Only relevant if streaming is set to
-\code{2}.}
-
-\item{cell_batch_size}{Integer. How big are the batch sizes for the cells
-in the transformation from the cell-based to gene-based format. Defaults to
-\code{100000L}. Only relevant if streaming is set to \code{2}.}
+\item{streaming, batch_size, max_genes_in_memory, cell_batch_size}{Replaced by
+\code{csc_mem_gb} and ignored. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
 \item{.verbose}{Boolean.}
 }

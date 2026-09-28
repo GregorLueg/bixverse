@@ -335,7 +335,6 @@ sc_full <- load_tenx_h5(
   h5_path = f_path_v3,
   sc_qc_param = sc_qc_param,
   feature_type = "Gene Expression",
-  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -452,7 +451,6 @@ sc_full_v2 <- load_tenx_h5(
   object = sc_full_v2,
   h5_path = f_path_v2,
   sc_qc_param = sc_qc_param,
-  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -526,7 +524,6 @@ sc_mm <- load_tenx_h5(
   h5_path = f_path_v3_mm,
   sc_qc_param = sc_qc_param,
   feature_type = "Gene Expression",
-  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -743,7 +740,6 @@ sc_union <- suppressWarnings(load_multi_tenx_h5(
   object = sc_union,
   prescan_result = prescan_union,
   sc_qc_param = sc_qc_param,
-  streaming = 0L,
   .verbose = FALSE
 ))
 
@@ -830,7 +826,6 @@ sc_multi <- load_multi_tenx_h5(
   object = sc_multi,
   prescan_result = prescan_isect,
   sc_qc_param = sc_qc_param,
-  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -948,7 +943,6 @@ sc_mixed <- load_multi_tenx_h5(
   object = sc_mixed,
   prescan_result = prescan_mixed,
   sc_qc_param = sc_qc_param,
-  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -974,7 +968,6 @@ sc_mm_multi <- load_multi_tenx_h5(
   object = sc_mm_multi,
   prescan_result = prescan_mm,
   sc_qc_param = sc_qc_param,
-  streaming = 0L,
   .verbose = FALSE
 )
 

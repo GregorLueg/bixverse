@@ -306,57 +306,15 @@ Generate gene-based data from the cells binary file
 
 \subsection{Arguments}{
 \describe{
+\item{\code{max_mem_gb}}{(\code{numeric} or \code{NULL})\cr Memory for the conversion buffers in GB, at 10 bytes per non-zero. \code{NULL} converts in a single phase.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{description}{
 Reads the \code{.bin} file at \code{f_path_cells} and writes a gene-friendly
-(CSC) representation to \code{f_path_genes}. The conversion happens fully
-in memory and may cause memory pressure on large data sets; see
-\code{generate_gene_based_data_streaming} or
-\code{generate_gene_based_data_memory_bounded} for lighter alternatives.
-
-}
-\subsection{returns}{
-Invisible \code{NULL}.
-}
-}
-
-\subsection{Method \code{generate_gene_based_data_streaming}}{
-Generate gene-based data with streaming
-
-\subsection{Arguments}{
-\describe{
-\item{\code{batch_size}}{(\code{integer})\cr Number of cells processed per batch. Larger values increase memory pressure but reduce overhead.}
-\item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
-}}
-\subsection{description}{
-Builds the CSC representation directly without creating intermediate
-CSR structures. Suitable for very large data sets where the all-in-
-memory path is too costly.
-
-}
-\subsection{returns}{
-Invisible \code{NULL}.
-}
-}
-
-\subsection{Method \code{generate_gene_based_data_memory_bounded}}{
-Generate gene-based data with memory-bounded accumulation
-
-\subsection{Arguments}{
-\describe{
-\item{\code{max_genes_in_memory}}{(\code{integer})\cr Maximum number of genes to accumulate at once (e.g. \code{2000}).}
-\item{\code{cell_batch_size}}{(\code{integer})\cr Number of cells to process at once (e.g. \code{100000}).}
-\item{\code{verbose}}{(\code{logical})\cr Controls verbosity. }
-}}
-\subsection{description}{
-Processes genes in phases to cap memory usage. Each phase:
-\enumerate{
-\item reads all cells (unavoidable for CSC conversion);
-\item only accumulates data for genes in the current phase;
-\item writes those genes to disk;
-\item clears memory and moves to the next phase.
-}
+(CSC) representation to \code{f_path_genes}. A parallel counting-sort
+transpose: one pass counts the non-zeros per gene, then genes are
+converted in phases that fit \code{max_mem_gb}. Each phase re-reads the
+cell file, so a tighter budget trades time for memory.
 
 }
 \subsection{returns}{

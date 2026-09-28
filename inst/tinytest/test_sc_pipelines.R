@@ -199,7 +199,6 @@ sc_object_2 <- load_r_data(
   obs = single_cell_test_data$obs,
   var = single_cell_test_data$var,
   sc_qc_param = sc_qc_param,
-  streaming = 0L,
   .verbose = FALSE
 )
 sc_object_2 <- apply_pipeline(p_hvg_pca, sc_object_2)

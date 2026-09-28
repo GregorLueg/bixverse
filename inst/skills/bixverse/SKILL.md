@@ -73,8 +73,7 @@ obj <- load_r_data(
   var = syn$var,
   sc_qc_param = params_sc_min_quality(
     min_unique_genes = 45L, min_lib_size = 300L, min_cells = 500L
-  ),
-  streaming = 0L
+  )
 )
 
 obj <- find_hvg_sc(obj, hvg_no = 30L)

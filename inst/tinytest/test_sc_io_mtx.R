@@ -845,10 +845,7 @@ expect_equal(
   info = "multi_mtx_to_file - one per_file entry per input"
 )
 
-rust_con$generate_gene_based_data_streaming(
-  batch_size = 1000L,
-  verbose = FALSE
-)
+rust_con$generate_gene_based_data(max_mem_gb = NULL, verbose = FALSE)
 
 counts <- rust_con$return_full_mat(
   assay = "raw",

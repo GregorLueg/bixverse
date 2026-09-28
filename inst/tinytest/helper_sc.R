@@ -176,8 +176,8 @@ sc_test_qc_params <- function(fixture, ...) {
 #' modified one to add grouping columns.
 #' @param counts dgRMatrix. Counts, defaults to the fixture's.
 #' @param sc_qc_param List. Defaults to [sc_test_qc_params()] off the fixture.
-#' @param streaming Integer. One of `0L`, `1L`, `2L`. The suite runs the
-#' in-memory path by default, the package default is `1L`.
+#' @param csc_mem_gb Optional numeric. Memory cap for the CSR to CSC
+#' conversion, passed to [load_r_data()]. `NULL` converts in one phase.
 #' @param ... Passed on to [load_r_data()].
 #'
 #' @returns The loaded `SingleCells` object.
@@ -189,7 +189,7 @@ sc_test_object <- function(
   obs = fixture$obs,
   counts = fixture$counts,
   sc_qc_param = sc_test_qc_params(fixture),
-  streaming = 0L,
+  csc_mem_gb = NULL,
   ...
 ) {
   checkmate::assertDirectoryExists(dir)
@@ -197,7 +197,7 @@ sc_test_object <- function(
   checkmate::assertDataFrame(obs)
   checkmate::assertClass(counts, "dgRMatrix")
   checkmate::assertList(sc_qc_param, names = "named")
-  checkmate::assertChoice(streaming, c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
 
   load_r_data(
     object = SingleCells(dir_data = dir),
@@ -205,7 +205,7 @@ sc_test_object <- function(
     obs = obs,
     var = fixture$var,
     sc_qc_param = sc_qc_param,
-    streaming = streaming,
+    csc_mem_gb = csc_mem_gb,
     .verbose = FALSE,
     ...
   )
@@ -303,7 +303,6 @@ dialogue_test_object <- function(dir, fixture, obs = fixture$obs) {
       min_lib_size = fixture$min_lib_size,
       min_cells = fixture$min_cells_exp
     ),
-    streaming = 0L,
     .verbose = FALSE
   )
 }
@@ -396,7 +395,6 @@ cellsweep_test_object <- function(dir, fixture, obs = fixture$obs) {
     obs = obs,
     var = fixture$var,
     sc_qc_param = fixture$sc_qc_param,
-    streaming = 0L,
     .verbose = FALSE
   )
 }

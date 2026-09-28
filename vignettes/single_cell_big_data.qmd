@@ -89,9 +89,9 @@ load_params <- params_sc_mtx_io(
 # We will write everything into the temporary directory
 sce <- SingleCells(dir_data = tempdir())
 
-# We enforce level 2 streaming here which will run for a bit longer, but ensure
-# your memory never blows up
-sce <- load_mtx(object = sce, sc_mtx_io_param = load_params, streaming = 2L)
+# We cap the cell-to-gene conversion at 8 GB here. It will run for a bit longer,
+# but ensures your memory never blows up
+sce <- load_mtx(object = sce, sc_mtx_io_param = load_params, csc_mem_gb = 8)
 ```
 
 This step is the slowest... A lot of things are actually happening here.
@@ -565,7 +565,7 @@ The data is again streamed from disk, which makes this very fast...
 The API surface is intentionally identical to the PBMC3k walkthrough. The
 meaningful differences when working at the million-cell scale are:
 
-1. **Streaming I/O.** Use `load_mtx(..., streaming = 2L)` (or the equivalent
+1. **Streaming I/O.** Use `load_mtx(..., csc_mem_gb = 8)` (or the equivalent
    on whatever loader fits your input), and the streaming behaviour propagates
    through `gene_set_proportions_sc` and `find_hvg_sc`. This is what makes
    working with this data set on a laptop possible at all.
