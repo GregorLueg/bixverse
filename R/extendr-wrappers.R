@@ -639,6 +639,79 @@ rs_random_svd <- function(x, scale, rank, seed, oversampling, n_power_iter) .Cal
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
+#' Probabilistic PCA on a matrix with missing values
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Port of `ppca()` from pcaMethods. Fits the principal subspace by EM on the
+#' observed entries only and imputes the missing ones from it. The start is
+#' drawn from `seed` with the Rust RNG, so results match pcaMethods at
+#' convergence, not iterate by iterate.
+#'
+#' @param x Numeric matrix. Rows = samples, columns = features. `NA` marks a
+#' missing value.
+#' @param ppca_params List. The PPCA parameters, see
+#' [bixverse::params_ppca()].
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item scores - Samples x `n_pcs`.
+#'   \item loadings - Features x `n_pcs`, orthonormal.
+#'   \item r2_cum - Cumulative R^2 per component on the completed matrix.
+#'   \item centre - Column centres that were subtracted.
+#'   \item scale - Column scales that were divided out.
+#'   \item completed - `x` with the missing entries imputed.
+#'   \item noise_var - Residual variance outside the subspace.
+#'   \item n_iter - EM iterations run.
+#'   \item converged - Whether `tol` was reached before `max_iter`.
+#' }
+#'
+#' @references Roweis, NIPS, 1998; Tipping and Bishop, J R Stat Soc B, 1999;
+#' Stacklies, et al., Bioinformatics, 2007
+#'
+#' @export
+#'
+#' @keywords internal
+rs_ppca <- function(x, ppca_params, verbose) .Call(wrap__rs_ppca, x, ppca_params, verbose)
+
+#' Bayesian PCA on a matrix with missing values
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Port of `bpca()` from pcaMethods. Variational Bayes with an ARD prior per
+#' component, so superfluous components shrink towards zero. Deterministic,
+#' the start comes from an SVD.
+#'
+#' @param x Numeric matrix. Rows = samples, columns = features. `NA` marks a
+#' missing value.
+#' @param bpca_params List. The BPCA parameters, see
+#' [bixverse::params_bpca()].
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item scores - Samples x `n_pcs`.
+#'   \item loadings - Features x `n_pcs`, not orthonormal.
+#'   \item r2_cum - Cumulative R^2 per component on the observed entries.
+#'   \item centre - Column centres that were subtracted.
+#'   \item scale - Column scales that were divided out.
+#'   \item completed - `x` with the missing entries imputed.
+#'   \item noise_var - Residual variance, `1 / tau`.
+#'   \item n_iter - Variational steps run.
+#'   \item converged - Whether `tol` was reached before `max_iter`.
+#' }
+#'
+#' @references Oba, et al., Bioinformatics, 2003; Stacklies, et al.,
+#' Bioinformatics, 2007
+#'
+#' @export
+#'
+#' @keywords internal
+rs_bpca <- function(x, bpca_params, verbose) .Call(wrap__rs_bpca, x, bpca_params, verbose)
+
 #' Rust implementation of a Loess function
 #'
 #' @description

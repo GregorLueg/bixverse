@@ -229,6 +229,62 @@ params_boost <- function(
   )
 }
 
+#' Wrapper function for Bayesian PCA parameters
+#'
+#' @description Parameters for PCA with missing values via Bayesian PCA, see
+#' [bixverse::run_bpca()]. Defaults follow pcaMethods.
+#'
+#' @param n_pcs Integer. Number of principal components. Defaults to `2L`.
+#' @param max_iter Integer. Maximum number of variational steps. Defaults to
+#' `100L`.
+#' @param tol Numeric. Change in `log10(tau)` over ten steps below which the fit
+#' stops. Defaults to `1e-04`.
+#' @param centre Boolean. Shall the observed column means be subtracted first.
+#' Defaults to `TRUE`.
+#' @param scale Boolean. Shall the columns be divided by their observed standard
+#' deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_pcs - Integer. Number of principal components. Defaults to `2L`.
+#'  \item max_iter - Integer. Maximum number of variational steps. Defaults to
+#'  `100L`.
+#'  \item tol - Numeric. Change in `log10(tau)` over ten steps below which the
+#'  fit stops. Defaults to `1e-04`.
+#'  \item centre - Boolean. Shall the observed column means be subtracted first.
+#'  Defaults to `TRUE`.
+#'  \item scale - Boolean. Shall the columns be divided by their observed
+#'  standard deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#' }
+#'
+#' @references Oba, et al., Bioinformatics, 2003; Stacklies, et al.,
+#' Bioinformatics, 2007
+#'
+#' @export
+params_bpca <- function(
+  n_pcs = 2L,
+  max_iter = 100L,
+  tol = 1e-04,
+  centre = TRUE,
+  scale = FALSE
+) {
+  # Checks
+  checkmate::qassert(n_pcs, "I1[1,)")
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(centre, "B1")
+  checkmate::qassert(scale, "B1")
+
+  # Return
+  list(
+    n_pcs = n_pcs,
+    max_iter = max_iter,
+    tol = tol,
+    centre = centre,
+    scale = scale
+  )
+}
+
 #' Wrapper function to generate bulk sparsification parameters
 #'
 #' @description Parameters for [bixverse::simulate_dropouts()]. Dropout falls
@@ -2244,6 +2300,68 @@ params_pca_defaults <- function() {
     no_pcs = 30L,
     random_svd = TRUE,
     sparse = FALSE
+  )
+}
+
+#' Wrapper function for probabilistic PCA parameters
+#'
+#' @description Parameters for PCA with missing values via probabilistic PCA,
+#' see [bixverse::run_ppca()]. Defaults follow pcaMethods.
+#'
+#' @param n_pcs Integer. Number of principal components. Defaults to `2L`.
+#' @param max_iter Integer. Maximum number of EM iterations. Defaults to
+#' `1000L`.
+#' @param tol Numeric. Relative change in the objective below which EM stops.
+#' Defaults to `1e-05`.
+#' @param seed Integer. Seed for the random initial loadings. Defaults to `42L`.
+#' @param centre Boolean. Shall the observed column means be subtracted first.
+#' Defaults to `TRUE`.
+#' @param scale Boolean. Shall the columns be divided by their observed standard
+#' deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_pcs - Integer. Number of principal components. Defaults to `2L`.
+#'  \item max_iter - Integer. Maximum number of EM iterations. Defaults to
+#'  `1000L`.
+#'  \item tol - Numeric. Relative change in the objective below which EM stops.
+#'  Defaults to `1e-05`.
+#'  \item seed - Integer. Seed for the random initial loadings. Defaults to
+#'  `42L`.
+#'  \item centre - Boolean. Shall the observed column means be subtracted first.
+#'  Defaults to `TRUE`.
+#'  \item scale - Boolean. Shall the columns be divided by their observed
+#'  standard deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#' }
+#'
+#' @references Tipping and Bishop, J R Stat Soc B, 1999; Stacklies, et al.,
+#' Bioinformatics, 2007
+#'
+#' @export
+params_ppca <- function(
+  n_pcs = 2L,
+  max_iter = 1000L,
+  tol = 1e-05,
+  seed = 42L,
+  centre = TRUE,
+  scale = FALSE
+) {
+  # Checks
+  checkmate::qassert(n_pcs, "I1[1,)")
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(seed, "I1[0,)")
+  checkmate::qassert(centre, "B1")
+  checkmate::qassert(scale, "B1")
+
+  # Return
+  list(
+    n_pcs = n_pcs,
+    max_iter = max_iter,
+    tol = tol,
+    seed = seed,
+    centre = centre,
+    scale = scale
   )
 }
 
