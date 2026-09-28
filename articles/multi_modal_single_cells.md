@@ -221,7 +221,7 @@ sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = 30L
 )
-#> Using dense SVD solving on scaled data on 2000 HVG.
+#> Using sparse SVD solving on scaled data on 2000 HVG.
 
 # the data is so tiny that exhaustive kNN search is faster than building
 # an approximate nearest neighbour index
@@ -253,10 +253,10 @@ head(sc_object)
 #>    outlier leiden_clustering
 #>     <lgcl>             <int>
 #> 1:   FALSE                 0
-#> 2:   FALSE                 8
+#> 2:   FALSE                 7
 #> 3:   FALSE                 0
-#> 4:   FALSE                 6
-#> 5:   FALSE                17
+#> 4:   FALSE                 8
+#> 5:   FALSE                 2
 #> 6:   FALSE                 0
 ```
 

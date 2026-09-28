@@ -10,7 +10,7 @@ as an `ScStep`.
 step_pca_sc(
   no_pcs = 30L,
   pca_params = params_sc_pca(),
-  sparse_svd = FALSE,
+  sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
   .verbose = TRUE
@@ -31,12 +31,11 @@ step_pca_sc(
 
 - sparse_svd:
 
-  Boolean. Shall sparse solvers be used that do not do scaling. If set
-  to yes, in the case of `random_svd = FALSE`, Lanczos iterations are
-  used to solve the sparse SVD. With `random_svd = TRUE`, the sparse
-  initial matrix is multiplied with the random matrix, yielding a much
-  smaller dense matrix that does not increase the memory pressure
-  massively. Not used for `MetaCells`.
+  Optional boolean. Solve on the sparse data with implicit centring and
+  scaling instead of materialising the dense scaled matrix. `NULL` picks
+  the sparse path, which is faster and lighter on memory for every
+  solver, or the dense one for `residuals = TRUE`. `FALSE` uses the
+  dense path, but only below 500,000 cells. Not used for `MetaCells`.
 
 - hvg:
 
@@ -48,8 +47,8 @@ step_pca_sc(
 
 - seed:
 
-  Integer. Controls reproducibility. Only relevant if
-  `randomised_svd = TRUE`.
+  Integer. Controls reproducibility. Only relevant for
+  `svd_solver = "randomised"` and the Lanczos start vector.
 
 - .verbose:
 
@@ -68,5 +67,5 @@ An `ScStep`.
 step_hvg_sc(hvg_no = 30L) %>>% step_pca_sc(no_pcs = 10L)
 #> <ScPipeline> 2 steps
 #>   1. hvg  hvg_no = 30L, hvg_params = <list>, streaming = NULL, .verbose = TRUE
-#>   2. pca  no_pcs = 10L, pca_params = <list>, sparse_svd = FALSE, hvg = NULL, seed = 42L, .verbose = TRUE
+#>   2. pca  no_pcs = 10L, pca_params = <list>, sparse_svd = NULL, hvg = NULL, seed = 42L, .verbose = TRUE
 ```

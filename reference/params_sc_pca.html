@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,9 +102,10 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_pca</span><span class="op">(</span></span>
 <span>  mean_center <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  normalise_variance <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  randomised <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  randomised <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  clr <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  size_factor <span class="op">=</span> <span class="fl">10000</span></span>
+<span>  size_factor <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>  svd_solver <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"covariance"</span>, <span class="st">"randomised"</span>, <span class="st">"exact"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -123,8 +124,8 @@ Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-randomised">randomised<a class="anchor" aria-label="anchor" href="#arg-randomised"></a></dt>
-<dd><p>Boolean. Shall fast, approximate randomised SVD be used.
-Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Boolean or <code>NULL</code>. Deprecated, use <code>svd_solver</code>. <code>TRUE</code>
+maps to <code>"randomised"</code>, <code>FALSE</code> to <code>"exact"</code>. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-clr">clr<a class="anchor" aria-label="anchor" href="#arg-clr"></a></dt>
@@ -137,6 +138,15 @@ et al. Defaults to <code>FALSE</code>.</p></dd>
 the same as during I/O to have correct results when using the <code>PFlogPF</code>
 transformation. Defaults to <code>10000.0</code>.</p></dd>
 
+
+<dt id="arg-svd-solver">svd_solver<a class="anchor" aria-label="anchor" href="#arg-svd-solver"></a></dt>
+<dd><p>String. Which solver to use. <code>"covariance"</code> builds the gene
+x gene cross-product and eigendecomposes it: exact, and the fastest option
+for a few thousand HVGs, but its cost grows with the square of the gene
+number in memory and the cube in time. <code>"randomised"</code> is a randomised SVD,
+approximate in the trailing components. <code>"exact"</code> is a full SVD on the dense
+path and Lanczos on the sparse one. One of <code>c("covariance", "randomised", "exact")</code>. Defaults to <code>"covariance"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -144,13 +154,19 @@ transformation. Defaults to <code>10000.0</code>.</p></dd>
 <code>TRUE</code>.</p></li>
 <li><p>normalise_variance - Boolean. Shall the data have normalised variance
 Defaults to <code>TRUE</code>.</p></li>
-<li><p>randomised - Boolean. Shall fast, approximate randomised SVD be used.
-Defaults to <code>TRUE</code>.</p></li>
+<li><p>randomised - Boolean or <code>NULL</code>. Deprecated, use <code>svd_solver</code>. <code>TRUE</code>
+maps to <code>"randomised"</code>, <code>FALSE</code> to <code>"exact"</code>. Defaults to <code>NULL</code>.</p></li>
 <li><p>clr - Boolean. Shall the CLR-type <code>PFlogPF</code> be applied, see
 Booeshaghi, et al. Defaults to <code>FALSE</code>.</p></li>
 <li><p>size_factor - Numeric. The used size factor during I/O. It needs to be
 the same as during I/O to have correct results when using the <code>PFlogPF</code>
 transformation. Defaults to <code>10000.0</code>.</p></li>
+<li><p>svd_solver - String. Which solver to use. <code>"covariance"</code> builds the
+gene x gene cross-product and eigendecomposes it: exact, and the fastest
+option for a few thousand HVGs, but its cost grows with the square of the
+gene number in memory and the cube in time. <code>"randomised"</code> is a randomised
+SVD, approximate in the trailing components. <code>"exact"</code> is a full SVD on the
+dense path and Lanczos on the sparse one. One of <code>c("covariance", "randomised", "exact")</code>. Defaults to <code>"covariance"</code>.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,5 +1,46 @@
 # Changelog
 
+## bixverse 0.5.3
+
+### Features
+
+- Single cell PCA got a lot faster.
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  has a new `svd_solver` argument, one of `"covariance"` (the new
+  default), `"randomised"` or `"exact"`. The covariance solver builds
+  the gene x gene cross-product straight from the sparse counts and
+  eigendecomposes it. The randomised solver got about 2x faster as well.
+- [`calculate_pca_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_pca_sc.md)
+  and
+  [`step_pca_sc()`](https://gregorlueg.github.io/bixverse/reference/step_pca_sc.md)
+  now default to `sparse_svd = NULL`, which picks the sparse path for
+  the normalised data (faster and lighter on memory for every solver)
+  and the dense one for `residuals = TRUE`.
+- PCA on matrices with missing values:
+  [`run_ppca()`](https://gregorlueg.github.io/bixverse/reference/run_ppca.md)
+  and
+  [`run_bpca()`](https://gregorlueg.github.io/bixverse/reference/run_bpca.md)
+  for probabilistic and Bayesian PCA, ported from
+  [pcaMethods](https://bioconductor.org/packages/pcaMethods/).
+
+### Changes
+
+- The default PCA is now exact rather than randomised, so PCs, and
+  everything built on them, shift slightly compared to 0.5.2. The
+  leading PCs barely move; the trailing ones can.
+- The `randomised` argument of
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  is deprecated. `TRUE` maps to `svd_solver = "randomised"`, `FALSE` to
+  `"exact"`, with a warning.
+
+### Fixes
+
+- Cells that the sNN pruning left without a single edge now keep their
+  strongest kNN edge. Before, Leiden turned each of them into a one-cell
+  cluster, and on large data these added up to hundreds.
+- The sparse PCA path ignored `mean_center = FALSE` and
+  `normalise_variance = FALSE`.
+
 ## bixverse 0.5.2
 
 ### Features

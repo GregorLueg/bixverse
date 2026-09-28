@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Doublet detection with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-27</p>
+      <p class="date">2026-09-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -419,13 +419,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scdblfinder_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.592613</span></span>
+<span><span class="co">#&gt; [1] 0.5769029</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.6895446</span></span>
+<span><span class="co">#&gt; [1] 0.7049391</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6374148</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6345266</span></span></code></pre></div>
 </div>
 <p>We can also extract the other scores from scDblFinder. We can for example extract the weighted score, identify the threshold via Otsu’s method and check the doublets like this.</p>
 <div class="cell">
@@ -442,8 +442,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         weighted</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 12008   706</span></span>
-<span><span class="co">#&gt;    TRUE     52  1762</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 11986   637</span></span>
+<span><span class="co">#&gt;    TRUE     74  1831</span></span></code></pre></div>
 </div>
 <p>Or alternatively, the cxds scores can also be extracted and used. These scores were originally developed by <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7703774/" class="external-link">Bais and Kostka</a> and are used as an input into the classifier.</p>
 <div class="cell">
@@ -460,8 +460,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         cxds</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 12464   250</span></span>
-<span><span class="co">#&gt;    TRUE    747  1067</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 12391   232</span></span>
+<span><span class="co">#&gt;    TRUE    820  1085</span></span></code></pre></div>
 </div>
 <p>Should you observe that this is very flat or you only have a few data points (this can occur in low complexity experiments in which the highest expressing genes are VERY similar across all the cells for example in cell culture experiments), you can bump <code>cxds_genes</code> up. The default here is 500L, but you might want to increase this pending your experiment.</p>
 </section><section class="level3"><h3 id="conclusion">Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>

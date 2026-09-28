@@ -98,14 +98,14 @@ dt <- extract_feature_plot_data(
   embedding = "pca"
 )
 head(dt[, c("cell_id", "dim_1", "dim_2", "gene", "expression")])
-#>     cell_id     dim_1      dim_2    gene expression
-#>      <char>     <num>      <num>  <fctr>      <num>
-#> 1: cell_001 -0.369421  3.0682011 gene_01   6.222656
-#> 2: cell_002  2.233128 -2.5044506 gene_01   4.113281
-#> 3: cell_003 -2.483406  0.5060491 gene_01   4.300781
-#> 4: cell_004  1.357756  2.6232290 gene_01   5.757812
-#> 5: cell_005  2.134258 -0.2906672 gene_01   0.000000
-#> 6: cell_006 -2.623219  0.5387377 gene_01   0.000000
+#>     cell_id      dim_1      dim_2    gene expression
+#>      <char>      <num>      <num>  <fctr>      <num>
+#> 1: cell_001 -0.3694211  3.0682013 gene_01   6.222656
+#> 2: cell_002  2.2331283 -2.5044506 gene_01   4.113281
+#> 3: cell_003 -2.4834063  0.5060492 gene_01   4.300781
+#> 4: cell_004  1.3577558  2.6232290 gene_01   5.757812
+#> 5: cell_005  2.1342576 -0.2906672 gene_01   0.000000
+#> 6: cell_006 -2.6232185  0.5387377 gene_01   0.000000
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

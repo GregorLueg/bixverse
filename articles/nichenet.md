@@ -100,13 +100,15 @@ celltype_counts <- sc_object[[]][!is.na(celltype), .N, by = celltype][order(-N)]
 celltype_counts
 #>     celltype     N
 #>       <char> <int>
-#> 1: cluster_0  1207
-#> 2: cluster_1   491
-#> 3: cluster_2   444
-#> 4: cluster_3   348
-#> 5: cluster_4   161
-#> 6: cluster_5    32
-#> 7: cluster_6    15
+#> 1: cluster_0  1198
+#> 2: cluster_1   486
+#> 3: cluster_2   346
+#> 4: cluster_3   286
+#> 5: cluster_4   166
+#> 6: cluster_5   165
+#> 7: cluster_6    33
+#> 8: cluster_7    14
+#> 9: cluster_8     4
 ```
 
 ## Building the NicheNet networks
@@ -359,7 +361,7 @@ receiver_de <- find_markers_sc(
 # upregulated genes with FDR <= 0.05 form the gene set
 geneset_oi <- receiver_de[lfc > 0 & fdr <= 0.05, gene_id]
 length(geneset_oi)
-#> [1] 877
+#> [1] 880
 ```
 
 ## Ligand activity scoring
@@ -486,11 +488,11 @@ head(
 #>       sender  receiver ligand_symbol receptor_symbol prioritisation_score
 #>       <char>    <char>        <char>          <char>                <num>
 #> 1: cluster_4 cluster_0         TGFB1          TGFBR2            0.8333333
-#> 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7793662
-#> 3: cluster_2 cluster_0         TGFB1          TGFBR2            0.6914723
-#> 4: cluster_4 cluster_0          IL15           IL2RG            0.5663366
-#> 5: cluster_1 cluster_0          IL15           IL2RG            0.5637502
-#> 6: cluster_3 cluster_0         TGFB1          TGFBR2            0.5500000
+#> 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7864823
+#> 3: cluster_3 cluster_0         TGFB1          TGFBR2            0.6756293
+#> 4: cluster_1 cluster_0          IL15           IL2RG            0.5830033
+#> 5: cluster_2 cluster_0         TGFB1          TGFBR2            0.5500000
+#> 6: cluster_4 cluster_0          IL15           IL2RG            0.5434125
 #>    prioritisation_rank
 #>                  <int>
 #> 1:                   1

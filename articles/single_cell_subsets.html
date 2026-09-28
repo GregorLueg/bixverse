@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Sub-clustering and per-group pipelines</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-27</p>
+      <p class="date">2026-09-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -294,9 +294,9 @@
 <span><span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">cell_type</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">N</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    cell_type     N</span></span>
 <span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   T cells  1046</span></span>
-<span><span class="co">#&gt; 2: Monocytes   458</span></span>
-<span><span class="co">#&gt; 3:        NK   379</span></span>
+<span><span class="co">#&gt; 1:   T cells  1042</span></span>
+<span><span class="co">#&gt; 2: Monocytes   459</span></span>
+<span><span class="co">#&gt; 3:        NK   382</span></span>
 <span><span class="co">#&gt; 4:   B cells   280</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -329,7 +329,7 @@
 <span></span>
 <span><span class="va">t_cells</span></span>
 <span><span class="co">#&gt; Single cell experiment (subset).</span></span>
-<span><span class="co">#&gt;   No cells: 1046</span></span>
+<span><span class="co">#&gt;   No cells: 1042</span></span>
 <span><span class="co">#&gt;   No genes: 11139</span></span>
 <span><span class="co">#&gt;   Group: cell_type = T cells</span></span>
 <span><span class="co">#&gt;   HVG calculated: FALSE</span></span>
@@ -344,7 +344,7 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">t_cells</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1]  1046 11139</span></span>
+<span><span class="co">#&gt; [1]  1042 11139</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">t_cells</span><span class="op">)</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">cell_id</span>, <span class="va">cell_idx</span>, <span class="va">lib_size</span>, <span class="va">cell_type</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;             cell_id cell_idx lib_size cell_type</span></span>
@@ -352,9 +352,9 @@
 <span><span class="co">#&gt; 1: AAACATACAACCAC-1        1     2418   T cells</span></span>
 <span><span class="co">#&gt; 2: AAACATTGATCAGC-1        3     3144   T cells</span></span>
 <span><span class="co">#&gt; 3: AAACGCACTGGTAC-1        6     2154   T cells</span></span>
-<span><span class="co">#&gt; 4: AAACTTGATCCAGA-1       12     2382   T cells</span></span>
-<span><span class="co">#&gt; 5: AAAGAGACGAGATA-1       13     2403   T cells</span></span>
-<span><span class="co">#&gt; 6: AAAGCCTGTATGCG-1       20     2922   T cells</span></span></code></pre></div>
+<span><span class="co">#&gt; 4: AAACGCTGTAGCCA-1        9     1273   T cells</span></span>
+<span><span class="co">#&gt; 5: AAACTTGATCCAGA-1       12     2382   T cells</span></span>
+<span><span class="co">#&gt; 6: AAAGAGACGAGATA-1       13     2403   T cells</span></span></code></pre></div>
 </div>
 <section class="level3"><h3 id="a-note-on-indices">A note on indices<a class="anchor" aria-label="anchor" href="#a-note-on-indices"></a>
 </h3>
@@ -407,7 +407,7 @@
 <span></span>
 <span><span class="va">t_cells</span></span>
 <span><span class="co">#&gt; Single cell experiment (subset).</span></span>
-<span><span class="co">#&gt;   No cells: 1046</span></span>
+<span><span class="co">#&gt;   No cells: 1042</span></span>
 <span><span class="co">#&gt;   No genes: 11139</span></span>
 <span><span class="co">#&gt;   Group: cell_type = T cells</span></span>
 <span><span class="co">#&gt;   HVG calculated: TRUE</span></span>
@@ -424,7 +424,7 @@
 <span><span class="va">subset_hvg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_hvg.html">get_hvg</a></span><span class="op">(</span><span class="va">t_cells</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">global_hvg</span>, <span class="va">subset_hvg</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1016</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1014</span></span></code></pre></div>
 </div>
 <p>Around a thousand of the 2000 genes are different, and the ones that dropped out are the monocyte and B cell markers that were carrying the global PCA. The subset PCA is built on genes that vary <em>within</em> T cells, which is the whole point.</p>
 <div class="cell">
@@ -464,21 +464,21 @@
 <span><span class="op">]</span></span>
 <span><span class="co">#&gt;       grp        gene_symbol       lfc          fdr</span></span>
 <span><span class="co">#&gt;     &lt;int&gt;             &lt;char&gt;     &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1:     0             S100A4 1.5171083 5.137542e-85</span></span>
-<span><span class="co">#&gt;  2:     0              ANXA1 0.8223093 5.096615e-29</span></span>
-<span><span class="co">#&gt;  3:     0            S100A11 0.8210568 3.329714e-34</span></span>
-<span><span class="co">#&gt;  4:     0               KLF6 0.7815999 9.624673e-26</span></span>
-<span><span class="co">#&gt;  5:     0           SH3BGRL3 0.7646732 7.046937e-33</span></span>
-<span><span class="co">#&gt;  6:     1               CCR7 0.5379487 9.096949e-19</span></span>
-<span><span class="co">#&gt;  7:     1            C6orf48 0.3903745 3.988756e-10</span></span>
-<span><span class="co">#&gt;  8:     1               CD8B 0.3675649 3.410456e-10</span></span>
-<span><span class="co">#&gt;  9:     1              RPS3A 0.3314095 1.408217e-26</span></span>
-<span><span class="co">#&gt; 10:     1               BTG1 0.3313620 2.968827e-11</span></span>
-<span><span class="co">#&gt; 11:     2 XXbac-BPG299F13.17 2.9109616 8.112309e-03</span></span>
-<span><span class="co">#&gt; 12:     2             FCER1A 2.8321912 2.592287e-41</span></span>
-<span><span class="co">#&gt; 13:     2              LZTS2 2.5425797 1.346397e-11</span></span>
-<span><span class="co">#&gt; 14:     2               GPX1 2.4119055 1.028758e-02</span></span>
-<span><span class="co">#&gt; 15:     2              USP30 2.3417146 1.092048e-22</span></span></code></pre></div>
+<span><span class="co">#&gt;  1:     0             S100A4 1.5424920 1.947885e-87</span></span>
+<span><span class="co">#&gt;  2:     0            S100A10 0.8233794 7.058865e-30</span></span>
+<span><span class="co">#&gt;  3:     0              ANXA1 0.8222183 8.406427e-29</span></span>
+<span><span class="co">#&gt;  4:     0            S100A11 0.8162472 2.966387e-34</span></span>
+<span><span class="co">#&gt;  5:     0               IL32 0.8090411 4.971992e-34</span></span>
+<span><span class="co">#&gt;  6:     1               CCR7 0.5925658 2.975135e-22</span></span>
+<span><span class="co">#&gt;  7:     1            C6orf48 0.4198709 4.800646e-11</span></span>
+<span><span class="co">#&gt;  8:     1               CD8B 0.4193143 1.531082e-13</span></span>
+<span><span class="co">#&gt;  9:     1                CD7 0.3640330 1.282367e-07</span></span>
+<span><span class="co">#&gt; 10:     1               SELL 0.3356816 2.172734e-05</span></span>
+<span><span class="co">#&gt; 11:     2 XXbac-BPG299F13.17 2.9117374 7.948966e-03</span></span>
+<span><span class="co">#&gt; 12:     2             FCER1A 2.8321354 3.452312e-41</span></span>
+<span><span class="co">#&gt; 13:     2              LZTS2 2.5425255 1.457232e-11</span></span>
+<span><span class="co">#&gt; 14:     2               GPX1 2.4128747 1.024864e-02</span></span>
+<span><span class="co">#&gt; 15:     2              USP30 2.3416917 1.347109e-22</span></span></code></pre></div>
 </div>
 <p>S100A4, ANXA1 and IL32 on one side, CCR7, SELL and CD8B on the other. That is the memory versus naive split, and the global clustering had no way of seeing it. Cluster 2 is two cells, which is Leiden being Leiden at this resolution.</p>
 <p>The expression plots work on the subset too, so you can go straight to a dot plot without touching the parent.</p>
@@ -526,17 +526,17 @@
 <span>  cols <span class="op">=</span> <span class="st">"t_subcluster"</span>,</span>
 <span>  prefix_values <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Merged 1 column(s) for 1046 cells into obs (1654 cells left as NA).</span></span>
+<span><span class="co">#&gt; Merged 1 column(s) for 1042 cells into obs (1658 cells left as NA).</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">t_subcluster</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span></span>
 <span>  <span class="va">t_subcluster</span></span>
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    t_subcluster     N</span></span>
 <span><span class="co">#&gt;          &lt;char&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:    T cells_0   554</span></span>
-<span><span class="co">#&gt; 2:    T cells_1   490</span></span>
+<span><span class="co">#&gt; 1:    T cells_0   545</span></span>
+<span><span class="co">#&gt; 2:    T cells_1   495</span></span>
 <span><span class="co">#&gt; 3:    T cells_2     2</span></span>
-<span><span class="co">#&gt; 4:         &lt;NA&gt;  1117</span></span></code></pre></div>
+<span><span class="co">#&gt; 4:         &lt;NA&gt;  1121</span></span></code></pre></div>
 </div>
 <p><code>prefix_values = TRUE</code> stamps the subset’s group onto every value, so you get <code>T cells_0</code> rather than a bare <code>0</code>. Drop it if you want the raw labels. Leave <code>cols</code> out and everything the subset gained that the parent does not have yet gets merged, which after a pipeline run is exactly the new columns.</p>
 <p>The join is a left join, so every cell that was not a T cell gets <code>NA</code>. That is the behaviour you want, and the downstream methods respect it.</p>
@@ -554,12 +554,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">cell_id</span>, <span class="va">cell_type</span>, <span class="va">t_subcluster</span>, <span class="va">res_1</span>, <span class="va">res_0.5</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;             cell_id cell_type t_subcluster res_1 res_0.5</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;    &lt;char&gt;       &lt;char&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1: AAACATACAACCAC-1   T cells    T cells_0     0       0</span></span>
+<span><span class="co">#&gt; 1: AAACATACAACCAC-1   T cells    T cells_1     1       1</span></span>
 <span><span class="co">#&gt; 2: AAACATTGATCAGC-1   T cells    T cells_0     0       0</span></span>
 <span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1 Monocytes         &lt;NA&gt;    NA      NA</span></span>
 <span><span class="co">#&gt; 4: AAACGCACTGGTAC-1   T cells    T cells_0     0       0</span></span>
 <span><span class="co">#&gt; 5: AAACGCTGGTTCTT-1        NK         &lt;NA&gt;    NA      NA</span></span>
-<span><span class="co">#&gt; 6: AAACGCTGTAGCCA-1        NK         &lt;NA&gt;    NA      NA</span></span></code></pre></div>
+<span><span class="co">#&gt; 6: AAACGCTGTAGCCA-1   T cells    T cells_0     0       0</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="pipelines">Pipelines<a class="anchor" aria-label="anchor" href="#pipelines"></a>
 </h2>
@@ -643,9 +643,9 @@
 <span><span class="va">summary_dt</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">n_cells</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    cell_type n_cells n_subclusters hvg_shared_with_global</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;   &lt;int&gt;         &lt;int&gt;                  &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   T cells    1046             3                   1016</span></span>
-<span><span class="co">#&gt; 2: Monocytes     458             2                    820</span></span>
-<span><span class="co">#&gt; 3:        NK     379             3                    669</span></span>
+<span><span class="co">#&gt; 1:   T cells    1042             3                   1014</span></span>
+<span><span class="co">#&gt; 2: Monocytes     459             2                    820</span></span>
+<span><span class="co">#&gt; 3:        NK     382             2                    671</span></span>
 <span><span class="co">#&gt; 4:   B cells     280             1                    581</span></span></code></pre></div>
 </div>
 <p>Every lineage picked a different feature set, and the shared fraction with the global HVGs is nowhere near complete. Running one global PCA and hoping it resolves everything was never going to work.</p>
@@ -665,14 +665,13 @@
 <span><span class="co">#&gt;     fine_label     N</span></span>
 <span><span class="co">#&gt;         &lt;char&gt; &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:   B cells_0   280</span></span>
-<span><span class="co">#&gt; 2: Monocytes_0   233</span></span>
-<span><span class="co">#&gt; 3: Monocytes_1   225</span></span>
-<span><span class="co">#&gt; 4:        NK_0   138</span></span>
-<span><span class="co">#&gt; 5:        NK_1   128</span></span>
-<span><span class="co">#&gt; 6:        NK_2   113</span></span>
-<span><span class="co">#&gt; 7:   T cells_0   554</span></span>
-<span><span class="co">#&gt; 8:   T cells_1   490</span></span>
-<span><span class="co">#&gt; 9:   T cells_2     2</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: Monocytes_0   248</span></span>
+<span><span class="co">#&gt; 3: Monocytes_1   211</span></span>
+<span><span class="co">#&gt; 4:        NK_0   257</span></span>
+<span><span class="co">#&gt; 5:        NK_1   125</span></span>
+<span><span class="co">#&gt; 6:   T cells_0   545</span></span>
+<span><span class="co">#&gt; 7:   T cells_1   495</span></span>
+<span><span class="co">#&gt; 8:   T cells_2     2</span></span></code></pre></div>
 </div>
 <p>The prefix is doing real work here. Every group’s Leiden run starts counting at zero, so without it the T cell <code>1</code> and the B cell <code>1</code> collapse into one label. Leave it out and you get a warning naming the values that clash.</p>
 <div class="cell">

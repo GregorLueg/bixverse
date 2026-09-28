@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>KNN searches for single cell</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-27</p>
+      <p class="date">2026-09-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -455,7 +455,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.8198, 155.0561]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8343, 155.6370]</span></span></code></pre></div>
 </div>
 <p>This is the class that is actually sored in the object after running <code><a href="../reference/find_neighbours_sc.html">find_neighbours_sc()</a></code>.</p>
 <div class="cell">
@@ -486,7 +486,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.8198, 155.0561]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8343, 155.6370]</span></span></code></pre></div>
 </div>
 <p>The print message showed this line here:</p>
 <pre><code>Recall of approximate nearest neighbours search in random subset: 1.00</code></pre>
@@ -524,7 +524,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.8198, 156.7455]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8343, 157.2724]</span></span></code></pre></div>
 </div>
 <p>With one tree, we can appreciate that the Recall is dropping:</p>
 <pre><code>Recall of approximate nearest neighbours search in random subset: 0.75</code></pre>
@@ -545,8 +545,8 @@
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Annoy vs exhaustive.</span></span>
-<span><span class="co">#&gt;   Recall@15: 0.665.</span></span>
-<span><span class="co">#&gt;   Distance ratio: 1.026.</span></span></code></pre></div>
+<span><span class="co">#&gt;   Recall@15: 0.725.</span></span>
+<span><span class="co">#&gt;   Distance ratio: 1.021.</span></span></code></pre></div>
 </div>
 <p>We can appreciate that with one tree we do not get a Recall of 1 and the distance ratio is worse than the exhaustive one. Let’s test another index</p>
 <div class="cell">
@@ -562,7 +562,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.8198, 155.0750]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8343, 155.6370]</span></span></code></pre></div>
 </div>
 <p>And benchmark it:</p>
 <div class="cell">

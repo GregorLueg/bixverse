@@ -67,6 +67,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/apply_pipeline_per_group.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/apply_qtest_rules.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertBlitzGseaParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/assertBpcaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertBulkSparsityParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertCellMarkerList.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertCellsExist.html</loc></url>
@@ -100,6 +101,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertNebulaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertNmfConsensusParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertNmfHalsParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/assertPpcaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertSNFParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertScAprParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertScAucellParams.html</loc></url>
@@ -210,6 +212,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/cellsweep_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/change_gene_identifier.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkBlitzGseaParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/checkBpcaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkBulkSparsityParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkCellMarkerList.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkCellsExist.html</loc></url>
@@ -241,6 +244,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkNebulaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkNmfConsensusParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkNmfHalsParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/checkPpcaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkSNFParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkScAprParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkScAucellParams.html</loc></url>
@@ -334,6 +338,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-assert_lda_k_range.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-assert_modality_available.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-assert_nmf_k_range.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-assert_observed_margins.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-assert_residual_pca_params.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-boost_run.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-build_corrected_object.html</loc></url>
@@ -383,6 +388,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-migrate_sc_cache.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-migrate_sc_map.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-migrate_sc_state.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-name_missing_pca_res.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-nebula_design.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-nebula_res_to_class.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-new_sc_id.html</loc></url>
@@ -703,6 +709,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/ot_harmonic_score.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_blitzgsea.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_boost.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/params_bpca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_bulk_sparsity.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_cistarget.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_community_detection.html</loc></url>
@@ -734,6 +741,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/params_ppca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_sc_apr.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_sc_bbknn.html</loc></url>
@@ -851,6 +859,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_bbknn_filtering.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_blitzgsea_calibrate.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_blitzgsea_score.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_bpca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_build_symphony_ref.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_calc_es.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_calc_gsea_stat_cumulative_batch.html</loc></url>
@@ -983,6 +992,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_pcr.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_phyper.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_pointwise_mutual_info.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_ppca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_prcomp.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_prepare_gsva_gs.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_prepare_whitening.html</loc></url>
@@ -1063,6 +1073,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_vision_with_autocorrelation.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_voom_normalise.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_wnn.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/run_bpca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_cell_qc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_cell_qc_fixed.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_cistarget.html</loc></url>
@@ -1073,6 +1084,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_magic_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_paga_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_palantir_sc.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/run_ppca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_snf.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/sc_knn_to_nearest_neighbours.html</loc></url>

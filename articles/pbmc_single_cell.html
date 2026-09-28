@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Analysing PBMCs with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-09-27</p>
+      <p class="date">2026-09-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -395,19 +395,19 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_markers</span><span class="op">[</span><span class="va">fdr</span> <span class="op">&lt;=</span> <span class="fl">0.05</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lfc</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      grp         gene_id      lfc     prop1     prop2 z_scores      p_values</span></span>
 <span><span class="co">#&gt;    &lt;int&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     2 ENSG00000163220 4.160649 0.9859944 0.2004430 34.76254 4.479903e-265</span></span>
-<span><span class="co">#&gt; 2:     4 ENSG00000105374 4.126296 0.9957627 0.2086144 30.80441 1.143719e-208</span></span>
-<span><span class="co">#&gt; 3:     2 ENSG00000090382 4.056365 0.9971989 0.5105205 30.63871 1.868267e-206</span></span>
-<span><span class="co">#&gt; 4:     2 ENSG00000143546 3.653863 0.9719888 0.1140642 37.42005 9.224141e-307</span></span>
-<span><span class="co">#&gt; 5:     2 ENSG00000101439 3.427596 0.9971989 0.2375415 32.85327 5.113793e-237</span></span>
+<span><span class="co">#&gt; 1:     2 ENSG00000163220 4.194226 0.9884726 0.2042952 34.46479 1.352011e-260</span></span>
+<span><span class="co">#&gt; 2:     4 ENSG00000105374 4.155993 1.0000000 0.2162301 29.70839 2.991490e-194</span></span>
+<span><span class="co">#&gt; 3:     2 ENSG00000090382 4.083348 1.0000000 0.5126652 30.45956 4.474529e-204</span></span>
+<span><span class="co">#&gt; 4:     2 ENSG00000143546 3.677881 0.9711816 0.1189427 36.95369 3.177281e-299</span></span>
+<span><span class="co">#&gt; 5:     2 ENSG00000101439 3.430261 1.0000000 0.2411894 32.46707 1.555225e-231</span></span>
 <span><span class="co">#&gt; 6:     3 ENSG00000204287 3.274704 1.0000000 0.4668083 27.17719 6.043250e-163</span></span>
 <span><span class="co">#&gt;              fdr gene_symbol</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: 4.069544e-262      S100A9</span></span>
-<span><span class="co">#&gt; 2: 7.197258e-206        NKG7</span></span>
-<span><span class="co">#&gt; 3: 7.071390e-204         LYZ</span></span>
-<span><span class="co">#&gt; 4: 2.094802e-303      S100A8</span></span>
-<span><span class="co">#&gt; 5: 3.318121e-234        CST3</span></span>
+<span><span class="co">#&gt; 1: 1.218703e-257      S100A9</span></span>
+<span><span class="co">#&gt; 2: 1.900024e-191        NKG7</span></span>
+<span><span class="co">#&gt; 3: 1.680558e-201         LYZ</span></span>
+<span><span class="co">#&gt; 4: 7.160003e-296      S100A8</span></span>
+<span><span class="co">#&gt; 5: 1.001343e-228        CST3</span></span>
 <span><span class="co">#&gt; 6: 2.871215e-160     HLA-DRA</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="fast-clustering">Fast clustering<a class="anchor" aria-label="anchor" href="#fast-clustering"></a>
@@ -429,12 +429,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fast_clusted_dt</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    cell_idx res_5 res_3 res_2 res_1.5 res_1 res_0.5</span></span>
 <span><span class="co">#&gt;       &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        1    13     2     0       0     0       0</span></span>
-<span><span class="co">#&gt; 2:        3    14     3     0       0     0       0</span></span>
-<span><span class="co">#&gt; 3:        4     1     4     3       3     1       1</span></span>
-<span><span class="co">#&gt; 4:        6    16     3     0       0     0       0</span></span>
-<span><span class="co">#&gt; 5:        8     4     3     0       0     0       0</span></span>
-<span><span class="co">#&gt; 6:        9     4     3     0       0     0       0</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        1     2     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 2:        3     2     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 3:        4     3     4     4       4     4       3</span></span>
+<span><span class="co">#&gt; 4:        6     8     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 5:        8     2     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 6:        9     4     0     0       0     0       0</span></span></code></pre></div>
 </div>
 <p>If you want to explore the k-means memberships or centroids, there are getters for this.</p>
 <div class="cell">
@@ -462,12 +462,12 @@
 <span><span class="co">#&gt; 6:        9 AAACGCTGTAGCCA-1   530     1273    TRUE 0.011783189 0.3794187</span></span>
 <span><span class="co">#&gt;    outlier leiden_clusters res_5 res_3 res_2 res_1.5 res_1 res_0.5</span></span>
 <span><span class="co">#&gt;     &lt;lgcl&gt;           &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   FALSE               1    13     2     0       0     0       0</span></span>
-<span><span class="co">#&gt; 2:   FALSE               1    14     3     0       0     0       0</span></span>
-<span><span class="co">#&gt; 3:   FALSE               6     1     4     3       3     1       1</span></span>
-<span><span class="co">#&gt; 4:   FALSE               1    16     3     0       0     0       0</span></span>
-<span><span class="co">#&gt; 5:   FALSE               5     4     3     0       0     0       0</span></span>
-<span><span class="co">#&gt; 6:   FALSE               5     4     3     0       0     0       0</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:   FALSE               0     2     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 2:   FALSE               1     2     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 3:   FALSE               6     3     4     4       4     4       3</span></span>
+<span><span class="co">#&gt; 4:   FALSE               1     8     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 5:   FALSE               5     2     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 6:   FALSE               0     4     0     0       0     0       0</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="dimensionality-reduction">Dimensionality reduction<a class="anchor" aria-label="anchor" href="#dimensionality-reduction"></a>
 </h3>

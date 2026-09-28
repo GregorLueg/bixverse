@@ -75,6 +75,6 @@ An `ScStep`.
 # neighbours on the PCA embedding
 step_pca_sc(no_pcs = 10L) %>>% step_neighbours_sc()
 #> <ScPipeline> 2 steps
-#>   1. pca         no_pcs = 10L, pca_params = <list>, sparse_svd = FALSE, hvg = NULL, seed = 42L, .verbose = TRUE
+#>   1. pca         no_pcs = 10L, pca_params = <list>, sparse_svd = NULL, hvg = NULL, seed = 42L, .verbose = TRUE
 #>   2. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
 ```

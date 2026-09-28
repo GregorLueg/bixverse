@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,6 +92,26 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.3" id="bixverse-053">bixverse 0.5.3<a class="anchor" aria-label="anchor" href="#bixverse-053"></a></h2>
+<div class="section level3">
+<h3 id="features-0-5-3">Features<a class="anchor" aria-label="anchor" href="#features-0-5-3"></a></h3>
+<ul><li>Single cell PCA got a lot faster. <code><a href="../reference/params_sc_pca.html">params_sc_pca()</a></code> has a new <code>svd_solver</code> argument, one of <code>"covariance"</code> (the new default), <code>"randomised"</code> or <code>"exact"</code>. The covariance solver builds the gene x gene cross-product straight from the sparse counts and eigendecomposes it. The randomised solver got about 2x faster as well.</li>
+<li>
+<code><a href="../reference/calculate_pca_sc.html">calculate_pca_sc()</a></code> and <code><a href="../reference/step_pca_sc.html">step_pca_sc()</a></code> now default to <code>sparse_svd = NULL</code>, which picks the sparse path for the normalised data (faster and lighter on memory for every solver) and the dense one for <code>residuals = TRUE</code>.</li>
+<li>PCA on matrices with missing values: <code><a href="../reference/run_ppca.html">run_ppca()</a></code> and <code><a href="../reference/run_bpca.html">run_bpca()</a></code> for probabilistic and Bayesian PCA, ported from <a href="https://bioconductor.org/packages/pcaMethods/" class="external-link">pcaMethods</a>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changes-0-5-3">Changes<a class="anchor" aria-label="anchor" href="#changes-0-5-3"></a></h3>
+<ul><li>The default PCA is now exact rather than randomised, so PCs, and everything built on them, shift slightly compared to 0.5.2. The leading PCs barely move; the trailing ones can.</li>
+<li>The <code>randomised</code> argument of <code><a href="../reference/params_sc_pca.html">params_sc_pca()</a></code> is deprecated. <code>TRUE</code> maps to <code>svd_solver = "randomised"</code>, <code>FALSE</code> to <code>"exact"</code>, with a warning.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-5-3">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-5-3"></a></h3>
+<ul><li>Cells that the sNN pruning left without a single edge now keep their strongest kNN edge. Before, Leiden turned each of them into a one-cell cluster, and on large data these added up to hundreds.</li>
+<li>The sparse PCA path ignored <code>mean_center = FALSE</code> and <code>normalise_variance = FALSE</code>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.2" id="bixverse-052">bixverse 0.5.2<a class="anchor" aria-label="anchor" href="#bixverse-052"></a></h2>
 <div class="section level3">

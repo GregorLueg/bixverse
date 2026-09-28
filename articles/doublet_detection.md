@@ -383,13 +383,13 @@ doublet_metrics(
   actual = scdblfinder_dt$Call
 )
 #> $precision
-#> [1] 0.592613
+#> [1] 0.5769029
 #> 
 #> $recall
-#> [1] 0.6895446
+#> [1] 0.7049391
 #> 
 #> $f1
-#> [1] 0.6374148
+#> [1] 0.6345266
 ```
 
 We can also extract the other scores from scDblFinder. We can for
@@ -410,8 +410,8 @@ table(
 )
 #>         weighted
 #> lightgbm FALSE  TRUE
-#>    FALSE 12008   706
-#>    TRUE     52  1762
+#>    FALSE 11986   637
+#>    TRUE     74  1831
 ```
 
 Or alternatively, the cxds scores can also be extracted and used. These
@@ -433,8 +433,8 @@ table(
 )
 #>         cxds
 #> lightgbm FALSE  TRUE
-#>    FALSE 12464   250
-#>    TRUE    747  1067
+#>    FALSE 12391   232
+#>    TRUE    820  1085
 ```
 
 Should you observe that this is very flat or you only have a few data

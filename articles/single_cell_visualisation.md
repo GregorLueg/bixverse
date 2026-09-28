@@ -382,12 +382,12 @@ dt <- extract_embedding_data(
 head(dt)
 #>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
 #>              <char>     <num>     <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1  2.438378 -3.853977    T cells               0 0.4371381
-#> 2: AAACATTGAGCTAC-1 -7.839015 -1.337620    B cells               2 0.4246323
-#> 3: AAACATTGATCAGC-1  5.144168 -3.826030    T cells               0 0.3171120
-#> 4: AAACCGTGCTTCCG-1 -2.792677  2.448639 CD14+ Mono               1 0.2431611
-#> 5: AAACCGTGTATGCG-1  2.725567  1.727976         NK               5 0.1491318
-#> 6: AAACGCACTGGTAC-1  3.680359 -2.433794    T cells               0 0.3635097
+#> 1: AAACATACAACCAC-1 -3.811489  2.530436    T cells               0 0.4371381
+#> 2: AAACATTGAGCTAC-1  6.876703  1.665102    B cells               2 0.4246323
+#> 3: AAACATTGATCAGC-1 -5.737097  2.708501    T cells               0 0.3171120
+#> 4: AAACCGTGCTTCCG-1  1.824733 -3.972527 CD16+ Mono               4 0.2431611
+#> 5: AAACCGTGTATGCG-1 -2.078420 -1.778267         NK               5 0.1491318
+#> 6: AAACGCACTGGTAC-1 -4.594027  2.556168    T cells               0 0.3635097
 ```
 
 ## Per-Gene Expression plots\`
@@ -459,12 +459,12 @@ dt <- extract_feature_plot_data(
 head(dt)
 #>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
 #>              <char>     <num>     <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1  2.438378 -3.853977    T cells               0 0.4371381
-#> 2: AAACATTGAGCTAC-1 -7.839015 -1.337620    B cells               2 0.4246323
-#> 3: AAACATTGATCAGC-1  5.144168 -3.826030    T cells               0 0.3171120
-#> 4: AAACCGTGCTTCCG-1 -2.792677  2.448639 CD14+ Mono               1 0.2431611
-#> 5: AAACCGTGTATGCG-1  2.725567  1.727976         NK               5 0.1491318
-#> 6: AAACGCACTGGTAC-1  3.680359 -2.433794    T cells               0 0.3635097
+#> 1: AAACATACAACCAC-1 -3.811489  2.530436    T cells               0 0.4371381
+#> 2: AAACATTGAGCTAC-1  6.876703  1.665102    B cells               2 0.4246323
+#> 3: AAACATTGATCAGC-1 -5.737097  2.708501    T cells               0 0.3171120
+#> 4: AAACCGTGCTTCCG-1  1.824733 -3.972527 CD16+ Mono               4 0.2431611
+#> 5: AAACCGTGTATGCG-1 -2.078420 -1.778267         NK               5 0.1491318
+#> 6: AAACGCACTGGTAC-1 -4.594027  2.556168    T cells               0 0.3635097
 #>               gene expression
 #>             <fctr>      <num>
 #> 1: ENSG00000156738   0.000000
@@ -533,14 +533,14 @@ dt <- extract_dot_plot_data(
 )
 
 head(dt)
-#>               gene  group  mean_exp   pct_exp scaled_exp
-#>             <fctr> <fctr>     <num>     <num>      <num>
-#> 1: ENSG00000167286      0 2.1235094 87.006581 0.88261863
-#> 2: ENSG00000167286      1 0.1619400  9.591836 0.06730897
-#> 3: ENSG00000167286      2 0.1005410  5.459770 0.04178903
-#> 4: ENSG00000167286      3 2.4059196 91.078067 1.00000000
-#> 5: ENSG00000167286      4 0.1152344  7.926829 0.04789619
-#> 6: ENSG00000167286      5 0.2186716 10.493827 0.09088901
+#>               gene  group   mean_exp   pct_exp scaled_exp
+#>             <fctr> <fctr>      <num>     <num>      <num>
+#> 1: ENSG00000167286      0 2.12411809 87.194610 0.94530820
+#> 2: ENSG00000167286      1 0.16227114  9.611452 0.07221644
+#> 3: ENSG00000167286      2 0.08924539  4.913295 0.03971738
+#> 4: ENSG00000167286      3 2.24701118 85.350317 1.00000000
+#> 5: ENSG00000167286      4 0.11523438  7.926829 0.05128340
+#> 6: ENSG00000167286      5 0.28394875 12.837838 0.12636731
 ```
 
 ## Stacked Violin Plots
@@ -582,7 +582,7 @@ head(dt)
 #> 1: AAACATACAACCAC-1    T cells ENSG00000167286   2.865234
 #> 2: AAACATTGAGCTAC-1    B cells ENSG00000167286   0.000000
 #> 3: AAACATTGATCAGC-1    T cells ENSG00000167286   3.490234
-#> 4: AAACCGTGCTTCCG-1 CD14+ Mono ENSG00000167286   0.000000
+#> 4: AAACCGTGCTTCCG-1 CD16+ Mono ENSG00000167286   0.000000
 #> 5: AAACCGTGTATGCG-1         NK ENSG00000167286   0.000000
 #> 6: AAACGCACTGGTAC-1    T cells ENSG00000167286   1.730469
 ```

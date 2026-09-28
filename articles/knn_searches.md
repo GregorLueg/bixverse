@@ -220,7 +220,7 @@ exhaustive_knn
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [3.8198, 155.0561]
+#>   Distance range: [3.8343, 155.6370]
 ```
 
 This is the class that is actually sored in the object after running
@@ -257,7 +257,7 @@ annoy_knn
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [3.8198, 155.0561]
+#>   Distance range: [3.8343, 155.6370]
 ```
 
 The print message showed this line here:
@@ -303,7 +303,7 @@ annoy_knn_less_trees
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [3.8198, 156.7455]
+#>   Distance range: [3.8343, 157.2724]
 ```
 
 With one tree, we can appreciate that the Recall is dropping:
@@ -328,8 +328,8 @@ cat(
   )
 )
 #> Annoy vs exhaustive.
-#>   Recall@15: 0.665.
-#>   Distance ratio: 1.026.
+#>   Recall@15: 0.725.
+#>   Distance ratio: 1.021.
 ```
 
 We can appreciate that with one tree we do not get a Recall of 1 and the
@@ -349,7 +349,7 @@ nndescent_knn
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [3.8198, 155.0750]
+#>   Distance range: [3.8343, 155.6370]
 ```
 
 And benchmark it:

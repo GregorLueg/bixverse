@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Batch correction with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-09-27</p>
+      <p class="date">2026-09-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -286,7 +286,7 @@
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  no_pcs <span class="op">=</span> <span class="fl">30L</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Using dense SVD solving on scaled data on 2000 HVG.</span></span>
+<span><span class="co">#&gt; Using sparse SVD solving on scaled data on 2000 HVG.</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
@@ -356,7 +356,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_type</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   B cells        DC Monocytes        NK Platelets   T cells </span></span>
-<span><span class="co">#&gt;       874        79      1016       331        12      3529</span></span></code></pre></div>
+<span><span class="co">#&gt;       873        74      1016       336        11      3531</span></span></code></pre></div>
 </details>
 </div>
 </section></section><section class="level2"><h2 id="comparing-the-different-methods">Comparing the different methods<a class="anchor" aria-label="anchor" href="#comparing-the-different-methods"></a>
@@ -397,8 +397,8 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, batch_column <span class="op">=</span> <span class="st">"exp_id"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; kBET Scores</span></span>
 <span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.9885 (5774 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     12.8259 (expected under H0: 1)</span></span>
+<span><span class="co">#&gt;   Rejection rate:      0.9868 (5764 / 5841)</span></span>
+<span><span class="co">#&gt;   Mean Chi-Square:     12.8102 (expected under H0: 1)</span></span>
 <span><span class="co">#&gt;   Median Chi-Square:   8.7578</span></span></code></pre></div>
 </div>
 <p>In practice, you’d want all of them at once. <code><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc()</a></code> gives one row per call, and we’ll stack one row per method into <code>metrics_dt</code>:</p>
@@ -415,10 +415,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt; &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       pca  0.01147064 0.8909914     0             NA     1     0.6758695</span></span>
+<span><span class="co">#&gt; 1:       pca  0.01318267 0.8897316     0             NA     1      0.678216</span></span>
 <span><span class="co">#&gt;    graph_connectivity      method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9894515 Uncorrected</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:                  1 Uncorrected</span></span></code></pre></div>
 </div>
 <p>The high kBET rejection rate (so a low <code>kbet_accept</code>) and a low <code>ilisi</code> confirm a substantial batch effect, and the tSNE shows clear separation by batch. <code>pcr_comparison</code> is <code>NA</code> here: it compares a corrected embedding against this PCA, so the PCA has nothing to compare against.</p>
 </section><section class="level3"><h3 id="fastmnn">fastMNN<a class="anchor" aria-label="anchor" href="#fastmnn"></a>
@@ -463,10 +463,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"fastMNN"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       mnn   0.6449238 0.9378912 0.3005779      0.8858816     1     0.6544492</span></span>
+<span><span class="co">#&gt; 1:       mnn   0.6926896 0.9413112 0.4705881      0.8862376     1     0.6573856</span></span>
 <span><span class="co">#&gt;    graph_connectivity  method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9972923 fastMNN</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9408038 fastMNN</span></span></code></pre></div>
 </div>
 <p>We can see clear improvements on the batch side: kBET acceptance, batch ASW and iLISI all go up.</p>
 <div class="cell">
@@ -538,10 +538,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:   harmony   0.8635508 0.9270976 0.6423357      0.9235798     1     0.6475987</span></span>
+<span><span class="co">#&gt; 1:   harmony   0.8508817 0.9283036 0.6423357      0.9213816     1     0.6509099</span></span>
 <span><span class="co">#&gt;    graph_connectivity  method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:           0.989357 Harmony</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9953539 Harmony</span></span></code></pre></div>
 </div>
 <p>Also here, we observe improvements across the board.</p>
 <div class="cell">
@@ -620,10 +620,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony v2"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: harmony_v2   0.8604691 0.9189612 0.6423357       0.894781     1</span></span>
+<span><span class="co">#&gt; 1: harmony_v2   0.8597843  0.919809 0.6423357      0.8935811     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity     method</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;     &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:     0.6957046          0.9879408 Harmony v2</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:     0.6993859                  1 Harmony v2</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
@@ -702,10 +702,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Seurat CCA"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       cca   0.6856703 0.8886744 0.4705881      0.8693617     1     0.6997823</span></span>
+<span><span class="co">#&gt; 1:       cca   0.7178565 0.8929735 0.4705881      0.8688793     1     0.7043481</span></span>
 <span><span class="co">#&gt;    graph_connectivity     method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;     &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9894515 Seurat CCA</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:                  1 Seurat CCA</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
@@ -771,10 +771,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Seurat rPCA"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:      rpca   0.7752097 0.9051192 0.6423357       0.810686     1      0.691866</span></span>
+<span><span class="co">#&gt; 1:      rpca   0.7846259 0.9078943 0.6423357      0.8138718     1     0.6966736</span></span>
 <span><span class="co">#&gt;    graph_connectivity      method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9894043 Seurat rPCA</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:                  1 Seurat rPCA</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
@@ -844,7 +844,7 @@
 <span><span class="co">#&gt; 1:      &lt;NA&gt;           1        NA   0.8             NA     1            NA</span></span>
 <span><span class="co">#&gt;    graph_connectivity method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt; &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9755626  BBKNN</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:                  1  BBKNN</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
@@ -889,22 +889,22 @@
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         method kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: Uncorrected  0.01147064 0.8909914 0.0000000             NA     1</span></span>
-<span><span class="co">#&gt; 2:     fastMNN  0.64492381 0.9378912 0.3005779      0.8858816     1</span></span>
-<span><span class="co">#&gt; 3:     Harmony  0.86355076 0.9270976 0.6423357      0.9235798     1</span></span>
-<span><span class="co">#&gt; 4:  Harmony v2  0.86046910 0.9189612 0.6423357      0.8947810     1</span></span>
-<span><span class="co">#&gt; 5:  Seurat CCA  0.68567026 0.8886744 0.4705881      0.8693617     1</span></span>
-<span><span class="co">#&gt; 6: Seurat rPCA  0.77520972 0.9051192 0.6423357      0.8106860     1</span></span>
+<span><span class="co">#&gt; 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1</span></span>
+<span><span class="co">#&gt; 2:     fastMNN  0.69268961 0.9413112 0.4705881      0.8862376     1</span></span>
+<span><span class="co">#&gt; 3:     Harmony  0.85088170 0.9283036 0.6423357      0.9213816     1</span></span>
+<span><span class="co">#&gt; 4:  Harmony v2  0.85978428 0.9198090 0.6423357      0.8935811     1</span></span>
+<span><span class="co">#&gt; 5:  Seurat CCA  0.71785653 0.8929735 0.4705881      0.8688793     1</span></span>
+<span><span class="co">#&gt; 6: Seurat rPCA  0.78462592 0.9078943 0.6423357      0.8138718     1</span></span>
 <span><span class="co">#&gt; 7:       BBKNN  1.00000000        NA 0.8000000             NA     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     0.6758695          0.9894515</span></span>
-<span><span class="co">#&gt; 2:     0.6544492          0.9972923</span></span>
-<span><span class="co">#&gt; 3:     0.6475987          0.9893570</span></span>
-<span><span class="co">#&gt; 4:     0.6957046          0.9879408</span></span>
-<span><span class="co">#&gt; 5:     0.6997823          0.9894515</span></span>
-<span><span class="co">#&gt; 6:     0.6918660          0.9894043</span></span>
-<span><span class="co">#&gt; 7:            NA          0.9755626</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:     0.6782160          1.0000000</span></span>
+<span><span class="co">#&gt; 2:     0.6573856          0.9408038</span></span>
+<span><span class="co">#&gt; 3:     0.6509099          0.9953539</span></span>
+<span><span class="co">#&gt; 4:     0.6993859          1.0000000</span></span>
+<span><span class="co">#&gt; 5:     0.7043481          1.0000000</span></span>
+<span><span class="co">#&gt; 6:     0.6966736          1.0000000</span></span>
+<span><span class="co">#&gt; 7:            NA          1.0000000</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">

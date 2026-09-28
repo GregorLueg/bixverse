@@ -29,12 +29,11 @@ params_sc_neighbours(
   `k = 20`. As the default k is set to 15, we set it to `1/12`. Track
   this against `k` rather than leaving it: the threshold is a share of
   the neighbourhood, so the same value prunes far harder at a larger
-  `k`. Over-pruning fails quietly, in that you still get a clustering,
-  but cells left with too few shared neighbours drop out as singleton
-  communities, which then show up downstream as one-cell clusters with
-  inflated
-  [`run_paga_sc()`](https://gregorlueg.github.io/bixverse/reference/run_paga_sc.md)
-  connectivities. Defaults to `0.08333333333333333`.
+  `k`. A cell that loses every edge to pruning keeps its strongest kNN
+  edge, so it does not drop out as a one-cell cluster. Over-pruning
+  still fails quietly otherwise: small groups of cells that only share
+  neighbours with each other split off as tiny communities. Defaults to
+  `0.08333333333333333`.
 
 - snn_similarity:
 
@@ -72,12 +71,11 @@ A named list with the following elements:
   `k = 20`. As the default k is set to 15, we set it to `1/12`. Track
   this against `k` rather than leaving it: the threshold is a share of
   the neighbourhood, so the same value prunes far harder at a larger
-  `k`. Over-pruning fails quietly, in that you still get a clustering,
-  but cells left with too few shared neighbours drop out as singleton
-  communities, which then show up downstream as one-cell clusters with
-  inflated
-  [`run_paga_sc()`](https://gregorlueg.github.io/bixverse/reference/run_paga_sc.md)
-  connectivities. Defaults to `0.08333333333333333`.
+  `k`. A cell that loses every edge to pruning keeps its strongest kNN
+  edge, so it does not drop out as a one-cell cluster. Over-pruning
+  still fails quietly otherwise: small groups of cells that only share
+  neighbours with each other split off as tiny communities. Defaults to
+  `0.08333333333333333`.
 
 - snn_similarity - String. The Jaccard similarity calculates the Jaccard
   between the neighbours, whereas the rank method calculates edge

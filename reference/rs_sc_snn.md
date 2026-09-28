@@ -28,7 +28,8 @@ rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 
 - pruning:
 
-  Float. Below which similarity value to prune the weight to 0.
+  Float. Below which similarity value to prune the weight to 0. A cell
+  that loses every edge keeps its strongest kNN edge.
 
 - verbose:
 

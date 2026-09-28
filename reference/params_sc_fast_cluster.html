@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -145,7 +145,9 @@ neighbours. Defaults to <code>FALSE</code>.</p></dd>
 
 <dt id="arg-pruning">pruning<a class="anchor" aria-label="anchor" href="#arg-pruning"></a></dt>
 <dd><p>Numeric or <code>NULL</code>. Weights below this threshold will be set to
-0 in the generation of the sNN graph. If not provided, defaults to <code>1 / ceil(k * 0.8)</code>. Defaults to <code>NULL</code>.</p></dd>
+0 in the generation of the sNN graph. A node that loses every edge keeps its
+strongest kNN edge. If not provided, defaults to <code>1 / ceil(k * 0.8)</code>.
+Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-snn-similarity">snn_similarity<a class="anchor" aria-label="anchor" href="#arg-snn-similarity"></a></dt>
@@ -188,7 +190,9 @@ Defaults to <code>10L</code>.</p></li>
 generated that generates edges between all cells instead of between only
 neighbours. Defaults to <code>FALSE</code>.</p></li>
 <li><p>pruning - Numeric or <code>NULL</code>. Weights below this threshold will be set
-to 0 in the generation of the sNN graph. If not provided, defaults to <code>1 / ceil(k * 0.8)</code>. Defaults to <code>NULL</code>.</p></li>
+to 0 in the generation of the sNN graph. A node that loses every edge keeps
+its strongest kNN edge. If not provided, defaults to <code>1 / ceil(k * 0.8)</code>.
+Defaults to <code>NULL</code>.</p></li>
 <li><p>snn_similarity - String. The Jaccard similarity calculates the Jaccard
 between the neighbours, whereas the rank method calculates edge weights
 based on the ranking of shared neighbours. For the rank method, the weight

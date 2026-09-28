@@ -1425,6 +1425,15 @@ Any types of functions that help with statistics
   : Calculates a harmonic sum normalised between 0 to 1.
 - [`robust_scale()`](https://gregorlueg.github.io/bixverse/reference/robust_scale.md)
   : Robust scaler.
+- [`run_ppca()`](https://gregorlueg.github.io/bixverse/reference/run_ppca.md)
+  **\[experimental\]** : Probabilistic PCA on a matrix with missing
+  values
+- [`run_bpca()`](https://gregorlueg.github.io/bixverse/reference/run_bpca.md)
+  **\[experimental\]** : Bayesian PCA on a matrix with missing values
+- [`params_ppca()`](https://gregorlueg.github.io/bixverse/reference/params_ppca.md)
+  : Wrapper function for probabilistic PCA parameters
+- [`params_bpca()`](https://gregorlueg.github.io/bixverse/reference/params_bpca.md)
+  : Wrapper function for Bayesian PCA parameters
 
 ## Plotting helpers
 
@@ -1598,6 +1607,8 @@ There is a lot more under the hood…
 - [`rs_blitzgsea_score()`](https://gregorlueg.github.io/bixverse/reference/rs_blitzgsea_score.md)
   **\[experimental\]** : Score gene sets against a calibrated blitzGSEA
   null
+- [`rs_bpca()`](https://gregorlueg.github.io/bixverse/reference/rs_bpca.md)
+  **\[experimental\]** : Bayesian PCA on a matrix with missing values
 - [`rs_calc_norm_factors()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_norm_factors.md)
   **\[experimental\]** : Calculate normalisation factors
 - [`rs_cell_type_asw()`](https://gregorlueg.github.io/bixverse/reference/rs_cell_type_asw.md)
@@ -1777,6 +1788,9 @@ There is a lot more under the hood…
   **\[experimental\]** : Calculate the hypergeometric test in Rust
 - [`rs_pointwise_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_pointwise_mutual_info.md)
   **\[experimental\]** : Calculates the point wise mutual information
+- [`rs_ppca()`](https://gregorlueg.github.io/bixverse/reference/rs_ppca.md)
+  **\[experimental\]** : Probabilistic PCA on a matrix with missing
+  values
 - [`rs_prcomp()`](https://gregorlueg.github.io/bixverse/reference/rs_prcomp.md)
   **\[experimental\]** : Rust implementation of prcomp
 - [`rs_prepare_whitening()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_whitening.md)

@@ -50,7 +50,8 @@ params_sc_fast_cluster(
 - pruning:
 
   Numeric or `NULL`. Weights below this threshold will be set to 0 in
-  the generation of the sNN graph. If not provided, defaults to
+  the generation of the sNN graph. A node that loses every edge keeps
+  its strongest kNN edge. If not provided, defaults to
   `1 / ceil(k * 0.8)`. Defaults to `NULL`.
 
 - snn_similarity:
@@ -105,7 +106,8 @@ A named list with the following elements:
   only neighbours. Defaults to `FALSE`.
 
 - pruning - Numeric or `NULL`. Weights below this threshold will be set
-  to 0 in the generation of the sNN graph. If not provided, defaults to
+  to 0 in the generation of the sNN graph. A node that loses every edge
+  keeps its strongest kNN edge. If not provided, defaults to
   `1 / ceil(k * 0.8)`. Defaults to `NULL`.
 
 - snn_similarity - String. The Jaccard similarity calculates the Jaccard

@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Multicellular programmes with DIALOGUE</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-27</p>
+      <p class="date">2026-09-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -288,10 +288,10 @@
 <span><span class="co">#&gt;   Shared samples:   30</span></span>
 <span><span class="co">#&gt;   Programmes:       3</span></span>
 <span><span class="co">#&gt;     mcp_01 - worst pair p: 0.0448 | spans 4 cell type(s)</span></span>
-<span><span class="co">#&gt;     mcp_02 - worst pair p: 0.1127 | spans 4 cell type(s)</span></span>
-<span><span class="co">#&gt;     mcp_03 - worst pair p: 0.08292 | spans 4 cell type(s)</span></span>
-<span><span class="co">#&gt;   Genes with a verdict: 1395</span></span>
-<span><span class="co">#&gt;   Signature genes:  1168 permissive | 799 strict</span></span></code></pre></div>
+<span><span class="co">#&gt;     mcp_02 - worst pair p: 0.5 | spans 3 cell type(s)</span></span>
+<span><span class="co">#&gt;     mcp_03 - worst pair p: 0.08834 | spans 4 cell type(s)</span></span>
+<span><span class="co">#&gt;   Genes with a verdict: 1277</span></span>
+<span><span class="co">#&gt;   Signature genes:  1112 permissive | 719 strict</span></span></code></pre></div>
 </div>
 <p><code>quality_col = "cell_q"</code> is the per-cell quality score the original paper shipped with this data. Leave it <code>NULL</code> and <code>bixverse</code> falls back to the z-scored log library size instead. That choice matters more than it looks, and we come back to it below.</p>
 </section><section class="level2"><h2 id="reading-the-output">Reading the output<a class="anchor" aria-label="anchor" href="#reading-the-output"></a>
@@ -302,24 +302,24 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_results.html">get_results</a></span><span class="op">(</span><span class="va">dlg_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     programme cell_type_a cell_type_b      emp_p  pair_cor</span></span>
 <span><span class="co">#&gt;         &lt;int&gt;      &lt;char&gt;      &lt;char&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1:         1   CD8+ IELs     CD8+ LP 0.04480159 0.9186660</span></span>
-<span><span class="co">#&gt;  2:         2   CD8+ IELs     CD8+ LP 0.06371927 0.6268279</span></span>
-<span><span class="co">#&gt;  3:         3   CD8+ IELs     CD8+ LP 0.05551659 0.6293367</span></span>
-<span><span class="co">#&gt;  4:         1   CD8+ IELs Macrophages 0.04480159 0.8735931</span></span>
-<span><span class="co">#&gt;  5:         2   CD8+ IELs Macrophages 0.04480159 0.8026124</span></span>
-<span><span class="co">#&gt;  6:         3   CD8+ IELs Macrophages 0.04817104 0.6640532</span></span>
-<span><span class="co">#&gt;  7:         1   CD8+ IELs         TA2 0.04480159 0.9256057</span></span>
-<span><span class="co">#&gt;  8:         2   CD8+ IELs         TA2 0.07283526 0.5953537</span></span>
-<span><span class="co">#&gt;  9:         3   CD8+ IELs         TA2 0.04480159 0.7620888</span></span>
-<span><span class="co">#&gt; 10:         1     CD8+ LP Macrophages 0.04480159 0.9521887</span></span>
-<span><span class="co">#&gt; 11:         2     CD8+ LP Macrophages 0.04817104 0.7600446</span></span>
-<span><span class="co">#&gt; 12:         3     CD8+ LP Macrophages 0.04817104 0.7119079</span></span>
-<span><span class="co">#&gt; 13:         1     CD8+ LP         TA2 0.04480159 0.9452754</span></span>
-<span><span class="co">#&gt; 14:         2     CD8+ LP         TA2 0.04480159 0.7362233</span></span>
-<span><span class="co">#&gt; 15:         3     CD8+ LP         TA2 0.08291775 0.6008835</span></span>
-<span><span class="co">#&gt; 16:         1 Macrophages         TA2 0.04480159 0.9129270</span></span>
-<span><span class="co">#&gt; 17:         2 Macrophages         TA2 0.11266125 0.5873035</span></span>
-<span><span class="co">#&gt; 18:         3 Macrophages         TA2 0.05174027 0.6392640</span></span></code></pre></div>
+<span><span class="co">#&gt;  1:         1   CD8+ IELs     CD8+ LP 0.04480159 0.9184860</span></span>
+<span><span class="co">#&gt;  2:         2   CD8+ IELs     CD8+ LP 0.04817104 0.7532821</span></span>
+<span><span class="co">#&gt;  3:         3   CD8+ IELs     CD8+ LP 0.07775252 0.6249087</span></span>
+<span><span class="co">#&gt;  4:         1   CD8+ IELs Macrophages 0.04480159 0.8783269</span></span>
+<span><span class="co">#&gt;  5:         2   CD8+ IELs Macrophages 0.04480159 0.8080615</span></span>
+<span><span class="co">#&gt;  6:         3   CD8+ IELs Macrophages 0.07775252 0.5694392</span></span>
+<span><span class="co">#&gt;  7:         1   CD8+ IELs         TA2 0.04480159 0.9216183</span></span>
+<span><span class="co">#&gt;  8:         2   CD8+ IELs         TA2 0.14933670 0.5434863</span></span>
+<span><span class="co">#&gt;  9:         3   CD8+ IELs         TA2 0.04817104 0.7229226</span></span>
+<span><span class="co">#&gt; 10:         1     CD8+ LP Macrophages 0.04480159 0.9437799</span></span>
+<span><span class="co">#&gt; 11:         2     CD8+ LP Macrophages 0.04480159 0.8039438</span></span>
+<span><span class="co">#&gt; 12:         3     CD8+ LP Macrophages 0.04480159 0.7622578</span></span>
+<span><span class="co">#&gt; 13:         1     CD8+ LP         TA2 0.04480159 0.9411470</span></span>
+<span><span class="co">#&gt; 14:         2     CD8+ LP         TA2 0.25520089 0.5148425</span></span>
+<span><span class="co">#&gt; 15:         3     CD8+ LP         TA2 0.05174027 0.6520660</span></span>
+<span><span class="co">#&gt; 16:         1 Macrophages         TA2 0.04480159 0.9127722</span></span>
+<span><span class="co">#&gt; 17:         2 Macrophages         TA2 0.50000000 0.4733177</span></span>
+<span><span class="co">#&gt; 18:         3 Macrophages         TA2 0.08833696 0.5969017</span></span></code></pre></div>
 </div>
 <p>A programme is only interesting if it holds up across <em>every</em> pair, so the number to look at is the worst p in each programme, which is what <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> reports. With <code>n_permutations = 100</code> the p-value cannot go below roughly 0.01, so do not read too much into the exact values; raise it for anything you intend to believe.</p>
 <p><code>refit_fidelity</code> says how well each cell type’s score survived stage three, i.e. how much of the programme is really carried by the genes that passed the mixed model.</p>
@@ -327,10 +327,10 @@
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">dlg_res</span><span class="op">$</span><span class="va">refit_fidelity</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             mcp_01 mcp_02 mcp_03</span></span>
-<span><span class="co">#&gt; CD8+ IELs    0.947  0.463  0.775</span></span>
-<span><span class="co">#&gt; CD8+ LP      0.943  0.787  0.734</span></span>
-<span><span class="co">#&gt; Macrophages  0.985  0.884  0.898</span></span>
-<span><span class="co">#&gt; TA2          0.938  0.827  0.877</span></span></code></pre></div>
+<span><span class="co">#&gt; CD8+ IELs    0.944  0.547  0.796</span></span>
+<span><span class="co">#&gt; CD8+ LP      0.949  0.703  0.758</span></span>
+<span><span class="co">#&gt; Macrophages  0.985  0.876  0.877</span></span>
+<span><span class="co">#&gt; TA2          0.938  1.000  0.875</span></span></code></pre></div>
 </div>
 <p>The signatures come in two flavours. <code>permissive</code> and <code>strict</code> are nested by evidence rather than by threshold, and <code>strict</code> is the one to quote.</p>
 <div class="cell">
@@ -347,18 +347,17 @@
 <span><span class="co">#&gt; Key: &lt;cell_type, programme&gt;</span></span>
 <span><span class="co">#&gt;       cell_type programme  down    up</span></span>
 <span><span class="co">#&gt;          &lt;char&gt;     &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1:   CD8+ IELs         1    76    25</span></span>
-<span><span class="co">#&gt;  2:   CD8+ IELs         2    NA     3</span></span>
-<span><span class="co">#&gt;  3:   CD8+ IELs         3     3     7</span></span>
-<span><span class="co">#&gt;  4:     CD8+ LP         1    69    58</span></span>
-<span><span class="co">#&gt;  5:     CD8+ LP         2    10     4</span></span>
-<span><span class="co">#&gt;  6:     CD8+ LP         3    12    21</span></span>
-<span><span class="co">#&gt;  7: Macrophages         1   187   156</span></span>
-<span><span class="co">#&gt;  8: Macrophages         2    NA    15</span></span>
-<span><span class="co">#&gt;  9: Macrophages         3    10    48</span></span>
-<span><span class="co">#&gt; 10:         TA2         1    36    33</span></span>
-<span><span class="co">#&gt; 11:         TA2         2    NA    11</span></span>
-<span><span class="co">#&gt; 12:         TA2         3     4    11</span></span></code></pre></div>
+<span><span class="co">#&gt;  1:   CD8+ IELs         1    25    70</span></span>
+<span><span class="co">#&gt;  2:   CD8+ IELs         2     3    NA</span></span>
+<span><span class="co">#&gt;  3:   CD8+ IELs         3     6     1</span></span>
+<span><span class="co">#&gt;  4:     CD8+ LP         1    57    73</span></span>
+<span><span class="co">#&gt;  5:     CD8+ LP         2     5     6</span></span>
+<span><span class="co">#&gt;  6:     CD8+ LP         3     7     1</span></span>
+<span><span class="co">#&gt;  7: Macrophages         1   154   180</span></span>
+<span><span class="co">#&gt;  8: Macrophages         2    20     1</span></span>
+<span><span class="co">#&gt;  9: Macrophages         3    29     6</span></span>
+<span><span class="co">#&gt; 10:         TA2         1    33    36</span></span>
+<span><span class="co">#&gt; 11:         TA2         3     5     1</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="does-it-track-the-disease">Does it track the disease?<a class="anchor" aria-label="anchor" href="#does-it-track-the-disease"></a>
 </h2>
@@ -388,9 +387,9 @@
 <span><span class="co">#&gt;      cell_type        p</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;    &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:         TA2 0.000239</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP 0.000956</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs 0.000542</span></span>
-<span><span class="co">#&gt; 4: Macrophages 0.010100</span></span></code></pre></div>
+<span><span class="co">#&gt; 2:     CD8+ LP 0.000658</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs 0.000296</span></span>
+<span><span class="co">#&gt; 4: Macrophages 0.013200</span></span></code></pre></div>
 </div>
 <p><code>mcp_01</code> separates UC donors from healthy ones in all four cell types at once, which is the thing DIALOGUE exists to find. Plotted:</p>
 <div class="cell">
@@ -422,12 +421,12 @@
 <span>  <span class="fu">.</span><span class="op">(</span>rho <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">mcp_01</span>, <span class="va">lib_size</span>, method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  by <span class="op">=</span> <span class="va">cell_type</span></span>
 <span><span class="op">]</span></span>
-<span><span class="co">#&gt;      cell_type   rho</span></span>
-<span><span class="co">#&gt;         &lt;char&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         TA2 0.585</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP 0.556</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs 0.461</span></span>
-<span><span class="co">#&gt; 4: Macrophages 0.591</span></span></code></pre></div>
+<span><span class="co">#&gt;      cell_type    rho</span></span>
+<span><span class="co">#&gt;         &lt;char&gt;  &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:         TA2 -0.591</span></span>
+<span><span class="co">#&gt; 2:     CD8+ LP -0.555</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs -0.445</span></span>
+<span><span class="co">#&gt; 4: Macrophages -0.586</span></span></code></pre></div>
 </div>
 <p>That is not a small correlation. <code>mcp_01</code> is tracking library size at <code>rho ~ 0.5</code> in every cell type, and library size itself differs between the UC and healthy donors on this subset. So a good chunk of what we just called a disease programme is a depth axis wearing a lab coat.</p>
 <p>The fix is to condition on the right covariate. <code>cell_q</code> is the paper’s own quality score and it barely correlates with <code>mcp_01</code> here, so it was never going to absorb this. The library-size covariate will.</p>
@@ -456,12 +455,12 @@
 <span>  <span class="fu">.</span><span class="op">(</span>rho <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">mcp_01</span>, <span class="va">lib_size</span>, method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  by <span class="op">=</span> <span class="va">cell_type</span></span>
 <span><span class="op">]</span></span>
-<span><span class="co">#&gt;      cell_type   rho</span></span>
-<span><span class="co">#&gt;         &lt;char&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         TA2 0.181</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP 0.239</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs 0.068</span></span>
-<span><span class="co">#&gt; 4: Macrophages 0.276</span></span></code></pre></div>
+<span><span class="co">#&gt;      cell_type    rho</span></span>
+<span><span class="co">#&gt;         &lt;char&gt;  &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:         TA2 -0.185</span></span>
+<span><span class="co">#&gt; 2:     CD8+ LP -0.242</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs -0.056</span></span>
+<span><span class="co">#&gt; 4: Macrophages -0.274</span></span></code></pre></div>
 </div>
 <p>Much better. Two things to notice about what changed and what did not.</p>
 <p>The programme table and the p-values are <strong>identical</strong> to the first run. That is not a bug: the quality covariate only enters stage two, so stage one’s decomposition and its permutation null never saw it.</p>
@@ -473,7 +472,7 @@
 <span>  lib_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">dlg_lib</span><span class="op">$</span><span class="va">signatures</span><span class="op">[</span><span class="va">list</span> <span class="op">==</span> <span class="st">"strict"</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;   cell_q lib_size </span></span>
-<span><span class="co">#&gt;      799      342</span></span></code></pre></div>
+<span><span class="co">#&gt;      719      328</span></span></code></pre></div>
 </div>
 <p>And the disease association survives.</p>
 <div class="cell">
@@ -488,10 +487,10 @@
 <span><span class="op">]</span></span>
 <span><span class="co">#&gt;      cell_type        p</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         TA2 0.013200</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP 0.004990</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs 0.000239</span></span>
-<span><span class="co">#&gt; 4: Macrophages 0.007700</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:         TA2 1.01e-02</span></span>
+<span><span class="co">#&gt; 2:     CD8+ LP 4.29e-03</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs 5.99e-05</span></span>
+<span><span class="co">#&gt; 4: Macrophages 7.70e-03</span></span></code></pre></div>
 </div>
 <p>So there is a real coordinated programme here, it is just a good deal smaller than the first run advertised. That is the normal outcome of doing this check, and it is why you do it.</p>
 </section><section class="level2"><h2 id="caveats-and-what-is-next">Caveats and what is next<a class="anchor" aria-label="anchor" href="#caveats-and-what-is-next"></a>

@@ -24,5 +24,5 @@ sc_pipeline() %>>%
   step_pca_sc(no_pcs = 10L)
 #> <ScPipeline> 2 steps
 #>   1. hvg  hvg_no = 30L, hvg_params = <list>, streaming = NULL, .verbose = TRUE
-#>   2. pca  no_pcs = 10L, pca_params = <list>, sparse_svd = FALSE, hvg = NULL, seed = 42L, .verbose = TRUE
+#>   2. pca  no_pcs = 10L, pca_params = <list>, sparse_svd = NULL, hvg = NULL, seed = 42L, .verbose = TRUE
 ```

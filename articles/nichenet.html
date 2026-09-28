@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>NicheNet ligand-receptor analysis with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-27</p>
+      <p class="date">2026-09-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -215,13 +215,15 @@
 <span><span class="va">celltype_counts</span></span>
 <span><span class="co">#&gt;     celltype     N</span></span>
 <span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1: cluster_0  1207</span></span>
-<span><span class="co">#&gt; 2: cluster_1   491</span></span>
-<span><span class="co">#&gt; 3: cluster_2   444</span></span>
-<span><span class="co">#&gt; 4: cluster_3   348</span></span>
-<span><span class="co">#&gt; 5: cluster_4   161</span></span>
-<span><span class="co">#&gt; 6: cluster_5    32</span></span>
-<span><span class="co">#&gt; 7: cluster_6    15</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: cluster_0  1198</span></span>
+<span><span class="co">#&gt; 2: cluster_1   486</span></span>
+<span><span class="co">#&gt; 3: cluster_2   346</span></span>
+<span><span class="co">#&gt; 4: cluster_3   286</span></span>
+<span><span class="co">#&gt; 5: cluster_4   166</span></span>
+<span><span class="co">#&gt; 6: cluster_5   165</span></span>
+<span><span class="co">#&gt; 7: cluster_6    33</span></span>
+<span><span class="co">#&gt; 8: cluster_7    14</span></span>
+<span><span class="co">#&gt; 9: cluster_8     4</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="building-the-nichenet-networks">Building the NicheNet networks<a class="anchor" aria-label="anchor" href="#building-the-nichenet-networks"></a>
 </h2>
@@ -452,7 +454,7 @@
 <span><span class="co"># upregulated genes with FDR &lt;= 0.05 form the gene set</span></span>
 <span><span class="va">geneset_oi</span> <span class="op">&lt;-</span> <span class="va">receiver_de</span><span class="op">[</span><span class="va">lfc</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">&amp;</span> <span class="va">fdr</span> <span class="op">&lt;=</span> <span class="fl">0.05</span>, <span class="va">gene_id</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">geneset_oi</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 877</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 880</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="ligand-activity-scoring">Ligand activity scoring<a class="anchor" aria-label="anchor" href="#ligand-activity-scoring"></a>
 </h2>
@@ -561,11 +563,11 @@
 <span><span class="co">#&gt;       sender  receiver ligand_symbol receptor_symbol prioritisation_score</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;    &lt;char&gt;        &lt;char&gt;          &lt;char&gt;                &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: cluster_4 cluster_0         TGFB1          TGFBR2            0.8333333</span></span>
-<span><span class="co">#&gt; 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7793662</span></span>
-<span><span class="co">#&gt; 3: cluster_2 cluster_0         TGFB1          TGFBR2            0.6914723</span></span>
-<span><span class="co">#&gt; 4: cluster_4 cluster_0          IL15           IL2RG            0.5663366</span></span>
-<span><span class="co">#&gt; 5: cluster_1 cluster_0          IL15           IL2RG            0.5637502</span></span>
-<span><span class="co">#&gt; 6: cluster_3 cluster_0         TGFB1          TGFBR2            0.5500000</span></span>
+<span><span class="co">#&gt; 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7864823</span></span>
+<span><span class="co">#&gt; 3: cluster_3 cluster_0         TGFB1          TGFBR2            0.6756293</span></span>
+<span><span class="co">#&gt; 4: cluster_1 cluster_0          IL15           IL2RG            0.5830033</span></span>
+<span><span class="co">#&gt; 5: cluster_2 cluster_0         TGFB1          TGFBR2            0.5500000</span></span>
+<span><span class="co">#&gt; 6: cluster_4 cluster_0          IL15           IL2RG            0.5434125</span></span>
 <span><span class="co">#&gt;    prioritisation_rank</span></span>
 <span><span class="co">#&gt;                  &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:                   1</span></span>

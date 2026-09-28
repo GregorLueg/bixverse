@@ -1,8 +1,10 @@
 # Run PCA for single cell
 
-This function will run PCA on the detected highly variable genes. You
-can use randomised SVD for speed and there is an option for sparse SVD
-for very large data sets to avoid memory pressure.
+This function will run PCA on the detected highly variable genes. The
+solver is set via `svd_solver` in
+[`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md);
+the default builds the gene x gene cross-product from the sparse data,
+which is exact and the fastest option for a few thousand HVGs.
 
 ## Usage
 
@@ -11,7 +13,7 @@ calculate_pca_sc(
   object,
   no_pcs,
   pca_params = params_sc_pca(),
-  sparse_svd = FALSE,
+  sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
   residuals = FALSE,
@@ -37,12 +39,11 @@ calculate_pca_sc(
 
 - sparse_svd:
 
-  Boolean. Shall sparse solvers be used that do not do scaling. If set
-  to yes, in the case of `random_svd = FALSE`, Lanczos iterations are
-  used to solve the sparse SVD. With `random_svd = TRUE`, the sparse
-  initial matrix is multiplied with the random matrix, yielding a much
-  smaller dense matrix that does not increase the memory pressure
-  massively. Not used for `MetaCells`.
+  Optional boolean. Solve on the sparse data with implicit centring and
+  scaling instead of materialising the dense scaled matrix. `NULL` picks
+  the sparse path, which is faster and lighter on memory for every
+  solver, or the dense one for `residuals = TRUE`. `FALSE` uses the
+  dense path, but only below 500,000 cells. Not used for `MetaCells`.
 
 - hvg:
 
@@ -54,8 +55,8 @@ calculate_pca_sc(
 
 - seed:
 
-  Integer. Controls reproducibility. Only relevant if
-  `randomised_svd = TRUE`.
+  Integer. Controls reproducibility. Only relevant for
+  `svd_solver = "randomised"` and the Lanczos start vector.
 
 - residuals:
 
@@ -65,7 +66,11 @@ calculate_pca_sc(
   `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since the
   residuals already carry the signal as variance, and does not support
   `sparse_svd`: a residual column is dense even where the counts are
-  not. Not supported for `MetaCells`.
+  not. On this dense path the default `svd_solver = "covariance"` pays
+  for a full gene x gene cross-product and is slower than
+  `svd_solver = "randomised"`, so pick the latter in
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  when speed matters. Not supported for `MetaCells`.
 
 - .verbose:
 
