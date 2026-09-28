@@ -721,6 +721,10 @@ reference:
       - get_inflection_point
       - ot_harmonic_score
       - robust_scale
+      - run_ppca
+      - run_bpca
+      - params_ppca
+      - params_bpca
   # Plotting helpers
   - title: Plotting helpers
     desc: 
@@ -800,6 +804,7 @@ reference:
       - rs_batch_silhouette_width
       - rs_blitzgsea_calibrate
       - rs_blitzgsea_score
+      - rs_bpca
       - rs_calc_norm_factors
       - rs_cell_type_asw
       - rs_cistarget
@@ -873,6 +878,7 @@ reference:
       - rs_pcr
       - rs_phyper
       - rs_pointwise_mutual_info
+      - rs_ppca
       - rs_prcomp
       - rs_prepare_whitening
       - rs_random_svd

@@ -276,6 +276,24 @@ get_c_pca_loadings(obj)
 `alpha` is the knob: 0 is plain PCA on the target, large values maximally
 suppress whatever the background shares. Look at the sweep before committing.
 
+## PCA with missing values
+
+Probabilistic and Bayesian PCA, ported from pcaMethods. Plain numeric matrix
+in, samples as rows, `NA` for the missing entries.
+
+```r
+res <- run_ppca(x, ppca_params = params_ppca(n_pcs = 3L))
+res <- run_bpca(x, bpca_params = params_bpca(n_pcs = 3L))
+
+res$scores      # samples x PCs
+res$loadings    # features x PCs
+res$completed   # x with the NAs imputed, observed entries untouched
+res$converged
+```
+
+A row or column with no observed value errors. PPCA starts from a random draw
+(`seed` in its params), BPCA is deterministic.
+
 ## Synthetic data for testing
 
 `params_synthetic_bulk_rnaseq()` plus the generators in

@@ -550,6 +550,10 @@ Any types of functions that help with statistics
 - `get_inflection_point`: Identify the inflection point for elbow-like data
 - `ot_harmonic_score`: Calculates a harmonic sum normalised between 0 to 1.
 - `robust_scale`: Robust scaler.
+- `run_ppca`: Probabilistic PCA on a matrix with missing values
+- `run_bpca`: Bayesian PCA on a matrix with missing values
+- `params_ppca`: Wrapper function for probabilistic PCA parameters
+- `params_bpca`: Wrapper function for Bayesian PCA parameters
 
 ## Plotting helpers
 
@@ -622,7 +626,7 @@ All types of other random helpers without a clear pattern
 
 Everything Rusty - only use this if you know what you are doing... Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood...
 
-110 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
+112 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
 
 ## Not on the package website
 
