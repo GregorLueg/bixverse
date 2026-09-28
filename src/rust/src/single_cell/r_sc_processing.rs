@@ -1203,7 +1203,7 @@ fn rs_sc_knn_w_dist(
 /// @param limited_graph Boolean. Shall the sNNs only be calculated between
 /// direct neighbours in the graph, or between all possible combinations.
 /// @param pruning Float. Below which similarity value to prune the weight
-/// to 0.
+/// to 0. A cell that loses every edge keeps its strongest kNN edge.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///

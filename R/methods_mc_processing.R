@@ -589,7 +589,7 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
   object,
   no_pcs,
   pca_params = params_sc_pca(),
-  sparse_svd = FALSE,
+  sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
   residuals = FALSE,
@@ -598,7 +598,7 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(no_pcs, "I1")
   assertScPcaParams(pca_params)
-  checkmate::qassert(sparse_svd, "B1")
+  checkmate::qassert(sparse_svd, c("B1", "0"))
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(residuals, "B1")

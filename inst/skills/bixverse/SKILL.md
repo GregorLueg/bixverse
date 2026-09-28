@@ -49,7 +49,7 @@ than guessing, and much cheaper than recomputing a PCA you didn't need to.
 | Single cell: Pearson residuals / scTransform, ambient RNA removal (CellSweep) | `references/single-cell.md` |
 | Single cell downstream: gene set scoring, SCENIC, topic models, differential expression, Hotspot, trajectory, miloR, metacells, CITE-seq, reference mapping | `references/single-cell-analysis.md` |
 | Hypergeometric tests, GO elimination, GSEA, GSVA, ssGSEA, singscore | `references/enrichment.md` |
-| Bulk RNAseq: limma-voom and edgeR QL (no limma/edgeR install needed), effect sizes, co-expression modules, ICA, NMF, contrastive PCA | `references/bulk.md` |
+| Bulk RNAseq: limma-voom and edgeR QL (no limma/edgeR install needed), effect sizes, co-expression modules, ICA, NMF, contrastive PCA, PCA with missing values | `references/bulk.md` |
 | Network diffusion, RBH graphs, similarity network fusion, ontology semantic similarity | `references/graphs-ontology.md` |
 | Does function X exist? What's it called? | `references/api-index.md` |
 

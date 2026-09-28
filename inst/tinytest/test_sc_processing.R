@@ -736,7 +736,7 @@ sc_object <- calculate_pca_sc(
     mean_center = TRUE,
     normalise_variance = TRUE,
     clr = FALSE,
-    randomised = FALSE
+    svd_solver = "exact"
   ),
   .verbose = FALSE
 )
@@ -757,7 +757,7 @@ sc_object <- calculate_pca_sc(
     mean_center = TRUE,
     normalise_variance = TRUE,
     clr = FALSE,
-    randomised = TRUE
+    svd_solver = "randomised"
   ),
   .verbose = FALSE
 )
@@ -784,7 +784,7 @@ zeallot::`%<-%`(
       mean_center = TRUE,
       normalise_variance = TRUE,
       clr = FALSE,
-      randomised = FALSE
+      svd_solver = "exact"
     ),
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
@@ -837,7 +837,7 @@ sc_object <- calculate_pca_sc(
     mean_center = FALSE,
     normalise_variance = FALSE,
     clr = TRUE,
-    randomised = FALSE,
+    svd_solver = "exact",
     size_factor = 1e3
   ),
   .verbose = FALSE
@@ -862,7 +862,7 @@ sc_object <- calculate_pca_sc(
     mean_center = TRUE,
     normalise_variance = TRUE,
     clr = TRUE,
-    randomised = FALSE,
+    svd_solver = "exact",
     size_factor = 1e3
   ),
   .verbose = FALSE
@@ -893,7 +893,7 @@ zeallot::`%<-%`(
       mean_center = FALSE,
       normalise_variance = FALSE,
       clr = TRUE,
-      randomised = FALSE,
+      svd_solver = "exact",
       size_factor = 1e3
     ),
     cell_indices = get_cells_to_keep(sc_object),
@@ -1308,7 +1308,7 @@ zeallot::`%<-%`(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
     f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
     no_pcs = no_pcs,
-    pca_params = params_sc_pca(randomised = FALSE),
+    pca_params = params_sc_pca(svd_solver = "exact"),
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
     seed = 42L,
@@ -1322,7 +1322,7 @@ zeallot::`%<-%`(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
     f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
     no_pcs = no_pcs,
-    pca_params = params_sc_pca(randomised = FALSE),
+    pca_params = params_sc_pca(svd_solver = "exact"),
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
     seed = 42L,
@@ -1350,7 +1350,7 @@ expect_equal(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  pca_params = params_sc_pca(randomised = FALSE),
+  pca_params = params_sc_pca(svd_solver = "exact"),
   sparse_svd = TRUE,
   .verbose = FALSE
 )

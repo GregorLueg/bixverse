@@ -229,6 +229,62 @@ params_boost <- function(
   )
 }
 
+#' Wrapper function for Bayesian PCA parameters
+#'
+#' @description Parameters for PCA with missing values via Bayesian PCA, see
+#' [bixverse::run_bpca()]. Defaults follow pcaMethods.
+#'
+#' @param n_pcs Integer. Number of principal components. Defaults to `2L`.
+#' @param max_iter Integer. Maximum number of variational steps. Defaults to
+#' `100L`.
+#' @param tol Numeric. Change in `log10(tau)` over ten steps below which the fit
+#' stops. Defaults to `1e-04`.
+#' @param centre Boolean. Shall the observed column means be subtracted first.
+#' Defaults to `TRUE`.
+#' @param scale Boolean. Shall the columns be divided by their observed standard
+#' deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_pcs - Integer. Number of principal components. Defaults to `2L`.
+#'  \item max_iter - Integer. Maximum number of variational steps. Defaults to
+#'  `100L`.
+#'  \item tol - Numeric. Change in `log10(tau)` over ten steps below which the
+#'  fit stops. Defaults to `1e-04`.
+#'  \item centre - Boolean. Shall the observed column means be subtracted first.
+#'  Defaults to `TRUE`.
+#'  \item scale - Boolean. Shall the columns be divided by their observed
+#'  standard deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#' }
+#'
+#' @references Oba, et al., Bioinformatics, 2003; Stacklies, et al.,
+#' Bioinformatics, 2007
+#'
+#' @export
+params_bpca <- function(
+  n_pcs = 2L,
+  max_iter = 100L,
+  tol = 1e-04,
+  centre = TRUE,
+  scale = FALSE
+) {
+  # Checks
+  checkmate::qassert(n_pcs, "I1[1,)")
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(centre, "B1")
+  checkmate::qassert(scale, "B1")
+
+  # Return
+  list(
+    n_pcs = n_pcs,
+    max_iter = max_iter,
+    tol = tol,
+    centre = centre,
+    scale = scale
+  )
+}
+
 #' Wrapper function to generate bulk sparsification parameters
 #'
 #' @description Parameters for [bixverse::simulate_dropouts()]. Dropout falls
@@ -2247,6 +2303,68 @@ params_pca_defaults <- function() {
   )
 }
 
+#' Wrapper function for probabilistic PCA parameters
+#'
+#' @description Parameters for PCA with missing values via probabilistic PCA,
+#' see [bixverse::run_ppca()]. Defaults follow pcaMethods.
+#'
+#' @param n_pcs Integer. Number of principal components. Defaults to `2L`.
+#' @param max_iter Integer. Maximum number of EM iterations. Defaults to
+#' `1000L`.
+#' @param tol Numeric. Relative change in the objective below which EM stops.
+#' Defaults to `1e-05`.
+#' @param seed Integer. Seed for the random initial loadings. Defaults to `42L`.
+#' @param centre Boolean. Shall the observed column means be subtracted first.
+#' Defaults to `TRUE`.
+#' @param scale Boolean. Shall the columns be divided by their observed standard
+#' deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_pcs - Integer. Number of principal components. Defaults to `2L`.
+#'  \item max_iter - Integer. Maximum number of EM iterations. Defaults to
+#'  `1000L`.
+#'  \item tol - Numeric. Relative change in the objective below which EM stops.
+#'  Defaults to `1e-05`.
+#'  \item seed - Integer. Seed for the random initial loadings. Defaults to
+#'  `42L`.
+#'  \item centre - Boolean. Shall the observed column means be subtracted first.
+#'  Defaults to `TRUE`.
+#'  \item scale - Boolean. Shall the columns be divided by their observed
+#'  standard deviation first (pcaMethods' `"uv"`). Defaults to `FALSE`.
+#' }
+#'
+#' @references Tipping and Bishop, J R Stat Soc B, 1999; Stacklies, et al.,
+#' Bioinformatics, 2007
+#'
+#' @export
+params_ppca <- function(
+  n_pcs = 2L,
+  max_iter = 1000L,
+  tol = 1e-05,
+  seed = 42L,
+  centre = TRUE,
+  scale = FALSE
+) {
+  # Checks
+  checkmate::qassert(n_pcs, "I1[1,)")
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(seed, "I1[0,)")
+  checkmate::qassert(centre, "B1")
+  checkmate::qassert(scale, "B1")
+
+  # Return
+  list(
+    n_pcs = n_pcs,
+    max_iter = max_iter,
+    tol = tol,
+    seed = seed,
+    centre = centre,
+    scale = scale
+  )
+}
+
 #' Wrapper function for analytic Pearson residual parameters
 #'
 #' @description The closed-form alternative to scTransform: one shared
@@ -2927,8 +3045,9 @@ params_sc_empty_droplets <- function(
 #' generated that generates edges between all cells instead of between only
 #' neighbours. Defaults to `FALSE`.
 #' @param pruning Numeric or `NULL`. Weights below this threshold will be set to
-#' 0 in the generation of the sNN graph. If not provided, defaults to `1 /
-#' ceil(k * 0.8)`. Defaults to `NULL`.
+#' 0 in the generation of the sNN graph. A node that loses every edge keeps its
+#' strongest kNN edge. If not provided, defaults to `1 / ceil(k * 0.8)`.
+#' Defaults to `NULL`.
 #' @param snn_similarity String. The Jaccard similarity calculates the Jaccard
 #' between the neighbours, whereas the rank method calculates edge weights based
 #' on the ranking of shared neighbours. For the rank method, the weight is
@@ -2963,8 +3082,9 @@ params_sc_empty_droplets <- function(
 #'  generated that generates edges between all cells instead of between only
 #'  neighbours. Defaults to `FALSE`.
 #'  \item pruning - Numeric or `NULL`. Weights below this threshold will be set
-#'  to 0 in the generation of the sNN graph. If not provided, defaults to `1 /
-#'  ceil(k * 0.8)`. Defaults to `NULL`.
+#'  to 0 in the generation of the sNN graph. A node that loses every edge keeps
+#'  its strongest kNN edge. If not provided, defaults to `1 / ceil(k * 0.8)`.
+#'  Defaults to `NULL`.
 #'  \item snn_similarity - String. The Jaccard similarity calculates the Jaccard
 #'  between the neighbours, whereas the rank method calculates edge weights
 #'  based on the ranking of shared neighbours. For the rank method, the weight
@@ -3873,10 +3993,10 @@ params_sc_mtx_io <- function(
 #' generation of the sNN graph. Seurat uses for example `1/15` with `k = 20`. As
 #' the default k is set to 15, we set it to `1/12`. Track this against `k`
 #' rather than leaving it: the threshold is a share of the neighbourhood, so the
-#' same value prunes far harder at a larger `k`. Over-pruning fails quietly, in
-#' that you still get a clustering, but cells left with too few shared
-#' neighbours drop out as singleton communities, which then show up downstream
-#' as one-cell clusters with inflated [bixverse::run_paga_sc()] connectivities.
+#' same value prunes far harder at a larger `k`. A cell that loses every edge to
+#' pruning keeps its strongest kNN edge, so it does not drop out as a one-cell
+#' cluster. Over-pruning still fails quietly otherwise: small groups of cells
+#' that only share neighbours with each other split off as tiny communities.
 #' Defaults to `0.08333333333333333`.
 #' @param snn_similarity String. The Jaccard similarity calculates the Jaccard
 #' between the neighbours, whereas the rank method calculates edge weights based
@@ -3901,11 +4021,11 @@ params_sc_mtx_io <- function(
 #'  the generation of the sNN graph. Seurat uses for example `1/15` with `k =
 #'  20`. As the default k is set to 15, we set it to `1/12`. Track this against
 #'  `k` rather than leaving it: the threshold is a share of the neighbourhood,
-#'  so the same value prunes far harder at a larger `k`. Over-pruning fails
-#'  quietly, in that you still get a clustering, but cells left with too few
-#'  shared neighbours drop out as singleton communities, which then show up
-#'  downstream as one-cell clusters with inflated [bixverse::run_paga_sc()]
-#'  connectivities. Defaults to `0.08333333333333333`.
+#'  so the same value prunes far harder at a larger `k`. A cell that loses every
+#'  edge to pruning keeps its strongest kNN edge, so it does not drop out as a
+#'  one-cell cluster. Over-pruning still fails quietly otherwise: small groups
+#'  of cells that only share neighbours with each other split off as tiny
+#'  communities. Defaults to `0.08333333333333333`.
 #'  \item snn_similarity - String. The Jaccard similarity calculates the Jaccard
 #'  between the neighbours, whereas the rank method calculates edge weights
 #'  based on the ranking of shared neighbours. For the rank method, the weight
@@ -4083,13 +4203,20 @@ params_sc_palantir <- function(
 #' `TRUE`.
 #' @param normalise_variance Boolean. Shall the data have normalised variance
 #' Defaults to `TRUE`.
-#' @param randomised Boolean. Shall fast, approximate randomised SVD be used.
-#' Defaults to `TRUE`.
+#' @param randomised Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE`
+#' maps to `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 #' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
 #' et al. Defaults to `FALSE`.
 #' @param size_factor Numeric. The used size factor during I/O. It needs to be
 #' the same as during I/O to have correct results when using the `PFlogPF`
 #' transformation. Defaults to `10000.0`.
+#' @param svd_solver String. Which solver to use. `"covariance"` builds the gene
+#' x gene cross-product and eigendecomposes it: exact, and the fastest option
+#' for a few thousand HVGs, but its cost grows with the square of the gene
+#' number in memory and the cube in time. `"randomised"` is a randomised SVD,
+#' approximate in the trailing components. `"exact"` is a full SVD on the dense
+#' path and Lanczos on the sparse one. One of `c("covariance", "randomised",
+#' "exact")`. Defaults to `"covariance"`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -4097,29 +4224,52 @@ params_sc_palantir <- function(
 #'  `TRUE`.
 #'  \item normalise_variance - Boolean. Shall the data have normalised variance
 #'  Defaults to `TRUE`.
-#'  \item randomised - Boolean. Shall fast, approximate randomised SVD be used.
-#'  Defaults to `TRUE`.
+#'  \item randomised - Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE`
+#'  maps to `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 #'  \item clr - Boolean. Shall the CLR-type `PFlogPF` be applied, see
 #'  Booeshaghi, et al. Defaults to `FALSE`.
 #'  \item size_factor - Numeric. The used size factor during I/O. It needs to be
 #'  the same as during I/O to have correct results when using the `PFlogPF`
 #'  transformation. Defaults to `10000.0`.
+#'  \item svd_solver - String. Which solver to use. `"covariance"` builds the
+#'  gene x gene cross-product and eigendecomposes it: exact, and the fastest
+#'  option for a few thousand HVGs, but its cost grows with the square of the
+#'  gene number in memory and the cube in time. `"randomised"` is a randomised
+#'  SVD, approximate in the trailing components. `"exact"` is a full SVD on the
+#'  dense path and Lanczos on the sparse one. One of `c("covariance",
+#'  "randomised", "exact")`. Defaults to `"covariance"`.
 #' }
 #'
 #' @export
 params_sc_pca <- function(
   mean_center = TRUE,
   normalise_variance = TRUE,
-  randomised = TRUE,
+  randomised = NULL,
   clr = FALSE,
-  size_factor = 10000.0
+  size_factor = 10000.0,
+  svd_solver = c("covariance", "randomised", "exact")
 ) {
+  svd_solver <- match.arg(svd_solver)
+
   # Checks
   checkmate::qassert(mean_center, "B1")
   checkmate::qassert(normalise_variance, "B1")
-  checkmate::qassert(randomised, "B1")
+  checkmate::qassert(randomised, c("B1", "0"))
   checkmate::qassert(clr, "B1")
   checkmate::qassert(size_factor, "N1")
+  checkmate::assertChoice(svd_solver, c("covariance", "randomised", "exact"))
+
+  if (!is.null(randomised)) {
+    svd_solver <- c("exact", "randomised")[randomised + 1L]
+    warning(sprintf(
+      paste(
+        "`randomised` is deprecated, use `svd_solver` instead.",
+        "Mapping randomised = %s to svd_solver = \"%s\"."
+      ),
+      randomised,
+      svd_solver
+    ))
+  }
 
   # Return
   list(
@@ -4127,7 +4277,8 @@ params_sc_pca <- function(
     normalise_variance = normalise_variance,
     randomised = randomised,
     clr = clr,
-    size_factor = size_factor
+    size_factor = size_factor,
+    svd_solver = svd_solver
   )
 }
 

@@ -7,9 +7,10 @@
 params_sc_pca(
   mean_center = TRUE,
   normalise_variance = TRUE,
-  randomised = TRUE,
+  randomised = NULL,
   clr = FALSE,
-  size_factor = 10000
+  size_factor = 10000,
+  svd_solver = c("covariance", "randomised", "exact")
 )
 }
 \arguments{
@@ -19,8 +20,8 @@ params_sc_pca(
 \item{normalise_variance}{Boolean. Shall the data have normalised variance
 Defaults to \code{TRUE}.}
 
-\item{randomised}{Boolean. Shall fast, approximate randomised SVD be used.
-Defaults to \code{TRUE}.}
+\item{randomised}{Boolean or \code{NULL}. Deprecated, use \code{svd_solver}. \code{TRUE}
+maps to \code{"randomised"}, \code{FALSE} to \code{"exact"}. Defaults to \code{NULL}.}
 
 \item{clr}{Boolean. Shall the CLR-type \code{PFlogPF} be applied, see Booeshaghi,
 et al. Defaults to \code{FALSE}.}
@@ -28,6 +29,13 @@ et al. Defaults to \code{FALSE}.}
 \item{size_factor}{Numeric. The used size factor during I/O. It needs to be
 the same as during I/O to have correct results when using the \code{PFlogPF}
 transformation. Defaults to \code{10000.0}.}
+
+\item{svd_solver}{String. Which solver to use. \code{"covariance"} builds the gene
+x gene cross-product and eigendecomposes it: exact, and the fastest option
+for a few thousand HVGs, but its cost grows with the square of the gene
+number in memory and the cube in time. \code{"randomised"} is a randomised SVD,
+approximate in the trailing components. \code{"exact"} is a full SVD on the dense
+path and Lanczos on the sparse one. One of \code{c("covariance", "randomised", "exact")}. Defaults to \code{"covariance"}.}
 }
 \value{
 A named list with the following elements:
@@ -36,13 +44,19 @@ A named list with the following elements:
 \code{TRUE}.
 \item normalise_variance - Boolean. Shall the data have normalised variance
 Defaults to \code{TRUE}.
-\item randomised - Boolean. Shall fast, approximate randomised SVD be used.
-Defaults to \code{TRUE}.
+\item randomised - Boolean or \code{NULL}. Deprecated, use \code{svd_solver}. \code{TRUE}
+maps to \code{"randomised"}, \code{FALSE} to \code{"exact"}. Defaults to \code{NULL}.
 \item clr - Boolean. Shall the CLR-type \code{PFlogPF} be applied, see
 Booeshaghi, et al. Defaults to \code{FALSE}.
 \item size_factor - Numeric. The used size factor during I/O. It needs to be
 the same as during I/O to have correct results when using the \code{PFlogPF}
 transformation. Defaults to \code{10000.0}.
+\item svd_solver - String. Which solver to use. \code{"covariance"} builds the
+gene x gene cross-product and eigendecomposes it: exact, and the fastest
+option for a few thousand HVGs, but its cost grows with the square of the
+gene number in memory and the cube in time. \code{"randomised"} is a randomised
+SVD, approximate in the trailing components. \code{"exact"} is a full SVD on the
+dense path and Lanczos on the sparse one. One of \code{c("covariance", "randomised", "exact")}. Defaults to \code{"covariance"}.
 }
 }
 \description{

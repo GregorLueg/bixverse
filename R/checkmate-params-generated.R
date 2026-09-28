@@ -226,6 +226,57 @@ checkScBoostParams <- function(x) {
 #' @keywords internal
 assertScBoostParams <- checkmate::makeAssertionFunction(checkScBoostParams)
 
+#' Check BPCA params
+#'
+#' @description Checkmate extension for the output of [params_bpca()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkBpcaParams <- function(x) {
+  res <- check_list_shape(x, c("n_pcs", "max_iter", "tol", "centre", "scale"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_pcs = "I1[1,)",
+      max_iter = "I1[1,)",
+      tol = "N1(0,)",
+      centre = "B1",
+      scale = "B1"
+    ),
+    label = "BPCA params",
+    hint = paste(
+      "n_pcs and max_iter must be positive integers; tol must be a",
+      "positive numeric; centre and scale must be booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert BPCA params
+#'
+#' @inheritParams checkBpcaParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertBpcaParams <- checkmate::makeAssertionFunction(checkBpcaParams)
+
 #' Check bulk sparsity params
 #'
 #' @description Checkmate extension for the output of [params_bulk_sparsity()].
@@ -2243,6 +2294,62 @@ checkNmfHalsParams <- function(x) {
 #' @keywords internal
 assertNmfHalsParams <- checkmate::makeAssertionFunction(checkNmfHalsParams)
 
+#' Check PPCA params
+#'
+#' @description Checkmate extension for the output of [params_ppca()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkPpcaParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("n_pcs", "max_iter", "tol", "seed", "centre", "scale")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_pcs = "I1[1,)",
+      max_iter = "I1[1,)",
+      tol = "N1(0,)",
+      seed = "I1[0,)",
+      centre = "B1",
+      scale = "B1"
+    ),
+    label = "PPCA params",
+    hint = paste(
+      "n_pcs and max_iter must be positive integers; tol must be a",
+      "positive numeric; seed must be a non-negative integer; centre",
+      "and scale must be booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert PPCA params
+#'
+#' @inheritParams checkPpcaParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertPpcaParams <- checkmate::makeAssertionFunction(checkPpcaParams)
+
 #' Check analytic Pearson params
 #'
 #' @description Checkmate extension for the output of [params_sc_apr()].
@@ -3026,7 +3133,8 @@ checkScFastmnnParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -3054,7 +3162,7 @@ checkScFastmnnParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -3081,7 +3189,8 @@ checkScFastmnnParams <- function(x) {
         "ivf",
         "exhaustive"
       ),
-      ann_dist = c("euclidean", "cosine")
+      ann_dist = c("euclidean", "cosine"),
+      svd_solver = c("covariance", "randomised", "exact")
     ),
     label = "fastMNN params",
     hint = paste(
@@ -4102,7 +4211,8 @@ checkScPcaParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -4114,14 +4224,31 @@ checkScPcaParams <- function(x) {
     list(
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
     label = "single cell PCA params",
     hint = paste(
-      "mean_center, normalise_variance, randomised and clr must be",
-      "single booleans; size_factor must be a single numeric."
+      "mean_center, normalise_variance and clr must be single booleans;",
+      "svd_solver must be one of covariance, randomised or exact;",
+      "size_factor must be a single numeric."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      svd_solver = c("covariance", "randomised", "exact")
+    ),
+    label = "single cell PCA params",
+    hint = paste(
+      "mean_center, normalise_variance and clr must be single booleans;",
+      "svd_solver must be one of covariance, randomised or exact;",
+      "size_factor must be a single numeric."
     )
   )
   if (!isTRUE(res)) {
@@ -4388,7 +4515,8 @@ checkScSeuratCcaParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -4421,7 +4549,7 @@ checkScSeuratCcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -4442,7 +4570,8 @@ checkScSeuratCcaParams <- function(x) {
         "ivf",
         "exhaustive"
       ),
-      ann_dist = c("euclidean", "cosine")
+      ann_dist = c("euclidean", "cosine"),
+      svd_solver = c("covariance", "randomised", "exact")
     ),
     label = "Seurat CCA params"
   )
@@ -4506,7 +4635,8 @@ checkScSeuratRpcaParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -4536,7 +4666,7 @@ checkScSeuratRpcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -4557,7 +4687,8 @@ checkScSeuratRpcaParams <- function(x) {
         "ivf",
         "exhaustive"
       ),
-      ann_dist = c("euclidean", "cosine")
+      ann_dist = c("euclidean", "cosine"),
+      svd_solver = c("covariance", "randomised", "exact")
     ),
     label = "Seurat rPCA params"
   )

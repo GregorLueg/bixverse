@@ -35,7 +35,9 @@ generated that generates edges between all cells instead of between only
 neighbours. Defaults to \code{FALSE}.}
 
 \item{pruning}{Numeric or \code{NULL}. Weights below this threshold will be set to
-0 in the generation of the sNN graph. If not provided, defaults to \code{1 / ceil(k * 0.8)}. Defaults to \code{NULL}.}
+0 in the generation of the sNN graph. A node that loses every edge keeps its
+strongest kNN edge. If not provided, defaults to \code{1 / ceil(k * 0.8)}.
+Defaults to \code{NULL}.}
 
 \item{snn_similarity}{String. The Jaccard similarity calculates the Jaccard
 between the neighbours, whereas the rank method calculates edge weights based
@@ -72,7 +74,9 @@ Defaults to \code{10L}.
 generated that generates edges between all cells instead of between only
 neighbours. Defaults to \code{FALSE}.
 \item pruning - Numeric or \code{NULL}. Weights below this threshold will be set
-to 0 in the generation of the sNN graph. If not provided, defaults to \code{1 / ceil(k * 0.8)}. Defaults to \code{NULL}.
+to 0 in the generation of the sNN graph. A node that loses every edge keeps
+its strongest kNN edge. If not provided, defaults to \code{1 / ceil(k * 0.8)}.
+Defaults to \code{NULL}.
 \item snn_similarity - String. The Jaccard similarity calculates the Jaccard
 between the neighbours, whereas the rank method calculates edge weights
 based on the ranking of shared neighbours. For the rank method, the weight

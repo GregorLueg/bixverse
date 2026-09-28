@@ -97,7 +97,7 @@ ref_v1 <- build_symphony_ref(
   batch_column = "batch_index",
   hvg = ref_hvg,
   harmony_params = params_sc_harmony(k = harmony_k),
-  pca_params = params_sc_pca(randomised = FALSE),
+  pca_params = params_sc_pca(svd_solver = "exact"),
   no_pcs = no_pcs,
   label_columns = "cell_grp",
   seed = 42L,
@@ -187,7 +187,7 @@ ref_v2 <- build_symphony_ref(
   batch_column = "batch_index",
   hvg = ref_hvg,
   harmony_params = params_sc_harmony_v2(k = harmony_k),
-  pca_params = params_sc_pca(randomised = FALSE),
+  pca_params = params_sc_pca(svd_solver = "exact"),
   no_pcs = no_pcs,
   seed = 42L,
   .verbose = FALSE
@@ -212,7 +212,7 @@ ref_slim <- build_symphony_ref(
   batch_column = "batch_index",
   hvg = ref_hvg,
   harmony_params = params_sc_harmony(k = harmony_k),
-  pca_params = params_sc_pca(randomised = FALSE),
+  pca_params = params_sc_pca(svd_solver = "exact"),
   no_pcs = no_pcs,
   slim = TRUE,
   seed = 42L,
@@ -252,7 +252,7 @@ expect_error(
     batch_column = "batch_index",
     hvg = ref_hvg,
     harmony_params = list(k = 10), # plain list, no class tag
-    pca_params = params_sc_pca(randomised = FALSE),
+    pca_params = params_sc_pca(svd_solver = "exact"),
     no_pcs = no_pcs,
     seed = 42L,
     .verbose = FALSE

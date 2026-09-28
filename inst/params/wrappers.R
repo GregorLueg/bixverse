@@ -606,6 +606,98 @@ spec_nmf_consensus <- param_spec(
   )
 )
 
+spec_ppca <- param_spec(
+  name = "ppca",
+  title = "Wrapper function for probabilistic PCA parameters",
+  description = paste(
+    "Parameters for PCA with missing values via probabilistic PCA, see",
+    "[bixverse::run_ppca()]. Defaults follow pcaMethods."
+  ),
+  references = paste(
+    "Tipping and Bishop, J R Stat Soc B, 1999; Stacklies, et al.,",
+    "Bioinformatics, 2007"
+  ),
+  checker = "Ppca",
+  label = "PPCA params",
+  hint = paste(
+    "n_pcs and max_iter must be positive integers; tol must be a",
+    "positive numeric; seed must be a non-negative integer; centre",
+    "and scale must be booleans."
+  ),
+  fields = list(
+    n_pcs = p_int(2L, range = "[1,)", doc = "Number of principal components."),
+    max_iter = p_int(
+      1000L,
+      range = "[1,)",
+      doc = "Maximum number of EM iterations."
+    ),
+    tol = p_dbl(
+      1e-05,
+      range = "(0,)",
+      doc = "Relative change in the objective below which EM stops."
+    ),
+    seed = p_int(
+      42L,
+      range = "[0,)",
+      doc = "Seed for the random initial loadings."
+    ),
+    centre = p_lgl(
+      TRUE,
+      doc = "Shall the observed column means be subtracted first."
+    ),
+    scale = p_lgl(
+      FALSE,
+      doc = paste(
+        "Shall the columns be divided by their observed standard",
+        "deviation first (pcaMethods' `\"uv\"`)."
+      )
+    )
+  )
+)
+
+spec_bpca <- param_spec(
+  name = "bpca",
+  title = "Wrapper function for Bayesian PCA parameters",
+  description = paste(
+    "Parameters for PCA with missing values via Bayesian PCA, see",
+    "[bixverse::run_bpca()]. Defaults follow pcaMethods."
+  ),
+  references = paste(
+    "Oba, et al., Bioinformatics, 2003; Stacklies, et al.,",
+    "Bioinformatics, 2007"
+  ),
+  checker = "Bpca",
+  label = "BPCA params",
+  hint = paste(
+    "n_pcs and max_iter must be positive integers; tol must be a",
+    "positive numeric; centre and scale must be booleans."
+  ),
+  fields = list(
+    n_pcs = p_int(2L, range = "[1,)", doc = "Number of principal components."),
+    max_iter = p_int(
+      100L,
+      range = "[1,)",
+      doc = "Maximum number of variational steps."
+    ),
+    tol = p_dbl(
+      1e-04,
+      range = "(0,)",
+      doc = "Change in `log10(tau)` over ten steps below which the fit stops."
+    ),
+    centre = p_lgl(
+      TRUE,
+      doc = "Shall the observed column means be subtracted first."
+    ),
+    scale = p_lgl(
+      FALSE,
+      doc = paste(
+        "Shall the columns be divided by their observed standard",
+        "deviation first (pcaMethods' `\"uv\"`)."
+      )
+    )
+  )
+)
+
 spec_snf <- param_spec(
   name = "snf",
   title = "Wrapper function to generate SNF parameters",
@@ -1506,9 +1598,26 @@ spec_sc_pca <- param_spec(
   checker = "ScPca",
   label = "single cell PCA params",
   hint = paste(
-    "mean_center, normalise_variance, randomised and clr must be",
-    "single booleans; size_factor must be a single numeric."
+    "mean_center, normalise_variance and clr must be single booleans;",
+    "svd_solver must be one of covariance, randomised or exact;",
+    "size_factor must be a single numeric."
   ),
+  # randomised stays in its old position so positional calls keep working.
+  # Plain warning(): lifecycle::deprecate_warn() inspects the caller frames and
+  # errors when this constructor is itself a lazily evaluated argument.
+  extra_ctor = quote({
+    if (!is.null(randomised)) {
+      svd_solver <- c("exact", "randomised")[randomised + 1L]
+      warning(sprintf(
+        paste(
+          "`randomised` is deprecated, use `svd_solver` instead.",
+          "Mapping randomised = %s to svd_solver = \"%s\"."
+        ),
+        randomised,
+        svd_solver
+      ))
+    }
+  }),
   fields = list(
     mean_center = p_lgl(TRUE, doc = "Shall the data be mean centred"),
     normalise_variance = p_lgl(
@@ -1516,8 +1625,12 @@ spec_sc_pca <- param_spec(
       doc = "Shall the data have normalised variance"
     ),
     randomised = p_lgl(
-      TRUE,
-      doc = "Shall fast, approximate randomised SVD be used."
+      NULL,
+      null_ok = TRUE,
+      doc = paste(
+        "Deprecated, use `svd_solver`. `TRUE` maps to",
+        "`\"randomised\"`, `FALSE` to `\"exact\"`."
+      )
     ),
     clr = p_lgl(
       FALSE,
@@ -1532,6 +1645,19 @@ spec_sc_pca <- param_spec(
         "The used size factor during I/O. It needs to be the same as",
         "during I/O to have correct results when using the `PFlogPF`",
         "transformation."
+      )
+    ),
+    svd_solver = p_choice(
+      "covariance",
+      c("covariance", "randomised", "exact"),
+      doc = paste(
+        "Which solver to use. `\"covariance\"` builds the gene x gene",
+        "cross-product and eigendecomposes it: exact, and the fastest",
+        "option for a few thousand HVGs, but its cost grows with the",
+        "square of the gene number in memory and the cube in time.",
+        "`\"randomised\"` is a randomised SVD, approximate in the",
+        "trailing components. `\"exact\"` is a full SVD on the dense",
+        "path and Lanczos on the sparse one."
       )
     )
   )

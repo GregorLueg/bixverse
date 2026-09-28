@@ -71,7 +71,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   object,
   no_pcs,
   pca_params = params_sc_pca(),
-  sparse_svd = FALSE,
+  sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
   residuals = FALSE,
@@ -80,7 +80,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(no_pcs, "I1")
   assertScPcaParams(pca_params)
-  checkmate::qassert(sparse_svd, "B1")
+  checkmate::qassert(sparse_svd, c("B1", "0"))
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(residuals, "B1")
@@ -116,12 +116,13 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
       no_pcs = no_pcs,
       pca_params = pca_params,
       selected_hvg = selected_hvg,
-      sparse_svd = sparse_svd,
+      sparse_svd = isTRUE(sparse_svd),
       seed = seed,
       .verbose = .verbose
     ))
   }
 
+  sparse_svd <- sparse_svd %||% TRUE
   n_cells <- length(get_cells_to_keep(object))
   if (n_cells > 500000L && !sparse_svd) {
     message(paste(

@@ -143,6 +143,16 @@ the cache and the HVG selection, and errors in a non-interactive session unless
 
 ## Traps
 
+### PCA solver
+
+`params_sc_pca(svd_solver = ...)` picks the solver. `"covariance"` (default)
+builds the gene x gene cross-product from the sparse data: exact, and the
+fastest for a few thousand HVGs. Its cost grows with the square of the gene
+count in memory and the cube in time, so with many more features, or for
+`residuals = TRUE` (dense only), use `"randomised"`. `"exact"` is a full SVD or
+Lanczos. The old `randomised = TRUE/FALSE` argument still works but warns.
+Leave `sparse_svd` at its `NULL` default unless you have a reason.
+
 ### Missing prerequisites warn, they do not error
 
 `calculate_pca_sc()` with no HVG selection warns "Returning object as is" and

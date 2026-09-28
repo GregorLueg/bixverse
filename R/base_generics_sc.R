@@ -1334,32 +1334,35 @@ get_hvg_data_sc <- S7::new_generic(
 #' Run PCA for single cell
 #'
 #' @description
-#' This function will run PCA on the detected highly variable genes. You can
-#' use randomised SVD for speed and there is an option for sparse SVD for very
-#' large data sets to avoid memory pressure.
+#' This function will run PCA on the detected highly variable genes. The
+#' solver is set via `svd_solver` in [params_sc_pca()]; the default builds the
+#' gene x gene cross-product from the sparse data, which is exact and the
+#' fastest option for a few thousand HVGs.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
 #' @param pca_params Named list. Controls the parameters to be used for the
 #' PCA calculation which is single cell-specific, see [params_sc_pca()]
-#' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
-#' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
-#' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
-#' sparse initial matrix is multiplied with the random matrix, yielding a
-#' much smaller dense matrix that does not increase the memory pressure
-#' massively. Not used for `MetaCells`.
+#' @param sparse_svd Optional boolean. Solve on the sparse data with implicit
+#' centring and scaling instead of materialising the dense scaled matrix.
+#' `NULL` picks the sparse path, which is faster and lighter on memory for
+#' every solver, or the dense one for `residuals = TRUE`. `FALSE` uses the
+#' dense path, but only below 500,000 cells. Not used for `MetaCells`.
 #' @param hvg Optional integer. If you want to provide your own HVG genes.
 #' Otherwise, the function will default to what is found in
 #' [bixverse::get_hvg()]. Please provide 1-indexed genes here! If you provide
 #' these, the internal HVG will be overwritten.
-#' @param seed Integer. Controls reproducibility. Only relevant if
-#' `randomised_svd = TRUE`.
+#' @param seed Integer. Controls reproducibility. Only relevant for
+#' `svd_solver = "randomised"` and the Lanczos start vector.
 #' @param residuals Boolean. Run the PCA on the Pearson residuals of a model
 #' fitted with [bixverse::fit_residuals_sc()] instead of the stored normalised
 #' layer. Needs `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since
 #' the residuals already carry the signal as variance, and does not support
 #' `sparse_svd`: a residual column is dense even where the counts are not.
-#' Not supported for `MetaCells`.
+#' On this dense path the default `svd_solver = "covariance"` pays for a full
+#' gene x gene cross-product and is slower than `svd_solver = "randomised"`,
+#' so pick the latter in [params_sc_pca()] when speed matters. Not supported
+#' for `MetaCells`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -1384,7 +1387,7 @@ calculate_pca_sc <- S7::new_generic(
     object,
     no_pcs,
     pca_params = params_sc_pca(),
-    sparse_svd = FALSE,
+    sparse_svd = NULL,
     hvg = NULL,
     seed = 42L,
     residuals = FALSE,

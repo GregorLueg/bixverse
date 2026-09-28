@@ -40,9 +40,10 @@ So you pass `knn = list(...)` but read `p$k`. Same pattern in
 A documented trap worth repeating: `pruning` in `params_sc_neighbours()` is a
 share of the neighbourhood, so it has to track `k`. The default `1/12` is tuned
 for the default `k = 15L`. Raise `k` without raising `pruning` and you prune
-harder, which fails quietly: you still get a clustering, but under-connected
-cells drop out as singleton communities and show up later as one-cell clusters
-with inflated `run_paga_sc()` connectivities.
+harder. A cell that loses every edge keeps its strongest kNN edge, so it no
+longer becomes a one-cell cluster, but over-pruning still fails quietly: small
+groups of cells that only share neighbours with each other split off as tiny
+clusters.
 
 ### Bundle or plain arguments?
 

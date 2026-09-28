@@ -516,7 +516,7 @@ step_hvg_sc <- function(
 step_pca_sc <- function(
   no_pcs = 30L,
   pca_params = params_sc_pca(),
-  sparse_svd = FALSE,
+  sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
   .verbose = TRUE

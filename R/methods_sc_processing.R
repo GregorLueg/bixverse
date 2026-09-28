@@ -1337,7 +1337,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   object,
   no_pcs,
   pca_params = params_sc_pca(),
-  sparse_svd = FALSE,
+  sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
   residuals = FALSE,
@@ -1346,7 +1346,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(no_pcs, "I1")
   assertScPcaParams(pca_params)
-  checkmate::qassert(sparse_svd, "B1")
+  checkmate::qassert(sparse_svd, c("B1", "0"))
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(residuals, "B1")
@@ -1385,11 +1385,14 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
       no_pcs = no_pcs,
       pca_params = pca_params,
       selected_hvg = selected_hvg,
-      sparse_svd = sparse_svd,
+      sparse_svd = isTRUE(sparse_svd),
       seed = seed,
       .verbose = .verbose
     ))
   }
+
+  # NULL means auto: the sparse path is faster and lighter for every solver
+  sparse_svd <- sparse_svd %||% TRUE
 
   # swap to sparse SVD for large data sets
   n_cells <- length(get_cells_to_keep(object))
