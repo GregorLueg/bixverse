@@ -2927,8 +2927,9 @@ params_sc_empty_droplets <- function(
 #' generated that generates edges between all cells instead of between only
 #' neighbours. Defaults to `FALSE`.
 #' @param pruning Numeric or `NULL`. Weights below this threshold will be set to
-#' 0 in the generation of the sNN graph. If not provided, defaults to `1 /
-#' ceil(k * 0.8)`. Defaults to `NULL`.
+#' 0 in the generation of the sNN graph. A node that loses every edge keeps its
+#' strongest kNN edge. If not provided, defaults to `1 / ceil(k * 0.8)`.
+#' Defaults to `NULL`.
 #' @param snn_similarity String. The Jaccard similarity calculates the Jaccard
 #' between the neighbours, whereas the rank method calculates edge weights based
 #' on the ranking of shared neighbours. For the rank method, the weight is
@@ -2963,8 +2964,9 @@ params_sc_empty_droplets <- function(
 #'  generated that generates edges between all cells instead of between only
 #'  neighbours. Defaults to `FALSE`.
 #'  \item pruning - Numeric or `NULL`. Weights below this threshold will be set
-#'  to 0 in the generation of the sNN graph. If not provided, defaults to `1 /
-#'  ceil(k * 0.8)`. Defaults to `NULL`.
+#'  to 0 in the generation of the sNN graph. A node that loses every edge keeps
+#'  its strongest kNN edge. If not provided, defaults to `1 / ceil(k * 0.8)`.
+#'  Defaults to `NULL`.
 #'  \item snn_similarity - String. The Jaccard similarity calculates the Jaccard
 #'  between the neighbours, whereas the rank method calculates edge weights
 #'  based on the ranking of shared neighbours. For the rank method, the weight
@@ -3873,10 +3875,10 @@ params_sc_mtx_io <- function(
 #' generation of the sNN graph. Seurat uses for example `1/15` with `k = 20`. As
 #' the default k is set to 15, we set it to `1/12`. Track this against `k`
 #' rather than leaving it: the threshold is a share of the neighbourhood, so the
-#' same value prunes far harder at a larger `k`. Over-pruning fails quietly, in
-#' that you still get a clustering, but cells left with too few shared
-#' neighbours drop out as singleton communities, which then show up downstream
-#' as one-cell clusters with inflated [bixverse::run_paga_sc()] connectivities.
+#' same value prunes far harder at a larger `k`. A cell that loses every edge to
+#' pruning keeps its strongest kNN edge, so it does not drop out as a one-cell
+#' cluster. Over-pruning still fails quietly otherwise: small groups of cells
+#' that only share neighbours with each other split off as tiny communities.
 #' Defaults to `0.08333333333333333`.
 #' @param snn_similarity String. The Jaccard similarity calculates the Jaccard
 #' between the neighbours, whereas the rank method calculates edge weights based
@@ -3901,11 +3903,11 @@ params_sc_mtx_io <- function(
 #'  the generation of the sNN graph. Seurat uses for example `1/15` with `k =
 #'  20`. As the default k is set to 15, we set it to `1/12`. Track this against
 #'  `k` rather than leaving it: the threshold is a share of the neighbourhood,
-#'  so the same value prunes far harder at a larger `k`. Over-pruning fails
-#'  quietly, in that you still get a clustering, but cells left with too few
-#'  shared neighbours drop out as singleton communities, which then show up
-#'  downstream as one-cell clusters with inflated [bixverse::run_paga_sc()]
-#'  connectivities. Defaults to `0.08333333333333333`.
+#'  so the same value prunes far harder at a larger `k`. A cell that loses every
+#'  edge to pruning keeps its strongest kNN edge, so it does not drop out as a
+#'  one-cell cluster. Over-pruning still fails quietly otherwise: small groups
+#'  of cells that only share neighbours with each other split off as tiny
+#'  communities. Defaults to `0.08333333333333333`.
 #'  \item snn_similarity - String. The Jaccard similarity calculates the Jaccard
 #'  between the neighbours, whereas the rank method calculates edge weights
 #'  based on the ranking of shared neighbours. For the rank method, the weight

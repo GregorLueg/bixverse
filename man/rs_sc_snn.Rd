@@ -17,7 +17,7 @@ Choice of \code{c("jaccard", "rank")}; anything else errors.}
 direct neighbours in the graph, or between all possible combinations.}
 
 \item{pruning}{Float. Below which similarity value to prune the weight
-to 0.}
+to 0. A cell that loses every edge keeps its strongest kNN edge.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}

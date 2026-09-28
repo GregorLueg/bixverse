@@ -457,12 +457,11 @@ spec_sc_neighbours <- param_spec(
         "with `k = 20`. As the default k is set to 15, we set it to",
         "`1/12`. Track this against `k` rather than leaving it: the",
         "threshold is a share of the neighbourhood, so the same value",
-        "prunes far harder at a larger `k`. Over-pruning fails",
-        "quietly, in that you still get a clustering, but cells left",
-        "with too few shared neighbours drop out as singleton",
-        "communities, which then show up downstream as one-cell",
-        "clusters with inflated [bixverse::run_paga_sc()]",
-        "connectivities."
+        "prunes far harder at a larger `k`. A cell that loses every",
+        "edge to pruning keeps its strongest kNN edge, so it does not",
+        "drop out as a one-cell cluster. Over-pruning still fails",
+        "quietly otherwise: small groups of cells that only share",
+        "neighbours with each other split off as tiny communities."
       )
     ),
     snn_similarity = p_choice(
@@ -550,8 +549,9 @@ spec_sc_fast_cluster <- param_spec(
       null_ok = TRUE,
       doc = paste(
         "Weights below this threshold will be set to 0 in the",
-        "generation of the sNN graph. If not provided, defaults to `1",
-        "/ ceil(k * 0.8)`."
+        "generation of the sNN graph. A node that loses every edge",
+        "keeps its strongest kNN edge. If not provided, defaults to",
+        "`1 / ceil(k * 0.8)`."
       )
     ),
     snn_similarity = p_choice(
