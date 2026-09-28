@@ -5,9 +5,8 @@
 * Single cell PCA got a lot faster. `params_sc_pca()` has a new `svd_solver`
   argument, one of `"covariance"` (the new default), `"randomised"` or
   `"exact"`. The covariance solver builds the gene x gene cross-product
-  straight from the sparse counts and eigendecomposes it. It is exact, and on
-  346k cells `calculate_pca_sc()` goes from 9.1 s to 2.8 s (M1 Max). The
-  randomised solver got about 2x faster as well.
+  straight from the sparse counts and eigendecomposes it. The randomised solver 
+  got about 2x faster as well.
 * `calculate_pca_sc()` and `step_pca_sc()` now default to `sparse_svd = NULL`,
   which picks the sparse path for the normalised data (faster and lighter on
   memory for every solver) and the dense one for `residuals = TRUE`.
@@ -27,8 +26,7 @@
 
 * Cells that the sNN pruning left without a single edge now keep their
   strongest kNN edge. Before, Leiden turned each of them into a one-cell
-  cluster, and on large data these added up to hundreds (517 clusters at 346k
-  cells, now 53).
+  cluster, and on large data these added up to hundreds.
 * The sparse PCA path ignored `mean_center = FALSE` and
   `normalise_variance = FALSE`.
 
