@@ -3026,7 +3026,8 @@ checkScFastmnnParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -3054,7 +3055,7 @@ checkScFastmnnParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -3081,7 +3082,8 @@ checkScFastmnnParams <- function(x) {
         "ivf",
         "exhaustive"
       ),
-      ann_dist = c("euclidean", "cosine")
+      ann_dist = c("euclidean", "cosine"),
+      svd_solver = c("covariance", "randomised", "exact")
     ),
     label = "fastMNN params",
     hint = paste(
@@ -4102,7 +4104,8 @@ checkScPcaParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -4114,14 +4117,31 @@ checkScPcaParams <- function(x) {
     list(
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
     label = "single cell PCA params",
     hint = paste(
-      "mean_center, normalise_variance, randomised and clr must be",
-      "single booleans; size_factor must be a single numeric."
+      "mean_center, normalise_variance and clr must be single booleans;",
+      "svd_solver must be one of covariance, randomised or exact;",
+      "size_factor must be a single numeric."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      svd_solver = c("covariance", "randomised", "exact")
+    ),
+    label = "single cell PCA params",
+    hint = paste(
+      "mean_center, normalise_variance and clr must be single booleans;",
+      "svd_solver must be one of covariance, randomised or exact;",
+      "size_factor must be a single numeric."
     )
   )
   if (!isTRUE(res)) {
@@ -4388,7 +4408,8 @@ checkScSeuratCcaParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -4421,7 +4442,7 @@ checkScSeuratCcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -4442,7 +4463,8 @@ checkScSeuratCcaParams <- function(x) {
         "ivf",
         "exhaustive"
       ),
-      ann_dist = c("euclidean", "cosine")
+      ann_dist = c("euclidean", "cosine"),
+      svd_solver = c("covariance", "randomised", "exact")
     ),
     label = "Seurat CCA params"
   )
@@ -4506,7 +4528,8 @@ checkScSeuratRpcaParams <- function(x) {
       "normalise_variance",
       "randomised",
       "clr",
-      "size_factor"
+      "size_factor",
+      "svd_solver"
     )
   )
   if (!isTRUE(res)) {
@@ -4536,7 +4559,7 @@ checkScSeuratRpcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = "B1",
+      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -4557,7 +4580,8 @@ checkScSeuratRpcaParams <- function(x) {
         "ivf",
         "exhaustive"
       ),
-      ann_dist = c("euclidean", "cosine")
+      ann_dist = c("euclidean", "cosine"),
+      svd_solver = c("covariance", "randomised", "exact")
     ),
     label = "Seurat rPCA params"
   )

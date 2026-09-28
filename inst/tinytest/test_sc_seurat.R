@@ -237,7 +237,7 @@ seurat_obj <- Seurat::RunPCA(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  pca_params = params_sc_pca(randomised = FALSE),
+  pca_params = params_sc_pca(svd_solver = "exact"),
   .verbose = FALSE
 )
 

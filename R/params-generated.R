@@ -4085,13 +4085,20 @@ params_sc_palantir <- function(
 #' `TRUE`.
 #' @param normalise_variance Boolean. Shall the data have normalised variance
 #' Defaults to `TRUE`.
-#' @param randomised Boolean. Shall fast, approximate randomised SVD be used.
-#' Defaults to `TRUE`.
+#' @param randomised Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE`
+#' maps to `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 #' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
 #' et al. Defaults to `FALSE`.
 #' @param size_factor Numeric. The used size factor during I/O. It needs to be
 #' the same as during I/O to have correct results when using the `PFlogPF`
 #' transformation. Defaults to `10000.0`.
+#' @param svd_solver String. Which solver to use. `"covariance"` builds the gene
+#' x gene cross-product and eigendecomposes it: exact, and the fastest option
+#' for a few thousand HVGs, but its cost grows with the square of the gene
+#' number in memory and the cube in time. `"randomised"` is a randomised SVD,
+#' approximate in the trailing components. `"exact"` is a full SVD on the dense
+#' path and Lanczos on the sparse one. One of `c("covariance", "randomised",
+#' "exact")`. Defaults to `"covariance"`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -4099,29 +4106,49 @@ params_sc_palantir <- function(
 #'  `TRUE`.
 #'  \item normalise_variance - Boolean. Shall the data have normalised variance
 #'  Defaults to `TRUE`.
-#'  \item randomised - Boolean. Shall fast, approximate randomised SVD be used.
-#'  Defaults to `TRUE`.
+#'  \item randomised - Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE`
+#'  maps to `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 #'  \item clr - Boolean. Shall the CLR-type `PFlogPF` be applied, see
 #'  Booeshaghi, et al. Defaults to `FALSE`.
 #'  \item size_factor - Numeric. The used size factor during I/O. It needs to be
 #'  the same as during I/O to have correct results when using the `PFlogPF`
 #'  transformation. Defaults to `10000.0`.
+#'  \item svd_solver - String. Which solver to use. `"covariance"` builds the
+#'  gene x gene cross-product and eigendecomposes it: exact, and the fastest
+#'  option for a few thousand HVGs, but its cost grows with the square of the
+#'  gene number in memory and the cube in time. `"randomised"` is a randomised
+#'  SVD, approximate in the trailing components. `"exact"` is a full SVD on the
+#'  dense path and Lanczos on the sparse one. One of `c("covariance",
+#'  "randomised", "exact")`. Defaults to `"covariance"`.
 #' }
 #'
 #' @export
 params_sc_pca <- function(
   mean_center = TRUE,
   normalise_variance = TRUE,
-  randomised = TRUE,
+  randomised = NULL,
   clr = FALSE,
-  size_factor = 10000.0
+  size_factor = 10000.0,
+  svd_solver = c("covariance", "randomised", "exact")
 ) {
+  svd_solver <- match.arg(svd_solver)
+
   # Checks
   checkmate::qassert(mean_center, "B1")
   checkmate::qassert(normalise_variance, "B1")
-  checkmate::qassert(randomised, "B1")
+  checkmate::qassert(randomised, c("B1", "0"))
   checkmate::qassert(clr, "B1")
   checkmate::qassert(size_factor, "N1")
+  checkmate::assertChoice(svd_solver, c("covariance", "randomised", "exact"))
+
+  if (!is.null(randomised)) {
+    warning(paste(
+      "`randomised` is deprecated, use `svd_solver` instead.",
+      sprintf("Mapping randomised = %s to", randomised),
+      sprintf("svd_solver = \"%s\".", if (randomised) "randomised" else "exact")
+    ))
+    svd_solver <- if (randomised) "randomised" else "exact"
+  }
 
   # Return
   list(
@@ -4129,7 +4156,8 @@ params_sc_pca <- function(
     normalise_variance = normalise_variance,
     randomised = randomised,
     clr = clr,
-    size_factor = size_factor
+    size_factor = size_factor,
+    svd_solver = svd_solver
   )
 }
 

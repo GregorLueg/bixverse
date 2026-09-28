@@ -1506,9 +1506,23 @@ spec_sc_pca <- param_spec(
   checker = "ScPca",
   label = "single cell PCA params",
   hint = paste(
-    "mean_center, normalise_variance, randomised and clr must be",
-    "single booleans; size_factor must be a single numeric."
+    "mean_center, normalise_variance and clr must be single booleans;",
+    "svd_solver must be one of covariance, randomised or exact;",
+    "size_factor must be a single numeric."
   ),
+  # randomised stays in its old position so positional calls keep working.
+  # Plain warning(): lifecycle::deprecate_warn() inspects the caller frames and
+  # errors when this constructor is itself a lazily evaluated argument.
+  extra_ctor = quote({
+    if (!is.null(randomised)) {
+      warning(paste(
+        "`randomised` is deprecated, use `svd_solver` instead.",
+        sprintf("Mapping randomised = %s to", randomised),
+        sprintf("svd_solver = \"%s\".", if (randomised) "randomised" else "exact")
+      ))
+      svd_solver <- if (randomised) "randomised" else "exact"
+    }
+  }),
   fields = list(
     mean_center = p_lgl(TRUE, doc = "Shall the data be mean centred"),
     normalise_variance = p_lgl(
@@ -1516,8 +1530,12 @@ spec_sc_pca <- param_spec(
       doc = "Shall the data have normalised variance"
     ),
     randomised = p_lgl(
-      TRUE,
-      doc = "Shall fast, approximate randomised SVD be used."
+      NULL,
+      null_ok = TRUE,
+      doc = paste(
+        "Deprecated, use `svd_solver`. `TRUE` maps to",
+        "`\"randomised\"`, `FALSE` to `\"exact\"`."
+      )
     ),
     clr = p_lgl(
       FALSE,
@@ -1532,6 +1550,19 @@ spec_sc_pca <- param_spec(
         "The used size factor during I/O. It needs to be the same as",
         "during I/O to have correct results when using the `PFlogPF`",
         "transformation."
+      )
+    ),
+    svd_solver = p_choice(
+      "covariance",
+      c("covariance", "randomised", "exact"),
+      doc = paste(
+        "Which solver to use. `\"covariance\"` builds the gene x gene",
+        "cross-product and eigendecomposes it: exact, and the fastest",
+        "option for a few thousand HVGs, but its cost grows with the",
+        "square of the gene number in memory and the cube in time.",
+        "`\"randomised\"` is a randomised SVD, approximate in the",
+        "trailing components. `\"exact\"` is a full SVD on the dense",
+        "path and Lanczos on the sparse one."
       )
     )
   )

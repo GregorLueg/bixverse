@@ -7,7 +7,7 @@
 step_pca_sc(
   no_pcs = 30L,
   pca_params = params_sc_pca(),
-  sparse_svd = FALSE,
+  sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
   .verbose = TRUE
@@ -19,20 +19,19 @@ step_pca_sc(
 \item{pca_params}{Named list. Controls the parameters to be used for the
 PCA calculation which is single cell-specific, see \code{\link[=params_sc_pca]{params_sc_pca()}}}
 
-\item{sparse_svd}{Boolean. Shall sparse solvers be used that do not do
-scaling. If set to yes, in the case of \code{random_svd = FALSE}, Lanczos
-iterations are used to solve the sparse SVD. With \code{random_svd = TRUE}, the
-sparse initial matrix is multiplied with the random matrix, yielding a
-much smaller dense matrix that does not increase the memory pressure
-massively. Not used for \code{MetaCells}.}
+\item{sparse_svd}{Optional boolean. Solve on the sparse data with implicit
+centring and scaling instead of materialising the dense scaled matrix.
+\code{NULL} picks the sparse path, which is faster and lighter on memory for
+every solver, or the dense one for \code{residuals = TRUE}. \code{FALSE} uses the
+dense path, but only below 500,000 cells. Not used for \code{MetaCells}.}
 
 \item{hvg}{Optional integer. If you want to provide your own HVG genes.
 Otherwise, the function will default to what is found in
 \code{\link[=get_hvg]{get_hvg()}}. Please provide 1-indexed genes here! If you provide
 these, the internal HVG will be overwritten.}
 
-\item{seed}{Integer. Controls reproducibility. Only relevant if
-\code{randomised_svd = TRUE}.}
+\item{seed}{Integer. Controls reproducibility. Only relevant for
+\code{svd_solver = "randomised"} and the Lanczos start vector.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
