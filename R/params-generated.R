@@ -4260,12 +4260,15 @@ params_sc_pca <- function(
   checkmate::assertChoice(svd_solver, c("covariance", "randomised", "exact"))
 
   if (!is.null(randomised)) {
-    warning(paste(
-      "`randomised` is deprecated, use `svd_solver` instead.",
-      sprintf("Mapping randomised = %s to", randomised),
-      sprintf("svd_solver = \"%s\".", if (randomised) "randomised" else "exact")
+    svd_solver <- c("exact", "randomised")[randomised + 1L]
+    warning(sprintf(
+      paste(
+        "`randomised` is deprecated, use `svd_solver` instead.",
+        "Mapping randomised = %s to svd_solver = \"%s\"."
+      ),
+      randomised,
+      svd_solver
     ))
-    svd_solver <- if (randomised) "randomised" else "exact"
   }
 
   # Return
