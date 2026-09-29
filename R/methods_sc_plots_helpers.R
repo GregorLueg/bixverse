@@ -57,6 +57,122 @@
   return(manifold_nn)
 }
 
+#' Resolve the kNN and input embedding for a manifold method
+#'
+#' @description
+#' Shared entry point of the `*_sc` 2D embedding methods. `"wnn"` takes the
+#' integrated kNN graph but reads the input embedding from the RNA cache, so the
+#' modality the embedding comes from (`cache_modality`) can differ from the one
+#' the result is written to.
+#'
+#' @param object `SingleCells`, `MetaCells` or `SingleCellsSubset` class.
+#' @param use_knn Boolean. Use the kNN graph found in the object.
+#' @param embd_to_use String. The embedding to feed the method. Must be
+#' available in the object.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param modality String. One of `c("rna", "adt", "wnn")`.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item knn - The manifoldsR `NearestNeighbours`, or `NULL` if the method
+#'   should build its own.
+#'   \item embd - The input embedding, cells x dimensions.
+#'   \item cache_modality - The modality the embedding was read from.
+#' }
+#'
+#' @keywords internal
+.manifold_inputs <- function(
+  object,
+  use_knn,
+  embd_to_use,
+  no_embd_to_use,
+  modality
+) {
+  # checks
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
+  checkmate::qassert(use_knn, "B1")
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
+
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  # wnn takes the integrated graph; embeddings still read/write the rna cache
+  cache_modality <- if (modality == "wnn") "rna" else modality
+
+  # hard tier: the manifold is written back onto the object, and it is read
+  # from `cache_modality` while the kNN comes from `modality`
+  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
+  if (modality == "wnn" || use_knn) {
+    assert_sc_state(object, artefacts = "knn", modality = modality)
+  }
+
+  knn <- if (modality == "wnn") {
+    .get_manifoldsr_knn_from_wnn(x = object)
+  } else if (use_knn) {
+    .get_manifoldsr_knn(x = object, modality = modality)
+  } else {
+    NULL
+  }
+
+  checkmate::assertTRUE(
+    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  )
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = cache_modality
+  )
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  list(knn = knn, embd = embd, cache_modality = cache_modality)
+}
+
+#' Name a manifold embedding and write it back onto the object
+#'
+#' @param object `SingleCells`, `MetaCells` or `SingleCellsSubset` class.
+#' @param embd Numeric matrix. The embedding, cells x dimensions.
+#' @param prefix String. Column name prefix, e.g. `"umap"`.
+#' @param slot_name String. Name of the embedding within the object.
+#' @param modality String. Modality the embedding is written to.
+#' @param from Character vector. Parent artefact names for the provenance
+#' stamp, see [.manifold_from()].
+#'
+#' @returns The object with the embedding added.
+#'
+#' @keywords internal
+.store_manifold <- function(object, embd, prefix, slot_name, modality, from) {
+  checkmate::assertMatrix(embd, mode = "numeric")
+  checkmate::qassert(prefix, "S1")
+  checkmate::qassert(slot_name, "S1")
+  checkmate::qassert(modality, "S1")
+  checkmate::qassert(from, "S+")
+
+  colnames(embd) <- sprintf("%s_%s", prefix, seq_len(ncol(embd)))
+
+  set_embedding(
+    x = object,
+    embd = embd,
+    name = slot_name,
+    modality = modality,
+    from = from
+  )
+}
+
 ### umap -----------------------------------------------------------------------
 
 #' Run UMAP on a SingleCells/MetaCells object
@@ -175,74 +291,33 @@ S7::method(umap_sc, ScOrMc) <- function(
   .verbose = TRUE
 ) {
   modality <- match.arg(modality)
+  knn_method <- match.arg(knn_method)
 
   # checks
-  checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) ||
-      S7::S7_inherits(object, MetaCells) ||
-      S7::S7_inherits(object, SingleCellsSubset)
-  )
-  checkmate::qassert(use_knn, "B1")
-  checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(slot_name, "S1")
-  checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[1,)")
   checkmate::qassert(k, "I1[2,)")
   checkmate::qassert(min_dist, "N1[0,)")
   checkmate::qassert(spread, "N1[0,)")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
-  knn_method <- match.arg(knn_method)
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
-
-  # wnn takes the integrated graph; embeddings still read/write the rna cache
-  cache_modality <- if (modality == "wnn") "rna" else modality
-
-  # hard tier: the manifold is written back onto the object, and it is read
-  # from `cache_modality` while the kNN comes from `modality`
-  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
-  if (modality == "wnn" || use_knn) {
-    assert_sc_state(object, artefacts = "knn", modality = modality)
-  }
-
-  # get the knn
-  knn <- if (modality == "wnn") {
-    .get_manifoldsr_knn_from_wnn(x = object)
-  } else if (use_knn) {
-    .get_manifoldsr_knn(x = object, modality = modality)
-  } else {
-    NULL
-  }
-
-  # get the embedding
-  checkmate::assertTRUE(
-    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  inputs <- .manifold_inputs(
+    object = object,
+    use_knn = use_knn,
+    embd_to_use = embd_to_use,
+    no_embd_to_use = no_embd_to_use,
+    modality = modality
   )
-  embd <- get_embedding(
-    x = object,
-    embd_name = embd_to_use,
-    modality = cache_modality
-  )
-
-  if (!is.null(no_embd_to_use)) {
-    to_take <- min(c(no_embd_to_use, ncol(embd)))
-    embd <- embd[, 1:to_take]
-  }
 
   if (.verbose) {
     message("Running UMAP.")
   }
 
   umap_embd <- manifoldsR::umap(
-    data = embd,
+    data = inputs$embd,
     n_dim = n_dim,
-    knn = knn,
+    knn = inputs$knn,
     k = k,
     min_dist = min_dist,
     spread = spread,
@@ -253,22 +328,185 @@ S7::method(umap_sc, ScOrMc) <- function(
     .verbose = .verbose
   )
 
-  colnames(umap_embd) <- sprintf("umap_%s", seq_len(ncol(umap_embd)))
-
-  object <- set_embedding(
-    x = object,
+  .store_manifold(
+    object = object,
     embd = umap_embd,
-    name = slot_name,
+    prefix = "umap",
+    slot_name = slot_name,
     modality = modality,
     from = .manifold_from(
       embd_to_use = embd_to_use,
-      cache_modality = cache_modality,
+      cache_modality = inputs$cache_modality,
       modality = modality,
-      has_knn = !is.null(knn)
+      has_knn = !is.null(inputs$knn)
     )
   )
+}
 
-  return(object)
+### densmap --------------------------------------------------------------------
+
+#' Run densMAP on a SingleCells/MetaCells object
+#'
+#' @description
+#' Wrapper around [manifoldsR::densmap()] for the `SingleCells` and `MetaCells`
+#' classes. densMAP is UMAP plus a density-preserving term: a tight population
+#' stays tight in the embedding and a diffuse one stays diffuse. With plain
+#' UMAP the relative size of a cluster on the plot tells you nothing, with
+#' densMAP it does. Setting `lambda = 0` in [manifoldsR::params_densmap()]
+#' gives you back plain UMAP.
+#'
+#' Neighbour handling is the same as in [bixverse::umap_sc()]: with
+#' `use_knn = TRUE` (the default) the cached kNN graph is reused, otherwise
+#' neighbours are computed from the chosen embedding.
+#'
+#' @param object `SingleCells`, `MetaCells` class.
+#' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
+#' `TRUE`. If not available, will default to the embedding.
+#' @param embd_to_use String. The embedding to use for densMAP. Must be
+#' available in the object.
+#' @param slot_name String. The name of this embedding within the object.
+#' Defaults to `"densmap"`.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run densMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
+#' @param n_dim Integer. Number of densMAP dimensions. Defaults to `2L`.
+#' @param k Integer. Number of nearest neighbours. Defaults to `15L`.
+#' @param min_dist Numeric. Minimum distance between embedded points. Defaults
+#' to `0.5`.
+#' @param spread Numeric. Effective scale of embedded points. Defaults to `1.0`.
+#' @param knn_method String. Approximate nearest neighbour algorithm. One of
+#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' @param nn_params Named list. See [manifoldsR::params_nn()].
+#' @param umap_params Named list. See [manifoldsR::params_umap()].
+#' @param dens_params Named list. The density knobs, see
+#' [manifoldsR::params_densmap()].
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @returns The object with a `"densmap"` embedding added.
+#'
+#' @export
+#'
+#' @references Narayan, Berger & Cho, Nat. Biotechnol., 2021
+#'
+#' @examples
+#' # densMAP off the cached kNN graph
+#' sc <- demo_single_cells()
+#' sc <- densmap_sc(sc, .verbose = FALSE)
+#' dim(get_embedding(sc, "densmap"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+densmap_sc <- S7::new_generic(
+  name = "densmap_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    use_knn = TRUE,
+    embd_to_use = "pca",
+    slot_name = "densmap",
+    no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
+    n_dim = 2L,
+    k = 15L,
+    min_dist = 0.5,
+    spread = 1.0,
+    knn_method = c(
+      "kmknn",
+      "hnsw",
+      "balltree",
+      "annoy",
+      "nndescent",
+      "exhaustive"
+    ),
+    nn_params = manifoldsR::params_nn(),
+    umap_params = manifoldsR::params_umap(),
+    dens_params = manifoldsR::params_densmap(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+S7::method(densmap_sc, ScOrMc) <- function(
+  object,
+  use_knn = TRUE,
+  embd_to_use = "pca",
+  slot_name = "densmap",
+  no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
+  n_dim = 2L,
+  k = 15L,
+  min_dist = 0.5,
+  spread = 1.0,
+  knn_method = c(
+    "kmknn",
+    "hnsw",
+    "balltree",
+    "annoy",
+    "nndescent",
+    "exhaustive"
+  ),
+  nn_params = manifoldsR::params_nn(),
+  umap_params = manifoldsR::params_umap(),
+  dens_params = manifoldsR::params_densmap(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  modality <- match.arg(modality)
+  knn_method <- match.arg(knn_method)
+
+  # checks
+  checkmate::qassert(slot_name, "S1")
+  checkmate::qassert(n_dim, "I1[1,)")
+  checkmate::qassert(k, "I1[2,)")
+  checkmate::qassert(min_dist, "N1[0,)")
+  checkmate::qassert(spread, "N1[0,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  inputs <- .manifold_inputs(
+    object = object,
+    use_knn = use_knn,
+    embd_to_use = embd_to_use,
+    no_embd_to_use = no_embd_to_use,
+    modality = modality
+  )
+
+  if (.verbose) {
+    message("Running densMAP.")
+  }
+
+  densmap_embd <- manifoldsR::densmap(
+    data = inputs$embd,
+    knn = inputs$knn,
+    n_dim = n_dim,
+    k = k,
+    min_dist = min_dist,
+    spread = spread,
+    knn_method = knn_method,
+    nn_params = nn_params,
+    umap_params = umap_params,
+    dens_params = dens_params,
+    seed = seed,
+    .verbose = .verbose
+  )
+
+  .store_manifold(
+    object = object,
+    embd = densmap_embd,
+    prefix = "densmap",
+    slot_name = slot_name,
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = inputs$cache_modality,
+      modality = modality,
+      has_knn = !is.null(inputs$knn)
+    )
+  )
 }
 
 ### tsne -----------------------------------------------------------------------
@@ -283,40 +521,43 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' global structure while UMAP preserves it is largely an artefact of default
 #' initialisations rather than a property of the loss functions themselves.
 #'
-#' When `use_knn = FALSE` (the default), the kNN graph already stored on the
-#' object is reused. Otherwise neighbours are computed from the chosen
+#' When `use_knn = TRUE`, the kNN graph already stored on the object is reused.
+#' With `use_knn = FALSE` (the default), neighbours are computed from the chosen
 #' embedding.
 #'
-#' Two approximation strategies are available via `approx_type`: `"bh"`
+#' Three approximation strategies are available via `approx_type`: `"bh"`
 #' (Barnes-Hut) is the classical O(n log n) approximation and works well
 #' across a wide range of dataset sizes; `"fft"` (interpolation-based, as in
-#' FIt-SNE) scales better to very large datasets. `perplexity` controls the
-#' bandwidth of the Gaussian kernel used to compute affinities within the
-#' neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
-#' `use_knn = TRUE`, perplexity no longer drives neighbour retrieval but still
-#' shapes the affinity distribution over the retrieved neighbours; values too
-#' close to the kNN size will produce poor results. With tSNE in particular the
-#' rule of thumb is to set k to `3 * perplexity`. When `k ≤ perplexity`` the
-#' algorithm does not behave properly anymore, thus, will throw an error.
+#' FIt-SNE) scales better to very large datasets; `"fft_3k"` is the
+#' three-kernel variant of the latter, with one forward and three inverse FFTs
+#' per epoch instead of four each. The FFT options are only available on Unix
+#' systems. `perplexity` controls the bandwidth of the Gaussian kernel used to
+#' compute affinities within the neighbour set (typical values 5-50). When a
+#' pre-computed kNN is supplied via `use_knn = TRUE`, perplexity no longer
+#' drives neighbour retrieval but still shapes the affinity distribution over
+#' the retrieved neighbours; values too close to the kNN size will produce poor
+#' results. With tSNE in particular the rule of thumb is to set k to
+#' `3 * perplexity`. When `k <= perplexity` the algorithm does not behave
+#' properly anymore, thus, will throw an error.
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
-#' `TRUE`. If not available, will default to the embedding.
+#' `FALSE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for t-SNE. Must be available
 #' in the object.
 #' @param slot_name String. The name of this embedding within the object.
 #' Defaults to `"tsne"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
-#' @param modality String. On which modality to run the UMAP. One of
+#' @param modality String. On which modality to run the t-SNE. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of t-SNE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
 #' @param perplexity Numeric. Perplexity parameter. Typical values between 5
-#' and 50. Defaults to `30.0`.
-#' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut)
-#' or `"fft"`. Defaults to `"bh"`.
+#' and 50. Defaults to `10.0`.
+#' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut),
+#' `"fft"` or `"fft_3k"`. Defaults to `"bh"`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
 #' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
@@ -347,7 +588,7 @@ tsne_sc <- S7::new_generic(
     modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     perplexity = 10.0,
-    approx_type = c("bh", "fft"),
+    approx_type = c("bh", "fft", "fft_3k"),
     knn_method = c(
       "kmknn",
       "hnsw",
@@ -374,7 +615,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10.0,
-  approx_type = c("bh", "fft"),
+  approx_type = c("bh", "fft", "fft_3k"),
   knn_method = c(
     "kmknn",
     "hnsw",
@@ -389,70 +630,31 @@ S7::method(tsne_sc, ScOrMc) <- function(
   .verbose = TRUE
 ) {
   modality <- match.arg(modality)
+  approx_type <- match.arg(approx_type)
+  knn_method <- match.arg(knn_method)
 
   # checks
-  checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) ||
-      S7::S7_inherits(object, MetaCells) ||
-      S7::S7_inherits(object, SingleCellsSubset)
-  )
-  checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(slot_name, "S1")
-  checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[2,2]")
   checkmate::qassert(perplexity, "N1[1,)")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
-  approx_type <- match.arg(approx_type)
-  knn_method <- match.arg(knn_method)
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
-
-  cache_modality <- if (modality == "wnn") "rna" else modality
-
-  # hard tier: the manifold is written back onto the object, and it is read
-  # from `cache_modality` while the kNN comes from `modality`
-  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
-  if (modality == "wnn" || use_knn) {
-    assert_sc_state(object, artefacts = "knn", modality = modality)
-  }
-
-  # get the knn
-  knn <- if (modality == "wnn") {
-    .get_manifoldsr_knn_from_wnn(x = object)
-  } else if (use_knn) {
-    .get_manifoldsr_knn(x = object, modality = modality)
-  } else {
-    NULL
-  }
-
-  # get the embedding
-  checkmate::assertTRUE(
-    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  inputs <- .manifold_inputs(
+    object = object,
+    use_knn = use_knn,
+    embd_to_use = embd_to_use,
+    no_embd_to_use = no_embd_to_use,
+    modality = modality
   )
-  embd <- get_embedding(
-    x = object,
-    embd_name = embd_to_use,
-    modality = cache_modality
-  )
-
-  if (!is.null(no_embd_to_use)) {
-    to_take <- min(c(no_embd_to_use, ncol(embd)))
-    embd <- embd[, 1:to_take]
-  }
 
   if (.verbose) {
     message("Running t-SNE.")
   }
 
   tsne_embd <- manifoldsR::tsne(
-    data = embd,
-    knn = knn,
+    data = inputs$embd,
+    knn = inputs$knn,
     n_dim = n_dim,
     perplexity = perplexity,
     approx_type = approx_type,
@@ -463,22 +665,181 @@ S7::method(tsne_sc, ScOrMc) <- function(
     .verbose = .verbose
   )
 
-  colnames(tsne_embd) <- sprintf("tsne_%s", seq_len(ncol(tsne_embd)))
-
-  object <- set_embedding(
-    x = object,
+  .store_manifold(
+    object = object,
     embd = tsne_embd,
-    name = slot_name,
+    prefix = "tsne",
+    slot_name = slot_name,
     modality = modality,
     from = .manifold_from(
       embd_to_use = embd_to_use,
-      cache_modality = cache_modality,
+      cache_modality = inputs$cache_modality,
       modality = modality,
-      has_knn = !is.null(knn)
+      has_knn = !is.null(inputs$knn)
     )
   )
+}
 
-  return(object)
+### densne ---------------------------------------------------------------------
+
+#' Run den-SNE on a SingleCells/MetaCells object
+#'
+#' @description
+#' Wrapper around [manifoldsR::densne()] for the `SingleCells` and `MetaCells`
+#' classes. den-SNE is t-SNE plus a density-preserving term: a tight population
+#' stays tight in the embedding and a diffuse one stays diffuse. Plain t-SNE
+#' inflates dense clusters and shrinks sparse ones, so relative cluster sizes
+#' on the plot mean nothing; with den-SNE they do. Setting `lambda = 0` in
+#' [manifoldsR::params_densne()] gives you back plain t-SNE.
+#'
+#' Neighbour handling, `approx_type` and the `k` versus `perplexity` caveats
+#' are the same as in [bixverse::tsne_sc()].
+#'
+#' @param object `SingleCells`, `MetaCells` class.
+#' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
+#' `FALSE`. If not available, will default to the embedding.
+#' @param embd_to_use String. The embedding to use for den-SNE. Must be
+#' available in the object.
+#' @param slot_name String. The name of this embedding within the object.
+#' Defaults to `"densne"`.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run den-SNE. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
+#' @param n_dim Integer. Number of den-SNE dimensions. Currently only `2L` is
+#' supported. Defaults to `2L`.
+#' @param perplexity Numeric. Perplexity parameter. Typical values between 5
+#' and 50. Defaults to `10.0`.
+#' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut),
+#' `"fft"` or `"fft_3k"`. Defaults to `"bh"`.
+#' @param knn_method String. Approximate nearest neighbour algorithm. One of
+#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' @param nn_params Named list. See [manifoldsR::params_nn()].
+#' @param tsne_params Named list. See [manifoldsR::params_tsne()].
+#' @param dens_params Named list. The density knobs, see
+#' [manifoldsR::params_densne()].
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @returns The object with a `"densne"` embedding added.
+#'
+#' @export
+#'
+#' @references Narayan, Berger & Cho, Nat. Biotechnol., 2021
+#'
+#' @examples
+#' # Barnes-Hut den-SNE on the PCA factors
+#' sc <- demo_single_cells()
+#' sc <- densne_sc(sc, .verbose = FALSE)
+#' dim(get_embedding(sc, "densne"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+densne_sc <- S7::new_generic(
+  name = "densne_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    use_knn = FALSE,
+    embd_to_use = "pca",
+    slot_name = "densne",
+    no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
+    n_dim = 2L,
+    perplexity = 10.0,
+    approx_type = c("bh", "fft", "fft_3k"),
+    knn_method = c(
+      "kmknn",
+      "hnsw",
+      "balltree",
+      "annoy",
+      "nndescent",
+      "exhaustive"
+    ),
+    nn_params = manifoldsR::params_nn(),
+    tsne_params = manifoldsR::params_tsne(),
+    dens_params = manifoldsR::params_densne(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+S7::method(densne_sc, ScOrMc) <- function(
+  object,
+  use_knn = FALSE,
+  embd_to_use = "pca",
+  slot_name = "densne",
+  no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
+  n_dim = 2L,
+  perplexity = 10.0,
+  approx_type = c("bh", "fft", "fft_3k"),
+  knn_method = c(
+    "kmknn",
+    "hnsw",
+    "balltree",
+    "annoy",
+    "nndescent",
+    "exhaustive"
+  ),
+  nn_params = manifoldsR::params_nn(),
+  tsne_params = manifoldsR::params_tsne(),
+  dens_params = manifoldsR::params_densne(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  modality <- match.arg(modality)
+  approx_type <- match.arg(approx_type)
+  knn_method <- match.arg(knn_method)
+
+  # checks
+  checkmate::qassert(slot_name, "S1")
+  checkmate::qassert(n_dim, "I1[2,2]")
+  checkmate::qassert(perplexity, "N1[1,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  inputs <- .manifold_inputs(
+    object = object,
+    use_knn = use_knn,
+    embd_to_use = embd_to_use,
+    no_embd_to_use = no_embd_to_use,
+    modality = modality
+  )
+
+  if (.verbose) {
+    message("Running den-SNE.")
+  }
+
+  densne_embd <- manifoldsR::densne(
+    data = inputs$embd,
+    knn = inputs$knn,
+    n_dim = n_dim,
+    perplexity = perplexity,
+    approx_type = approx_type,
+    knn_method = knn_method,
+    nn_params = nn_params,
+    tsne_params = tsne_params,
+    dens_params = dens_params,
+    seed = seed,
+    .verbose = .verbose
+  )
+
+  .store_manifold(
+    object = object,
+    embd = densne_embd,
+    prefix = "densne",
+    slot_name = slot_name,
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = inputs$cache_modality,
+      modality = modality,
+      has_knn = !is.null(inputs$knn)
+    )
+  )
 }
 
 ### phate ----------------------------------------------------------------------
@@ -514,7 +875,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' Defaults to `"phate"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
-#' @param modality String. On which modality to run the UMAP. One of
+#' @param modality String. On which modality to run PHATE. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of PHATE dimensions. Currently only `2L` is
@@ -591,69 +952,30 @@ S7::method(phate_sc, ScOrMc) <- function(
   .verbose = TRUE
 ) {
   modality <- match.arg(modality)
+  knn_method <- match.arg(knn_method)
 
   # checks
-  checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) ||
-      S7::S7_inherits(object, MetaCells) ||
-      S7::S7_inherits(object, SingleCellsSubset)
-  )
-  checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(slot_name, "S1")
-  checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[2,2]")
   checkmate::qassert(k, "I1[1,)")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
-  knn_method <- match.arg(knn_method)
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
-
-  cache_modality <- if (modality == "wnn") "rna" else modality
-
-  # hard tier: the manifold is written back onto the object, and it is read
-  # from `cache_modality` while the kNN comes from `modality`
-  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
-  if (modality == "wnn" || use_knn) {
-    assert_sc_state(object, artefacts = "knn", modality = modality)
-  }
-
-  # get the knn
-  knn <- if (modality == "wnn") {
-    .get_manifoldsr_knn_from_wnn(x = object)
-  } else if (use_knn) {
-    .get_manifoldsr_knn(x = object, modality = modality)
-  } else {
-    NULL
-  }
-
-  # get the embedding
-  checkmate::assertTRUE(
-    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  inputs <- .manifold_inputs(
+    object = object,
+    use_knn = use_knn,
+    embd_to_use = embd_to_use,
+    no_embd_to_use = no_embd_to_use,
+    modality = modality
   )
-  embd <- get_embedding(
-    x = object,
-    embd_name = embd_to_use,
-    modality = cache_modality
-  )
-
-  if (!is.null(no_embd_to_use)) {
-    to_take <- min(c(no_embd_to_use, ncol(embd)))
-    embd <- embd[, 1:to_take]
-  }
 
   if (.verbose) {
     message("Running PHATE.")
   }
 
   phate_embd <- manifoldsR::phate(
-    data = embd,
-    knn = knn,
+    data = inputs$embd,
+    knn = inputs$knn,
     n_dim = n_dim,
     k = k,
     knn_method = knn_method,
@@ -663,22 +985,244 @@ S7::method(phate_sc, ScOrMc) <- function(
     .verbose = .verbose
   )
 
-  colnames(phate_embd) <- sprintf("phate_%s", seq_len(ncol(phate_embd)))
-
-  object <- set_embedding(
-    x = object,
+  .store_manifold(
+    object = object,
     embd = phate_embd,
-    name = slot_name,
+    prefix = "phate",
+    slot_name = slot_name,
     modality = modality,
     from = .manifold_from(
       embd_to_use = embd_to_use,
-      cache_modality = cache_modality,
+      cache_modality = inputs$cache_modality,
       modality = modality,
-      has_knn = !is.null(knn)
+      has_knn = !is.null(inputs$knn)
     )
   )
+}
 
-  return(object)
+### forceatlas2 ----------------------------------------------------------------
+
+#' Run ForceAtlas2 on a SingleCells/MetaCells object
+#'
+#' @description
+#' Wrapper around [manifoldsR::forceatlas2()] and
+#' [manifoldsR::forceatlas2_from_graph()] for the `SingleCells` and `MetaCells`
+#' classes. ForceAtlas2 is a force-directed graph layout: every edge pulls,
+#' every pair of cells pushes, and gravity keeps disconnected components from
+#' drifting off. It is what scanpy's `draw_graph` does.
+#'
+#' `graph` picks what gets laid out:
+#' \itemize{
+#'   \item `"knn"` - The kNN graph (cached if `use_knn = TRUE`, otherwise built
+#'   from the chosen embedding), turned into the UMAP fuzzy union graph first.
+#'   This matches scanpy.
+#'   \item `"snn"` - The sNN graph from [bixverse::find_neighbours_sc()], i.e.
+#'   the same graph the Leiden/Louvain clustering runs on. `use_knn`,
+#'   `embd_to_use`, `no_embd_to_use`, `k`, `knn_method` and `nn_params` do not
+#'   apply here, and neither do the graph and initialisation knobs in
+#'   `fa2_params`. Pass `init_embd` to start from an existing 2D embedding,
+#'   otherwise the layout starts from random positions.
+#' }
+#'
+#' @param object `SingleCells`, `MetaCells` class.
+#' @param graph String. Which graph to lay out. One of `c("knn", "snn")`.
+#' Defaults to `"knn"`.
+#' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
+#' `TRUE`. If not available, will default to the embedding. `"knn"` only.
+#' @param embd_to_use String. The embedding to build the kNN graph from. Must
+#' be available in the object. `"knn"` only.
+#' @param slot_name String. The name of this embedding within the object.
+#' Defaults to `"fa2"`.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used. `"knn"` only.
+#' @param init_embd Optional string. Name of a stored 2D embedding, e.g.
+#' `"umap"`, to initialise the layout with. `"snn"` only. Defaults to `NULL`.
+#' @param modality String. On which modality to run ForceAtlas2. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
+#' @param k Integer. Number of nearest neighbours. Defaults to `15L`. `"knn"`
+#' only.
+#' @param knn_method String. Approximate nearest neighbour algorithm. One of
+#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `"knn"` only.
+#' @param nn_params Named list. See [manifoldsR::params_nn()]. `"knn"` only.
+#' @param fa2_params Named list. See [manifoldsR::params_fa2()].
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @returns The object with a `"fa2"` embedding added.
+#'
+#' @export
+#'
+#' @references Jacomy, et al., PLoS ONE, 2014
+#'
+#' @examples
+#' # ForceAtlas2 on the cached kNN graph, then on the sNN graph
+#' sc <- demo_single_cells()
+#' sc <- forceatlas2_sc(sc, .verbose = FALSE)
+#' sc <- forceatlas2_sc(
+#'   sc,
+#'   graph = "snn",
+#'   slot_name = "fa2_snn",
+#'   .verbose = FALSE
+#' )
+#' dim(get_embedding(sc, "fa2_snn"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+forceatlas2_sc <- S7::new_generic(
+  name = "forceatlas2_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    graph = c("knn", "snn"),
+    use_knn = TRUE,
+    embd_to_use = "pca",
+    slot_name = "fa2",
+    no_embd_to_use = NULL,
+    init_embd = NULL,
+    modality = c("rna", "adt", "wnn"),
+    k = 15L,
+    knn_method = c(
+      "kmknn",
+      "hnsw",
+      "balltree",
+      "annoy",
+      "nndescent",
+      "exhaustive"
+    ),
+    nn_params = manifoldsR::params_nn(),
+    fa2_params = manifoldsR::params_fa2(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+S7::method(forceatlas2_sc, ScOrMc) <- function(
+  object,
+  graph = c("knn", "snn"),
+  use_knn = TRUE,
+  embd_to_use = "pca",
+  slot_name = "fa2",
+  no_embd_to_use = NULL,
+  init_embd = NULL,
+  modality = c("rna", "adt", "wnn"),
+  k = 15L,
+  knn_method = c(
+    "kmknn",
+    "hnsw",
+    "balltree",
+    "annoy",
+    "nndescent",
+    "exhaustive"
+  ),
+  nn_params = manifoldsR::params_nn(),
+  fa2_params = manifoldsR::params_fa2(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  graph <- match.arg(graph)
+  modality <- match.arg(modality)
+  knn_method <- match.arg(knn_method)
+
+  # checks
+  checkmate::qassert(slot_name, "S1")
+  checkmate::qassert(init_embd, c("0", "S1"))
+  checkmate::qassert(k, "I1[2,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  if (graph == "knn") {
+    if (!is.null(init_embd)) {
+      warning("`init_embd` only applies to graph = 'snn'. Ignoring it.")
+    }
+
+    inputs <- .manifold_inputs(
+      object = object,
+      use_knn = use_knn,
+      embd_to_use = embd_to_use,
+      no_embd_to_use = no_embd_to_use,
+      modality = modality
+    )
+
+    if (.verbose) {
+      message("Running ForceAtlas2 on the kNN graph.")
+    }
+
+    fa2_embd <- manifoldsR::forceatlas2(
+      data = inputs$embd,
+      knn = inputs$knn,
+      k = k,
+      knn_method = knn_method,
+      nn_params = nn_params,
+      fa2_params = fa2_params,
+      seed = seed,
+      .verbose = .verbose
+    )
+
+    from <- .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = inputs$cache_modality,
+      modality = modality,
+      has_knn = !is.null(inputs$knn)
+    )
+  } else {
+    checkmate::assertTRUE(
+      S7::S7_inherits(object, SingleCells) ||
+        S7::S7_inherits(object, MetaCells) ||
+        S7::S7_inherits(object, SingleCellsSubset)
+    )
+    if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+      stop(sprintf(
+        "modality = '%s' is only supported for SingleCellsMultiModal.",
+        modality
+      ))
+    }
+
+    # the graph and the init both live under the write modality, wnn included
+    assert_sc_state(object, artefacts = "snn", modality = modality)
+    snn_graph <- get_snn_graph(object, modality = modality)
+    if (is.null(snn_graph)) {
+      stop("No sNN graph found. Run find_neighbours_sc() first.")
+    }
+
+    init <- NULL
+    if (!is.null(init_embd)) {
+      assert_sc_state(object, artefacts = init_embd, modality = modality)
+      init <- get_embedding(
+        x = object,
+        embd_name = init_embd,
+        modality = modality
+      )
+    }
+
+    if (.verbose) {
+      message("Running ForceAtlas2 on the sNN graph.")
+    }
+
+    fa2_embd <- manifoldsR::forceatlas2_from_graph(
+      graph = snn_graph,
+      init = init,
+      fa2_params = fa2_params,
+      seed = seed,
+      .verbose = .verbose
+    )
+
+    from <- c(
+      sprintf("%s:snn", modality),
+      if (!is.null(init_embd)) sprintf("%s:%s", modality, init_embd) else NULL
+    )
+  }
+
+  .store_manifold(
+    object = object,
+    embd = fa2_embd,
+    prefix = "fa2",
+    slot_name = slot_name,
+    modality = modality,
+    from = from
+  )
 }
 
 ## feature extraction ----------------------------------------------------------

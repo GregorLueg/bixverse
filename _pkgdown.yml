@@ -697,8 +697,11 @@ reference:
     contents:
       - sc_knn_to_nearest_neighbours
       - umap_sc
+      - densmap_sc
       - tsne_sc
+      - densne_sc
       - phate_sc
+      - forceatlas2_sc
       - extract_dot_plot_data
       - extract_gene_expression
       - extract_embedding_data
