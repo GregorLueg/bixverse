@@ -2,29 +2,26 @@
 % Please edit documentation in R/methods_sc_io.R
 \name{.dispatch_gene_based_data}
 \alias{.dispatch_gene_based_data}
-\title{Dispatch CSR-to-CSC generation based on streaming level}
+\title{Generate the gene-based binary from the cell-based one}
 \usage{
 .dispatch_gene_based_data(
   rust_con,
-  streaming,
-  batch_size,
-  max_genes_in_memory,
-  cell_batch_size,
+  csc_mem_gb,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose
 )
 }
 \arguments{
 \item{rust_con}{The Rust count connector.}
 
-\item{streaming}{Integer. \code{0L} for in-memory, \code{1L} for light streaming,
-\code{2L} for heavy streaming with memory upper boundaries.}
+\item{csc_mem_gb}{Optional numeric. Memory in GB for the conversion buffers.
+\code{NULL} converts in one pass.}
 
-\item{batch_size}{Integer. Batch size for light streaming.}
-
-\item{max_genes_in_memory}{Integer. Genes held in memory at once for
-heavy streaming.}
-
-\item{cell_batch_size}{Integer. Cell batch size for heavy streaming.}
+\item{streaming, batch_size, max_genes_in_memory, cell_batch_size}{Retired
+arguments, forwarded from the caller only to warn if they were supplied.}
 
 \item{.verbose}{Boolean.}
 }
@@ -32,8 +29,7 @@ heavy streaming.}
 Invisible NULL. Side effect is the gene-based binary file.
 }
 \description{
-Internal helper to keep the streaming dispatch consistent across all loaders.
-Validates the streaming level and routes to the appropriate Rust method on
-the count connector.
+Internal helper so every loader runs the CSR to CSC conversion, and warns
+about the retired streaming arguments, the same way.
 }
 \keyword{internal}

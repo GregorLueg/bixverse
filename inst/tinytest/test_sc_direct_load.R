@@ -30,8 +30,7 @@ sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
 sc_object <- sc_test_object(
   test_temp_dir,
   single_cell_test_data,
-  sc_qc_param = sc_qc_param,
-  streaming = 1L
+  sc_qc_param = sc_qc_param
 )
 
 # do a filtering on the obs column

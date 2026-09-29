@@ -307,6 +307,50 @@ prescan_h5ad_files <- function(
 
 ### dimensions -----------------------------------------------------------------
 
+#' Number of rows of an h5ad dataframe group
+#'
+#' @description
+#' Reads the length of the index named by the `_index` attribute. The index is
+#' a plain dataset for older writers, or a group holding `values` (nullable
+#' strings, as written with pandas >= 3) or `codes` (categoricals). Files
+#' without an `_index` attribute fall back to the first plain dataset in the
+#' group.
+#'
+#' @param f_path File path to the `.h5ad` file.
+#' @param h5_content data.table. Output of `rhdf5::h5ls()` on `f_path`.
+#' @param group String. One of `"/obs"` or `"/var"`.
+#'
+#' @returns The number of rows as numeric, `NA` if it cannot be resolved.
+#'
+#' @keywords internal
+.h5ad_frame_length <- function(f_path, h5_content, group) {
+  checkmate::assertFileExists(f_path)
+  checkmate::assertDataTable(h5_content)
+  checkmate::assertChoice(group, c("/obs", "/var"))
+
+  frame <- group
+  index_name <- rhdf5::h5readAttributes(f_path, frame)[["_index"]]
+
+  if (is.null(index_name)) {
+    return(h5_content[
+      group == frame & otype == "H5I_DATASET"
+    ][1, as.numeric(dim)])
+  }
+
+  index_path <- paste0(frame, "/", index_name)
+  index_row <- h5_content[group == frame & name == index_name]
+
+  if (nrow(index_row) == 1L && index_row$otype == "H5I_DATASET") {
+    return(as.numeric(index_row$dim))
+  }
+
+  h5_content[
+    group == index_path &
+      name %in% c("values", "codes") &
+      otype == "H5I_DATASET"
+  ][1, as.numeric(dim)]
+}
+
 #' Helper function to get the dimensions and storage format
 #'
 #' Distinguishes sparse (`CSR`/`CSC`) from dense storage. For dense `X` the
@@ -339,13 +383,8 @@ get_h5ad_dimensions <- function(f_path) {
 
   on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
 
-  no_obs <- h5_content[
-    group == "/obs" & otype == "H5I_DATASET"
-  ][1, as.numeric(dim)]
-
-  no_var <- h5_content[
-    group == "/var" & otype == "H5I_DATASET"
-  ][1, as.numeric(dim)]
+  no_obs <- .h5ad_frame_length(f_path, h5_content, "/obs")
+  no_var <- .h5ad_frame_length(f_path, h5_content, "/var")
 
   x_row <- h5_content[group == "/" & name == "X"]
 
@@ -361,7 +400,14 @@ get_h5ad_dimensions <- function(f_path) {
     if (length(indptr) == 0L) {
       stop("/X is a group but contains no indptr dataset.")
     }
-    ifelse(no_var + 1 == indptr, "CSC", "CSR")
+    encoding <- rhdf5::h5readAttributes(f_path, "X")[["encoding-type"]]
+    if (identical(encoding, "csr_matrix")) {
+      "CSR"
+    } else if (identical(encoding, "csc_matrix")) {
+      "CSC"
+    } else {
+      ifelse(no_var + 1 == indptr, "CSC", "CSR")
+    }
   } else {
     # h5ls dim is R-view; read native order directly
     fid <- rhdf5::H5Fopen(f_path)

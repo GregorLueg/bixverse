@@ -294,7 +294,6 @@ sc_denoised <- cellsweep_sc(
     method = "supplied",
     is_empty_column = "is_empty"
   ),
-  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -406,7 +405,6 @@ sc_inferred <- cellsweep_sc(
     method = "umi_cutoff",
     umi_cutoff = 500L
   ),
-  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -503,7 +501,6 @@ sc_filtered <- load_r_data(
     min_lib_size = 500L,
     min_cells = 0L
   ),
-  streaming = 0L,
   .verbose = FALSE
 )
 

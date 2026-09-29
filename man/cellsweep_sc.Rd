@@ -12,10 +12,11 @@ cellsweep_sc(
   empty_params,
   cellsweep_params = params_sc_cellsweep(),
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 }
@@ -40,14 +41,13 @@ name of the obs column holding the mask.}
 \item{sc_qc_param}{List. See \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}. Only \code{target_size} is
 used, to scale the new normalised layer.}
 
-\item{streaming}{Integer. \code{0L} in-memory, \code{1L} light streaming (default) or
-\code{2L} memory-bounded, for the CSR to CSC conversion.}
+\item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.}
 
-\item{batch_size}{Integer. Cells per batch for \code{streaming = 1L}.}
-
-\item{max_genes_in_memory}{Integer. Genes held at once for \code{streaming = 2L}.}
-
-\item{cell_batch_size}{Integer. Cells per batch for \code{streaming = 2L}.}
+\item{streaming, batch_size, max_genes_in_memory, cell_batch_size}{Replaced by
+\code{csc_mem_gb} and ignored. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed

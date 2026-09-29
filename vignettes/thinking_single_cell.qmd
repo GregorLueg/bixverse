@@ -86,7 +86,6 @@ sc_object <- load_r_data(
     min_cells = 0L,
     target_size = 1e3 # target size of 1000
   ),
-  streaming = 0L,
   .verbose = TRUE
 )
 
@@ -138,7 +137,6 @@ sc_object <- load_r_data(
     min_cells = 500L, # the data is weird and a lot cells express genes
     target_size = 1e3 # target size of 1000
   ),
-  streaming = 0L,
   .verbose = TRUE
 )
 

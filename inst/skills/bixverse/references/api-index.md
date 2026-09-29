@@ -527,8 +527,11 @@ Various helpers that generate data for plotting single cell, such as 2D embeddin
 
 - `sc_knn_to_nearest_neighbours`: Convert SingleCellNearestNeighbour to manifoldsR NearestNeighbours
 - `umap_sc`: Run UMAP on a SingleCells/MetaCells object
+- `densmap_sc`: Run densMAP on a SingleCells/MetaCells object
 - `tsne_sc`: Run t-SNE on a SingleCells/MetaCells object
+- `densne_sc`: Run den-SNE on a SingleCells/MetaCells object
 - `phate_sc`: Run PHATE on a SingleCells/MetaCells object
+- `forceatlas2_sc`: Run ForceAtlas2 on a SingleCells/MetaCells object
 - `extract_dot_plot_data`: Extract grouped gene statistics for dot plots
 - `extract_gene_expression`: Extract normalised gene expression for plotting
 - `extract_embedding_data`: Extract embedding coordinates for plotting

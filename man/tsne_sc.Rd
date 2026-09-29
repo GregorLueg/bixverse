@@ -13,7 +13,7 @@ tsne_sc(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10,
-  approx_type = c("bh", "fft"),
+  approx_type = c("bh", "fft", "fft_3k"),
   knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
@@ -25,7 +25,7 @@ tsne_sc(
 \item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
-\code{TRUE}. If not available, will default to the embedding.}
+\code{FALSE}. If not available, will default to the embedding.}
 
 \item{embd_to_use}{String. The embedding to use for t-SNE. Must be available
 in the object.}
@@ -36,7 +36,7 @@ Defaults to \code{"tsne"}.}
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
 
-\item{modality}{String. On which modality to run the UMAP. One of
+\item{modality}{String. On which modality to run the t-SNE. One of
 \code{c("rna", "adt", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
 
@@ -44,10 +44,10 @@ multi-modal versions with the added data.}
 supported. Defaults to \code{2L}.}
 
 \item{perplexity}{Numeric. Perplexity parameter. Typical values between 5
-and 50. Defaults to \code{30.0}.}
+and 50. Defaults to \code{10.0}.}
 
-\item{approx_type}{String. Approximation method. One of \code{"bh"} (Barnes-Hut)
-or \code{"fft"}. Defaults to \code{"bh"}.}
+\item{approx_type}{String. Approximation method. One of \code{"bh"} (Barnes-Hut),
+\code{"fft"} or \code{"fft_3k"}. Defaults to \code{"bh"}.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
 \code{"hnsw"}, \code{"balltree"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
@@ -71,21 +71,24 @@ be over-interpreted quantitatively, but the common claim that t-SNE discards
 global structure while UMAP preserves it is largely an artefact of default
 initialisations rather than a property of the loss functions themselves.
 
-When \code{use_knn = FALSE} (the default), the kNN graph already stored on the
-object is reused. Otherwise neighbours are computed from the chosen
+When \code{use_knn = TRUE}, the kNN graph already stored on the object is reused.
+With \code{use_knn = FALSE} (the default), neighbours are computed from the chosen
 embedding.
 
-Two approximation strategies are available via \code{approx_type}: \code{"bh"}
+Three approximation strategies are available via \code{approx_type}: \code{"bh"}
 (Barnes-Hut) is the classical O(n log n) approximation and works well
 across a wide range of dataset sizes; \code{"fft"} (interpolation-based, as in
-FIt-SNE) scales better to very large datasets. \code{perplexity} controls the
-bandwidth of the Gaussian kernel used to compute affinities within the
-neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
-\code{use_knn = TRUE}, perplexity no longer drives neighbour retrieval but still
-shapes the affinity distribution over the retrieved neighbours; values too
-close to the kNN size will produce poor results. With tSNE in particular the
-rule of thumb is to set k to \code{3 * perplexity}. When `k ≤ perplexity`` the
-algorithm does not behave properly anymore, thus, will throw an error.
+FIt-SNE) scales better to very large datasets; \code{"fft_3k"} is the
+three-kernel variant of the latter, with one forward and three inverse FFTs
+per epoch instead of four each. The FFT options are only available on Unix
+systems. \code{perplexity} controls the bandwidth of the Gaussian kernel used to
+compute affinities within the neighbour set (typical values 5-50). When a
+pre-computed kNN is supplied via \code{use_knn = TRUE}, perplexity no longer
+drives neighbour retrieval but still shapes the affinity distribution over
+the retrieved neighbours; values too close to the kNN size will produce poor
+results. With tSNE in particular the rule of thumb is to set k to
+\code{3 * perplexity}. When \code{k <= perplexity} the algorithm does not behave
+properly anymore, thus, will throw an error.
 }
 \examples{
 # Barnes-Hut t-SNE on the PCA factors

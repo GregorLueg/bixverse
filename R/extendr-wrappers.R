@@ -7096,57 +7096,15 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
+#'\item{`max_mem_gb`}{(`numeric` or `NULL`)\cr Memory for the conversion buffers in GB, at 10 bytes per non-zero. `NULL` converts in a single phase.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{description}{
 #'Reads the `.bin` file at `f_path_cells` and writes a gene-friendly
-#'(CSC) representation to `f_path_genes`. The conversion happens fully
-#'in memory and may cause memory pressure on large data sets; see
-#'`generate_gene_based_data_streaming` or
-#'`generate_gene_based_data_memory_bounded` for lighter alternatives.
-#'
-#'}
-#' \subsection{returns}{
-#'Invisible `NULL`.
-#'}
-#'}
-#'
-#'\subsection{Method `generate_gene_based_data_streaming`}{
-#'Generate gene-based data with streaming
-#'
-#' \subsection{Arguments}{
-#'\describe{
-#'\item{`batch_size`}{(`integer`)\cr Number of cells processed per batch. Larger values increase memory pressure but reduce overhead.}
-#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
-#'}}
-#' \subsection{description}{
-#'Builds the CSC representation directly without creating intermediate
-#'CSR structures. Suitable for very large data sets where the all-in-
-#'memory path is too costly.
-#'
-#'}
-#' \subsection{returns}{
-#'Invisible `NULL`.
-#'}
-#'}
-#'
-#'\subsection{Method `generate_gene_based_data_memory_bounded`}{
-#'Generate gene-based data with memory-bounded accumulation
-#'
-#' \subsection{Arguments}{
-#'\describe{
-#'\item{`max_genes_in_memory`}{(`integer`)\cr Maximum number of genes to accumulate at once (e.g. `2000`).}
-#'\item{`cell_batch_size`}{(`integer`)\cr Number of cells to process at once (e.g. `100000`).}
-#'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
-#'}}
-#' \subsection{description}{
-#'Processes genes in phases to cap memory usage. Each phase:
-#'\enumerate{
-#'\item reads all cells (unavoidable for CSC conversion);
-#'\item only accumulates data for genes in the current phase;
-#'\item writes those genes to disk;
-#'\item clears memory and moves to the next phase.
-#'}
+#'(CSC) representation to `f_path_genes`. A parallel counting-sort
+#'transpose: one pass counts the non-zeros per gene, then genes are
+#'converted in phases that fit `max_mem_gb`. Each phase re-reads the
+#'cell file, so a tighter budget trades time for memory.
 #'
 #'}
 #' \subsection{returns}{
@@ -7262,11 +7220,7 @@ SingleCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Cal
 
 SingleCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_cells_by_indices, self, indices, assay)
 
-SingleCellCountData$generate_gene_based_data <- function(verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data, self, verbose)
-
-SingleCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose)
-
-SingleCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes_in_memory, cell_batch_size, verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data_memory_bounded, self, max_genes_in_memory, cell_batch_size, verbose)
+SingleCellCountData$generate_gene_based_data <- function(max_mem_gb, verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data, self, max_mem_gb, verbose)
 
 SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_genes_by_indices, self, indices, assay)
 

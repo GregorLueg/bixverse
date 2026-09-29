@@ -196,19 +196,16 @@ prescan_mtx_dirs <- function(
 
 ### CSR to CSC conversion ------------------------------------------------------
 
-#' Dispatch CSR-to-CSC generation based on streaming level
+#' Generate the gene-based binary from the cell-based one
 #'
-#' Internal helper to keep the streaming dispatch consistent across all loaders.
-#' Validates the streaming level and routes to the appropriate Rust method on
-#' the count connector.
+#' Internal helper so every loader runs the CSR to CSC conversion, and warns
+#' about the retired streaming arguments, the same way.
 #'
 #' @param rust_con The Rust count connector.
-#' @param streaming Integer. `0L` for in-memory, `1L` for light streaming,
-#' `2L` for heavy streaming with memory upper boundaries.
-#' @param batch_size Integer. Batch size for light streaming.
-#' @param max_genes_in_memory Integer. Genes held in memory at once for
-#' heavy streaming.
-#' @param cell_batch_size Integer. Cell batch size for heavy streaming.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the conversion buffers.
+#' `NULL` converts in one pass.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Retired
+#' arguments, forwarded from the caller only to warn if they were supplied.
 #' @param .verbose Boolean.
 #'
 #' @returns Invisible NULL. Side effect is the gene-based binary file.
@@ -216,45 +213,41 @@ prescan_mtx_dirs <- function(
 #' @keywords internal
 .dispatch_gene_based_data <- function(
   rust_con,
-  streaming,
-  batch_size,
-  max_genes_in_memory,
-  cell_batch_size,
+  csc_mem_gb,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose
 ) {
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
-  checkmate::qassert(batch_size, "I1")
-  checkmate::qassert(max_genes_in_memory, "I1")
-  checkmate::qassert(cell_batch_size, "I1")
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
-  if (streaming == 0L) {
-    if (.verbose) {
-      message(" Loading data directly into memory for CSR to CSC conversion.")
-    }
-    rust_con$generate_gene_based_data(verbose = .verbose)
-  } else if (streaming == 1L) {
-    if (.verbose) {
-      message(" Using light streaming for the CSR to CSC conversion.")
-    }
-    rust_con$generate_gene_based_data_streaming(
-      batch_size = batch_size,
-      verbose = .verbose
-    )
-  } else {
-    if (.verbose) {
-      message(paste(
-        " Using heavy streaming with reduced memory",
-        "pressure for the CSR to CSC conversion."
-      ))
-    }
-    rust_con$generate_gene_based_data_memory_bounded(
-      max_genes_in_memory = max_genes_in_memory,
-      cell_batch_size = cell_batch_size,
-      verbose = .verbose
+  supplied <- c(
+    streaming = lifecycle::is_present(streaming),
+    batch_size = lifecycle::is_present(batch_size),
+    max_genes_in_memory = lifecycle::is_present(max_genes_in_memory),
+    cell_batch_size = lifecycle::is_present(cell_batch_size)
+  )
+  if (any(supplied)) {
+    deprecate_warn(
+      "0.5.4",
+      I(sprintf(
+        "The %s argument(s) of the count loaders",
+        paste0("`", names(supplied)[supplied], "`", collapse = ", ")
+      )),
+      details = paste(
+        "The CSR to CSC conversion is bounded by `csc_mem_gb` instead.",
+        "The old arguments are ignored."
+      ),
+      always = TRUE
     )
   }
+
+  if (.verbose) {
+    message(" Converting the cell-based data into the gene-based format.")
+  }
+  rust_con$generate_gene_based_data(max_mem_gb = csc_mem_gb, verbose = .verbose)
 
   invisible(NULL)
 }
@@ -281,15 +274,12 @@ prescan_mtx_dirs <- function(
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
-#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory
-#' (fastest, highest memory), `1L` -> light streaming with cell batching,
-#' `2L` -> heavy streaming with memory upper boundaries. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns It will populate the files on disk and return the class with updated
@@ -317,7 +307,6 @@ prescan_mtx_dirs <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -331,10 +320,11 @@ load_seurat <- S7::new_generic(
     object,
     seurat,
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -346,18 +336,18 @@ S7::method(load_seurat, SingleCells) <- function(
   object,
   seurat,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertClass(seurat, "Seurat")
   assertScMinQCParams(sc_qc_param)
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   if (.verbose) {
@@ -389,6 +379,7 @@ S7::method(load_seurat, SingleCells) <- function(
     obs = obs_dt,
     var = var_dt,
     sc_qc_param = sc_qc_param,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -548,15 +539,12 @@ S7::method(load_seurat, SingleCells) <- function(
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
-#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory
-#' (fastest, highest memory), `1L` -> light streaming with cell batching,
-#' `2L` -> heavy streaming with memory upper boundaries. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns It will populate the files on disk and return the class with updated
@@ -585,7 +573,6 @@ S7::method(load_seurat, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -600,10 +587,11 @@ load_sce <- S7::new_generic(
     sce,
     assay_name = "counts",
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -616,10 +604,11 @@ S7::method(load_sce, SingleCells) <- function(
   sce,
   assay_name = "counts",
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   # checks
@@ -636,8 +625,7 @@ S7::method(load_sce, SingleCells) <- function(
   checkmate::assertClass(sce, "SingleCellExperiment")
   checkmate::qassert(assay_name, "S1")
   assertScMinQCParams(sc_qc_param)
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   available <- SummarizedExperiment::assayNames(sce)
@@ -694,6 +682,7 @@ S7::method(load_sce, SingleCells) <- function(
     obs = tables$obs,
     var = tables$var,
     sc_qc_param = sc_qc_param,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -728,15 +717,12 @@ S7::method(load_sce, SingleCells) <- function(
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
-#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory
-#' (fastest, highest memory), `1L` -> light streaming with cell batching,
-#' `2L` -> heavy streaming with memory upper boundaries. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns It will populate the files on disk and return the class with updated
@@ -761,7 +747,6 @@ S7::method(load_sce, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -776,10 +761,11 @@ load_r_data <- S7::new_generic(
     obs,
     var,
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -793,10 +779,11 @@ S7::method(load_r_data, SingleCells) <- function(
   obs,
   var,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   # checks
@@ -806,8 +793,7 @@ S7::method(load_r_data, SingleCells) <- function(
   no_genes <- ncol(counts)
   checkmate::assertDataTable(obs, nrows = no_cells)
   checkmate::assertDataTable(var, nrows = no_genes)
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   if (.verbose) {
@@ -830,6 +816,7 @@ S7::method(load_r_data, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -900,19 +887,18 @@ S7::method(load_r_data, SingleCells) <- function(
 #' }
 #' @param cell_id_col Optional string. If a specific column in the h5ad obs
 #' data is representing the cell identifiers, you can specify it here.
-#' @param streaming Integer. `0L` -> all cells loaded in memory then transposed
-#' (fastest, highest memory), `1L` -> light streaming with cell batching, `2L`
-#' -> heavy streaming with memory upper boundaries on the gene side. Controls
-#' memory pressure during the CSR-to-CSC conversion. Defaults to `1L`.
 #' @param raw_count_slot Where raw counts live. `"auto"` detects per file via
 #' [detect_raw_count_slot()]; otherwise one of `"X"`, `"raw.X"`,
 #' `"layers.counts"`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param h5ad_streaming Boolean. Stream the h5ad counts into the cell-based
+#' binary in batches instead of materialising the filtered matrix first.
+#' Recommended for large files. Defaults to `TRUE`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns It will populate the files on disk and return the class with updated
@@ -937,7 +923,6 @@ S7::method(load_r_data, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -950,12 +935,14 @@ load_h5ad <- S7::new_generic(
     object,
     h5_path,
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
     raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
     cell_id_col = NULL,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    h5ad_streaming = TRUE,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -972,12 +959,14 @@ S7::method(load_h5ad, SingleCells) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
   raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   cell_id_col = NULL,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  h5ad_streaming = TRUE,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   raw_count_slot <- match.arg(raw_count_slot)
@@ -985,15 +974,12 @@ S7::method(load_h5ad, SingleCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMinQCParams(sc_qc_param)
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(h5ad_streaming, "B1")
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::assertChoice(
     raw_count_slot,
     c("auto", "X", "raw.X", "layers.counts")
   )
-  checkmate::qassert(batch_size, "I1")
-  checkmate::qassert(max_genes_in_memory, "I1")
-  checkmate::qassert(cell_batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
 
   raw_count_slot <- if (raw_count_slot == "auto") {
@@ -1015,7 +1001,13 @@ S7::method(load_h5ad, SingleCells) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  file_res <- rust_con$h5ad_to_file(
+  h5ad_to_file <- if (h5ad_streaming) {
+    rust_con$h5ad_to_file_streaming
+  } else {
+    rust_con$h5ad_to_file
+  }
+
+  file_res <- h5ad_to_file(
     cs_type = h5_meta$type,
     h5_path = h5_path,
     no_cells = h5_meta$dims["obs"],
@@ -1027,6 +1019,7 @@ S7::method(load_h5ad, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -1092,15 +1085,12 @@ S7::method(load_h5ad, SingleCells) <- function(
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
 #' @param cell_id_col Optional string. If a specific column in the h5ad obs
 #' data represents the cell identifiers, you can specify it here.
-#' @param streaming Integer. `0L` -> in-memory, `1L` -> light streaming, `2L`
-#' -> heavy streaming with memory upper boundaries. Controls memory pressure
-#' during CSR-to-CSC conversion. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns It will populate the files on disk and return the class with updated
@@ -1134,7 +1124,6 @@ S7::method(load_h5ad, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -1149,11 +1138,12 @@ load_h5ad_norm <- S7::new_generic(
     obs_lib_size_col,
     target_size,
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
     cell_id_col = NULL,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1172,19 +1162,19 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
   obs_lib_size_col,
   target_size,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
   cell_id_col = NULL,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMinQCParams(sc_qc_param)
   checkmate::qassert(obs_lib_size_col, "S1")
   checkmate::qassert(target_size, "N1")
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   h5_path <- path.expand(h5_path)
@@ -1206,6 +1196,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -1253,10 +1244,8 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' Stream in h5ad to `SingleCells` (alias)
 #'
 #' @description
-#' Convenience alias for `load_h5ad(streaming = 2L)`. Kept for backwards
-#' compatibility - forwards directly to [bixverse::load_h5ad()] with heavy
-#' streaming enabled. Prefer calling `load_h5ad` directly with an explicit
-#' `streaming` level.
+#' Convenience alias for `load_h5ad(h5ad_streaming = TRUE)`. Kept for
+#' backwards compatibility. Prefer calling [bixverse::load_h5ad()] directly.
 #'
 #' @param object `SingleCells` class.
 #' @param h5_path File path to the h5ad object.
@@ -1264,9 +1253,12 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' @param raw_count_slot Where raw counts live. `"auto"` detects per file via
 #' [detect_raw_count_slot()]; otherwise one of `"X"`, `"raw.X"`,
 #' `"layers.counts"`.
-#' @param max_genes_in_memory Integer. Genes held in memory at once. Defaults
-#' to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size. Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns The class with updated shape information.
@@ -1274,7 +1266,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' @export
 #'
 #' @examples
-#' # same as load_h5ad(streaming = 2L)
+#' # same as load_h5ad(h5ad_streaming = TRUE)
 #' data <- generate_single_cell_test_data(
 #'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
 #' )
@@ -1303,8 +1295,11 @@ stream_h5ad <- S7::new_generic(
     h5_path,
     sc_qc_param = params_sc_min_quality(),
     raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1319,8 +1314,11 @@ S7::method(stream_h5ad, SingleCells) <- function(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   load_h5ad(
@@ -1328,7 +1326,10 @@ S7::method(stream_h5ad, SingleCells) <- function(
     h5_path = h5_path,
     sc_qc_param = sc_qc_param,
     raw_count_slot = raw_count_slot,
-    streaming = 2L,
+    h5ad_streaming = TRUE,
+    csc_mem_gb = csc_mem_gb,
+    streaming = streaming,
+    batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
     cell_batch_size = cell_batch_size,
     .verbose = .verbose
@@ -1348,14 +1349,12 @@ S7::method(stream_h5ad, SingleCells) <- function(
 #' @param prescan_result Output of [bixverse::prescan_h5ad_files()].
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
 #' @param cell_id_col Optional string. Column name for cell identifiers in obs.
-#' @param streaming Integer. `0L` -> in-memory, `1L` -> light streaming, `2L`
-#' -> heavy streaming with memory upper boundaries. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns The class with updated shape and populated DuckDB.
@@ -1386,7 +1385,6 @@ S7::method(stream_h5ad, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' table(sc[["exp_id"]])
@@ -1400,10 +1398,11 @@ load_multi_h5ad <- S7::new_generic(
     prescan_result,
     sc_qc_param = params_sc_min_quality(),
     cell_id_col = NULL,
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1418,10 +1417,11 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
   prescan_result,
   sc_qc_param = params_sc_min_quality(),
   cell_id_col = NULL,
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -1431,8 +1431,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
     c("universe", "universe_size", "file_tasks") %in%
       names(prescan_result)
   ))
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   rust_con <- get_sc_rust_ptr(object)
@@ -1446,6 +1445,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -1518,15 +1518,12 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 #' @param mtx_streaming Boolean. Shall the .mtx file ingestion itself be
 #' streamed (via temp-file bucketing). Recommended for large mtx files.
 #' Defaults to `TRUE`.
-#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
-#' `1L` -> light streaming, `2L` -> heavy streaming with memory upper
-#' boundaries. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns The class with updated shape information.
@@ -1561,7 +1558,6 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -1575,10 +1571,11 @@ load_mtx <- S7::new_generic(
     sc_mtx_io_param = params_sc_mtx_io(),
     sc_qc_param = params_sc_min_quality(),
     mtx_streaming = TRUE,
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1596,18 +1593,18 @@ S7::method(load_mtx, SingleCells) <- function(
   sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
   mtx_streaming = TRUE,
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
   assertScMtxIOParams(sc_mtx_io_param)
   assertScMinQCParams(sc_qc_param)
   checkmate::qassert(mtx_streaming, "B1")
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   rust_con <- get_sc_rust_ptr(object)
@@ -1636,6 +1633,7 @@ S7::method(load_mtx, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -1697,15 +1695,12 @@ S7::method(load_mtx, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param prescan_result Output of [bixverse::prescan_mtx_dirs()].
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
-#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
-#' `1L` -> light streaming, `2L` -> heavy streaming with memory upper
-#' boundaries. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns The class with updated shape and populated DuckDB.
@@ -1747,7 +1742,6 @@ S7::method(load_mtx, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -1764,10 +1758,11 @@ load_multi_mtx <- S7::new_generic(
     object,
     prescan_result,
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1781,10 +1776,11 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   object,
   prescan_result,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -1794,8 +1790,7 @@ S7::method(load_multi_mtx, SingleCells) <- function(
     c("universe", "universe_size", "file_tasks", "temp_files") %in%
       names(prescan_result)
   ))
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   on.exit(
@@ -1825,6 +1820,7 @@ S7::method(load_multi_mtx, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -1892,14 +1888,12 @@ S7::method(load_multi_mtx, SingleCells) <- function(
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
 #' @param feature_type String. Modality to keep. Defaults to
 #' `"Gene Expression"`. Ignored for v2 (single modality).
-#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
-#' `1L` -> light streaming, `2L` -> heavy streaming. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
-#' to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
-#' when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns The class with updated shape information.
@@ -1933,7 +1927,6 @@ S7::method(load_multi_mtx, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -1947,10 +1940,11 @@ load_tenx_h5 <- S7::new_generic(
     h5_path,
     sc_qc_param = params_sc_min_quality(),
     feature_type = "Gene Expression",
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1965,17 +1959,17 @@ S7::method(load_tenx_h5, SingleCells) <- function(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   feature_type = "Gene Expression",
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMinQCParams(sc_qc_param)
   checkmate::qassert(feature_type, c("S1", "0"))
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   h5_path <- path.expand(h5_path)
@@ -1995,6 +1989,7 @@ S7::method(load_tenx_h5, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
@@ -2053,15 +2048,12 @@ S7::method(load_tenx_h5, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param prescan_result Output of [bixverse::prescan_tenx_h5_files()].
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
-#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
-#' `1L` -> light streaming, `2L` -> heavy streaming with memory upper
-#' boundaries. Defaults to `1L`.
-#' @param batch_size Integer. Cell batch size when `streaming = 1L`.
-#' Defaults to `1000L`.
-#' @param max_genes_in_memory Integer. Maximum genes held in memory at
-#' once when `streaming = 2L`. Defaults to `2000L`.
-#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
-#' Defaults to `100000L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns The class with updated shape and populated DuckDB.
@@ -2102,7 +2094,6 @@ S7::method(load_tenx_h5, SingleCells) <- function(
 #'     min_lib_size = 25L,
 #'     min_cells = 5L
 #'   ),
-#'   streaming = 0L,
 #'   .verbose = FALSE
 #' )
 #' dim(sc)
@@ -2115,10 +2106,11 @@ load_multi_tenx_h5 <- S7::new_generic(
     object,
     prescan_result,
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -2132,10 +2124,11 @@ S7::method(load_multi_tenx_h5, SingleCells) <- function(
   object,
   prescan_result,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -2144,8 +2137,7 @@ S7::method(load_multi_tenx_h5, SingleCells) <- function(
   checkmate::assertTRUE(all(
     c("universe", "universe_size", "file_tasks") %in% names(prescan_result)
   ))
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   rust_con <- get_sc_rust_ptr(object)
@@ -2159,6 +2151,7 @@ S7::method(load_multi_tenx_h5, SingleCells) <- function(
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,

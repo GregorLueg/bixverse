@@ -9,10 +9,11 @@ load_multi_h5ad(
   prescan_result,
   sc_qc_param = params_sc_min_quality(),
   cell_id_col = NULL,
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 }
@@ -25,17 +26,13 @@ load_multi_h5ad(
 
 \item{cell_id_col}{Optional string. Column name for cell identifiers in obs.}
 
-\item{streaming}{Integer. \code{0L} -> in-memory, \code{1L} -> light streaming, \code{2L}
--> heavy streaming with memory upper boundaries. Defaults to \code{1L}.}
+\item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.}
 
-\item{batch_size}{Integer. Cell batch size when \code{streaming = 1L}. Defaults
-to \code{1000L}.}
-
-\item{max_genes_in_memory}{Integer. Maximum genes held in memory at once
-when \code{streaming = 2L}. Defaults to \code{2000L}.}
-
-\item{cell_batch_size}{Integer. Cell batch size when \code{streaming = 2L}.
-Defaults to \code{100000L}.}
+\item{streaming, batch_size, max_genes_in_memory, cell_batch_size}{Replaced by
+\code{csc_mem_gb} and ignored. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
 \item{.verbose}{Boolean.}
 }
@@ -71,7 +68,6 @@ sc <- load_multi_h5ad(
     min_lib_size = 25L,
     min_cells = 5L
   ),
-  streaming = 0L,
   .verbose = FALSE
 )
 table(sc[["exp_id"]])

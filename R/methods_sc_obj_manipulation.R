@@ -33,16 +33,12 @@
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
 #' Only `target_size` is consulted here; no QC filtering is applied during
 #' merge.
-#' @param streaming Integer. `0` -> no streaming, `1` -> light streaming, `2` ->
-#' heavy streaming with memory upper boundaries. This enables you to control
-#' the memory pressure during ingestion.
-#' @param batch_size Integer. Batch size when `streaming = 1L`.
-#' @param max_genes_in_memory Integer. How many genes shall be held in memory
-#' at a given point. Defaults to `2000L`. Only relevant if streaming is set to
-#' `2`.
-#' @param cell_batch_size Integer. How big are the batch sizes for the cells
-#' in the transformation from the cell-based to gene-based format. Defaults to
-#' `100000L`. Only relevant if streaming is set to `2`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean.
 #'
 #' @returns The populated target `SingleCells`.
@@ -80,10 +76,11 @@ merge_sc_experiments <- S7::new_generic(
     exp_ids,
     renormalise = FALSE,
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -99,10 +96,11 @@ S7::method(merge_sc_experiments, SingleCells) <- function(
   exp_ids,
   renormalise = FALSE,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   # checks
@@ -114,9 +112,7 @@ S7::method(merge_sc_experiments, SingleCells) <- function(
   checkmate::assertCharacter(exp_ids, len = length(inputs), unique = TRUE)
   checkmate::qassert(renormalise, "B1")
   assertScMinQCParams(sc_qc_param)
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
-  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
   # error on inputs that were themselves merged
@@ -189,34 +185,15 @@ S7::method(merge_sc_experiments, SingleCells) <- function(
   if (.verbose) {
     message("Generating gene-based binary.")
   }
-  if (streaming == 1L) {
-    if (.verbose) {
-      message(" Using light streaming for the CSR to CSC conversion.")
-    }
-    rust_con$generate_gene_based_data_streaming(
-      batch_size = batch_size,
-      verbose = .verbose
-    )
-  } else if (streaming == 2L) {
-    if (.verbose) {
-      message(paste(
-        " Using heavy streaming with reduced memory",
-        "pressure for the CSR to CSC conversion."
-      ))
-    }
-    rust_con$generate_gene_based_data_memory_bounded(
-      max_genes_in_memory = max_genes_in_memory,
-      cell_batch_size = cell_batch_size,
-      verbose = .verbose
-    )
-  } else {
-    if (.verbose) {
-      message(paste(
-        " Loading data directly into memory for CSR to CSC conversion."
-      ))
-    }
-    rust_con$generate_gene_based_data(verbose = .verbose)
-  }
+  .dispatch_gene_based_data(
+    rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
+    streaming = streaming,
+    batch_size = batch_size,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = .verbose
+  )
 
   gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
   gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)

@@ -604,7 +604,6 @@ demo_single_cells <- function(
       min_lib_size = 25L,
       min_cells = 5L
     ),
-    streaming = 0L,
     .verbose = .verbose
   )
 

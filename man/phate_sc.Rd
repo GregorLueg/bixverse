@@ -35,7 +35,7 @@ Defaults to \code{"phate"}.}
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
 
-\item{modality}{String. On which modality to run the UMAP. One of
+\item{modality}{String. On which modality to run PHATE. One of
 \code{c("rna", "adt", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
 

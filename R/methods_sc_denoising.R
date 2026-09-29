@@ -180,11 +180,12 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
 #' @param cellsweep_params List. See [params_sc_cellsweep()].
 #' @param sc_qc_param List. See [params_sc_min_quality()]. Only `target_size` is
 #' used, to scale the new normalised layer.
-#' @param streaming Integer. `0L` in-memory, `1L` light streaming (default) or
-#' `2L` memory-bounded, for the CSR to CSC conversion.
-#' @param batch_size Integer. Cells per batch for `streaming = 1L`.
-#' @param max_genes_in_memory Integer. Genes held at once for `streaming = 2L`.
-#' @param cell_batch_size Integer. Cells per batch for `streaming = 2L`.
+#' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
+#' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
+#' (default) converts in one pass and holds the whole matrix. Set a cap for
+#' large data sets; every extra phase re-reads the cell file once.
+#' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
+#' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -207,10 +208,11 @@ cellsweep_sc <- S7::new_generic(
     empty_params,
     cellsweep_params = params_sc_cellsweep(),
     sc_qc_param = params_sc_min_quality(),
-    streaming = 1L,
-    batch_size = 1000L,
-    max_genes_in_memory = 2000L,
-    cell_batch_size = 100000L,
+    csc_mem_gb = NULL,
+    streaming = deprecated(),
+    batch_size = deprecated(),
+    max_genes_in_memory = deprecated(),
+    cell_batch_size = deprecated(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -230,10 +232,11 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   empty_params,
   cellsweep_params = params_sc_cellsweep(),
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 ) {
   # checks
@@ -244,9 +247,7 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   assertScEmptyDropletsParams(empty_params)
   assertScCellsweepParams(cellsweep_params)
   assertScMinQCParams(sc_qc_param)
-  checkmate::qassert(streaming, "I1")
-  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
-  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (identical(S7::prop(target, "dir_data"), S7::prop(input, "dir_data"))) {
@@ -351,20 +352,15 @@ S7::method(cellsweep_sc, SingleCells) <- function(
     message("Generating gene-based binary.")
   }
 
-  if (streaming == 1L) {
-    rust_con$generate_gene_based_data_streaming(
-      batch_size = batch_size,
-      verbose = as.logical(.verbose)
-    )
-  } else if (streaming == 2L) {
-    rust_con$generate_gene_based_data_memory_bounded(
-      max_genes_in_memory = max_genes_in_memory,
-      cell_batch_size = cell_batch_size,
-      verbose = as.logical(.verbose)
-    )
-  } else {
-    rust_con$generate_gene_based_data(verbose = as.logical(.verbose))
-  }
+  .dispatch_gene_based_data(
+    rust_con = rust_con,
+    csc_mem_gb = csc_mem_gb,
+    streaming = streaming,
+    batch_size = batch_size,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = as.logical(.verbose)
+  )
 
   if (.verbose) {
     message("Populating obs and var tables.")
