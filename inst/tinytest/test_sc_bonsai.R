@@ -8,14 +8,9 @@ test_temp_dir <- sc_test_dir("bonsai")
 
 fixture <- sc_test_fixture()
 sc_object <- sc_test_object(test_temp_dir, fixture)
-sc_object <- find_hvg_sc(
-  sc_object,
-  hvg_no = fixture$hvg_to_keep,
-  .verbose = FALSE
-)
 
 cell_names <- get_cell_names(sc_object, filtered = TRUE)
-hvg_names <- get_gene_names_from_idx(sc_object, get_hvg(sc_object))
+all_genes <- get_gene_names(sc_object)
 
 tree <- bonsai_sc(sc_object, .verbose = FALSE)
 
@@ -51,14 +46,24 @@ expect_true(
 )
 
 expect_true(
-  length(tree$genes_used) > 0 && all(tree$genes_used %in% hvg_names),
-  info = "bonsai: genes used are a subset of the HVGs"
+  length(tree$genes_used) > 0,
+  info = "bonsai: all genes in, some pass the signal-to-noise filter"
+)
+
+expect_error(
+  bonsai_sc(
+    sc_object,
+    bonsai_params = params_sc_bonsai(min_signal_to_noise = 1e12),
+    .verbose = FALSE
+  ),
+  pattern = "retained|feature",
+  info = "bonsai: a threshold no gene passes errors cleanly"
 )
 
 expect_equal(
   sort(c(tree$genes_used, tree$genes_dropped)),
-  sort(unname(hvg_names)),
-  info = "bonsai: used and dropped genes partition the input"
+  sort(all_genes),
+  info = "bonsai: used and dropped genes partition all genes"
 )
 
 expect_stdout(
@@ -171,15 +176,29 @@ expect_equal(
   info = "bonsai: same seed, same tree"
 )
 
-sc_no_hvg <- sc_test_object(sc_test_dir("bonsai_no_hvg"), fixture)
-
-expect_warning(
-  res_no_hvg <- bonsai_sc(sc_no_hvg, .verbose = FALSE),
-  info = "bonsai: warns without HVGs"
+sc_object <- find_hvg_sc(
+  sc_object,
+  hvg_no = fixture$hvg_to_keep,
+  .verbose = FALSE
+)
+hvg_names <- unname(get_gene_names_from_idx(sc_object, get_hvg(sc_object)))
+tree_hvg <- bonsai_sc(
+  sc_object,
+  hvg = get_hvg(sc_object) + 1L,
+  .verbose = FALSE
 )
 
-expect_null(res_no_hvg, info = "bonsai: NULL without HVGs")
+expect_true(
+  length(tree_hvg$genes_used) > 0 && all(tree_hvg$genes_used %in% hvg_names),
+  info = "bonsai hvg: genes used come from the given genes"
+)
+
+expect_equal(
+  sort(c(tree_hvg$genes_used, tree_hvg$genes_dropped)),
+  sort(hvg_names),
+  info = "bonsai hvg: used and dropped genes partition the given genes"
+)
 
 # clean up ---------------------------------------------------------------------
 
-sc_test_cleanup(test_temp_dir, sc_test_dir("bonsai_no_hvg"))
+sc_test_cleanup(test_temp_dir)

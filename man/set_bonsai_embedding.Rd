@@ -24,7 +24,6 @@ been built over the object's current cells, in the same order.
 \examples{
 # Bonsai leaf coordinates next to the other embeddings
 sc <- demo_single_cells(prepped = FALSE)
-sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 tree <- bonsai_sc(sc, .verbose = FALSE)
 sc <- set_bonsai_embedding(sc, tree)
 get_available_embeddings(sc)

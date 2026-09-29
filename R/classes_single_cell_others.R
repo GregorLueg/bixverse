@@ -4806,7 +4806,6 @@ print.BonsaiTree <- function(x, ...) {
 #' @examples
 #' # the same tree as a dendrogram
 #' sc <- demo_single_cells(prepped = FALSE)
-#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 #' tree <- bonsai_sc(sc, .verbose = FALSE)
 #' tree <- relayout_bonsai(tree, layout = "dendrogram")
 #' plot(tree)
@@ -4875,7 +4874,6 @@ relayout_bonsai <- function(
 #' @examples
 #' # the tree coloured by cell type
 #' sc <- demo_single_cells(prepped = FALSE)
-#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 #' tree <- bonsai_sc(sc, .verbose = FALSE)
 #' plot(tree, colour_by = get_sc_obs(sc, filtered = TRUE)$cell_grp)
 #'
@@ -4976,7 +4974,6 @@ plot.BonsaiTree <- function(
 #' @examples
 #' # Bonsai leaf coordinates next to the other embeddings
 #' sc <- demo_single_cells(prepped = FALSE)
-#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 #' tree <- bonsai_sc(sc, .verbose = FALSE)
 #' sc <- set_bonsai_embedding(sc, tree)
 #' get_available_embeddings(sc)

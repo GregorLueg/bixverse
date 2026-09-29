@@ -44,7 +44,6 @@ angles.
 \examples{
 # the tree coloured by cell type
 sc <- demo_single_cells(prepped = FALSE)
-sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 tree <- bonsai_sc(sc, .verbose = FALSE)
 plot(tree, colour_by = get_sc_obs(sc, filtered = TRUE)$cell_grp)
 

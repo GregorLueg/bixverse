@@ -636,22 +636,31 @@ S7::method(run_gene_trends_sc, ScOrMc) <- function(
 #' Bonsai reconstructs a tree over the cells in which every cell is a leaf and
 #' the internal nodes are inferred ancestral states, with branch lengths that
 #' carry the amount of change between them. Unlike a kNN graph it uses each
-#' measurement's error bar, which is what Sanity provides: the raw counts of
-#' the chosen genes go through Sanity first, for posterior log fold changes
-#' with error bars, and Bonsai builds the tree on those. The tree is then laid
-#' out in 2D. For details, please refer to de Groot, et al. and Breda, et al.
+#' measurement's error bar, which is what Sanity provides: the raw counts go
+#' through Sanity first, for posterior log fold changes with error bars, and
+#' Bonsai builds the tree on those. The tree is then laid out in 2D. For
+#' details, please refer to de Groot, et al. and Breda, et al.
+#'
+#' No HVG selection needed. By default every gene goes in, streamed through
+#' Sanity in chunks, and only the genes with enough signal over their own noise
+#' (`min_signal_to_noise` in [bixverse::params_sc_bonsai()]) are kept for the
+#' tree. That is the gene selection of the Bonsai paper, and it keeps memory at
+#' one chunk plus the survivors. Pass `hvg` to restrict the candidates.
 #'
 #' Runtime grows a little faster than linearly with the number of cells. In
 #' bonsai-rs's own benchmarks the search took about 70 seconds at 10,000 cells
-#' and 210 seconds at 25,000 on ten cores, on top of the Sanity run.
+#' and 210 seconds at 25,000 on ten cores. Sanity comes on top, linear in the
+#' number of genes it has to fit; on the CPU that is the larger share once all
+#' genes go in.
 #'
 #' The object itself is not touched. Store the leaf coordinates with
 #' [bixverse::set_bonsai_embedding()] if you want them next to the other
 #' embeddings.
 #'
 #' @param object `SingleCells` class.
-#' @param hvg Optional integer. The genes to build the tree on. Please provide
-#' 1-indexed genes here! Defaults to [bixverse::get_hvg()].
+#' @param hvg Optional integer. Restrict the candidate genes to these, e.g. the
+#' output of [bixverse::get_hvg()] plus one. Please provide 1-indexed genes
+#' here! If `NULL`, every gene in the object is a candidate.
 #' @param bonsai_params List. See [bixverse::params_sc_bonsai()].
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -665,9 +674,9 @@ S7::method(run_gene_trends_sc, ScOrMc) <- function(
 #'   \item loglik - The loglikelihood of the final tree.
 #'   \item steps - data.table with the loglikelihood after each search step.
 #'   \item genes_used - The genes the tree was built on.
-#'   \item genes_dropped - The genes that went in but were left out: no counts
-#'   in the cells, ill-conditioned Sanity posteriors, or a signal-to-noise
-#'   ratio below `min_signal_to_noise`.
+#'   \item genes_dropped - The candidate genes left out: no counts in the
+#'   cells, ill-conditioned Sanity posteriors, or a signal-to-noise ratio below
+#'   `min_signal_to_noise`.
 #'   \item cell_idx - The cells the tree was built over (0-indexed).
 #'   \item layout, hyperbolic - The current layout.
 #'   \item params - The parameters of the run.
@@ -679,9 +688,8 @@ S7::method(run_gene_trends_sc, ScOrMc) <- function(
 #' @export
 #'
 #' @examples
-#' # a tree over the demo cells on 30 highly variable genes
+#' # a tree over the demo cells, genes selected by their signal-to-noise
 #' sc <- demo_single_cells(prepped = FALSE)
-#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 #' tree <- bonsai_sc(sc, .verbose = FALSE)
 #' tree
 #'
@@ -714,21 +722,19 @@ S7::method(bonsai_sc, SingleCells) <- function(
   assertScBonsaiParams(bonsai_params)
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  genes_in <- if (!is.null(hvg)) hvg - 1L else suppressWarnings(get_hvg(object))
-
-  if (length(genes_in) == 0) {
-    warning(paste(
-      "No HVGs identified in the object nor provided.",
-      "Please run find_hvg_sc() or provide the genes. Returning NULL."
-    ))
-    return(NULL)
+  genes_in <- if (!is.null(hvg)) {
+    hvg - 1L
+  } else {
+    get_gene_indices(object, get_gene_names(object), rust_index = TRUE)
   }
+  # ascending, so genes_used comes back in gene order
+  genes_in <- sort(unique(as.integer(genes_in)))
 
   cell_idx <- get_cells_to_keep(object)
 
   if (.verbose) {
     message(sprintf(
-      "Running Sanity and Bonsai over %i cells and %i genes.",
+      "Running Sanity and Bonsai over %i cells and %i candidate genes.",
       length(cell_idx),
       length(genes_in)
     ))
@@ -747,8 +753,8 @@ S7::method(bonsai_sc, SingleCells) <- function(
     rs_res = rs_res,
     cell_idx = cell_idx,
     cell_names = get_cell_names(object, filtered = TRUE),
-    genes_in = as.integer(genes_in),
-    gene_ids = unname(get_gene_names_from_idx(object, as.integer(genes_in))),
+    genes_in = genes_in,
+    gene_ids = unname(get_gene_names_from_idx(object, genes_in)),
     bonsai_params = bonsai_params
   )
 }

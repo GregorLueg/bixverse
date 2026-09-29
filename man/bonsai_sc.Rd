@@ -14,8 +14,9 @@ bonsai_sc(
 \arguments{
 \item{object}{\code{SingleCells} class.}
 
-\item{hvg}{Optional integer. The genes to build the tree on. Please provide
-1-indexed genes here! Defaults to \code{\link[=get_hvg]{get_hvg()}}.}
+\item{hvg}{Optional integer. Restrict the candidate genes to these, e.g. the
+output of \code{\link[=get_hvg]{get_hvg()}} plus one. Please provide 1-indexed genes
+here! If \code{NULL}, every gene in the object is a candidate.}
 
 \item{bonsai_params}{List. See \code{\link[=params_sc_bonsai]{params_sc_bonsai()}}.}
 
@@ -32,9 +33,9 @@ A \code{BonsaiTree} S3 object with:
 \item loglik - The loglikelihood of the final tree.
 \item steps - data.table with the loglikelihood after each search step.
 \item genes_used - The genes the tree was built on.
-\item genes_dropped - The genes that went in but were left out: no counts
-in the cells, ill-conditioned Sanity posteriors, or a signal-to-noise
-ratio below \code{min_signal_to_noise}.
+\item genes_dropped - The candidate genes left out: no counts in the
+cells, ill-conditioned Sanity posteriors, or a signal-to-noise ratio below
+\code{min_signal_to_noise}.
 \item cell_idx - The cells the tree was built over (0-indexed).
 \item layout, hyperbolic - The current layout.
 \item params - The parameters of the run.
@@ -44,23 +45,30 @@ ratio below \code{min_signal_to_noise}.
 Bonsai reconstructs a tree over the cells in which every cell is a leaf and
 the internal nodes are inferred ancestral states, with branch lengths that
 carry the amount of change between them. Unlike a kNN graph it uses each
-measurement's error bar, which is what Sanity provides: the raw counts of
-the chosen genes go through Sanity first, for posterior log fold changes
-with error bars, and Bonsai builds the tree on those. The tree is then laid
-out in 2D. For details, please refer to de Groot, et al. and Breda, et al.
+measurement's error bar, which is what Sanity provides: the raw counts go
+through Sanity first, for posterior log fold changes with error bars, and
+Bonsai builds the tree on those. The tree is then laid out in 2D. For
+details, please refer to de Groot, et al. and Breda, et al.
+
+No HVG selection needed. By default every gene goes in, streamed through
+Sanity in chunks, and only the genes with enough signal over their own noise
+(\code{min_signal_to_noise} in \code{\link[=params_sc_bonsai]{params_sc_bonsai()}}) are kept for the
+tree. That is the gene selection of the Bonsai paper, and it keeps memory at
+one chunk plus the survivors. Pass \code{hvg} to restrict the candidates.
 
 Runtime grows a little faster than linearly with the number of cells. In
 bonsai-rs's own benchmarks the search took about 70 seconds at 10,000 cells
-and 210 seconds at 25,000 on ten cores, on top of the Sanity run.
+and 210 seconds at 25,000 on ten cores. Sanity comes on top, linear in the
+number of genes it has to fit; on the CPU that is the larger share once all
+genes go in.
 
 The object itself is not touched. Store the leaf coordinates with
 \code{\link[=set_bonsai_embedding]{set_bonsai_embedding()}} if you want them next to the other
 embeddings.
 }
 \examples{
-# a tree over the demo cells on 30 highly variable genes
+# a tree over the demo cells, genes selected by their signal-to-noise
 sc <- demo_single_cells(prepped = FALSE)
-sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 tree <- bonsai_sc(sc, .verbose = FALSE)
 tree
 

@@ -28,7 +28,6 @@ node numbers; the leaves, and so the cells, keep theirs.
 \examples{
 # the same tree as a dendrogram
 sc <- demo_single_cells(prepped = FALSE)
-sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 tree <- bonsai_sc(sc, .verbose = FALSE)
 tree <- relayout_bonsai(tree, layout = "dendrogram")
 plot(tree)
