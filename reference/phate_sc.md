@@ -70,7 +70,7 @@ phate_sc(
 
 - modality:
 
-  String. On which modality to run the UMAP. One of
+  String. On which modality to run PHATE. One of
   `c("rna", "adt", "wnn")`. The two latter options are only available
   for multi-modal versions with the added data.
 

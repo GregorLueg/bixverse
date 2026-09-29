@@ -45,7 +45,7 @@ sc_object <- load_mtx(
   mtx_streaming = FALSE,
   .verbose = TRUE
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading observations data from flat file into the DuckDB.
 #> Loading variable data from flat file into the DuckDB.
 

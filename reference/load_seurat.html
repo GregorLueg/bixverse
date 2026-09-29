@@ -11,7 +11,7 @@ and the metadata is loaded into the DuckDB."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,10 +109,11 @@ and the metadata is loaded into the DuckDB.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  <span class="va">seurat</span>,</span>
 <span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  batch_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
-<span>  max_genes_in_memory <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  cell_batch_size <span class="op">=</span> <span class="fl">100000L</span>,</span>
+<span>  csc_mem_gb <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  streaming <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  batch_size <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  max_genes_in_memory <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  cell_batch_size <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -141,25 +142,16 @@ detected to be included.</p></li>
 </ul></dd>
 
 
-<dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
-<dd><p>Integer. CSR-to-CSC conversion mode. <code>0L</code> -&gt; in-memory
-(fastest, highest memory), <code>1L</code> -&gt; light streaming with cell batching,
-<code>2L</code> -&gt; heavy streaming with memory upper boundaries. Defaults to <code>1L</code>.</p></dd>
+<dt id="arg-csc-mem-gb">csc_mem_gb<a class="anchor" aria-label="anchor" href="#arg-csc-mem-gb"></a></dt>
+<dd><p>Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. <code>NULL</code>
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.</p></dd>
 
 
-<dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
-<dd><p>Integer. Cell batch size when <code>streaming = 1L</code>. Defaults
-to <code>1000L</code>.</p></dd>
-
-
-<dt id="arg-max-genes-in-memory">max_genes_in_memory<a class="anchor" aria-label="anchor" href="#arg-max-genes-in-memory"></a></dt>
-<dd><p>Integer. Maximum genes held in memory at once
-when <code>streaming = 2L</code>. Defaults to <code>2000L</code>.</p></dd>
-
-
-<dt id="arg-cell-batch-size">cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-cell-batch-size"></a></dt>
-<dd><p>Integer. Cell batch size when <code>streaming = 2L</code>.
-Defaults to <code>100000L</code>.</p></dd>
+<dt id="arg-streaming-batch-size-max-genes-in-memory-cell-batch-size">streaming, batch_size, max_genes_in_memory, cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-streaming-batch-size-max-genes-in-memory-cell-batch-size"></a></dt>
+<dd><p>Replaced by
+<code>csc_mem_gb</code> and ignored. <a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a></p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
@@ -195,7 +187,6 @@ shape information.</p>
 <span class="r-in"><span>    min_lib_size <span class="op">=</span> <span class="fl">25L</span>,</span></span>
 <span class="r-in"><span>    min_cells <span class="op">=</span> <span class="fl">5L</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
-<span class="r-in"><span>  streaming <span class="op">=</span> <span class="fl">0L</span>,</span></span>
 <span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></span>

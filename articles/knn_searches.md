@@ -40,10 +40,9 @@ mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  streaming = 0L,
   .verbose = TRUE
 )
-#>  Loading data directly into memory for CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading observations data from flat file into the DuckDB.
 #> Loading variable data from flat file into the DuckDB.
 

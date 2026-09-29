@@ -1,10 +1,9 @@
 # Stream in h5ad to `SingleCells` (alias)
 
-Convenience alias for `load_h5ad(streaming = 2L)`. Kept for backwards
-compatibility - forwards directly to
+Convenience alias for `load_h5ad(h5ad_streaming = TRUE)`. Kept for
+backwards compatibility. Prefer calling
 [`load_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad.md)
-with heavy streaming enabled. Prefer calling `load_h5ad` directly with
-an explicit `streaming` level.
+directly.
 
 ## Usage
 
@@ -14,8 +13,11 @@ stream_h5ad(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 ```
@@ -41,13 +43,16 @@ stream_h5ad(
   [`detect_raw_count_slot()`](https://gregorlueg.github.io/bixverse/reference/detect_raw_count_slot.md);
   otherwise one of `"X"`, `"raw.X"`, `"layers.counts"`.
 
-- max_genes_in_memory:
+- csc_mem_gb:
 
-  Integer. Genes held in memory at once. Defaults to `2000L`.
+  Optional numeric. Memory in GB for the buffers of the cell-to-gene
+  (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL` (default)
+  converts in one pass and holds the whole matrix. Set a cap for large
+  data sets; every extra phase re-reads the cell file once.
 
-- cell_batch_size:
+- streaming, batch_size, max_genes_in_memory, cell_batch_size:
 
-  Integer. Cell batch size. Defaults to `100000L`.
+  Replaced by `csc_mem_gb` and ignored. **\[deprecated\]**
 
 - .verbose:
 
@@ -60,7 +65,7 @@ The class with updated shape information.
 ## Examples
 
 ``` r
-# same as load_h5ad(streaming = 2L)
+# same as load_h5ad(h5ad_streaming = TRUE)
 data <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
 )

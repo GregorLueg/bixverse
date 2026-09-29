@@ -80,7 +80,7 @@ sc_object <- load_h5ad(
     target_size = 10000
   )
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading observations data from h5ad into the DuckDB.
 #> Loading variables data from h5ad into the DuckDB.
 
@@ -249,18 +249,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> 219563629918c779
-#> 2:      rna embedding   umap    TRUE  FALSE   <NA> a3e060b79d71b68a
-#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 523cfa6df00d4206
-#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 1ec2af9755786821
-#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> d153b710217a1a13
+#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> 277d5f13a540632e
+#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 1ec711bcc4ee102b
+#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 42b563d0a345ac32
+#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 0cd18d2392e7c486
+#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> 69d6e21770db7de9
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: 219563629918c779,523cfa6df00d4206
-#> 3:                  219563629918c779
-#> 4:                  523cfa6df00d4206
-#> 5:                  523cfa6df00d4206
+#> 2: 277d5f13a540632e,42b563d0a345ac32
+#> 3:                  277d5f13a540632e
+#> 4:                  42b563d0a345ac32
+#> 5:                  42b563d0a345ac32
 ```
 
 ## PAGA

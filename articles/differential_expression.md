@@ -80,7 +80,7 @@ sc_object <- load_sce(
 #> Pulling the obs and var data out of the object
 #> Writing counts to disk.
 #> Generating gene-based data.
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Writing to the DuckDB.
 #> Setting internal mapping.
 

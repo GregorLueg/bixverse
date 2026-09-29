@@ -75,7 +75,7 @@ and written to the two binary files on disk.
 sc_object <- SingleCellsMultiModal(dir_data = tempdir_10x_total_seq)
 
 sc_object <- load_tenx_h5(object = sc_object, h5_path = h5_10x_path)
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading barcodes from 10x h5 into the DuckDB.
 #> Loading features from 10x h5 into the DuckDB.
 

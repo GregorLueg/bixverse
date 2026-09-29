@@ -1153,10 +1153,16 @@ their summaries) from the binary storage files.
   : Convert SingleCellNearestNeighbour to manifoldsR NearestNeighbours
 - [`umap_sc()`](https://gregorlueg.github.io/bixverse/reference/umap_sc.md)
   : Run UMAP on a SingleCells/MetaCells object
+- [`densmap_sc()`](https://gregorlueg.github.io/bixverse/reference/densmap_sc.md)
+  : Run densMAP on a SingleCells/MetaCells object
 - [`tsne_sc()`](https://gregorlueg.github.io/bixverse/reference/tsne_sc.md)
   : Run t-SNE on a SingleCells/MetaCells object
+- [`densne_sc()`](https://gregorlueg.github.io/bixverse/reference/densne_sc.md)
+  : Run den-SNE on a SingleCells/MetaCells object
 - [`phate_sc()`](https://gregorlueg.github.io/bixverse/reference/phate_sc.md)
   : Run PHATE on a SingleCells/MetaCells object
+- [`forceatlas2_sc()`](https://gregorlueg.github.io/bixverse/reference/forceatlas2_sc.md)
+  : Run ForceAtlas2 on a SingleCells/MetaCells object
 - [`extract_dot_plot_data()`](https://gregorlueg.github.io/bixverse/reference/extract_dot_plot_data.md)
   : Extract grouped gene statistics for dot plots
 - [`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md)

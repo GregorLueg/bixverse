@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>A guide to single-cell plotting functions</h1>
 
       <p class="author">Liesbeth François</p>
-      <p class="date">2026-09-28</p>
+      <p class="date">2026-09-29</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -172,7 +172,7 @@
 <span>  mtx_streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt;  Using light streaming for the CSR to CSC conversion.</span></span>
+<span><span class="co">#&gt;  Converting the cell-based data into the gene-based format.</span></span>
 <span><span class="co">#&gt; Loading observations data from flat file into the DuckDB.</span></span>
 <span><span class="co">#&gt; Loading variable data from flat file into the DuckDB.</span></span>
 <span></span>
@@ -522,11 +522,84 @@
 <span><span class="co">#&gt; 5: AAACCGTGTATGCG-1 -2.078420 -1.778267         NK               5 0.1491318</span></span>
 <span><span class="co">#&gt; 6: AAACGCACTGGTAC-1 -4.594027  2.556168    T cells               0 0.3635097</span></span></code></pre></div>
 </div>
-</section><section class="section level2"><h2 id="per-gene-expression-plots">Per-Gene Expression plots`<a class="anchor" aria-label="anchor" href="#per-gene-expression-plots"></a>
+</section><section class="section level2"><h2 id="other-2d-embeddings">Other 2D embeddings<a class="anchor" aria-label="anchor" href="#other-2d-embeddings"></a>
+</h2>
+<p>UMAP is not the only game in town. All the 2D embeddings come from <a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a> and land in the same object, so <code><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc()</a></code> works on every one of them.</p>
+<section class="level2"><h3 id="density-preserving-embeddings">Density-preserving embeddings<a class="anchor" aria-label="anchor" href="#density-preserving-embeddings"></a>
+</h3>
+<p>UMAP and t-SNE throw away local density. A tight, homogeneous population and a diffuse, heterogeneous one come out at roughly the same size, so reading anything into the area a cluster takes up on the plot is a mistake. densMAP and den-SNE fix this with an extra term in the loss that keeps the local radius of each cell in the embedding correlated with its radius in PCA space. Big blob now means lots of variation, small tight blob means not much. <code>lambda</code> in <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_densmap.html" class="external-link">manifoldsR::params_densmap()</a></code> and <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_densne.html" class="external-link">manifoldsR::params_densne()</a></code> sets how hard that term pulls; <code>lambda = 0</code> gives you plain UMAP and t-SNE back.</p>
+<p>For the t-SNE flavours we use <code>approx_type = "fft_3k"</code>, the three-kernel FFT optimiser. The FFT options only exist on Unix, on Windows stick to <code>"bh"</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/densmap_sc.html">densmap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, approx_type <span class="op">=</span> <span class="st">"fft_3k"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/densne_sc.html">densne_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, approx_type <span class="op">=</span> <span class="st">"fft_3k"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">density_plots</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"umap"</span>, <span class="st">"densmap"</span>, <span class="st">"tsne"</span>, <span class="st">"densne"</span><span class="op">)</span>,</span>
+<span>  \<span class="op">(</span><span class="va">embd</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
+<span>      <span class="va">sc_object</span>,</span>
+<span>      embedding <span class="op">=</span> <span class="va">embd</span>,</span>
+<span>      colour_by <span class="op">=</span> <span class="st">"sc_type"</span>,</span>
+<span>      discrete <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="va">embd</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="va">density_plots</span>, ncol <span class="op">=</span> <span class="fl">2</span>, guides <span class="op">=</span> <span class="st">"collect"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="single_cell_visualisation_files/figure-html/density-plots-1.png" width="960"></p>
+<figcaption>UMAP and t-SNE (left) next to their density-preserving versions (right), coloured by cell type.</figcaption></figure>
+</div>
+</div>
+</div>
+</section><section class="level2"><h3 id="forceatlas2">ForceAtlas2<a class="anchor" aria-label="anchor" href="#forceatlas2"></a>
+</h3>
+<p>ForceAtlas2 is a force-directed layout of the neighbour graph: edges pull, every pair of cells pushes, gravity keeps the lot together. It is what scanpy’s <code>draw_graph()</code> does, and a common pick for data with continuous transitions (think differentiation). <code>graph = "knn"</code> lays out the kNN graph the same way scanpy does. <code>graph = "snn"</code> lays out the sNN graph the Leiden clustering ran on, here started from the UMAP via <code>init_embd</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/forceatlas2_sc.html">forceatlas2_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/forceatlas2_sc.html">forceatlas2_sc</a></span><span class="op">(</span></span>
+<span>  <span class="va">sc_object</span>,</span>
+<span>  graph <span class="op">=</span> <span class="st">"snn"</span>,</span>
+<span>  init_embd <span class="op">=</span> <span class="st">"umap"</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"fa2_snn"</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fa2_plots</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fa2"</span>, <span class="st">"fa2_snn"</span><span class="op">)</span>,</span>
+<span>  \<span class="op">(</span><span class="va">embd</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
+<span>      <span class="va">sc_object</span>,</span>
+<span>      embedding <span class="op">=</span> <span class="va">embd</span>,</span>
+<span>      colour_by <span class="op">=</span> <span class="st">"sc_type"</span>,</span>
+<span>      discrete <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="va">embd</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="va">fa2_plots</span>, ncol <span class="op">=</span> <span class="fl">2</span>, guides <span class="op">=</span> <span class="st">"collect"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="single_cell_visualisation_files/figure-html/fa2-plots-1.png" width="960"></p>
+<figcaption>ForceAtlas2 on the kNN graph (left) and on the sNN graph (right), coloured by cell type.</figcaption></figure>
+</div>
+</div>
+</div>
+</section></section><section class="section level2"><h2 id="per-gene-expression-plots">Per-Gene Expression plots`<a class="anchor" aria-label="anchor" href="#per-gene-expression-plots"></a>
 </h2>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/feature_plot_sc.html">feature_plot_sc()</a></code> projects normalised expression of one or more genes onto the embedding.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Select a single feature by Ensembl ID; provide a human-readable label</span></span>
 <span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">symbol_to_ensembl</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_markers</span><span class="op">)</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="va">feature_labels</span> <span class="op">&lt;-</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">features</span><span class="op">]</span></span>
@@ -548,7 +621,7 @@
 <p><strong>Tip:</strong> pass a character vector of Ensembl IDs to <code>features</code> and matching labels to <code>feature_labels</code> to produce one panel per gene.</p>
 <p>We can also highlight the genes of interest for clearer visualisation.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Select a single feature by Ensembl ID; provide a human-readable label</span></span>
 <span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">symbol_to_ensembl</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_markers</span><span class="op">)</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="va">feature_labels</span> <span class="op">&lt;-</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">features</span><span class="op">]</span></span>
@@ -571,7 +644,7 @@
 <p><strong>Extracting the plotting data</strong></p>
 <p>Alternatively, you can also extract the plotting data directly to make customised plots.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_feature_plot_data.html">extract_feature_plot_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
@@ -608,12 +681,12 @@
 <strong>Dot colour</strong> → mean (scaled) expression among expressing cells</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">symbol_to_ensembl</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_markers</span><span class="op">)</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="va">feature_labels</span> <span class="op">&lt;-</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">features</span><span class="op">]</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/dot_plot_sc.html">dot_plot_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  features <span class="op">=</span> <span class="va">features</span>,</span>
@@ -670,7 +743,7 @@
 <p><strong>Extracting the plotting data</strong></p>
 <p>Alternatively, you can also extract the plotting data directly to make customised plots.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_dot_plot_data.html">extract_dot_plot_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  features <span class="op">=</span> <span class="va">features</span>,</span>
@@ -692,7 +765,7 @@
 </h2>
 <p>Stacked violins show the per-group expression distribution of several genes in a compact vertical layout.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Take the first five markers</span></span>
 <span><span class="va">idx</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span></span>
 <span></span>
@@ -711,7 +784,7 @@
 </div>
 <p><strong>Extracting the plotting data</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_gene_violin_data.html">extract_gene_violin_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  features <span class="op">=</span> <span class="va">features</span>,</span>

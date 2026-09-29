@@ -121,7 +121,7 @@ sc_object <- load_multi_h5ad(
   prescan_result = h5_tasks,
   .verbose = TRUE
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading observation data from h5ad files into DuckDB.
 #> Loading variable data into DuckDB.
 ```
@@ -501,7 +501,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8508817 0.9283036 0.6423357      0.9213816     1     0.6509099
+#> 1:   harmony   0.8508817 0.9283037 0.6423357      0.9213822     1     0.6509095
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:          0.9953539 Harmony
@@ -591,7 +591,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v2"]
 #>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v2   0.8597843  0.919809 0.6423357      0.8935811     1
+#> 1: harmony_v2   0.8597843 0.9198091 0.6423357      0.8935813     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
 #> 1:     0.6993859                  1 Harmony v2
@@ -903,8 +903,8 @@ metrics_dt[, .(
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1
 #> 2:     fastMNN  0.69268961 0.9413112 0.4705881      0.8862376     1
-#> 3:     Harmony  0.85088170 0.9283036 0.6423357      0.9213816     1
-#> 4:  Harmony v2  0.85978428 0.9198090 0.6423357      0.8935811     1
+#> 3:     Harmony  0.85088170 0.9283037 0.6423357      0.9213822     1
+#> 4:  Harmony v2  0.85978428 0.9198091 0.6423357      0.8935813     1
 #> 5:  Seurat CCA  0.71785653 0.8929735 0.4705881      0.8688793     1
 #> 6: Seurat rPCA  0.78462592 0.9078943 0.6423357      0.8138718     1
 #> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
@@ -912,7 +912,7 @@ metrics_dt[, .(
 #>            <num>              <num>
 #> 1:     0.6782160          1.0000000
 #> 2:     0.6573856          0.9408038
-#> 3:     0.6509099          0.9953539
+#> 3:     0.6509095          0.9953539
 #> 4:     0.6993859          1.0000000
 #> 5:     0.7043481          1.0000000
 #> 6:     0.6966736          1.0000000

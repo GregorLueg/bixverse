@@ -75,7 +75,7 @@ sc_ref <- load_multi_h5ad(
   prescan_result = h5_tasks,
   .verbose = TRUE
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading observation data from h5ad files into DuckDB.
 #> Loading variable data into DuckDB.
 ```
@@ -415,7 +415,7 @@ sc_query <- load_mtx(
   mtx_streaming = FALSE,
   .verbose = TRUE
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading observations data from flat file into the DuckDB.
 #> Loading variable data from flat file into the DuckDB.
 ```

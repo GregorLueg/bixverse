@@ -89,7 +89,7 @@ raw_object <- load_tenx_h5(
   feature_type = "Gene Expression",
   .verbose = TRUE
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading barcodes from 10x h5 into the DuckDB.
 #> Loading features from 10x h5 into the DuckDB.
 
@@ -228,7 +228,7 @@ cell_object <- load_tenx_h5(
   feature_type = "Gene Expression",
   .verbose = TRUE
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading barcodes from 10x h5 into the DuckDB.
 #> Loading features from 10x h5 into the DuckDB.
 
@@ -380,6 +380,7 @@ clean_object <- cellsweep_sc(
 #> 238 barcodes are neither empty nor annotated-and-passing-QC. They are excluded from the fit and from the output.
 #> Running CellSweep over 1 samples, 762 barcodes, 96998 empty droplets.
 #> Generating gene-based binary.
+#>  Converting the cell-based data into the gene-based format.
 #> Populating obs and var tables.
 
 clean_object

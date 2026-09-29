@@ -30,10 +30,11 @@ merge_sc_experiments(
   exp_ids,
   renormalise = FALSE,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 ```
@@ -65,26 +66,16 @@ merge_sc_experiments(
   Only `target_size` is consulted here; no QC filtering is applied
   during merge.
 
-- streaming:
+- csc_mem_gb:
 
-  Integer. `0` -\> no streaming, `1` -\> light streaming, `2` -\> heavy
-  streaming with memory upper boundaries. This enables you to control
-  the memory pressure during ingestion.
+  Optional numeric. Memory in GB for the buffers of the cell-to-gene
+  (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL` (default)
+  converts in one pass and holds the whole matrix. Set a cap for large
+  data sets; every extra phase re-reads the cell file once.
 
-- batch_size:
+- streaming, batch_size, max_genes_in_memory, cell_batch_size:
 
-  Integer. Batch size when `streaming = 1L`.
-
-- max_genes_in_memory:
-
-  Integer. How many genes shall be held in memory at a given point.
-  Defaults to `2000L`. Only relevant if streaming is set to `2`.
-
-- cell_batch_size:
-
-  Integer. How big are the batch sizes for the cells in the
-  transformation from the cell-based to gene-based format. Defaults to
-  `100000L`. Only relevant if streaming is set to `2`.
+  Replaced by `csc_mem_gb` and ignored. **\[deprecated\]**
 
 - .verbose:
 

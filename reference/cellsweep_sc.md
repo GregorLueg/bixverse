@@ -18,10 +18,11 @@ cellsweep_sc(
   empty_params,
   cellsweep_params = params_sc_cellsweep(),
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 ```
@@ -65,22 +66,16 @@ cellsweep_sc(
   [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
   Only `target_size` is used, to scale the new normalised layer.
 
-- streaming:
+- csc_mem_gb:
 
-  Integer. `0L` in-memory, `1L` light streaming (default) or `2L`
-  memory-bounded, for the CSR to CSC conversion.
+  Optional numeric. Memory in GB for the buffers of the cell-to-gene
+  (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL` (default)
+  converts in one pass and holds the whole matrix. Set a cap for large
+  data sets; every extra phase re-reads the cell file once.
 
-- batch_size:
+- streaming, batch_size, max_genes_in_memory, cell_batch_size:
 
-  Integer. Cells per batch for `streaming = 1L`.
-
-- max_genes_in_memory:
-
-  Integer. Genes held at once for `streaming = 2L`.
-
-- cell_batch_size:
-
-  Integer. Cells per batch for `streaming = 2L`.
+  Replaced by `csc_mem_gb` and ignored. **\[deprecated\]**
 
 - .verbose:
 

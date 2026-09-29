@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,6 +92,30 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.4" id="bixverse-054">bixverse 0.5.4<a class="anchor" aria-label="anchor" href="#bixverse-054"></a></h2>
+<div class="section level3">
+<h3 id="features-0-5-4">Features<a class="anchor" aria-label="anchor" href="#features-0-5-4"></a></h3>
+<ul><li>New single cell I/O machinery from bixverse-rs 0.5.6. The cell-to-gene (CSR to CSC) conversion now has one knob, <code>csc_mem_gb</code>: <code>NULL</code> (default) converts in one pass, a number caps the conversion buffers at that many GB. Available on all count loaders (<code><a href="../reference/load_mtx.html">load_mtx()</a></code>, <code><a href="../reference/load_multi_mtx.html">load_multi_mtx()</a></code>, <code><a href="../reference/load_h5ad.html">load_h5ad()</a></code>, <code><a href="../reference/load_h5ad_norm.html">load_h5ad_norm()</a></code>, <code><a href="../reference/load_multi_h5ad.html">load_multi_h5ad()</a></code>, <code><a href="../reference/stream_h5ad.html">stream_h5ad()</a></code>, <code><a href="../reference/load_tenx_h5.html">load_tenx_h5()</a></code>, <code><a href="../reference/load_multi_tenx_h5.html">load_multi_tenx_h5()</a></code>, <code><a href="../reference/load_seurat.html">load_seurat()</a></code>, <code><a href="../reference/load_sce.html">load_sce()</a></code>, <code><a href="../reference/load_r_data.html">load_r_data()</a></code>), plus <code><a href="../reference/merge_sc_experiments.html">merge_sc_experiments()</a></code> and <code><a href="../reference/cellsweep_sc.html">cellsweep_sc()</a></code>.</li>
+<li>
+<code><a href="../reference/load_h5ad.html">load_h5ad()</a></code> gained <code>h5ad_streaming</code> (default <code>TRUE</code>), which streams the counts into the cell-based binary in batches instead of materialising the filtered matrix first. <code><a href="../reference/stream_h5ad.html">stream_h5ad()</a></code> is now an alias for <code>load_h5ad(h5ad_streaming = TRUE)</code>.</li>
+<li>More 2D embeddings from <a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a> 0.3.5: <code><a href="../reference/densmap_sc.html">densmap_sc()</a></code> and <code><a href="../reference/densne_sc.html">densne_sc()</a></code> for the density-preserving versions of UMAP and t-SNE (<a href="https://doi.org/10.1038/s41587-020-00801-7" class="external-link">Narayan et al.</a>), and <code><a href="../reference/forceatlas2_sc.html">forceatlas2_sc()</a></code> for ForceAtlas2 layouts of either the kNN or the sNN graph. See the updated <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_visualisation.html">plotting vignette</a>.</li>
+<li>
+<code><a href="../reference/tsne_sc.html">tsne_sc()</a></code> and <code><a href="../reference/densne_sc.html">densne_sc()</a></code> take <code>approx_type = "fft_3k"</code>, the three-kernel FFT optimiser (Unix only, like <code>"fft"</code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changes-0-5-4">Changes<a class="anchor" aria-label="anchor" href="#changes-0-5-4"></a></h3>
+<ul><li>
+<code>streaming</code>, <code>batch_size</code>, <code>max_genes_in_memory</code> and <code>cell_batch_size</code> are deprecated on every function listed above. They are ignored and warn if supplied; use <code>csc_mem_gb</code> instead. Nothing breaks, old calls keep running.</li>
+<li>Needs manifoldsR &gt;= 0.3.5.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-5-4">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-5-4"></a></h3>
+<ul><li>h5ad: the number of cells and genes is read from the <code>_index</code> of <code>/obs</code> and <code>/var</code> rather than the first dataset in the group, and CSR vs CSC comes from the <code>encoding-type</code> attribute of <code>X</code> instead of being guessed from the <code>indptr</code> length.</li>
+<li>
+<code><a href="../reference/tsne_sc.html">tsne_sc()</a></code> documentation had the <code>use_knn</code> default and the perplexity default wrong.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.3" id="bixverse-053">bixverse 0.5.3<a class="anchor" aria-label="anchor" href="#bixverse-053"></a></h2>
 <div class="section level3">

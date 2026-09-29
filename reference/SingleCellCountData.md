@@ -558,6 +558,12 @@ Generate gene-based data from the cells binary file
 
 #### Arguments
 
+- `max_mem_gb`:
+
+  (`numeric` or `NULL`)  
+  Memory for the conversion buffers in GB, at 10 bytes per non-zero.
+  `NULL` converts in a single phase.
+
 - `verbose`:
 
   (`logical`)  
@@ -566,74 +572,10 @@ Generate gene-based data from the cells binary file
 #### description
 
 Reads the `.bin` file at `f_path_cells` and writes a gene-friendly (CSC)
-representation to `f_path_genes`. The conversion happens fully in memory
-and may cause memory pressure on large data sets; see
-`generate_gene_based_data_streaming` or
-`generate_gene_based_data_memory_bounded` for lighter alternatives.
-
-#### returns
-
-Invisible `NULL`.
-
-### Method `generate_gene_based_data_streaming`
-
-Generate gene-based data with streaming
-
-#### Arguments
-
-- `batch_size`:
-
-  (`integer`)  
-  Number of cells processed per batch. Larger values increase memory
-  pressure but reduce overhead.
-
-- `verbose`:
-
-  (`logical`)  
-  Controls verbosity of the function.
-
-#### description
-
-Builds the CSC representation directly without creating intermediate CSR
-structures. Suitable for very large data sets where the all-in- memory
-path is too costly.
-
-#### returns
-
-Invisible `NULL`.
-
-### Method `generate_gene_based_data_memory_bounded`
-
-Generate gene-based data with memory-bounded accumulation
-
-#### Arguments
-
-- `max_genes_in_memory`:
-
-  (`integer`)  
-  Maximum number of genes to accumulate at once (e.g. `2000`).
-
-- `cell_batch_size`:
-
-  (`integer`)  
-  Number of cells to process at once (e.g. `100000`).
-
-- `verbose`:
-
-  (`logical`)  
-  Controls verbosity.
-
-#### description
-
-Processes genes in phases to cap memory usage. Each phase:
-
-1.  reads all cells (unavoidable for CSC conversion);
-
-2.  only accumulates data for genes in the current phase;
-
-3.  writes those genes to disk;
-
-4.  clears memory and moves to the next phase.
+representation to `f_path_genes`. A parallel counting-sort transpose:
+one pass counts the non-zeros per gene, then genes are converted in
+phases that fit `max_mem_gb`. Each phase re-reads the cell file, so a
+tighter budget trades time for memory.
 
 #### returns
 

@@ -12,10 +12,11 @@ load_r_data(
   obs,
   var,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 ```
@@ -58,24 +59,16 @@ load_r_data(
 
   - target_size - Float. Target size to normalise to. Defaults to `1e5`.
 
-- streaming:
+- csc_mem_gb:
 
-  Integer. CSR-to-CSC conversion mode. `0L` -\> in-memory (fastest,
-  highest memory), `1L` -\> light streaming with cell batching, `2L` -\>
-  heavy streaming with memory upper boundaries. Defaults to `1L`.
+  Optional numeric. Memory in GB for the buffers of the cell-to-gene
+  (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL` (default)
+  converts in one pass and holds the whole matrix. Set a cap for large
+  data sets; every extra phase re-reads the cell file once.
 
-- batch_size:
+- streaming, batch_size, max_genes_in_memory, cell_batch_size:
 
-  Integer. Cell batch size when `streaming = 1L`. Defaults to `1000L`.
-
-- max_genes_in_memory:
-
-  Integer. Maximum genes held in memory at once when `streaming = 2L`.
-  Defaults to `2000L`.
-
-- cell_batch_size:
-
-  Integer. Cell batch size when `streaming = 2L`. Defaults to `100000L`.
+  Replaced by `csc_mem_gb` and ignored. **\[deprecated\]**
 
 - .verbose:
 
@@ -105,7 +98,6 @@ sc <- load_r_data(
     min_lib_size = 25L,
     min_cells = 5L
   ),
-  streaming = 0L,
   .verbose = FALSE
 )
 dim(sc)

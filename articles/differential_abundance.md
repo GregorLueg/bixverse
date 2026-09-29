@@ -93,7 +93,7 @@ sc_object <- load_sce(
 #> = "gene_id", : 336 gene(s) have no identifier. Generating one for each.
 #> Writing counts to disk.
 #> Generating gene-based data.
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Writing to the DuckDB.
 #> Setting internal mapping.
 

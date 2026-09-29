@@ -318,6 +318,8 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/create_dist_obj.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/create_sparse_matrix.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/demo_single_cells.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/densmap_sc.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/densne_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/detect_adt_isotypes.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/detect_raw_count_slot.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dgrdl_grid_search.html</loc></url>
@@ -374,11 +376,13 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-get_manifoldsr_knn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-get_manifoldsr_knn_from_wnn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-grouped_gene_stats_in_memory.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-h5ad_frame_length.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-inject_consensus_seed.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-integration_slot.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-lda_matrix_to_list.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-magic_matrix.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-manifold_from.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-manifold_inputs.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-match_features.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-mc_artefact_rows.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-mc_purity_cols.html</loc></url>
@@ -447,6 +451,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-stamp_artefact.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-stamp_from.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-stamp_ids_from.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-store_manifold.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-strip_frontmatter.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-tf_gene_cor_mc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-tf_gene_cor_sc.html</loc></url>
@@ -500,6 +505,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/fix_meta_data_column.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/flag_cells.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/flip_ica_loading_signs.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/forceatlas2_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/gene_set_proportions_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/generate_bt_meta_cells_sc.html</loc></url>

@@ -23,7 +23,7 @@ existing binary objects and writing CellSweep-denoised counts."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -602,7 +602,10 @@ parseable into a CSR matrix in R.</p>
 <div class="section">
 <h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
 
-<dl><dt><code>verbose</code></dt>
+<dl><dt><code>max_mem_gb</code></dt>
+<dd><p>(<code>numeric</code> or <code>NULL</code>)<br> Memory for the conversion buffers in GB, at 10 bytes per non-zero. <code>NULL</code> converts in a single phase.</p></dd>
+
+<dt><code>verbose</code></dt>
 <dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>
 
 
@@ -610,10 +613,10 @@ parseable into a CSR matrix in R.</p>
 <div class="section">
 <h4 id="description-6">description<a class="anchor" aria-label="anchor" href="#description-6"></a></h4>
 <p>Reads the <code>.bin</code> file at <code>f_path_cells</code> and writes a gene-friendly
-(CSC) representation to <code>f_path_genes</code>. The conversion happens fully
-in memory and may cause memory pressure on large data sets; see
-<code>generate_gene_based_data_streaming</code> or
-<code>generate_gene_based_data_memory_bounded</code> for lighter alternatives.</p>
+(CSC) representation to <code>f_path_genes</code>. A parallel counting-sort
+transpose: one pass counts the non-zeros per gene, then genes are
+converted in phases that fit <code>max_mem_gb</code>. Each phase re-reads the
+cell file, so a tighter budget trades time for memory.</p>
 </div>
 <div class="section">
 <h4 id="returns-15">returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
@@ -623,68 +626,10 @@ in memory and may cause memory pressure on large data sets; see
 </div>
 
 <div class="section">
-<h3 id="method-generate-gene-based-data-streaming">Method <code>generate_gene_based_data_streaming</code><a class="anchor" aria-label="anchor" href="#method-generate-gene-based-data-streaming"></a></h3>
-<p>Generate gene-based data with streaming</p>
-<div class="section">
-<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
-
-<dl><dt><code>batch_size</code></dt>
-<dd><p>(<code>integer</code>)<br> Number of cells processed per batch. Larger values increase memory pressure but reduce overhead.</p></dd>
-
-<dt><code>verbose</code></dt>
-<dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>
-
-
-</dl></div>
-<div class="section">
-<h4 id="description-7">description<a class="anchor" aria-label="anchor" href="#description-7"></a></h4>
-<p>Builds the CSC representation directly without creating intermediate
-CSR structures. Suitable for very large data sets where the all-in-
-memory path is too costly.</p>
-</div>
-<div class="section">
-<h4 id="returns-16">returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
-<p>Invisible <code>NULL</code>.</p>
-</div>
-
-</div>
-
-<div class="section">
-<h3 id="method-generate-gene-based-data-memory-bounded">Method <code>generate_gene_based_data_memory_bounded</code><a class="anchor" aria-label="anchor" href="#method-generate-gene-based-data-memory-bounded"></a></h3>
-<p>Generate gene-based data with memory-bounded accumulation</p>
-<div class="section">
-<h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
-
-<dl><dt><code>max_genes_in_memory</code></dt>
-<dd><p>(<code>integer</code>)<br> Maximum number of genes to accumulate at once (e.g. <code>2000</code>).</p></dd>
-
-<dt><code>cell_batch_size</code></dt>
-<dd><p>(<code>integer</code>)<br> Number of cells to process at once (e.g. <code>100000</code>).</p></dd>
-
-<dt><code>verbose</code></dt>
-<dd><p>(<code>logical</code>)<br> Controls verbosity.</p></dd>
-
-
-</dl></div>
-<div class="section">
-<h4 id="description-8">description<a class="anchor" aria-label="anchor" href="#description-8"></a></h4>
-<p>Processes genes in phases to cap memory usage. Each phase:</p><ol><li><p>reads all cells (unavoidable for CSC conversion);</p></li>
-<li><p>only accumulates data for genes in the current phase;</p></li>
-<li><p>writes those genes to disk;</p></li>
-<li><p>clears memory and moves to the next phase.</p></li>
-</ol></div>
-<div class="section">
-<h4 id="returns-17">returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
-<p>Invisible <code>NULL</code>.</p>
-</div>
-
-</div>
-
-<div class="section">
 <h3 id="method-get-genes-by-indices">Method <code>get_genes_by_indices</code><a class="anchor" aria-label="anchor" href="#method-get-genes-by-indices"></a></h3>
 <p>Return genes by index positions</p>
 <div class="section">
-<h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
+<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
 
 <dl><dt><code>indices</code></dt>
 <dd><p>(<code>integer</code>)<br> The gene indices to return (1-indexed).</p></dd>
@@ -695,11 +640,11 @@ memory path is too costly.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="description-9">description<a class="anchor" aria-label="anchor" href="#description-9"></a></h4>
+<h4 id="description-7">description<a class="anchor" aria-label="anchor" href="#description-7"></a></h4>
 <p>Leverages the CSC-stored data for fast gene retrieval.</p>
 </div>
 <div class="section">
-<h4 id="returns-18">returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
+<h4 id="returns-16">returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
 <p>A list with <code>indptr</code>, <code>indices</code> (0-indexed cell positions),
 <code>data</code>, <code>no_cells</code> and <code>no_genes</code> (number of returned genes),
 parseable into a CSC matrix in R.</p>
@@ -711,7 +656,7 @@ parseable into a CSC matrix in R.</p>
 <h3 id="method-get-nnz-genes">Method <code>get_nnz_genes</code><a class="anchor" aria-label="anchor" href="#method-get-nnz-genes"></a></h3>
 <p>Get the number of cells expressing each gene</p>
 <div class="section">
-<h4 id="arguments-18">Arguments<a class="anchor" aria-label="anchor" href="#arguments-18"></a></h4>
+<h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
 
 <dl><dt><code>gene_indices</code></dt>
 <dd><p>(<code>integer</code> or <code>NULL</code>)<br> Optional 1-indexed gene indices. If <code>NULL</code>, results are returned for all genes.</p></dd>
@@ -719,7 +664,7 @@ parseable into a CSC matrix in R.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="returns-19">returns<a class="anchor" aria-label="anchor" href="#returns-19"></a></h4>
+<h4 id="returns-17">returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
 <p>An integer vector of NNZ counts for the requested genes.</p>
 </div>
 
@@ -729,7 +674,7 @@ parseable into a CSC matrix in R.</p>
 <h3 id="method-merge-sc-files">Method <code>merge_sc_files</code><a class="anchor" aria-label="anchor" href="#method-merge-sc-files"></a></h3>
 <p>Merge multiple existing bin files into the cells binary file</p>
 <div class="section">
-<h4 id="arguments-19">Arguments<a class="anchor" aria-label="anchor" href="#arguments-19"></a></h4>
+<h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
 
 <dl><dt><code>merge_tasks</code></dt>
 <dd><p>(<code>list</code>)<br> A list of lists. Each inner list must contain <code>exp_id</code>, <code>bin_cells_path</code>, <code>cells_to_keep</code> (0-indexed integer vector) and <code>gene_local_to_universe</code> (0-indexed integer vector, <code>NA</code> for genes absent from the universe).</p></dd>
@@ -749,7 +694,7 @@ parseable into a CSC matrix in R.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="returns-20">returns<a class="anchor" aria-label="anchor" href="#returns-20"></a></h4>
+<h4 id="returns-18">returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
 <p>A list with <code>total_cells</code>, <code>total_genes</code> and <code>per_file</code> (a
 list of lists with <code>exp_id</code>, <code>lib_size</code>, <code>nnz</code>).</p>
 </div>
@@ -766,7 +711,7 @@ are neither empty nor annotated are not part of the model.</p>
 <p>Writes the cell-based file only; regenerate the gene-based companion
 afterwards, as for a merge.</p>
 <div class="section">
-<h4 id="arguments-20">Arguments<a class="anchor" aria-label="anchor" href="#arguments-20"></a></h4>
+<h4 id="arguments-18">Arguments<a class="anchor" aria-label="anchor" href="#arguments-18"></a></h4>
 
 <dl><dt><code>f_path_source</code></dt>
 <dd><p>(<code>character</code>)<br> Path to the raw <code>counts_cells.bin</code>, which must still contain the empty droplets.</p></dd>
@@ -786,7 +731,7 @@ afterwards, as for a merge.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="returns-21">returns<a class="anchor" aria-label="anchor" href="#returns-21"></a></h4>
+<h4 id="returns-19">returns<a class="anchor" aria-label="anchor" href="#returns-19"></a></h4>
 <p>A list with <code>cell_order</code> (0-indexed source indices in output
 order), <code>lib_size</code>, <code>nnz</code> and <code>fits</code> (one list per sample with
 <code>sample_id</code>, <code>alpha</code>, <code>z_hat</code> (1-indexed), <code>beta</code>, <code>ambient</code>,

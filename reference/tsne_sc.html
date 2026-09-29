@@ -5,39 +5,45 @@ neighbourhood structure. Distances between well-separated clusters should not
 be over-interpreted quantitatively, but the common claim that t-SNE discards
 global structure while UMAP preserves it is largely an artefact of default
 initialisations rather than a property of the loss functions themselves.
-When use_knn = FALSE (the default), the kNN graph already stored on the
-object is reused. Otherwise neighbours are computed from the chosen
+When use_knn = TRUE, the kNN graph already stored on the object is reused.
+With use_knn = FALSE (the default), neighbours are computed from the chosen
 embedding.
-Two approximation strategies are available via approx_type: "bh"
+Three approximation strategies are available via approx_type: "bh"
 (Barnes-Hut) is the classical O(n log n) approximation and works well
 across a wide range of dataset sizes; "fft" (interpolation-based, as in
-FIt-SNE) scales better to very large datasets. perplexity controls the
-bandwidth of the Gaussian kernel used to compute affinities within the
-neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
-use_knn = TRUE, perplexity no longer drives neighbour retrieval but still
-shapes the affinity distribution over the retrieved neighbours; values too
-close to the kNN size will produce poor results. With tSNE in particular the
-rule of thumb is to set k to 3 * perplexity. When `k ≤ perplexity“ the
-algorithm does not behave properly anymore, thus, will throw an error.'><meta property="og:description" content='Wrapper around manifoldsR::tsne() for the SingleCells and MetaCells
+FIt-SNE) scales better to very large datasets; "fft_3k" is the
+three-kernel variant of the latter, with one forward and three inverse FFTs
+per epoch instead of four each. The FFT options are only available on Unix
+systems. perplexity controls the bandwidth of the Gaussian kernel used to
+compute affinities within the neighbour set (typical values 5-50). When a
+pre-computed kNN is supplied via use_knn = TRUE, perplexity no longer
+drives neighbour retrieval but still shapes the affinity distribution over
+the retrieved neighbours; values too close to the kNN size will produce poor
+results. With tSNE in particular the rule of thumb is to set k to
+3 * perplexity. When k &amp;lt;= perplexity the algorithm does not behave
+properly anymore, thus, will throw an error.'><meta property="og:description" content='Wrapper around manifoldsR::tsne() for the SingleCells and MetaCells
 classes. t-SNE produces a low-dimensional embedding that emphasises local
 neighbourhood structure. Distances between well-separated clusters should not
 be over-interpreted quantitatively, but the common claim that t-SNE discards
 global structure while UMAP preserves it is largely an artefact of default
 initialisations rather than a property of the loss functions themselves.
-When use_knn = FALSE (the default), the kNN graph already stored on the
-object is reused. Otherwise neighbours are computed from the chosen
+When use_knn = TRUE, the kNN graph already stored on the object is reused.
+With use_knn = FALSE (the default), neighbours are computed from the chosen
 embedding.
-Two approximation strategies are available via approx_type: "bh"
+Three approximation strategies are available via approx_type: "bh"
 (Barnes-Hut) is the classical O(n log n) approximation and works well
 across a wide range of dataset sizes; "fft" (interpolation-based, as in
-FIt-SNE) scales better to very large datasets. perplexity controls the
-bandwidth of the Gaussian kernel used to compute affinities within the
-neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
-use_knn = TRUE, perplexity no longer drives neighbour retrieval but still
-shapes the affinity distribution over the retrieved neighbours; values too
-close to the kNN size will produce poor results. With tSNE in particular the
-rule of thumb is to set k to 3 * perplexity. When `k ≤ perplexity“ the
-algorithm does not behave properly anymore, thus, will throw an error.'><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+FIt-SNE) scales better to very large datasets; "fft_3k" is the
+three-kernel variant of the latter, with one forward and three inverse FFTs
+per epoch instead of four each. The FFT options are only available on Unix
+systems. perplexity controls the bandwidth of the Gaussian kernel used to
+compute affinities within the neighbour set (typical values 5-50). When a
+pre-computed kNN is supplied via use_knn = TRUE, perplexity no longer
+drives neighbour retrieval but still shapes the affinity distribution over
+the retrieved neighbours; values too close to the kNN size will produce poor
+results. With tSNE in particular the rule of thumb is to set k to
+3 * perplexity. When k &amp;lt;= perplexity the algorithm does not behave
+properly anymore, thus, will throw an error.'><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -45,7 +51,7 @@ algorithm does not behave properly anymore, thus, will throw an error.'><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,20 +144,23 @@ neighbourhood structure. Distances between well-separated clusters should not
 be over-interpreted quantitatively, but the common claim that t-SNE discards
 global structure while UMAP preserves it is largely an artefact of default
 initialisations rather than a property of the loss functions themselves.</p>
-<p>When <code>use_knn = FALSE</code> (the default), the kNN graph already stored on the
-object is reused. Otherwise neighbours are computed from the chosen
+<p>When <code>use_knn = TRUE</code>, the kNN graph already stored on the object is reused.
+With <code>use_knn = FALSE</code> (the default), neighbours are computed from the chosen
 embedding.</p>
-<p>Two approximation strategies are available via <code>approx_type</code>: <code>"bh"</code>
+<p>Three approximation strategies are available via <code>approx_type</code>: <code>"bh"</code>
 (Barnes-Hut) is the classical O(n log n) approximation and works well
 across a wide range of dataset sizes; <code>"fft"</code> (interpolation-based, as in
-FIt-SNE) scales better to very large datasets. <code>perplexity</code> controls the
-bandwidth of the Gaussian kernel used to compute affinities within the
-neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
-<code>use_knn = TRUE</code>, perplexity no longer drives neighbour retrieval but still
-shapes the affinity distribution over the retrieved neighbours; values too
-close to the kNN size will produce poor results. With tSNE in particular the
-rule of thumb is to set k to <code>3 * perplexity</code>. When `k ≤ perplexity“ the
-algorithm does not behave properly anymore, thus, will throw an error.</p>
+FIt-SNE) scales better to very large datasets; <code>"fft_3k"</code> is the
+three-kernel variant of the latter, with one forward and three inverse FFTs
+per epoch instead of four each. The FFT options are only available on Unix
+systems. <code>perplexity</code> controls the bandwidth of the Gaussian kernel used to
+compute affinities within the neighbour set (typical values 5-50). When a
+pre-computed kNN is supplied via <code>use_knn = TRUE</code>, perplexity no longer
+drives neighbour retrieval but still shapes the affinity distribution over
+the retrieved neighbours; values too close to the kNN size will produce poor
+results. With tSNE in particular the rule of thumb is to set k to
+<code>3 * perplexity</code>. When <code>k &lt;= perplexity</code> the algorithm does not behave
+properly anymore, thus, will throw an error.</p>
     </div>
 
     <div class="section level2">
@@ -165,7 +174,7 @@ algorithm does not behave properly anymore, thus, will throw an error.</p>
 <span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"wnn"</span><span class="op">)</span>,</span>
 <span>  n_dim <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  perplexity <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  approx_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bh"</span>, <span class="st">"fft"</span><span class="op">)</span>,</span>
+<span>  approx_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bh"</span>, <span class="st">"fft"</span>, <span class="st">"fft_3k"</span><span class="op">)</span>,</span>
 <span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"kmknn"</span>, <span class="st">"hnsw"</span>, <span class="st">"balltree"</span>, <span class="st">"annoy"</span>, <span class="st">"nndescent"</span>, <span class="st">"exhaustive"</span><span class="op">)</span>,</span>
 <span>  nn_params <span class="op">=</span> <span class="fu">manifoldsR</span><span class="fu">::</span><span class="fu"><a href="https://gregorlueg.github.io/manifoldsR/reference/params_nn.html" class="external-link">params_nn</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  tsne_params <span class="op">=</span> <span class="fu">manifoldsR</span><span class="fu">::</span><span class="fu"><a href="https://gregorlueg.github.io/manifoldsR/reference/params_tsne.html" class="external-link">params_tsne</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -184,7 +193,7 @@ algorithm does not behave properly anymore, thus, will throw an error.</p>
 
 <dt id="arg-use-knn">use_knn<a class="anchor" aria-label="anchor" href="#arg-use-knn"></a></dt>
 <dd><p>Boolean. Use the kNN graph found in the object. Defaults to
-<code>TRUE</code>. If not available, will default to the embedding.</p></dd>
+<code>FALSE</code>. If not available, will default to the embedding.</p></dd>
 
 
 <dt id="arg-embd-to-use">embd_to_use<a class="anchor" aria-label="anchor" href="#arg-embd-to-use"></a></dt>
@@ -203,7 +212,7 @@ use. If <code>NULL</code> all will be used.</p></dd>
 
 
 <dt id="arg-modality">modality<a class="anchor" aria-label="anchor" href="#arg-modality"></a></dt>
-<dd><p>String. On which modality to run the UMAP. One of
+<dd><p>String. On which modality to run the t-SNE. One of
 <code>c("rna", "adt", "wnn")</code>. The two latter options are only available for
 multi-modal versions with the added data.</p></dd>
 
@@ -215,12 +224,12 @@ supported. Defaults to <code>2L</code>.</p></dd>
 
 <dt id="arg-perplexity">perplexity<a class="anchor" aria-label="anchor" href="#arg-perplexity"></a></dt>
 <dd><p>Numeric. Perplexity parameter. Typical values between 5
-and 50. Defaults to <code>30.0</code>.</p></dd>
+and 50. Defaults to <code>10.0</code>.</p></dd>
 
 
 <dt id="arg-approx-type">approx_type<a class="anchor" aria-label="anchor" href="#arg-approx-type"></a></dt>
-<dd><p>String. Approximation method. One of <code>"bh"</code> (Barnes-Hut)
-or <code>"fft"</code>. Defaults to <code>"bh"</code>.</p></dd>
+<dd><p>String. Approximation method. One of <code>"bh"</code> (Barnes-Hut),
+<code>"fft"</code> or <code>"fft_3k"</code>. Defaults to <code>"bh"</code>.</p></dd>
 
 
 <dt id="arg-knn-method">knn_method<a class="anchor" aria-label="anchor" href="#arg-knn-method"></a></dt>

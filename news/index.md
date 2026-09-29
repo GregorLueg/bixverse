@@ -1,5 +1,69 @@
 # Changelog
 
+## bixverse 0.5.4
+
+### Features
+
+- New single cell I/O machinery from bixverse-rs 0.5.6. The cell-to-gene
+  (CSR to CSC) conversion now has one knob, `csc_mem_gb`: `NULL`
+  (default) converts in one pass, a number caps the conversion buffers
+  at that many GB. Available on all count loaders
+  ([`load_mtx()`](https://gregorlueg.github.io/bixverse/reference/load_mtx.md),
+  [`load_multi_mtx()`](https://gregorlueg.github.io/bixverse/reference/load_multi_mtx.md),
+  [`load_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad.md),
+  [`load_h5ad_norm()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad_norm.md),
+  [`load_multi_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_multi_h5ad.md),
+  [`stream_h5ad()`](https://gregorlueg.github.io/bixverse/reference/stream_h5ad.md),
+  [`load_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/load_tenx_h5.md),
+  [`load_multi_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/load_multi_tenx_h5.md),
+  [`load_seurat()`](https://gregorlueg.github.io/bixverse/reference/load_seurat.md),
+  [`load_sce()`](https://gregorlueg.github.io/bixverse/reference/load_sce.md),
+  [`load_r_data()`](https://gregorlueg.github.io/bixverse/reference/load_r_data.md)),
+  plus
+  [`merge_sc_experiments()`](https://gregorlueg.github.io/bixverse/reference/merge_sc_experiments.md)
+  and
+  [`cellsweep_sc()`](https://gregorlueg.github.io/bixverse/reference/cellsweep_sc.md).
+- [`load_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad.md)
+  gained `h5ad_streaming` (default `TRUE`), which streams the counts
+  into the cell-based binary in batches instead of materialising the
+  filtered matrix first.
+  [`stream_h5ad()`](https://gregorlueg.github.io/bixverse/reference/stream_h5ad.md)
+  is now an alias for `load_h5ad(h5ad_streaming = TRUE)`.
+- More 2D embeddings from
+  [manifoldsR](https://github.com/GregorLueg/manifoldsR) 0.3.5:
+  [`densmap_sc()`](https://gregorlueg.github.io/bixverse/reference/densmap_sc.md)
+  and
+  [`densne_sc()`](https://gregorlueg.github.io/bixverse/reference/densne_sc.md)
+  for the density-preserving versions of UMAP and t-SNE ([Narayan et
+  al.](https://doi.org/10.1038/s41587-020-00801-7)), and
+  [`forceatlas2_sc()`](https://gregorlueg.github.io/bixverse/reference/forceatlas2_sc.md)
+  for ForceAtlas2 layouts of either the kNN or the sNN graph. See the
+  updated [plotting
+  vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_visualisation.html).
+- [`tsne_sc()`](https://gregorlueg.github.io/bixverse/reference/tsne_sc.md)
+  and
+  [`densne_sc()`](https://gregorlueg.github.io/bixverse/reference/densne_sc.md)
+  take `approx_type = "fft_3k"`, the three-kernel FFT optimiser (Unix
+  only, like `"fft"`).
+
+### Changes
+
+- `streaming`, `batch_size`, `max_genes_in_memory` and `cell_batch_size`
+  are deprecated on every function listed above. They are ignored and
+  warn if supplied; use `csc_mem_gb` instead. Nothing breaks, old calls
+  keep running.
+- Needs manifoldsR \>= 0.3.5.
+
+### Fixes
+
+- h5ad: the number of cells and genes is read from the `_index` of
+  `/obs` and `/var` rather than the first dataset in the group, and CSR
+  vs CSC comes from the `encoding-type` attribute of `X` instead of
+  being guessed from the `indptr` length.
+- [`tsne_sc()`](https://gregorlueg.github.io/bixverse/reference/tsne_sc.md)
+  documentation had the `use_knn` default and the perplexity default
+  wrong.
+
 ## bixverse 0.5.3
 
 ### Features

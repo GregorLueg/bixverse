@@ -19,7 +19,7 @@ norm = log1p(x / lib_size * target_size)"><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,11 +123,12 @@ library sizes stored in a specified obs column.</p>
 <span>  <span class="va">obs_lib_size_col</span>,</span>
 <span>  <span class="va">target_size</span>,</span>
 <span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  cell_id_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  batch_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
-<span>  max_genes_in_memory <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  cell_batch_size <span class="op">=</span> <span class="fl">100000L</span>,</span>
+<span>  csc_mem_gb <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  streaming <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  batch_size <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  max_genes_in_memory <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  cell_batch_size <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -158,30 +159,21 @@ normalisation (e.g. <code>1e4</code>).</p></dd>
 <dd><p>List. Output of <code><a href="params_sc_min_quality.html">params_sc_min_quality()</a></code>.</p></dd>
 
 
-<dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
-<dd><p>Integer. <code>0L</code> -&gt; in-memory, <code>1L</code> -&gt; light streaming, <code>2L</code>
--&gt; heavy streaming with memory upper boundaries. Controls memory pressure
-during CSR-to-CSC conversion. Defaults to <code>1L</code>.</p></dd>
-
-
 <dt id="arg-cell-id-col">cell_id_col<a class="anchor" aria-label="anchor" href="#arg-cell-id-col"></a></dt>
 <dd><p>Optional string. If a specific column in the h5ad obs
 data represents the cell identifiers, you can specify it here.</p></dd>
 
 
-<dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
-<dd><p>Integer. Cell batch size when <code>streaming = 1L</code>. Defaults
-to <code>1000L</code>.</p></dd>
+<dt id="arg-csc-mem-gb">csc_mem_gb<a class="anchor" aria-label="anchor" href="#arg-csc-mem-gb"></a></dt>
+<dd><p>Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. <code>NULL</code>
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.</p></dd>
 
 
-<dt id="arg-max-genes-in-memory">max_genes_in_memory<a class="anchor" aria-label="anchor" href="#arg-max-genes-in-memory"></a></dt>
-<dd><p>Integer. Maximum genes held in memory at once
-when <code>streaming = 2L</code>. Defaults to <code>2000L</code>.</p></dd>
-
-
-<dt id="arg-cell-batch-size">cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-cell-batch-size"></a></dt>
-<dd><p>Integer. Cell batch size when <code>streaming = 2L</code>.
-Defaults to <code>100000L</code>.</p></dd>
+<dt id="arg-streaming-batch-size-max-genes-in-memory-cell-batch-size">streaming, batch_size, max_genes_in_memory, cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-streaming-batch-size-max-genes-in-memory-cell-batch-size"></a></dt>
+<dd><p>Replaced by
+<code>csc_mem_gb</code> and ignored. <a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a></p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
@@ -221,7 +213,6 @@ shape information.</p>
 <span class="r-in"><span>    min_lib_size <span class="op">=</span> <span class="fl">25L</span>,</span></span>
 <span class="r-in"><span>    min_cells <span class="op">=</span> <span class="fl">5L</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
-<span class="r-in"><span>  streaming <span class="op">=</span> <span class="fl">0L</span>,</span></span>
 <span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></span>

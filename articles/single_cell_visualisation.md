@@ -45,7 +45,7 @@ sc_object <- load_mtx(
   mtx_streaming = FALSE,
   .verbose = TRUE
 )
-#>  Using light streaming for the CSR to CSC conversion.
+#>  Converting the cell-based data into the gene-based format.
 #> Loading observations data from flat file into the DuckDB.
 #> Loading variable data from flat file into the DuckDB.
 
@@ -389,6 +389,108 @@ head(dt)
 #> 5: AAACCGTGTATGCG-1 -2.078420 -1.778267         NK               5 0.1491318
 #> 6: AAACGCACTGGTAC-1 -4.594027  2.556168    T cells               0 0.3635097
 ```
+
+## Other 2D embeddings
+
+UMAP is not the only game in town. All the 2D embeddings come from
+[manifoldsR](https://github.com/GregorLueg/manifoldsR) and land in the
+same object, so
+[`embedding_plot_sc()`](https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html)
+works on every one of them.
+
+### Density-preserving embeddings
+
+UMAP and t-SNE throw away local density. A tight, homogeneous population
+and a diffuse, heterogeneous one come out at roughly the same size, so
+reading anything into the area a cluster takes up on the plot is a
+mistake. densMAP and den-SNE fix this with an extra term in the loss
+that keeps the local radius of each cell in the embedding correlated
+with its radius in PCA space. Big blob now means lots of variation,
+small tight blob means not much. `lambda` in
+[`manifoldsR::params_densmap()`](https://gregorlueg.github.io/manifoldsR/reference/params_densmap.html)
+and
+[`manifoldsR::params_densne()`](https://gregorlueg.github.io/manifoldsR/reference/params_densne.html)
+sets how hard that term pulls; `lambda = 0` gives you plain UMAP and
+t-SNE back.
+
+For the t-SNE flavours we use `approx_type = "fft_3k"`, the three-kernel
+FFT optimiser. The FFT options only exist on Unix, on Windows stick to
+`"bh"`.
+
+``` r
+
+sc_object <- densmap_sc(sc_object, .verbose = FALSE)
+sc_object <- tsne_sc(sc_object, approx_type = "fft_3k", .verbose = FALSE)
+sc_object <- densne_sc(sc_object, approx_type = "fft_3k", .verbose = FALSE)
+```
+
+``` r
+
+density_plots <- purrr::map(
+  c("umap", "densmap", "tsne", "densne"),
+  \(embd) {
+    embedding_plot_sc(
+      sc_object,
+      embedding = embd,
+      colour_by = "sc_type",
+      discrete = TRUE
+    ) +
+      ggtitle(embd)
+  }
+)
+
+patchwork::wrap_plots(density_plots, ncol = 2, guides = "collect")
+```
+
+![](single_cell_visualisation_files/figure-html/density-plots-1.png)
+
+UMAP and t-SNE (left) next to their density-preserving versions (right),
+coloured by cell type.
+
+### ForceAtlas2
+
+ForceAtlas2 is a force-directed layout of the neighbour graph: edges
+pull, every pair of cells pushes, gravity keeps the lot together. It is
+what scanpy’s `draw_graph()` does, and a common pick for data with
+continuous transitions (think differentiation). `graph = "knn"` lays out
+the kNN graph the same way scanpy does. `graph = "snn"` lays out the sNN
+graph the Leiden clustering ran on, here started from the UMAP via
+`init_embd`.
+
+``` r
+
+sc_object <- forceatlas2_sc(sc_object, .verbose = FALSE)
+sc_object <- forceatlas2_sc(
+  sc_object,
+  graph = "snn",
+  init_embd = "umap",
+  slot_name = "fa2_snn",
+  .verbose = FALSE
+)
+```
+
+``` r
+
+fa2_plots <- purrr::map(
+  c("fa2", "fa2_snn"),
+  \(embd) {
+    embedding_plot_sc(
+      sc_object,
+      embedding = embd,
+      colour_by = "sc_type",
+      discrete = TRUE
+    ) +
+      ggtitle(embd)
+  }
+)
+
+patchwork::wrap_plots(fa2_plots, ncol = 2, guides = "collect")
+```
+
+![](single_cell_visualisation_files/figure-html/fa2-plots-1.png)
+
+ForceAtlas2 on the kNN graph (left) and on the sNN graph (right),
+coloured by cell type.
 
 ## Per-Gene Expression plots\`
 

@@ -17,7 +17,7 @@ matrix."><meta property="og:image" content="https://gregorlueg.github.io/bixvers
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,10 +122,11 @@ matrix.</p>
 <span>  <span class="va">empty_params</span>,</span>
 <span>  cellsweep_params <span class="op">=</span> <span class="fu"><a href="params_sc_cellsweep.html">params_sc_cellsweep</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  batch_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
-<span>  max_genes_in_memory <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  cell_batch_size <span class="op">=</span> <span class="fl">100000L</span>,</span>
+<span>  csc_mem_gb <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  streaming <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  batch_size <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  max_genes_in_memory <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  cell_batch_size <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -168,21 +169,16 @@ name of the obs column holding the mask.</p></dd>
 used, to scale the new normalised layer.</p></dd>
 
 
-<dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
-<dd><p>Integer. <code>0L</code> in-memory, <code>1L</code> light streaming (default) or
-<code>2L</code> memory-bounded, for the CSR to CSC conversion.</p></dd>
+<dt id="arg-csc-mem-gb">csc_mem_gb<a class="anchor" aria-label="anchor" href="#arg-csc-mem-gb"></a></dt>
+<dd><p>Optional numeric. Memory in GB for the buffers of the
+cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. <code>NULL</code>
+(default) converts in one pass and holds the whole matrix. Set a cap for
+large data sets; every extra phase re-reads the cell file once.</p></dd>
 
 
-<dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
-<dd><p>Integer. Cells per batch for <code>streaming = 1L</code>.</p></dd>
-
-
-<dt id="arg-max-genes-in-memory">max_genes_in_memory<a class="anchor" aria-label="anchor" href="#arg-max-genes-in-memory"></a></dt>
-<dd><p>Integer. Genes held at once for <code>streaming = 2L</code>.</p></dd>
-
-
-<dt id="arg-cell-batch-size">cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-cell-batch-size"></a></dt>
-<dd><p>Integer. Cells per batch for <code>streaming = 2L</code>.</p></dd>
+<dt id="arg-streaming-batch-size-max-genes-in-memory-cell-batch-size">streaming, batch_size, max_genes_in_memory, cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-streaming-batch-size-max-genes-in-memory-cell-batch-size"></a></dt>
+<dd><p>Replaced by
+<code>csc_mem_gb</code> and ignored. <a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a></p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>

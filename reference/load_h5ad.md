@@ -12,12 +12,14 @@ load_h5ad(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
-  streaming = 1L,
   raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   cell_id_col = NULL,
-  batch_size = 1000L,
-  max_genes_in_memory = 2000L,
-  cell_batch_size = 100000L,
+  h5ad_streaming = TRUE,
+  csc_mem_gb = NULL,
+  streaming = deprecated(),
+  batch_size = deprecated(),
+  max_genes_in_memory = deprecated(),
+  cell_batch_size = deprecated(),
   .verbose = TRUE
 )
 ```
@@ -49,14 +51,6 @@ load_h5ad(
 
   - target_size - Float. Target size to normalise to. Defaults to `1e5`.
 
-- streaming:
-
-  Integer. `0L` -\> all cells loaded in memory then transposed (fastest,
-  highest memory), `1L` -\> light streaming with cell batching, `2L` -\>
-  heavy streaming with memory upper boundaries on the gene side.
-  Controls memory pressure during the CSR-to-CSC conversion. Defaults to
-  `1L`.
-
 - raw_count_slot:
 
   Where raw counts live. `"auto"` detects per file via
@@ -68,18 +62,22 @@ load_h5ad(
   Optional string. If a specific column in the h5ad obs data is
   representing the cell identifiers, you can specify it here.
 
-- batch_size:
+- h5ad_streaming:
 
-  Integer. Cell batch size when `streaming = 1L`. Defaults to `1000L`.
+  Boolean. Stream the h5ad counts into the cell-based binary in batches
+  instead of materialising the filtered matrix first. Recommended for
+  large files. Defaults to `TRUE`.
 
-- max_genes_in_memory:
+- csc_mem_gb:
 
-  Integer. Maximum genes held in memory at once when `streaming = 2L`.
-  Defaults to `2000L`.
+  Optional numeric. Memory in GB for the buffers of the cell-to-gene
+  (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL` (default)
+  converts in one pass and holds the whole matrix. Set a cap for large
+  data sets; every extra phase re-reads the cell file once.
 
-- cell_batch_size:
+- streaming, batch_size, max_genes_in_memory, cell_batch_size:
 
-  Integer. Cell batch size when `streaming = 2L`. Defaults to `100000L`.
+  Replaced by `csc_mem_gb` and ignored. **\[deprecated\]**
 
 - .verbose:
 
@@ -109,7 +107,6 @@ sc <- load_h5ad(
     min_lib_size = 25L,
     min_cells = 5L
   ),
-  streaming = 0L,
   .verbose = FALSE
 )
 dim(sc)
