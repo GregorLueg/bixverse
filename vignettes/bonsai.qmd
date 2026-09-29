@@ -1,0 +1,284 @@
+---
+title: "Cell trees with Bonsai"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Cell trees with Bonsai}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+UMAP and t-SNE squash a kNN graph into two dimensions and lose most of the
+global structure on the way. Bonsai (de Groot, et al., Nat. Biotechnol., 2026)
+takes a different route: it reconstructs a tree over the cells, every cell a
+leaf and every internal node an inferred ancestral state, with branch lengths
+that carry how much changed between them. The tree is the representation; a 2D
+layout is just a way to draw it.
+
+What makes it work is that Bonsai uses the error bar on every measurement, not
+only the measurement. Those come from Sanity (Breda, et al., Nat. Biotechnol.,
+2021), which turns raw UMI counts into posterior log fold changes with error
+bars, gene by gene. `bonsai_sc()` runs both: counts from disk, Sanity, Bonsai,
+layout. Both are Rust ports under the hood,
+[`sanity-sc-rs`](https://github.com/GregorLueg/sanity-sc-rs) and
+[`bonsai-rs`](https://github.com/GregorLueg/bonsai-rs).
+
+We use the PBMC3k data here. If you have not worked through the
+[PBMC vignette](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html),
+do that first; the preprocessing below is the same, just condensed.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(ggplot2)
+library(data.table)
+library(bixverse.plots)
+library(magrittr)
+```
+
+## Preparing the data
+
+Loading, QC and the usual HVG, PCA, neighbours and clustering chain. Bonsai
+itself needs none of the last four, but the clusters and cell types make the
+tree readable, and the UMAP gives us something to compare against.
+
+```{r}
+#| label: load and qc
+pbmc3k_path <- download_pbmc3k()
+tempdir_pbmc <- tempdir()
+
+sc_object <- load_mtx(
+  object = SingleCells(dir_data = tempdir_pbmc),
+  sc_mtx_io_param = get_cell_ranger_params(pbmc3k_path),
+  mtx_streaming = FALSE,
+  .verbose = FALSE
+)
+
+setnames_sc(sc_object, table = "var", old = "column1", new = "gene_symbol")
+var <- get_sc_var(sc_object)
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  list(MT = var[grepl("^MT-", gene_symbol), gene_id]),
+  streaming = FALSE,
+  .verbose = FALSE
+)
+
+qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
+qc <- run_cell_qc(
+  metrics = list(
+    log10_lib_size = log10(qc_df$lib_size),
+    log10_nnz = log10(qc_df$nnz),
+    MT = qc_df$MT
+  ),
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = c(
+    log10_lib_size = "twosided",
+    log10_nnz = "twosided",
+    MT = "above"
+  ),
+  threshold = 3
+)
+sc_object <- set_cells_to_keep(sc_object, qc_df[!qc$combined, cell_id])
+
+sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
+sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, .verbose = FALSE)
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_clusters")
+sc_object <- umap_sc(sc_object, .verbose = FALSE)
+
+sc_object
+```
+
+Cell types via scType, with the same markers as the PBMC vignette.
+
+```{r}
+#| label: cell types
+cell_markers <- c(
+  CD3D = "T cells", CD3E = "T cells", IL7R = "CD4+ T", CD4 = "CD4+ T",
+  CD8A = "CD8+ T", CD8B = "CD8+ T", MS4A1 = "B cells", CD79A = "B cells",
+  CD14 = "CD14+ Mono", LYZ = "CD14+ Mono", FCGR3A = "CD16+ Mono",
+  CDKN1C = "CD16+ Mono", GNLY = "NK", NKG7 = "NK", FCER1A = "mDC",
+  CD1C = "mDC", LILRA4 = "pDC", PPBP = "Platelet", PF4 = "Platelet"
+)
+
+cell_markers_dt <- stack(cell_markers) %>%
+  as.data.table() %>%
+  setnames(c("values", "ind"), c("cell_type", "gene_symbol")) %>%
+  .[, gene_symbol := as.character(gene_symbol)] %>%
+  .[, gene_id := var$gene_id[match(gene_symbol, var$gene_symbol)]] %>%
+  .[!is.na(gene_id)]
+
+sctype_scores <- calc_sc_type_scores(
+  object = sc_object,
+  cell_marker_list = prepare_cell_markers(sc_object, cell_markers_dt)
+)
+obs <- get_sc_obs(sc_object, filtered = TRUE)
+cell_type_anno <- score_clusters(sctype_scores, obs$leiden_clusters)
+sc_object[["cell_type"]] <- cell_type_anno$cell_type[
+  match(obs$leiden_clusters, cell_type_anno$cluster_id)
+]
+```
+
+## Running Bonsai
+
+One call. No HVG selection needed: by default every gene is a candidate, and
+Sanity streams them through in chunks of 1,024, keeping only the genes with
+enough signal over their own noise (`min_signal_to_noise`, 1 by default). That
+is the gene selection of the Bonsai paper. Memory stays at one chunk of counts
+plus the survivors, whatever the number of candidates.
+
+```{r}
+#| label: bonsai
+tree <- bonsai_sc(sc_object, .verbose = FALSE)
+
+tree
+```
+
+Where did the time go? Every stage is timed, and `total` is the whole call as R
+saw it, so a gap between `total` and the stages would be time spent somewhere
+nobody measured. At this size Sanity is most of the run: it fits every one of
+the candidate genes, while the search only sees the few hundred that survive.
+
+```{r}
+#| label: timings
+tree$timings
+```
+
+The search reports its steps too: the loglikelihood after each and what it
+took. Steps 4 and 7 re-fit the branch lengths, 5 and 6 rearrange the tree
+(subtree pruning and regrafting, then nearest-neighbour interchanges), and 8
+collapses the zero-length edges the rest leave behind.
+
+```{r}
+#| label: steps
+tree$steps
+```
+
+### Which genes made it?
+
+Most genes carry no usable signal over their Poisson noise and are dropped. The
+ones that stay overlap with, but are not, the HVGs.
+
+```{r}
+#| label: genes
+hvg_ids <- get_gene_names_from_idx(sc_object, get_hvg(sc_object))
+
+data.table(
+  genes_used = length(tree$genes_used),
+  genes_dropped = length(tree$genes_dropped),
+  also_hvg = sum(tree$genes_used %in% hvg_ids)
+)
+```
+
+Want the tree on your own gene set instead? Pass `hvg` (1-indexed), e.g.
+`bonsai_sc(sc_object, hvg = get_hvg(sc_object) + 1L)`. The signal-to-noise
+filter still applies on top.
+
+## Plotting
+
+`plot()` draws every branch and a point per cell. `colour_by` takes one value
+per cell, in the order of the object's cells.
+
+```{r}
+#| label: plot equal angle
+#| fig-width: 7
+#| fig-height: 7
+cell_type <- get_sc_obs(sc_object, filtered = TRUE)$cell_type
+
+plot(tree, colour_by = cell_type, point_size = 0.8) +
+  guides(colour = guide_legend(override.aes = list(size = 3)))
+```
+
+Every cell type gets its own subtree, and none of that was told to Bonsai: the
+annotation only colours the leaves. The CD16+ monocytes sit inside the monocyte
+subtree rather than next to it, and the NK cells branch off close to the T
+cells, which is what you would expect from their biology. Branch length is
+change, so the long isolated branches are cells that look like nothing else in
+the data.
+
+The default is the equal-angle layout: every subtree gets a wedge proportional
+to its size. Two alternatives, recomputed from the stored tree without
+searching again. The dendrogram draws the branch lengths along x:
+
+```{r}
+#| label: plot dendrogram
+#| fig-width: 7
+#| fig-height: 7
+plot(tree, colour_by = cell_type, layout = "dendrogram", point_size = 0.5)
+```
+
+The hyperbolic projection maps the same layout onto the unit disk. How much it
+changes the picture depends on how far the tips sit from the root; on PBMC3k
+the branches are short and it barely does, on deeper trees it gives the crowded
+centre more room:
+
+```{r}
+#| label: plot hyperbolic
+#| fig-width: 7
+#| fig-height: 7
+plot(tree, colour_by = cell_type, hyperbolic = TRUE, point_size = 0.8)
+```
+
+`relayout_bonsai()` does the same but keeps the result, which matters for the
+next step.
+
+## Bonsai next to UMAP
+
+The leaf coordinates can go into the object as an embedding, so everything that
+plots embeddings works on them.
+
+```{r}
+#| label: embedding
+#| fig-width: 12
+#| fig-height: 5
+sc_object <- set_bonsai_embedding(sc_object, tree)
+
+patchwork::wrap_plots(
+  embedding_plot_sc(
+    sc_object,
+    embedding = "umap",
+    colour_by = "cell_type",
+    discrete = TRUE
+  ) +
+    ggtitle("UMAP"),
+  embedding_plot_sc(
+    sc_object,
+    embedding = "bonsai",
+    colour_by = "cell_type",
+    discrete = TRUE
+  ) +
+    ggtitle("Bonsai, equal angle")
+)
+```
+
+## Scaling
+
+The search grows a little faster than linearly with the cell number. In
+`bonsai-rs`'s own benchmarks on ten cores it took about 70 seconds at 10,000
+cells and 210 seconds at 25,000. Sanity comes on top and grows with the number
+of candidate genes. On the CPU that is the bigger share once every gene goes
+in. The GPU Sanity in `sanity-sc-rs` was 8 to 80 times faster than its CPU
+path in that crate's own benchmarks, and will come to `bixverse.gpu`. For large data sets, restricting the
+candidates with `hvg` is the cheap way out.
+
+## Clean up
+
+```{r}
+#| label: clean up
+unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
+```

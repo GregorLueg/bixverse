@@ -66,6 +66,19 @@ expect_equal(
   info = "bonsai: used and dropped genes partition all genes"
 )
 
+expect_equal(
+  tree$timings$stage,
+  c("sanity", "ingest", "bonsai", "layout", "total"),
+  info = "bonsai: every stage timed, plus the total"
+)
+
+expect_true(
+  all(tree$timings$seconds >= 0) &&
+    tree$timings[stage == "total", seconds] >=
+      sum(tree$timings[stage != "total", seconds]),
+  info = "bonsai: the total covers the stages"
+)
+
 expect_stdout(
   print(tree),
   "BonsaiTree:",

@@ -31,7 +31,11 @@ A \code{BonsaiTree} S3 object with:
 \code{branch}, \code{is_leaf}, \code{cell_id} (\code{NA} for the inferred ancestors), \code{x} and
 \code{y}. The leaves come first, in the order of the object's cells.
 \item loglik - The loglikelihood of the final tree.
-\item steps - data.table with the loglikelihood after each search step.
+\item steps - data.table with the loglikelihood after each search step
+and the step's wall time in seconds.
+\item timings - data.table with the wall time in seconds of each stage:
+\code{sanity}, \code{ingest}, \code{bonsai} (the whole search), \code{layout}, and \code{total}, the
+whole call as R saw it.
 \item genes_used - The genes the tree was built on.
 \item genes_dropped - The candidate genes left out: no counts in the
 cells, ill-conditioned Sanity posteriors, or a signal-to-noise ratio below

@@ -672,7 +672,11 @@ S7::method(run_gene_trends_sc, ScOrMc) <- function(
 #'   `branch`, `is_leaf`, `cell_id` (`NA` for the inferred ancestors), `x` and
 #'   `y`. The leaves come first, in the order of the object's cells.
 #'   \item loglik - The loglikelihood of the final tree.
-#'   \item steps - data.table with the loglikelihood after each search step.
+#'   \item steps - data.table with the loglikelihood after each search step
+#'   and the step's wall time in seconds.
+#'   \item timings - data.table with the wall time in seconds of each stage:
+#'   `sanity`, `ingest`, `bonsai` (the whole search), `layout`, and `total`, the
+#'   whole call as R saw it.
 #'   \item genes_used - The genes the tree was built on.
 #'   \item genes_dropped - The candidate genes left out: no counts in the
 #'   cells, ill-conditioned Sanity posteriors, or a signal-to-noise ratio below
@@ -740,6 +744,7 @@ S7::method(bonsai_sc, SingleCells) <- function(
     ))
   }
 
+  started <- Sys.time()
   rs_res <- rs_sc_bonsai(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
@@ -749,7 +754,7 @@ S7::method(bonsai_sc, SingleCells) <- function(
     verbose = parse_verbosity(.verbose)
   )
 
-  new_bonsai_tree(
+  tree <- new_bonsai_tree(
     rs_res = rs_res,
     cell_idx = cell_idx,
     cell_names = get_cell_names(object, filtered = TRUE),
@@ -757,4 +762,15 @@ S7::method(bonsai_sc, SingleCells) <- function(
     gene_ids = unname(get_gene_names_from_idx(object, genes_in)),
     bonsai_params = bonsai_params
   )
+
+  # anything the Rust stages do not account for shows up as the difference
+  tree$timings <- rbind(
+    tree$timings,
+    data.table::data.table(
+      stage = "total",
+      seconds = as.numeric(difftime(Sys.time(), started, units = "secs"))
+    )
+  )
+
+  tree
 }

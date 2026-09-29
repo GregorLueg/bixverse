@@ -4726,6 +4726,7 @@ new_bonsai_tree <- function(
       "n_leaves",
       "loglik",
       "steps",
+      "timings",
       "genes_used"
     )
   )
@@ -4745,7 +4746,12 @@ new_bonsai_tree <- function(
     loglik = rs_res$loglik,
     steps = data.table::data.table(
       step = rs_res$steps$step,
-      loglik = rs_res$steps$loglik
+      loglik = rs_res$steps$loglik,
+      seconds = rs_res$steps$seconds
+    ),
+    timings = data.table::data.table(
+      stage = rs_res$timings$stage,
+      seconds = rs_res$timings$seconds
     ),
     genes_used = genes_used,
     genes_dropped = setdiff(gene_ids, genes_used),
@@ -4781,6 +4787,13 @@ print.BonsaiTree <- function(x, ...) {
       "  Layout: %s%s\n",
       x$layout,
       if (isTRUE(x$hyperbolic)) " (hyperbolic)" else ""
+    ),
+    sprintf(
+      "  Seconds: %s\n",
+      paste(
+        sprintf("%s %.1f", x$timings$stage, x$timings$seconds),
+        collapse = " | "
+      )
     ),
     sep = ""
   )

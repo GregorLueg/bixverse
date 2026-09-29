@@ -83,6 +83,8 @@ navbar:
           href: articles/dialogue.html
         - text: "Trajectory inference with Palantir and PAGA"
           href: articles/trajectory_inference.html
+        - text: "Cell trees with Bonsai"
+          href: articles/bonsai.html
         - text: "Reference mapping via Symphony"
           href: articles/symphony.html
         - text: "Multi-modal analysis"
@@ -144,6 +146,7 @@ articles:
       - differential_expression
       - differential_abundance
       - trajectory_inference
+      - bonsai
       - single_cell_big_data
       - multi_modal_single_cells
       - single_cell_visualisation
@@ -580,6 +583,9 @@ reference:
       - run_palantir_sc
       - run_paga_sc
       - run_gene_trends_sc
+      - bonsai_sc
+      - relayout_bonsai
+      - set_bonsai_embedding
       - get_index_cells
       - add_nhoods_info
       - test_nhoods
@@ -623,6 +629,7 @@ reference:
       - params_sc_palantir
       - params_sc_branch_selection
       - params_sc_gene_trends
+      - params_sc_bonsai
       - params_nmf_hals
       - params_nmf_consensus
       - params_lda
