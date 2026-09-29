@@ -722,8 +722,49 @@ S7::method(bonsai_sc, SingleCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+
+  .bonsai_sc_run(
+    object = object,
+    hvg = hvg,
+    bonsai_params = bonsai_params,
+    runner = rs_sc_bonsai,
+    .verbose = .verbose
+  )
+}
+
+#' Run Bonsai with a given Rust entry point
+#'
+#' @description
+#' Everything [bixverse::bonsai_sc()] does around the Rust call: candidate
+#' genes, cells, the `BonsaiTree` and the total timing. The Rust entry point is
+#' an argument so `bixverse.gpu` can hand in its GPU Sanity one and get back the
+#' identical class.
+#'
+#' @param object `SingleCells` class.
+#' @param hvg Optional integer. 1-indexed candidate genes, `NULL` for all.
+#' @param bonsai_params List. See [bixverse::params_sc_bonsai()].
+#' @param runner Function with the signature of [bixverse::rs_sc_bonsai()].
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @returns A `BonsaiTree`, see [bixverse::bonsai_sc()].
+#'
+#' @keywords internal
+.bonsai_sc_run <- function(object, hvg, bonsai_params, runner, .verbose) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(hvg, c("I+", "0"))
   assertScBonsaiParams(bonsai_params)
+  checkmate::assertFunction(
+    runner,
+    args = c(
+      "f_path_gene",
+      "f_path_cell",
+      "cell_indices",
+      "gene_indices",
+      "bonsai_params",
+      "verbose"
+    )
+  )
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   genes_in <- if (!is.null(hvg)) {
@@ -745,7 +786,7 @@ S7::method(bonsai_sc, SingleCells) <- function(
   }
 
   started <- Sys.time()
-  rs_res <- rs_sc_bonsai(
+  rs_res <- runner(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
     cell_indices = cell_idx,
