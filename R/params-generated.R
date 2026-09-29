@@ -2576,6 +2576,156 @@ params_sc_bbknn <- function(
   )
 }
 
+#' Wrapper function for Bonsai parameters
+#'
+#' @description Parameters for [bixverse::bonsai_sc()]. Sanity turns the raw
+#' counts into posterior log fold changes with error bars, Bonsai builds a tree
+#' over the cells from those, and the tree is laid out in 2D for plotting. The
+#' Sanity defaults come from sanity-sc-rs, the search defaults from bonsai-rs.
+#'
+#' @param variance_rule String. How Sanity treats each gene's variance in log
+#' fold change. `"marginalise"` integrates over the variance grid,
+#' `"posterior_mean"` and `"max_posterior"` collapse it to one value first
+#' (cheaper, less accurate error bars), and `"fixed"` uses `fixed_variance` for
+#' every gene. One of `c("marginalise", "posterior_mean", "max_posterior",
+#' "fixed")`. Defaults to `"marginalise"`.
+#' @param fixed_variance Numeric or `NULL`. The variance for `variance_rule =
+#' "fixed"`. Ignored otherwise. Defaults to `NULL`.
+#' @param variance_bins Integer. Bins in the log-spaced variance grid. Defaults
+#' to `161L`.
+#' @param variance_min Numeric. Smallest variance on the grid. Defaults to
+#' `0.001`.
+#' @param variance_max Numeric. Largest variance on the grid. Defaults to
+#' `50.0`.
+#' @param min_signal_to_noise Numeric. Genes whose signal-to-noise ratio falls
+#' below this are left out of the tree. Defaults to `1.0`.
+#' @param start String. Initial topology. `"linkage"` is a Ward linkage over a
+#' neighbour graph: faster and a better tree on real data. `"greedy_merge"` is
+#' the paper's star merge, kept for comparisons with the published method. One
+#' of `c("linkage", "greedy_merge")`. Defaults to `"linkage"`.
+#' @param spr_search String. Subtree pruning and regrafting. `"approximate"`
+#' stays within a few nats of `"exact"` on bonsai-rs's benchmarks at up to twice
+#' the speed. One of `c("approximate", "exact")`. Defaults to `"approximate"`.
+#' @param nni_search String. Nearest-neighbour interchange. `"approximate"`
+#' found the same tree as `"exact"` on every bonsai-rs benchmark, and faster.
+#' One of `c("approximate", "exact")`. Defaults to `"approximate"`.
+#' @param seed Integer. Seed for the linkage, SPR and NNI searches. Defaults to
+#' `42L`.
+#' @param reroot Boolean. Reroot the finished tree for display. Changes the
+#' drawing, not the likelihood. Defaults to `TRUE`.
+#' @param layout String. 2D layout. `"equal_daylight"` refines equal angle but
+#' falls back to it above 2,048 nodes, so it only matters for small trees. Can
+#' be changed later with [bixverse::relayout_bonsai()]. One of `c("equal_angle",
+#' "equal_daylight", "dendrogram")`. Defaults to `"equal_angle"`.
+#' @param hyperbolic Boolean. Project the layout onto the hyperbolic disk.
+#' Defaults to `FALSE`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item variance_rule - String. How Sanity treats each gene's variance in log
+#'  fold change. `"marginalise"` integrates over the variance grid,
+#'  `"posterior_mean"` and `"max_posterior"` collapse it to one value first
+#'  (cheaper, less accurate error bars), and `"fixed"` uses `fixed_variance` for
+#'  every gene. One of `c("marginalise", "posterior_mean", "max_posterior",
+#'  "fixed")`. Defaults to `"marginalise"`.
+#'  \item fixed_variance - Numeric or `NULL`. The variance for `variance_rule =
+#'  "fixed"`. Ignored otherwise. Defaults to `NULL`.
+#'  \item variance_bins - Integer. Bins in the log-spaced variance grid.
+#'  Defaults to `161L`.
+#'  \item variance_min - Numeric. Smallest variance on the grid. Defaults to
+#'  `0.001`.
+#'  \item variance_max - Numeric. Largest variance on the grid. Defaults to
+#'  `50.0`.
+#'  \item min_signal_to_noise - Numeric. Genes whose signal-to-noise ratio falls
+#'  below this are left out of the tree. Defaults to `1.0`.
+#'  \item start - String. Initial topology. `"linkage"` is a Ward linkage over a
+#'  neighbour graph: faster and a better tree on real data. `"greedy_merge"` is
+#'  the paper's star merge, kept for comparisons with the published method. One
+#'  of `c("linkage", "greedy_merge")`. Defaults to `"linkage"`.
+#'  \item spr_search - String. Subtree pruning and regrafting. `"approximate"`
+#'  stays within a few nats of `"exact"` on bonsai-rs's benchmarks at up to
+#'  twice the speed. One of `c("approximate", "exact")`. Defaults to
+#'  `"approximate"`.
+#'  \item nni_search - String. Nearest-neighbour interchange. `"approximate"`
+#'  found the same tree as `"exact"` on every bonsai-rs benchmark, and faster.
+#'  One of `c("approximate", "exact")`. Defaults to `"approximate"`.
+#'  \item seed - Integer. Seed for the linkage, SPR and NNI searches. Defaults
+#'  to `42L`.
+#'  \item reroot - Boolean. Reroot the finished tree for display. Changes the
+#'  drawing, not the likelihood. Defaults to `TRUE`.
+#'  \item layout - String. 2D layout. `"equal_daylight"` refines equal angle but
+#'  falls back to it above 2,048 nodes, so it only matters for small trees. Can
+#'  be changed later with [bixverse::relayout_bonsai()]. One of
+#'  `c("equal_angle", "equal_daylight", "dendrogram")`. Defaults to
+#'  `"equal_angle"`.
+#'  \item hyperbolic - Boolean. Project the layout onto the hyperbolic disk.
+#'  Defaults to `FALSE`.
+#' }
+#'
+#' @references de Groot, et al., Nat. Biotechnol., 2026; Breda, et al., Nat.
+#' Biotechnol., 2021.
+#'
+#' @export
+params_sc_bonsai <- function(
+  variance_rule = c("marginalise", "posterior_mean", "max_posterior", "fixed"),
+  fixed_variance = NULL,
+  variance_bins = 161L,
+  variance_min = 0.001,
+  variance_max = 50.0,
+  min_signal_to_noise = 1.0,
+  start = c("linkage", "greedy_merge"),
+  spr_search = c("approximate", "exact"),
+  nni_search = c("approximate", "exact"),
+  seed = 42L,
+  reroot = TRUE,
+  layout = c("equal_angle", "equal_daylight", "dendrogram"),
+  hyperbolic = FALSE
+) {
+  variance_rule <- match.arg(variance_rule)
+  start <- match.arg(start)
+  spr_search <- match.arg(spr_search)
+  nni_search <- match.arg(nni_search)
+  layout <- match.arg(layout)
+
+  # Checks
+  checkmate::assertChoice(
+    variance_rule,
+    c("marginalise", "posterior_mean", "max_posterior", "fixed")
+  )
+  checkmate::qassert(fixed_variance, c("N1(0,)", "0"))
+  checkmate::qassert(variance_bins, "I1[2,)")
+  checkmate::qassert(variance_min, "N1(0,)")
+  checkmate::qassert(variance_max, "N1(0,)")
+  checkmate::qassert(min_signal_to_noise, "N1")
+  checkmate::assertChoice(start, c("linkage", "greedy_merge"))
+  checkmate::assertChoice(spr_search, c("approximate", "exact"))
+  checkmate::assertChoice(nni_search, c("approximate", "exact"))
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(reroot, "B1")
+  checkmate::assertChoice(
+    layout,
+    c("equal_angle", "equal_daylight", "dendrogram")
+  )
+  checkmate::qassert(hyperbolic, "B1")
+
+  # Return
+  list(
+    variance_rule = variance_rule,
+    fixed_variance = fixed_variance,
+    variance_bins = variance_bins,
+    variance_min = variance_min,
+    variance_max = variance_max,
+    min_signal_to_noise = min_signal_to_noise,
+    start = start,
+    spr_search = spr_search,
+    nni_search = nni_search,
+    seed = seed,
+    reroot = reroot,
+    layout = layout,
+    hyperbolic = hyperbolic
+  )
+}
+
 #' Wrapper function for the branch cell selection parameters
 #'
 #' @description Parameters controlling which cells

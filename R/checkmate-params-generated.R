@@ -2578,6 +2578,111 @@ checkScBbknnParams <- function(x) {
 #' @keywords internal
 assertScBbknnParams <- checkmate::makeAssertionFunction(checkScBbknnParams)
 
+#' Check Bonsai params
+#'
+#' @description Checkmate extension for the output of [params_sc_bonsai()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkScBonsaiParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "variance_rule",
+      "fixed_variance",
+      "variance_bins",
+      "variance_min",
+      "variance_max",
+      "min_signal_to_noise",
+      "start",
+      "spr_search",
+      "nni_search",
+      "seed",
+      "reroot",
+      "layout",
+      "hyperbolic"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      fixed_variance = c("N1(0,)", "0"),
+      variance_bins = "I1[2,)",
+      variance_min = "N1(0,)",
+      variance_max = "N1(0,)",
+      min_signal_to_noise = "N1",
+      seed = "I1",
+      reroot = "B1",
+      hyperbolic = "B1"
+    ),
+    label = "Bonsai params",
+    hint = paste(
+      "variance_rule must be one of marginalise, posterior_mean,",
+      "max_posterior or fixed; fixed_variance must be NULL or > 0;",
+      "variance_bins must be >= 2; variance_min and variance_max must",
+      "be > 0; start must be linkage or greedy_merge; spr_search and",
+      "nni_search must be approximate or exact; layout must be one of",
+      "equal_angle, equal_daylight or dendrogram; seed must be an",
+      "integer; reroot and hyperbolic must be booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      variance_rule = c(
+        "marginalise",
+        "posterior_mean",
+        "max_posterior",
+        "fixed"
+      ),
+      start = c("linkage", "greedy_merge"),
+      spr_search = c("approximate", "exact"),
+      nni_search = c("approximate", "exact"),
+      layout = c("equal_angle", "equal_daylight", "dendrogram")
+    ),
+    label = "Bonsai params",
+    hint = paste(
+      "variance_rule must be one of marginalise, posterior_mean,",
+      "max_posterior or fixed; fixed_variance must be NULL or > 0;",
+      "variance_bins must be >= 2; variance_min and variance_max must",
+      "be > 0; start must be linkage or greedy_merge; spr_search and",
+      "nni_search must be approximate or exact; layout must be one of",
+      "equal_angle, equal_daylight or dendrogram; seed must be an",
+      "integer; reroot and hyperbolic must be booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert Bonsai params
+#'
+#' @inheritParams checkScBonsaiParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertScBonsaiParams <- checkmate::makeAssertionFunction(checkScBonsaiParams)
+
 #' Check branch selection params
 #'
 #' @description Checkmate extension for the output of

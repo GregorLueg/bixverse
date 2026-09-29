@@ -627,3 +627,128 @@ S7::method(run_gene_trends_sc, ScOrMc) <- function(
 
   magic[["data"]][obs_cells, features, drop = FALSE]
 }
+
+## bonsai ----------------------------------------------------------------------
+
+#' Build a Bonsai tree over the cells
+#'
+#' @description
+#' Bonsai reconstructs a tree over the cells in which every cell is a leaf and
+#' the internal nodes are inferred ancestral states, with branch lengths that
+#' carry the amount of change between them. Unlike a kNN graph it uses each
+#' measurement's error bar, which is what Sanity provides: the raw counts of
+#' the chosen genes go through Sanity first, for posterior log fold changes
+#' with error bars, and Bonsai builds the tree on those. The tree is then laid
+#' out in 2D. For details, please refer to de Groot, et al. and Breda, et al.
+#'
+#' Runtime grows a little faster than linearly with the number of cells. In
+#' bonsai-rs's own benchmarks the search took about 70 seconds at 10,000 cells
+#' and 210 seconds at 25,000 on ten cores, on top of the Sanity run.
+#'
+#' The object itself is not touched. Store the leaf coordinates with
+#' [bixverse::set_bonsai_embedding()] if you want them next to the other
+#' embeddings.
+#'
+#' @param object `SingleCells` class.
+#' @param hvg Optional integer. The genes to build the tree on. Please provide
+#' 1-indexed genes here! Defaults to [bixverse::get_hvg()].
+#' @param bonsai_params List. See [bixverse::params_sc_bonsai()].
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns A `BonsaiTree` S3 object with:
+#' \itemize{
+#'   \item nodes - data.table with `node`, `parent` (`NA` for the root),
+#'   `branch`, `is_leaf`, `cell_id` (`NA` for the inferred ancestors), `x` and
+#'   `y`. The leaves come first, in the order of the object's cells.
+#'   \item loglik - The loglikelihood of the final tree.
+#'   \item steps - data.table with the loglikelihood after each search step.
+#'   \item genes_used - The genes the tree was built on.
+#'   \item genes_dropped - The genes that went in but were left out: no counts
+#'   in the cells, ill-conditioned Sanity posteriors, or a signal-to-noise
+#'   ratio below `min_signal_to_noise`.
+#'   \item cell_idx - The cells the tree was built over (0-indexed).
+#'   \item layout, hyperbolic - The current layout.
+#'   \item params - The parameters of the run.
+#' }
+#'
+#' @references de Groot, et al., Nat. Biotechnol., 2026; Breda, et al., Nat.
+#' Biotechnol., 2021.
+#'
+#' @export
+#'
+#' @examples
+#' # a tree over the demo cells on 30 highly variable genes
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+#' tree <- bonsai_sc(sc, .verbose = FALSE)
+#' tree
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+bonsai_sc <- S7::new_generic(
+  name = "bonsai_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    hvg = NULL,
+    bonsai_params = params_sc_bonsai(),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method bonsai_sc SingleCells
+#'
+#' @export
+S7::method(bonsai_sc, SingleCells) <- function(
+  object,
+  hvg = NULL,
+  bonsai_params = params_sc_bonsai(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(hvg, c("I+", "0"))
+  assertScBonsaiParams(bonsai_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  genes_in <- if (!is.null(hvg)) hvg - 1L else suppressWarnings(get_hvg(object))
+
+  if (length(genes_in) == 0) {
+    warning(paste(
+      "No HVGs identified in the object nor provided.",
+      "Please run find_hvg_sc() or provide the genes. Returning NULL."
+    ))
+    return(NULL)
+  }
+
+  cell_idx <- get_cells_to_keep(object)
+
+  if (.verbose) {
+    message(sprintf(
+      "Running Sanity and Bonsai over %i cells and %i genes.",
+      length(cell_idx),
+      length(genes_in)
+    ))
+  }
+
+  rs_res <- rs_sc_bonsai(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cell_indices = cell_idx,
+    gene_indices = genes_in,
+    bonsai_params = bonsai_params,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  new_bonsai_tree(
+    rs_res = rs_res,
+    cell_idx = cell_idx,
+    cell_names = get_cell_names(object, filtered = TRUE),
+    genes_in = as.integer(genes_in),
+    gene_ids = unname(get_gene_names_from_idx(object, as.integer(genes_in))),
+    bonsai_params = bonsai_params
+  )
+}

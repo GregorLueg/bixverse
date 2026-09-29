@@ -4647,6 +4647,361 @@ print.PagaRes <- function(x, ...) {
   invisible(x)
 }
 
+### bonsai ---------------------------------------------------------------------
+
+#' Build the node table of a Bonsai tree
+#'
+#' @description
+#' Turns the 0-indexed parent array Rust hands back into a 1-indexed node table,
+#' root parent `NA`. Leaves come first and carry the cell names.
+#'
+#' @param rs_res List. Needs `parent`, `branch`, `x` and `y`.
+#' @param cell_names Character vector. One name per leaf, in leaf order.
+#'
+#' @returns data.table with `node`, `parent`, `branch`, `is_leaf`, `cell_id`,
+#' `x` and `y`.
+#'
+#' @keywords internal
+.bonsai_nodes <- function(rs_res, cell_names) {
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c("parent", "branch", "x", "y")
+  )
+  checkmate::qassert(cell_names, "S+")
+
+  n_nodes <- length(rs_res$parent)
+  n_leaves <- length(cell_names)
+  parent <- rs_res$parent + 1L
+  parent[parent == 0L] <- NA_integer_
+
+  data.table::data.table(
+    node = seq_len(n_nodes),
+    parent = parent,
+    branch = rs_res$branch,
+    is_leaf = seq_len(n_nodes) <= n_leaves,
+    cell_id = c(cell_names, rep(NA_character_, n_nodes - n_leaves)),
+    x = rs_res$x,
+    y = rs_res$y
+  )
+}
+
+#' Helper function to generate the Bonsai results
+#'
+#' @description
+#' Takes the raw Rust output of [bixverse::rs_sc_bonsai()] and maps the leaves
+#' back onto the cell names and the genes back onto their identifiers.
+#'
+#' @param rs_res List. The raw return of [bixverse::rs_sc_bonsai()].
+#' @param cell_idx Integer. The cells the tree was built over (0-indexed!), in
+#' leaf order.
+#' @param cell_names Character vector. The names of those cells.
+#' @param genes_in Integer. The genes that went in (0-indexed!).
+#' @param gene_ids Character vector. Identifiers of `genes_in`, same order.
+#' @param bonsai_params List. The parameters of the run, see
+#' [bixverse::params_sc_bonsai()].
+#'
+#' @returns Generates the `BonsaiTree` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_bonsai_tree <- function(
+  rs_res,
+  cell_idx,
+  cell_names,
+  genes_in,
+  gene_ids,
+  bonsai_params
+) {
+  # checks
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c(
+      "parent",
+      "branch",
+      "x",
+      "y",
+      "n_leaves",
+      "loglik",
+      "steps",
+      "genes_used"
+    )
+  )
+  checkmate::qassert(cell_idx, "I+")
+  checkmate::qassert(cell_names, "S+")
+  checkmate::qassert(genes_in, "I+")
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::assertTRUE(length(genes_in) == length(gene_ids))
+  assertScBonsaiParams(bonsai_params)
+  checkmate::assertTRUE(rs_res$n_leaves == length(cell_idx))
+
+  # Rust hands back the 0-indexed genes themselves, not positions in genes_in
+  genes_used <- gene_ids[match(rs_res$genes_used, genes_in)]
+
+  bonsai_tree <- list(
+    nodes = .bonsai_nodes(rs_res, cell_names),
+    loglik = rs_res$loglik,
+    steps = data.table::data.table(
+      step = rs_res$steps$step,
+      loglik = rs_res$steps$loglik
+    ),
+    genes_used = genes_used,
+    genes_dropped = setdiff(gene_ids, genes_used),
+    cell_idx = cell_idx,
+    layout = bonsai_params$layout,
+    hyperbolic = bonsai_params$hyperbolic,
+    params = bonsai_params
+  )
+
+  class(bonsai_tree) <- "BonsaiTree"
+
+  return(bonsai_tree)
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.BonsaiTree <- function(x, ...) {
+  n_leaves <- sum(x$nodes$is_leaf)
+  cat(
+    sprintf(
+      "BonsaiTree: %i cells, %i inferred ancestors\n",
+      n_leaves,
+      nrow(x$nodes) - n_leaves
+    ),
+    sprintf(
+      "  Genes: %i used, %i dropped\n",
+      length(x$genes_used),
+      length(x$genes_dropped)
+    ),
+    sprintf("  Loglikelihood: %.1f\n", x$loglik),
+    sprintf(
+      "  Layout: %s%s\n",
+      x$layout,
+      if (isTRUE(x$hyperbolic)) " (hyperbolic)" else ""
+    ),
+    sep = ""
+  )
+  invisible(x)
+}
+
+#' Recompute the layout of a Bonsai tree
+#'
+#' @description
+#' Lays the finished tree out again without searching. The tree is renumbered
+#' on the Rust side, so the inferred ancestors can come back with different
+#' node numbers; the leaves, and so the cells, keep theirs.
+#'
+#' @param x A `BonsaiTree` object.
+#' @param layout String. One of `c("equal_angle", "equal_daylight",
+#' "dendrogram")`.
+#' @param hyperbolic Boolean. Project the layout onto the hyperbolic disk.
+#'
+#' @returns The `BonsaiTree` with the new coordinates.
+#'
+#' @export
+#'
+#' @examples
+#' # the same tree as a dendrogram
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+#' tree <- bonsai_sc(sc, .verbose = FALSE)
+#' tree <- relayout_bonsai(tree, layout = "dendrogram")
+#' plot(tree)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+relayout_bonsai <- function(
+  x,
+  layout = c("equal_angle", "equal_daylight", "dendrogram"),
+  hyperbolic = FALSE
+) {
+  layout <- match.arg(layout)
+
+  # checks
+  checkmate::assertClass(x, "BonsaiTree")
+  checkmate::assertChoice(
+    layout,
+    c("equal_angle", "equal_daylight", "dendrogram")
+  )
+  checkmate::qassert(hyperbolic, "B1")
+
+  nodes <- x$nodes
+  parent <- nodes$parent - 1L
+  parent[is.na(parent)] <- -1L
+
+  rs_res <- rs_bonsai_layout(
+    parent = parent,
+    branch = nodes$branch,
+    n_leaves = sum(nodes$is_leaf),
+    layout = layout,
+    hyperbolic = hyperbolic
+  )
+
+  x$nodes <- .bonsai_nodes(rs_res, nodes$cell_id[nodes$is_leaf])
+  x$layout <- layout
+  x$hyperbolic <- hyperbolic
+
+  return(x)
+}
+
+#' Plot a Bonsai tree
+#'
+#' @description
+#' Draws every branch of the tree and a point per cell. Radial layouts are drawn
+#' with straight branches at a fixed aspect ratio, the dendrogram with right
+#' angles.
+#'
+#' @param x A `BonsaiTree` object.
+#' @param colour_by Optional vector with one value per cell, in the cell order
+#' of the tree (`x$nodes$cell_id[x$nodes$is_leaf]`). Numeric values get a
+#' continuous scale, anything else a discrete one.
+#' @param layout Optional string. One of `c("equal_angle", "equal_daylight",
+#' "dendrogram")`. If it differs from the stored layout, the tree is laid out
+#' again first, see [bixverse::relayout_bonsai()].
+#' @param hyperbolic Optional boolean. As `layout`, for the hyperbolic
+#' projection.
+#' @param point_size Numeric. Size of the cell points.
+#' @param edge_colour String. Colour of the branches.
+#' @param ... Additional arguments (unused; required by the S3 generic).
+#'
+#' @returns A `ggplot2` object.
+#'
+#' @export
+#'
+#' @keywords internal
+#'
+#' @examples
+#' # the tree coloured by cell type
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+#' tree <- bonsai_sc(sc, .verbose = FALSE)
+#' plot(tree, colour_by = get_sc_obs(sc, filtered = TRUE)$cell_grp)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+plot.BonsaiTree <- function(
+  x,
+  colour_by = NULL,
+  layout = NULL,
+  hyperbolic = NULL,
+  point_size = 0.5,
+  edge_colour = "grey60",
+  ...
+) {
+  # checks
+  checkmate::assertClass(x, "BonsaiTree")
+  if (!is.null(colour_by)) {
+    checkmate::assertAtomicVector(colour_by, len = sum(x$nodes$is_leaf))
+  }
+  checkmate::qassert(layout, c("S1", "0"))
+  checkmate::qassert(hyperbolic, c("B1", "0"))
+  checkmate::qassert(point_size, "N1(0,)")
+  checkmate::qassert(edge_colour, "S1")
+
+  layout <- layout %||% x$layout
+  hyperbolic <- hyperbolic %||% x$hyperbolic
+  if (layout != x$layout || hyperbolic != x$hyperbolic) {
+    x <- relayout_bonsai(x, layout = layout, hyperbolic = hyperbolic)
+  }
+
+  nodes <- x$nodes
+  edges <- nodes[!is.na(parent)]
+  edges[, `:=`(x_parent = nodes$x[parent], y_parent = nodes$y[parent])]
+
+  # dendrogram leaves run along y and depth along x, so a branch is a
+  # horizontal run to the parent's depth, then a vertical one to the parent
+  segments <- if (layout == "dendrogram") {
+    data.table::rbindlist(list(
+      edges[, .(x = x, y = y, xend = x_parent, yend = y)],
+      edges[, .(x = x_parent, y = y, xend = x_parent, yend = y_parent)]
+    ))
+  } else {
+    edges[, .(x = x, y = y, xend = x_parent, yend = y_parent)]
+  }
+
+  leaves <- nodes[(is_leaf)]
+  if (!is.null(colour_by)) {
+    leaves[, colour := colour_by]
+  }
+
+  p <- ggplot2::ggplot() +
+    ggplot2::geom_segment(
+      data = segments,
+      mapping = ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
+      colour = edge_colour,
+      linewidth = 0.2
+    ) +
+    ggplot2::theme_void()
+
+  p <- if (is.null(colour_by)) {
+    p +
+      ggplot2::geom_point(
+        data = leaves,
+        mapping = ggplot2::aes(x = x, y = y),
+        size = point_size
+      )
+  } else {
+    p +
+      ggplot2::geom_point(
+        data = leaves,
+        mapping = ggplot2::aes(x = x, y = y, colour = colour),
+        size = point_size
+      ) +
+      ggplot2::labs(colour = NULL)
+  }
+
+  if (layout != "dendrogram") {
+    p <- p + ggplot2::coord_equal()
+  }
+
+  p
+}
+
+#' Store the leaf coordinates of a Bonsai tree as an embedding
+#'
+#' @description
+#' Writes the 2D position of every cell in the tree into the object's
+#' embeddings, so the usual embedding plots can use it. The tree has to have
+#' been built over the object's current cells, in the same order.
+#'
+#' @param object `SingleCells` class.
+#' @param tree A `BonsaiTree`, from [bixverse::bonsai_sc()] on this object.
+#' @param name String. Name of the embedding.
+#'
+#' @returns The object with the embedding added.
+#'
+#' @export
+#'
+#' @examples
+#' # Bonsai leaf coordinates next to the other embeddings
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+#' tree <- bonsai_sc(sc, .verbose = FALSE)
+#' sc <- set_bonsai_embedding(sc, tree)
+#' get_available_embeddings(sc)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+set_bonsai_embedding <- function(object, tree, name = "bonsai") {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertClass(tree, "BonsaiTree")
+  checkmate::qassert(name, "S1")
+
+  if (!identical(tree$cell_idx, get_cells_to_keep(object))) {
+    stop(paste(
+      "The tree was not built over the current cells of this object.",
+      "Rerun bonsai_sc() after changing the cells to keep."
+    ))
+  }
+
+  leaves <- tree$nodes[(is_leaf)]
+  embd <- cbind(leaves$x, leaves$y)
+  dimnames(embd) <- list(leaves$cell_id, c("bonsai_1", "bonsai_2"))
+
+  set_embedding(x = object, embd = embd, name = name)
+}
+
 ### magic ----------------------------------------------------------------------
 
 #' Helper function to generate the MAGIC imputed layer

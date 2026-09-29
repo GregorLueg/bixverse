@@ -2255,6 +2255,124 @@ spec_sc_palantir <- param_spec(
   )
 )
 
+spec_sc_bonsai <- param_spec(
+  name = "sc_bonsai",
+  title = "Wrapper function for Bonsai parameters",
+  description = paste(
+    "Parameters for [bixverse::bonsai_sc()]. Sanity turns the raw",
+    "counts into posterior log fold changes with error bars, Bonsai",
+    "builds a tree over the cells from those, and the tree is laid",
+    "out in 2D for plotting. The Sanity defaults come from",
+    "sanity-sc-rs, the search defaults from bonsai-rs."
+  ),
+  references = paste(
+    "de Groot, et al., Nat. Biotechnol., 2026; Breda, et al., Nat.",
+    "Biotechnol., 2021."
+  ),
+  checker = "ScBonsai",
+  label = "Bonsai params",
+  hint = paste(
+    "variance_rule must be one of marginalise, posterior_mean,",
+    "max_posterior or fixed; fixed_variance must be NULL or > 0;",
+    "variance_bins must be >= 2; variance_min and variance_max must be",
+    "> 0; start must be linkage or greedy_merge; spr_search and",
+    "nni_search must be approximate or exact; layout must be one of",
+    "equal_angle, equal_daylight or dendrogram; seed must be an",
+    "integer; reroot and hyperbolic must be booleans."
+  ),
+  fields = list(
+    variance_rule = p_choice(
+      "marginalise",
+      c("marginalise", "posterior_mean", "max_posterior", "fixed"),
+      doc = paste(
+        "How Sanity treats each gene's variance in log fold change.",
+        "`\"marginalise\"` integrates over the variance grid,",
+        "`\"posterior_mean\"` and `\"max_posterior\"` collapse it to",
+        "one value first (cheaper, less accurate error bars), and",
+        "`\"fixed\"` uses `fixed_variance` for every gene."
+      )
+    ),
+    fixed_variance = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = "The variance for `variance_rule = \"fixed\"`. Ignored otherwise."
+    ),
+    variance_bins = p_int(
+      161L,
+      range = "[2,)",
+      doc = "Bins in the log-spaced variance grid."
+    ),
+    variance_min = p_dbl(
+      1e-3,
+      range = "(0,)",
+      doc = "Smallest variance on the grid."
+    ),
+    variance_max = p_dbl(
+      50,
+      range = "(0,)",
+      doc = "Largest variance on the grid."
+    ),
+    min_signal_to_noise = p_dbl(
+      1,
+      doc = paste(
+        "Genes whose signal-to-noise ratio falls below this are left",
+        "out of the tree."
+      )
+    ),
+    start = p_choice(
+      "linkage",
+      c("linkage", "greedy_merge"),
+      doc = paste(
+        "Initial topology. `\"linkage\"` is a Ward linkage over a",
+        "neighbour graph: faster and a better tree on real data.",
+        "`\"greedy_merge\"` is the paper's star merge, kept for",
+        "comparisons with the published method."
+      )
+    ),
+    spr_search = p_choice(
+      "approximate",
+      c("approximate", "exact"),
+      doc = paste(
+        "Subtree pruning and regrafting. `\"approximate\"` stays",
+        "within a few nats of `\"exact\"` on bonsai-rs's benchmarks at",
+        "up to twice the speed."
+      )
+    ),
+    nni_search = p_choice(
+      "approximate",
+      c("approximate", "exact"),
+      doc = paste(
+        "Nearest-neighbour interchange. `\"approximate\"` found the",
+        "same tree as `\"exact\"` on every bonsai-rs benchmark, and",
+        "faster."
+      )
+    ),
+    seed = p_int(42L, doc = "Seed for the linkage, SPR and NNI searches."),
+    reroot = p_lgl(
+      TRUE,
+      doc = paste(
+        "Reroot the finished tree for display. Changes the drawing,",
+        "not the likelihood."
+      )
+    ),
+    layout = p_choice(
+      "equal_angle",
+      c("equal_angle", "equal_daylight", "dendrogram"),
+      doc = paste(
+        "2D layout. `\"equal_daylight\"` refines equal angle but falls",
+        "back to it above 2,048 nodes, so it only matters for small",
+        "trees. Can be changed later with",
+        "[bixverse::relayout_bonsai()]."
+      )
+    ),
+    hyperbolic = p_lgl(
+      FALSE,
+      doc = "Project the layout onto the hyperbolic disk."
+    )
+  )
+)
+
 spec_sc_magic <- param_spec(
   name = "sc_magic",
   title = "Wrapper function for MAGIC imputation parameters",

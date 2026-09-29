@@ -3679,6 +3679,72 @@ rs_seurat_cca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, 
 #' @keywords internal
 rs_seurat_rpca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, rpca_params, verbose, seed) .Call(wrap__rs_seurat_rpca, f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, rpca_params, verbose, seed)
 
+#' Build a Bonsai tree from single cell counts
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the raw counts of the given genes and cells from the binary stores,
+#' runs Sanity on them for posterior log fold changes with error bars, builds
+#' a Bonsai tree over the cells and lays it out in 2D. Sanity runs on the CPU.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Supplies the
+#' library sizes.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!) Sets the
+#' leaf order.
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!)
+#' @param bonsai_params List. Parameter list, see
+#' [bixverse::params_sc_bonsai()].
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item parent - Integer. Parent of each node (0-indexed!), `-1` for the
+#'  root. Nodes `0` to `n_leaves - 1` are the cells in `cell_indices` order.
+#'  \item branch - Numeric. Branch length above each node.
+#'  \item x - Numeric. Horizontal coordinate of each node.
+#'  \item y - Numeric. Vertical coordinate of each node.
+#'  \item n_leaves - Integer. Number of leaves.
+#'  \item loglik - Numeric. Final tree loglikelihood.
+#'  \item steps - List with `step` and `loglik` after each search step.
+#'  \item genes_used - Integer. Genes the tree was built on. (0-indexed!)
+#' }
+#'
+#' @export
+#'
+#' @references de Groot, et al., Nat Biotechnol, 2026; Breda, et al., Nat
+#' Biotechnol, 2021.
+#'
+#' @keywords internal
+rs_sc_bonsai <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, bonsai_params, verbose) .Call(wrap__rs_sc_bonsai, f_path_gene, f_path_cell, cell_indices, gene_indices, bonsai_params, verbose)
+
+#' Lay out an existing Bonsai tree
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Computes a new 2D layout for a finished tree without searching again. The
+#' tree is renumbered internally, so inferred ancestors can come back with
+#' different indices than they went in with; leaves keep theirs. Replace the
+#' whole node table with the output.
+#'
+#' @param parent Integer. Parent of each node (0-indexed!), negative for the
+#' root.
+#' @param branch Numeric. Branch length above each node.
+#' @param n_leaves Integer. Number of leaves, which occupy the first
+#' `n_leaves` nodes.
+#' @param layout String. One of `c("equal_angle", "equal_daylight",
+#' "dendrogram")`.
+#' @param hyperbolic Boolean. Project onto the hyperbolic disk.
+#'
+#' @returns A list with `parent` (0-indexed!, `-1` for the root), `branch`, `x`
+#' and `y`, all indexed by the tree's own node numbering.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_bonsai_layout <- function(parent, branch, n_leaves, layout, hyperbolic) .Call(wrap__rs_bonsai_layout, parent, branch, n_leaves, layout, hyperbolic)
+
 #' Scrublet Rust interface
 #'
 #' @description
