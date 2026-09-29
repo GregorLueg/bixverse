@@ -1,3 +1,43 @@
+# bixverse 0.5.4
+
+## Features
+
+* New single cell I/O machinery from bixverse-rs 0.5.6. The cell-to-gene
+  (CSR to CSC) conversion now has one knob, `csc_mem_gb`: `NULL` (default)
+  converts in one pass, a number caps the conversion buffers at that many GB.
+  Available on all count loaders (`load_mtx()`, `load_multi_mtx()`,
+  `load_h5ad()`, `load_h5ad_norm()`, `load_multi_h5ad()`, `stream_h5ad()`,
+  `load_tenx_h5()`, `load_multi_tenx_h5()`, `load_seurat()`, `load_sce()`,
+  `load_r_data()`), plus `merge_sc_experiments()` and `cellsweep_sc()`.
+* `load_h5ad()` gained `h5ad_streaming` (default `TRUE`), which streams the
+  counts into the cell-based binary in batches instead of materialising the
+  filtered matrix first. `stream_h5ad()` is now an alias for
+  `load_h5ad(h5ad_streaming = TRUE)`.
+* More 2D embeddings from [manifoldsR](https://github.com/GregorLueg/manifoldsR)
+  0.3.5: `densmap_sc()` and `densne_sc()` for the density-preserving versions
+  of UMAP and t-SNE ([Narayan et al.](https://doi.org/10.1038/s41587-020-00801-7)),
+  and `forceatlas2_sc()` for ForceAtlas2 layouts of either the kNN or the sNN
+  graph. See the updated
+  [plotting vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_visualisation.html).
+* `tsne_sc()` and `densne_sc()` take `approx_type = "fft_3k"`, the
+  three-kernel FFT optimiser (Unix only, like `"fft"`).
+
+## Changes
+
+* `streaming`, `batch_size`, `max_genes_in_memory` and `cell_batch_size` are
+  deprecated on every function listed above. They are ignored and warn if
+  supplied; use `csc_mem_gb` instead. Nothing breaks, old calls keep running.
+* Needs manifoldsR >= 0.3.5.
+
+## Fixes
+
+* h5ad: the number of cells and genes is read from the `_index` of `/obs` and
+  `/var` rather than the first dataset in the group, and CSR vs CSC comes from
+  the `encoding-type` attribute of `X` instead of being guessed from the
+  `indptr` length.
+* `tsne_sc()` documentation had the `use_knn` default and the perplexity
+  default wrong.
+
 # bixverse 0.5.3
 
 ## Features
