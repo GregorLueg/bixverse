@@ -126,13 +126,13 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.5.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d6757d0c629a72a8f5f1244740a26ebf4262a15bf0e767f75025e072f94c5d6"
+version = "0.5.7"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-bonsai-wiring#f610048dae2c6eeecc91dacab5b3dd75ef7992de"
 dependencies = [
  "ann-search-rs",
  "approx",
  "bincode",
+ "bonsai-rs",
  "document-features",
  "edge-rs",
  "either",
@@ -181,6 +181,21 @@ dependencies = [
  "libz-sys",
  "lz4-sys",
  "zstd-sys",
+]
+
+[[package]]
+name = "bonsai-rs"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8af91fd499ba3fbc7cf04a7cd840dd902232d21133cde68e791014f93ebf7307"
+dependencies = [
+ "ann-search-rs",
+ "num-traits",
+ "rayon",
+ "rustc-hash",
+ "sanity-sc-rs",
+ "thiserror 2.0.20",
+ "wide 1.7.1",
 ]
 
 [[package]]
@@ -1864,6 +1879,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "sanity-sc-rs"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3deba97f057368ff283403b21905e01a4bd7a1a4ff3b5ac97fed3abd398acd73"
+dependencies = [
+ "num-traits",
+ "rand 0.9.5",
+ "rand_distr 0.5.1",
+ "rayon",
+ "thiserror 2.0.20",
 ]
 
 [[package]]

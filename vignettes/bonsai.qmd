@@ -55,6 +55,7 @@ tree readable, and the UMAP gives us something to compare against.
 pbmc3k_path <- download_pbmc3k()
 tempdir_pbmc <- tempdir()
 
+# load
 sc_object <- load_mtx(
   object = SingleCells(dir_data = tempdir_pbmc),
   sc_mtx_io_param = get_cell_ranger_params(pbmc3k_path),
@@ -65,6 +66,25 @@ sc_object <- load_mtx(
 setnames_sc(sc_object, table = "var", old = "column1", new = "gene_symbol")
 var <- get_sc_var(sc_object)
 
+# doublets
+scrublet_res <- scrublet_sc(sc_object)
+
+sc_object <- add_sc_new_obs(
+  object = sc_object,
+  obs_data = get_data(scrublet_res)
+)
+
+cells_without_doublets <- sc_object[[c("doublet", "cell_id")]][
+  !(doublet),
+  cell_id
+]
+
+sc_object <- set_cells_to_keep(
+  x = sc_object,
+  cells_to_keep = cells_without_doublets
+)
+
+# qc
 sc_object <- gene_set_proportions_sc(
   sc_object,
   list(MT = var[grepl("^MT-", gene_symbol), gene_id]),
@@ -89,8 +109,9 @@ qc <- run_cell_qc(
 )
 sc_object <- set_cells_to_keep(sc_object, qc_df[!qc$combined, cell_id])
 
+# hvg, pca, knn, clustering, umap
 sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
-sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, .verbose = FALSE)
+sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, .verbose = TRUE)
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
@@ -109,11 +130,25 @@ Cell types via scType, with the same markers as the PBMC vignette.
 ```{r}
 #| label: cell types
 cell_markers <- c(
-  CD3D = "T cells", CD3E = "T cells", IL7R = "CD4+ T", CD4 = "CD4+ T",
-  CD8A = "CD8+ T", CD8B = "CD8+ T", MS4A1 = "B cells", CD79A = "B cells",
-  CD14 = "CD14+ Mono", LYZ = "CD14+ Mono", FCGR3A = "CD16+ Mono",
-  CDKN1C = "CD16+ Mono", GNLY = "NK", NKG7 = "NK", FCER1A = "mDC",
-  CD1C = "mDC", LILRA4 = "pDC", PPBP = "Platelet", PF4 = "Platelet"
+  CD3D = "T cells",
+  CD3E = "T cells",
+  IL7R = "CD4+ T",
+  CD4 = "CD4+ T",
+  CD8A = "CD8+ T",
+  CD8B = "CD8+ T",
+  MS4A1 = "B cells",
+  CD79A = "B cells",
+  CD14 = "CD14+ Mono",
+  LYZ = "CD14+ Mono",
+  FCGR3A = "CD16+ Mono",
+  CDKN1C = "CD16+ Mono",
+  GNLY = "NK",
+  NKG7 = "NK",
+  FCER1A = "mDC",
+  CD1C = "mDC",
+  LILRA4 = "pDC",
+  PPBP = "Platelet",
+  PF4 = "Platelet"
 )
 
 cell_markers_dt <- stack(cell_markers) %>%
@@ -144,7 +179,7 @@ plus the survivors, whatever the number of candidates.
 
 ```{r}
 #| label: bonsai
-tree <- bonsai_sc(sc_object, .verbose = FALSE)
+tree <- bonsai_sc(sc_object, .verbose = TRUE)
 
 tree
 ```
@@ -280,24 +315,20 @@ Here SEACells compresses the PBMCs to 100 metacells, and each metacell gets
 the cell type most of its cells carry.
 
 ```{r}
-#| label: seacells
-seacells <- generate_seacells_sc(
+#| label: supercells
+supercells <- generate_supercells_sc(
   object = sc_object,
-  seacell_params = params_sc_seacells(
-    n_sea_cells = 100L,
-    min_iter = 10L,
-    convergence_epsilon = 0.001
-  ),
+  sc_supercell_params = params_sc_supercell(),
   .verbose = FALSE
 )
 
-seacells <- calc_meta_cell_purity(
-  seacells,
+supercells <- calc_meta_cell_purity(
+  supercells,
   original_cell_type = get_sc_obs(sc_object, filtered = TRUE)$cell_type,
   add_additional_info = "top_label"
 )
 
-tree_mc <- bonsai_sc(seacells, .verbose = FALSE)
+tree_mc <- bonsai_sc(supercells, .verbose = TRUE)
 
 tree_mc
 ```
@@ -315,7 +346,7 @@ for single cells, so the tree sees far more of the transcriptome.
 #| fig-height: 7
 plot(
   tree_mc,
-  colour_by = seacells[[]]$mc_top_label,
+  colour_by = supercells[[]]$mc_top_label,
   size_by_cells = TRUE,
   point_size = 1
 )

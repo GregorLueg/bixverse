@@ -168,9 +168,9 @@ S7::method(bonsai_sc, SingleCells) <- function(
 
   if (.verbose) {
     message(sprintf(
-      "Running Sanity and Bonsai over %i cells and %i candidate genes.",
-      length(cell_idx),
-      length(genes_in)
+      "Running Sanity and Bonsai over %s cells and %s candidate genes.",
+      format(length(cell_idx), big.mark = "_"),
+      format(length(genes_in), big.mark = "_")
     ))
   }
 

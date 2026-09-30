@@ -72,6 +72,23 @@ var <- get_sc_var(sc_object)
 ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
 symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
 
+scrublet_res <- scrublet_sc(sc_object)
+
+sc_object <- add_sc_new_obs(
+  object = sc_object,
+  obs_data = get_data(scrublet_res)
+)
+
+cells_without_doublets <- sc_object[[c("doublet", "cell_id")]][
+  !(doublet),
+  cell_id
+]
+
+sc_object <- set_cells_to_keep(
+  x = sc_object,
+  cells_to_keep = cells_without_doublets
+)
+
 # Define gene sets whose proportional expression signals low quality
 gs_of_interest <- list(
   MT = var[grepl("^MT-", gene_symbol), gene_id],
