@@ -14,7 +14,7 @@ tsne_sc(
   n_dim = 2L,
   perplexity = 10,
   approx_type = c("bh", "fft", "fft_3k"),
-  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
@@ -50,7 +50,8 @@ and 50. Defaults to \code{10.0}.}
 \code{"fft"} or \code{"fft_3k"}. Defaults to \code{"bh"}.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
-\code{"hnsw"}, \code{"balltree"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
+\code{c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}. Only used when neighbours are
+computed from the embedding.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}.}
 

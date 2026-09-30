@@ -15,7 +15,7 @@ densmap_sc(
   k = 15L,
   min_dist = 0.5,
   spread = 1,
-  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   umap_params = manifoldsR::params_umap(),
   dens_params = manifoldsR::params_densmap(),
@@ -52,7 +52,8 @@ to \code{0.5}.}
 \item{spread}{Numeric. Effective scale of embedded points. Defaults to \code{1.0}.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
-\code{"hnsw"}, \code{"balltree"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
+\code{c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}. Only used when neighbours are
+computed from the embedding.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}.}
 

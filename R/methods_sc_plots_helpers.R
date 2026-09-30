@@ -218,7 +218,9 @@
 #' to `0.5`.
 #' @param spread Numeric. Effective scale of embedded points. Defaults to `1.0`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
+#' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
+#' computed from the embedding.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param umap_params Named list. See [manifoldsR::params_umap()].
 #' @param seed Integer. For reproducibility.
@@ -252,9 +254,10 @@ umap_sc <- S7::new_generic(
     knn_method = c(
       "kmknn",
       "hnsw",
-      "balltree",
       "annoy",
       "nndescent",
+      "balltree",
+      "ivf",
       "exhaustive"
     ),
     nn_params = manifoldsR::params_nn(),
@@ -280,9 +283,10 @@ S7::method(umap_sc, ScOrMc) <- function(
   knn_method = c(
     "kmknn",
     "hnsw",
-    "balltree",
     "annoy",
     "nndescent",
+    "balltree",
+    "ivf",
     "exhaustive"
   ),
   nn_params = manifoldsR::params_nn(),
@@ -377,7 +381,9 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' to `0.5`.
 #' @param spread Numeric. Effective scale of embedded points. Defaults to `1.0`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
+#' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
+#' computed from the embedding.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param umap_params Named list. See [manifoldsR::params_umap()].
 #' @param dens_params Named list. The density knobs, see
@@ -415,9 +421,10 @@ densmap_sc <- S7::new_generic(
     knn_method = c(
       "kmknn",
       "hnsw",
-      "balltree",
       "annoy",
       "nndescent",
+      "balltree",
+      "ivf",
       "exhaustive"
     ),
     nn_params = manifoldsR::params_nn(),
@@ -444,9 +451,10 @@ S7::method(densmap_sc, ScOrMc) <- function(
   knn_method = c(
     "kmknn",
     "hnsw",
-    "balltree",
     "annoy",
     "nndescent",
+    "balltree",
+    "ivf",
     "exhaustive"
   ),
   nn_params = manifoldsR::params_nn(),
@@ -559,7 +567,9 @@ S7::method(densmap_sc, ScOrMc) <- function(
 #' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut),
 #' `"fft"` or `"fft_3k"`. Defaults to `"bh"`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
+#' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
+#' computed from the embedding.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param tsne_params Named list. See [manifoldsR::params_tsne()].
 #' @param seed Integer. For reproducibility.
@@ -592,9 +602,10 @@ tsne_sc <- S7::new_generic(
     knn_method = c(
       "kmknn",
       "hnsw",
-      "balltree",
       "annoy",
       "nndescent",
+      "balltree",
+      "ivf",
       "exhaustive"
     ),
     nn_params = manifoldsR::params_nn(),
@@ -619,9 +630,10 @@ S7::method(tsne_sc, ScOrMc) <- function(
   knn_method = c(
     "kmknn",
     "hnsw",
-    "balltree",
     "annoy",
     "nndescent",
+    "balltree",
+    "ivf",
     "exhaustive"
   ),
   nn_params = manifoldsR::params_nn(),
@@ -714,7 +726,9 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut),
 #' `"fft"` or `"fft_3k"`. Defaults to `"bh"`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
+#' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
+#' computed from the embedding.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param tsne_params Named list. See [manifoldsR::params_tsne()].
 #' @param dens_params Named list. The density knobs, see
@@ -751,9 +765,10 @@ densne_sc <- S7::new_generic(
     knn_method = c(
       "kmknn",
       "hnsw",
-      "balltree",
       "annoy",
       "nndescent",
+      "balltree",
+      "ivf",
       "exhaustive"
     ),
     nn_params = manifoldsR::params_nn(),
@@ -779,9 +794,10 @@ S7::method(densne_sc, ScOrMc) <- function(
   knn_method = c(
     "kmknn",
     "hnsw",
-    "balltree",
     "annoy",
     "nndescent",
+    "balltree",
+    "ivf",
     "exhaustive"
   ),
   nn_params = manifoldsR::params_nn(),
@@ -883,7 +899,9 @@ S7::method(densne_sc, ScOrMc) <- function(
 #' @param k Integer. Number of nearest neighbours for graph construction.
 #' Defaults to `5L`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
+#' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
+#' computed from the embedding.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param phate_params Named list. See [manifoldsR::params_phate()].
 #' @param seed Integer. For reproducibility.
@@ -915,9 +933,10 @@ phate_sc <- S7::new_generic(
     knn_method = c(
       "kmknn",
       "hnsw",
-      "balltree",
       "annoy",
       "nndescent",
+      "balltree",
+      "ivf",
       "exhaustive"
     ),
     nn_params = manifoldsR::params_nn(),
@@ -941,9 +960,10 @@ S7::method(phate_sc, ScOrMc) <- function(
   knn_method = c(
     "kmknn",
     "hnsw",
-    "balltree",
     "annoy",
     "nndescent",
+    "balltree",
+    "ivf",
     "exhaustive"
   ),
   nn_params = manifoldsR::params_nn(),
@@ -1043,7 +1063,9 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param k Integer. Number of nearest neighbours. Defaults to `15L`. `"knn"`
 #' only.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
+#' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
+#' computed from the embedding.
 #' `"knn"` only.
 #' @param nn_params Named list. See [manifoldsR::params_nn()]. `"knn"` only.
 #' @param fa2_params Named list. See [manifoldsR::params_fa2()].
@@ -1085,9 +1107,10 @@ forceatlas2_sc <- S7::new_generic(
     knn_method = c(
       "kmknn",
       "hnsw",
-      "balltree",
       "annoy",
       "nndescent",
+      "balltree",
+      "ivf",
       "exhaustive"
     ),
     nn_params = manifoldsR::params_nn(),
@@ -1112,9 +1135,10 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
   knn_method = c(
     "kmknn",
     "hnsw",
-    "balltree",
     "annoy",
     "nndescent",
+    "balltree",
+    "ivf",
     "exhaustive"
   ),
   nn_params = manifoldsR::params_nn(),
