@@ -7,7 +7,7 @@
 set_bonsai_embedding(object, tree, name = "bonsai")
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{MetaCells} class.}
 
 \item{tree}{A \code{BonsaiTree}, from \code{\link[=bonsai_sc]{bonsai_sc()}} on this object.}
 
@@ -17,9 +17,10 @@ set_bonsai_embedding(object, tree, name = "bonsai")
 The object with the embedding added.
 }
 \description{
-Writes the 2D position of every cell in the tree into the object's
+Writes the 2D position of every leaf, cell or metacell, into the object's
 embeddings, so the usual embedding plots can use it. The tree has to have
-been built over the object's current cells, in the same order.
+been built over the object's current cells (or all of its metacells), in the
+same order.
 }
 \examples{
 # Bonsai leaf coordinates next to the other embeddings

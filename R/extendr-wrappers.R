@@ -3719,6 +3719,33 @@ rs_seurat_rpca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices,
 #' @keywords internal
 rs_sc_bonsai <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, bonsai_params, verbose) .Call(wrap__rs_sc_bonsai, f_path_gene, f_path_cell, cell_indices, gene_indices, bonsai_params, verbose)
 
+#' Build a Bonsai tree from metacell counts
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' As [bixverse::rs_sc_bonsai()], with the metacells' aggregated raw counts
+#' from memory in place of the binary files. Each metacell is a leaf, and its
+#' total counts over all genes are its library size.
+#'
+#' @param sparse_data List. The raw metacell counts, see
+#' [bixverse::mc_counts_to_list()] with `assay = "raw"`.
+#' @param gene_indices Integer. The candidate genes. (0-indexed!)
+#' @param bonsai_params List. Parameter list, see
+#' [bixverse::params_sc_bonsai()].
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns The same list as [bixverse::rs_sc_bonsai()], with the metacells
+#' as the leaves in their row order.
+#'
+#' @export
+#'
+#' @references de Groot, et al., Nat Biotechnol, 2026; Breda, et al., Nat
+#' Biotechnol, 2021.
+#'
+#' @keywords internal
+rs_mc_bonsai <- function(sparse_data, gene_indices, bonsai_params, verbose) .Call(wrap__rs_mc_bonsai, sparse_data, gene_indices, bonsai_params, verbose)
+
 #' Lay out an existing Bonsai tree
 #'
 #' @description

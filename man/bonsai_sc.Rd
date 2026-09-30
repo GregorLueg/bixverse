@@ -12,7 +12,7 @@ bonsai_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{MetaCells} class.}
 
 \item{hvg}{Optional integer. Restrict the candidate genes to these, e.g. the
 output of \code{\link[=get_hvg]{get_hvg()}} plus one. Please provide 1-indexed genes
@@ -28,8 +28,10 @@ verbosity.}
 A \code{BonsaiTree} S3 object with:
 \itemize{
 \item nodes - data.table with \code{node}, \code{parent} (\code{NA} for the root),
-\code{branch}, \code{is_leaf}, \code{cell_id} (\code{NA} for the inferred ancestors), \code{x} and
-\code{y}. The leaves come first, in the order of the object's cells.
+\code{branch}, \code{is_leaf}, \code{cell_id} (\code{NA} for the inferred ancestors),
+\code{n_cells} (the cells behind a leaf: 1 for single cells, the originating
+cells for a metacell; \code{NA} for the ancestors), \code{x} and \code{y}. The leaves
+come first, in the order of the object's cells or metacells.
 \item loglik - The loglikelihood of the final tree.
 \item steps - data.table with the loglikelihood after each search step
 and the step's wall time in seconds.
@@ -40,7 +42,8 @@ whole call as R saw it.
 \item genes_dropped - The candidate genes left out: no counts in the
 cells, ill-conditioned Sanity posteriors, or a signal-to-noise ratio below
 \code{min_signal_to_noise}.
-\item cell_idx - The cells the tree was built over (0-indexed).
+\item cell_idx - The cells or metacells the tree was built over
+(0-indexed).
 \item layout, hyperbolic - The current layout.
 \item params - The parameters of the run.
 }
@@ -69,6 +72,13 @@ genes go in.
 The object itself is not touched. Store the leaf coordinates with
 \code{\link[=set_bonsai_embedding]{set_bonsai_embedding()}} if you want them next to the other
 embeddings.
+
+On \code{MetaCells} every metacell is a leaf. Their raw counts are sums over
+their cells, and a sum of Poisson counts is Poisson, so Sanity treats a
+metacell exactly as it treats a cell: its total counts are the library size,
+and a bigger metacell gets tighter error bars, which Bonsai weights by. That
+is the way to large data: 100k cells in metacells of 50 is a 2,000-leaf tree.
+What you give up is any structure inside a metacell.
 }
 \examples{
 # a tree over the demo cells, genes selected by their signal-to-noise

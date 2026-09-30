@@ -1,14 +1,17 @@
-//! Rust to R interface for Bonsai trees over single cell counts.
+//! Rust to R interface for Bonsai trees over single cell and metacell counts.
 //!
 //! Every cell, gene and node index that crosses this boundary, in and out, is
 //! 0-indexed. The root's parent is `-1`.
 
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::mc_analysis::bonsai_mc::sanity_bonsai_mc;
 use bixverse_rs::single_cell::sc_analysis::bonsai::{
     bonsai_layout, parse_bonsai_layout, sanity_bonsai_sc, BonsaiScParams,
 };
 use bixverse_rs::single_cell::sc_r_wrappers::{bonsai_sc_to_r_list, parents_from_r, parents_to_r};
 use extendr_api::*;
+
+use crate::meta_cell::utils::mc_list_to_sparse_u32;
 
 ////////////////////
 // extendr Module //
@@ -17,6 +20,7 @@ use extendr_api::*;
 extendr_module! {
     mod r_sc_bonsai;
     fn rs_sc_bonsai;
+    fn rs_mc_bonsai;
     fn rs_bonsai_layout;
 }
 
@@ -88,6 +92,48 @@ fn rs_sc_bonsai(
         verbosity,
     )
     .to_extendr()?;
+
+    Ok(bonsai_sc_to_r_list(res))
+}
+
+/// Build a Bonsai tree from metacell counts
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// As [bixverse::rs_sc_bonsai()], with the metacells' aggregated raw counts
+/// from memory in place of the binary files. Each metacell is a leaf, and its
+/// total counts over all genes are its library size.
+///
+/// @param sparse_data List. The raw metacell counts, see
+/// [bixverse::mc_counts_to_list()] with `assay = "raw"`.
+/// @param gene_indices Integer. The candidate genes. (0-indexed!)
+/// @param bonsai_params List. Parameter list, see
+/// [bixverse::params_sc_bonsai()].
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns The same list as [bixverse::rs_sc_bonsai()], with the metacells
+/// as the leaves in their row order.
+///
+/// @export
+///
+/// @references de Groot, et al., Nat Biotechnol, 2026; Breda, et al., Nat
+/// Biotechnol, 2021.
+///
+/// @keywords internal
+#[extendr]
+fn rs_mc_bonsai(
+    sparse_data: List,
+    gene_indices: Vec<i32>,
+    bonsai_params: List,
+    verbose: usize,
+) -> extendr_api::Result<List> {
+    let verbosity = parse_verbosity_level(verbose);
+    let gene_indices = gene_indices.r_int_convert();
+    let params = BonsaiScParams::from_r_list(bonsai_params)?;
+    let counts = mc_list_to_sparse_u32(sparse_data)?;
+
+    let res = sanity_bonsai_mc(&counts, &gene_indices, &params, verbosity).to_extendr()?;
 
     Ok(bonsai_sc_to_r_list(res))
 }

@@ -10,16 +10,18 @@ new_bonsai_tree(
   cell_names,
   genes_in,
   gene_ids,
-  bonsai_params
+  bonsai_params,
+  leaf_sizes = NULL
 )
 }
 \arguments{
-\item{rs_res}{List. The raw return of \code{\link[=rs_sc_bonsai]{rs_sc_bonsai()}}.}
+\item{rs_res}{List. The raw return of \code{\link[=rs_sc_bonsai]{rs_sc_bonsai()}} or
+\code{\link[=rs_mc_bonsai]{rs_mc_bonsai()}}.}
 
-\item{cell_idx}{Integer. The cells the tree was built over (0-indexed!), in
-leaf order.}
+\item{cell_idx}{Integer. The cells or metacells the tree was built over
+(0-indexed!), in leaf order.}
 
-\item{cell_names}{Character vector. The names of those cells.}
+\item{cell_names}{Character vector. The names of those cells or metacells.}
 
 \item{genes_in}{Integer. The genes that went in (0-indexed!).}
 
@@ -27,6 +29,9 @@ leaf order.}
 
 \item{bonsai_params}{List. The parameters of the run, see
 \code{\link[=params_sc_bonsai]{params_sc_bonsai()}}.}
+
+\item{leaf_sizes}{Optional integer. Cells behind each leaf. \code{NULL} means one
+each, i.e. single cells.}
 }
 \value{
 Generates the \code{BonsaiTree} class.

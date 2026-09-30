@@ -212,6 +212,62 @@ expect_equal(
   info = "bonsai hvg: used and dropped genes partition the given genes"
 )
 
+## metacells -------------------------------------------------------------------
+
+mc_dir <- sc_test_dir("bonsai_mc")
+mc_source <- sc_test_prepped(sc_test_object(mc_dir, fixture), fixture)
+mc_object <- generate_bt_meta_cells_sc(
+  mc_source,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 200L),
+  .verbose = FALSE
+)
+mc_obs <- mc_object[[]]
+
+tree_mc <- bonsai_sc(mc_object, .verbose = FALSE)
+
+expect_equal(
+  tree_mc$nodes[(is_leaf)]$cell_id,
+  mc_obs$meta_cell_id,
+  info = "bonsai mc: one leaf per metacell, in the object's order"
+)
+
+expect_equal(
+  tree_mc$nodes[(is_leaf)]$n_cells,
+  as.integer(mc_obs$no_originating_cells),
+  info = "bonsai mc: leaves carry their metacell sizes"
+)
+
+expect_true(
+  all(is.na(tree_mc$nodes[!(is_leaf)]$n_cells)) &&
+    all(tree$nodes[(is_leaf)]$n_cells == 1L),
+  info = "bonsai: ancestors have no size, single cells have one"
+)
+
+expect_equal(
+  sum(is.na(tree_mc$nodes$parent)),
+  1L,
+  info = "bonsai mc: exactly one root"
+)
+
+expect_stdout(
+  print(tree_mc),
+  "cells\\)",
+  info = "bonsai mc: print reports the cells behind the leaves"
+)
+
+expect_true(
+  inherits(plot(tree_mc, size_by_cells = TRUE), "ggplot"),
+  info = "bonsai mc: plot sized by metacell size"
+)
+
+mc_object <- set_bonsai_embedding(mc_object, tree_mc)
+
+expect_equal(
+  dim(get_embedding(mc_object, "bonsai")),
+  c(nrow(mc_obs), 2L),
+  info = "bonsai mc: embedding is metacells x 2"
+)
+
 # clean up ---------------------------------------------------------------------
 
-sc_test_cleanup(test_temp_dir)
+sc_test_cleanup(test_temp_dir, mc_dir)

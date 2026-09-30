@@ -10,6 +10,7 @@
   layout = NULL,
   hyperbolic = NULL,
   point_size = 0.5,
+  size_by_cells = FALSE,
   edge_colour = "grey60",
   ...
 )
@@ -27,7 +28,11 @@ again first, see \code{\link[=relayout_bonsai]{relayout_bonsai()}}.}
 \item{hyperbolic}{Optional boolean. As \code{layout}, for the hyperbolic
 projection.}
 
-\item{point_size}{Numeric. Size of the cell points.}
+\item{point_size}{Numeric. Size of the leaf points; the smallest size if
+\code{size_by_cells = TRUE}.}
+
+\item{size_by_cells}{Boolean. Scale each leaf point by the number of cells
+behind it, which only differs between leaves for metacells.}
 
 \item{edge_colour}{String. Colour of the branches.}
 
@@ -37,9 +42,9 @@ projection.}
 A \code{ggplot2} object.
 }
 \description{
-Draws every branch of the tree and a point per cell. Radial layouts are drawn
-with straight branches at a fixed aspect ratio, the dendrogram with right
-angles.
+Draws every branch of the tree and a point per leaf, a cell or a metacell.
+Radial layouts are drawn with straight branches at a fixed aspect ratio, the
+dendrogram with right angles.
 }
 \examples{
 # the tree coloured by cell type

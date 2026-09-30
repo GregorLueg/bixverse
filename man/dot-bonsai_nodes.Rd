@@ -4,16 +4,18 @@
 \alias{.bonsai_nodes}
 \title{Build the node table of a Bonsai tree}
 \usage{
-.bonsai_nodes(rs_res, cell_names)
+.bonsai_nodes(rs_res, cell_names, leaf_sizes)
 }
 \arguments{
 \item{rs_res}{List. Needs \code{parent}, \code{branch}, \code{x} and \code{y}.}
 
 \item{cell_names}{Character vector. One name per leaf, in leaf order.}
+
+\item{leaf_sizes}{Integer. Cells behind each leaf, same order.}
 }
 \value{
 data.table with \code{node}, \code{parent}, \code{branch}, \code{is_leaf}, \code{cell_id},
-\code{x} and \code{y}.
+\code{n_cells}, \code{x} and \code{y}.
 }
 \description{
 Turns the 0-indexed parent array Rust hands back into a 1-indexed node table,

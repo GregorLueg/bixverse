@@ -4868,18 +4868,21 @@ print.GeneTrendsRes <- function(x, ...) {
 #'
 #' @param rs_res List. Needs `parent`, `branch`, `x` and `y`.
 #' @param cell_names Character vector. One name per leaf, in leaf order.
+#' @param leaf_sizes Integer. Cells behind each leaf, same order.
 #'
 #' @returns data.table with `node`, `parent`, `branch`, `is_leaf`, `cell_id`,
-#' `x` and `y`.
+#' `n_cells`, `x` and `y`.
 #'
 #' @keywords internal
-.bonsai_nodes <- function(rs_res, cell_names) {
+.bonsai_nodes <- function(rs_res, cell_names, leaf_sizes) {
   checkmate::assertList(rs_res)
   checkmate::assertNames(
     names(rs_res),
     must.include = c("parent", "branch", "x", "y")
   )
   checkmate::qassert(cell_names, "S+")
+  checkmate::qassert(leaf_sizes, "I+")
+  checkmate::assertTRUE(length(leaf_sizes) == length(cell_names))
 
   n_nodes <- length(rs_res$parent)
   n_leaves <- length(cell_names)
@@ -4892,6 +4895,7 @@ print.GeneTrendsRes <- function(x, ...) {
     branch = rs_res$branch,
     is_leaf = seq_len(n_nodes) <= n_leaves,
     cell_id = c(cell_names, rep(NA_character_, n_nodes - n_leaves)),
+    n_cells = c(leaf_sizes, rep(NA_integer_, n_nodes - n_leaves)),
     x = rs_res$x,
     y = rs_res$y
   )
@@ -4903,14 +4907,17 @@ print.GeneTrendsRes <- function(x, ...) {
 #' Takes the raw Rust output of [bixverse::rs_sc_bonsai()] and maps the leaves
 #' back onto the cell names and the genes back onto their identifiers.
 #'
-#' @param rs_res List. The raw return of [bixverse::rs_sc_bonsai()].
-#' @param cell_idx Integer. The cells the tree was built over (0-indexed!), in
-#' leaf order.
-#' @param cell_names Character vector. The names of those cells.
+#' @param rs_res List. The raw return of [bixverse::rs_sc_bonsai()] or
+#' [bixverse::rs_mc_bonsai()].
+#' @param cell_idx Integer. The cells or metacells the tree was built over
+#' (0-indexed!), in leaf order.
+#' @param cell_names Character vector. The names of those cells or metacells.
 #' @param genes_in Integer. The genes that went in (0-indexed!).
 #' @param gene_ids Character vector. Identifiers of `genes_in`, same order.
 #' @param bonsai_params List. The parameters of the run, see
 #' [bixverse::params_sc_bonsai()].
+#' @param leaf_sizes Optional integer. Cells behind each leaf. `NULL` means one
+#' each, i.e. single cells.
 #'
 #' @returns Generates the `BonsaiTree` class.
 #'
@@ -4923,8 +4930,11 @@ new_bonsai_tree <- function(
   cell_names,
   genes_in,
   gene_ids,
-  bonsai_params
+  bonsai_params,
+  leaf_sizes = NULL
 ) {
+  leaf_sizes <- leaf_sizes %||% rep(1L, length(cell_idx))
+
   # checks
   checkmate::assertList(rs_res)
   checkmate::assertNames(
@@ -4953,7 +4963,7 @@ new_bonsai_tree <- function(
   genes_used <- gene_ids[match(rs_res$genes_used, genes_in)]
 
   bonsai_tree <- list(
-    nodes = .bonsai_nodes(rs_res, cell_names),
+    nodes = .bonsai_nodes(rs_res, cell_names, leaf_sizes),
     loglik = rs_res$loglik,
     steps = data.table::data.table(
       step = rs_res$steps$step,
@@ -4982,10 +4992,12 @@ new_bonsai_tree <- function(
 #' @export
 print.BonsaiTree <- function(x, ...) {
   n_leaves <- sum(x$nodes$is_leaf)
+  n_cells <- sum(x$nodes$n_cells, na.rm = TRUE)
   cat(
     sprintf(
-      "BonsaiTree: %i cells, %i inferred ancestors\n",
+      "BonsaiTree: %i leaves%s, %i inferred ancestors\n",
       n_leaves,
+      if (n_cells > n_leaves) sprintf(" (%i cells)", n_cells) else "",
       nrow(x$nodes) - n_leaves
     ),
     sprintf(
@@ -5062,7 +5074,11 @@ relayout_bonsai <- function(
     hyperbolic = hyperbolic
   )
 
-  x$nodes <- .bonsai_nodes(rs_res, nodes$cell_id[nodes$is_leaf])
+  x$nodes <- .bonsai_nodes(
+    rs_res,
+    nodes$cell_id[nodes$is_leaf],
+    nodes$n_cells[nodes$is_leaf]
+  )
   x$layout <- layout
   x$hyperbolic <- hyperbolic
 
@@ -5072,9 +5088,9 @@ relayout_bonsai <- function(
 #' Plot a Bonsai tree
 #'
 #' @description
-#' Draws every branch of the tree and a point per cell. Radial layouts are drawn
-#' with straight branches at a fixed aspect ratio, the dendrogram with right
-#' angles.
+#' Draws every branch of the tree and a point per leaf, a cell or a metacell.
+#' Radial layouts are drawn with straight branches at a fixed aspect ratio, the
+#' dendrogram with right angles.
 #'
 #' @param x A `BonsaiTree` object.
 #' @param colour_by Optional vector with one value per cell, in the cell order
@@ -5085,7 +5101,10 @@ relayout_bonsai <- function(
 #' again first, see [bixverse::relayout_bonsai()].
 #' @param hyperbolic Optional boolean. As `layout`, for the hyperbolic
 #' projection.
-#' @param point_size Numeric. Size of the cell points.
+#' @param point_size Numeric. Size of the leaf points; the smallest size if
+#' `size_by_cells = TRUE`.
+#' @param size_by_cells Boolean. Scale each leaf point by the number of cells
+#' behind it, which only differs between leaves for metacells.
 #' @param edge_colour String. Colour of the branches.
 #' @param ... Additional arguments (unused; required by the S3 generic).
 #'
@@ -5108,6 +5127,7 @@ plot.BonsaiTree <- function(
   layout = NULL,
   hyperbolic = NULL,
   point_size = 0.5,
+  size_by_cells = FALSE,
   edge_colour = "grey60",
   ...
 ) {
@@ -5119,6 +5139,7 @@ plot.BonsaiTree <- function(
   checkmate::qassert(layout, c("S1", "0"))
   checkmate::qassert(hyperbolic, c("B1", "0"))
   checkmate::qassert(point_size, "N1(0,)")
+  checkmate::qassert(size_by_cells, "B1")
   checkmate::qassert(edge_colour, "S1")
 
   layout <- layout %||% x$layout
@@ -5156,21 +5177,28 @@ plot.BonsaiTree <- function(
     ) +
     ggplot2::theme_void()
 
-  p <- if (is.null(colour_by)) {
-    p +
-      ggplot2::geom_point(
-        data = leaves,
-        mapping = ggplot2::aes(x = x, y = y),
-        size = point_size
-      )
-  } else {
-    p +
-      ggplot2::geom_point(
-        data = leaves,
-        mapping = ggplot2::aes(x = x, y = y, colour = colour),
-        size = point_size
-      ) +
-      ggplot2::labs(colour = NULL)
+  # built in one aes() call: adding to a mapping afterwards is not stable
+  # across ggplot2 versions
+  aes_args <- list(x = quote(x), y = quote(y))
+  if (!is.null(colour_by)) {
+    aes_args$colour <- quote(colour)
+  }
+  if (size_by_cells) {
+    aes_args$size <- quote(n_cells)
+  }
+  point_args <- list(
+    data = leaves,
+    mapping = do.call(ggplot2::aes, aes_args)
+  )
+  if (!size_by_cells) {
+    point_args$size <- point_size
+  }
+  p <- p + do.call(ggplot2::geom_point, point_args)
+  if (size_by_cells) {
+    p <- p + ggplot2::scale_size(range = c(point_size, point_size * 5))
+  }
+  if (!is.null(colour_by)) {
+    p <- p + ggplot2::labs(colour = NULL)
   }
 
   if (layout != "dendrogram") {
@@ -5183,11 +5211,12 @@ plot.BonsaiTree <- function(
 #' Store the leaf coordinates of a Bonsai tree as an embedding
 #'
 #' @description
-#' Writes the 2D position of every cell in the tree into the object's
+#' Writes the 2D position of every leaf, cell or metacell, into the object's
 #' embeddings, so the usual embedding plots can use it. The tree has to have
-#' been built over the object's current cells, in the same order.
+#' been built over the object's current cells (or all of its metacells), in the
+#' same order.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `MetaCells` class.
 #' @param tree A `BonsaiTree`, from [bixverse::bonsai_sc()] on this object.
 #' @param name String. Name of the embedding.
 #'
@@ -5205,11 +5234,18 @@ plot.BonsaiTree <- function(
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_bonsai_embedding <- function(object, tree, name = "bonsai") {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::assertClass(tree, "BonsaiTree")
   checkmate::qassert(name, "S1")
 
-  if (!identical(tree$cell_idx, get_cells_to_keep(object))) {
+  expected <- if (S7::S7_inherits(object, MetaCells)) {
+    seq_len(S7::prop(object, "dims")[1]) - 1L
+  } else {
+    get_cells_to_keep(object)
+  }
+  if (!identical(tree$cell_idx, expected)) {
     stop(paste(
       "The tree was not built over the current cells of this object.",
       "Rerun bonsai_sc() after changing the cells to keep."
