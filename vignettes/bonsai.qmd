@@ -266,6 +266,69 @@ patchwork::wrap_plots(
 )
 ```
 
+## Bonsai on metacells
+
+At 100k cells a tree over every cell is slow and hard to look at. Metacells
+compress first. Their raw counts are sums over their cells, and a sum of
+Poisson counts is Poisson, so Sanity treats a metacell exactly as it treats a
+cell, with its total counts as the library size. A metacell of 20 cells has
+about 20 times the counts, so its error bars are much tighter, and Bonsai
+weights by them. The same `bonsai_sc()` call works on `MetaCells`; every
+metacell becomes a leaf.
+
+Here SEACells compresses the PBMCs to 100 metacells, and each metacell gets
+the cell type most of its cells carry.
+
+```{r}
+#| label: seacells
+seacells <- generate_seacells_sc(
+  object = sc_object,
+  seacell_params = params_sc_seacells(
+    n_sea_cells = 100L,
+    min_iter = 10L,
+    convergence_epsilon = 0.001
+  ),
+  .verbose = FALSE
+)
+
+seacells <- calc_meta_cell_purity(
+  seacells,
+  original_cell_type = get_sc_obs(sc_object, filtered = TRUE)$cell_type,
+  add_additional_info = "top_label"
+)
+
+tree_mc <- bonsai_sc(seacells, .verbose = FALSE)
+
+tree_mc
+```
+
+The same PBMCs as 100 metacells: a few seconds instead of the minutes the
+cell-level tree took, most of it Sanity. And the summed counts are deep enough
+that thousands of genes clear the signal-to-noise bar, against a few hundred
+for single cells, so the tree sees far more of the transcriptome.
+
+`size_by_cells = TRUE` scales every leaf by the cells behind it.
+
+```{r}
+#| label: plot metacells
+#| fig-width: 7
+#| fig-height: 7
+plot(
+  tree_mc,
+  colour_by = seacells[[]]$mc_top_label,
+  size_by_cells = TRUE,
+  point_size = 1
+)
+```
+
+The subtrees of the cell-level tree survive the compression, and the
+monocytes come out sharper: CD14+ and CD16+ split into two branches of one
+monocyte subtree. A few T-cell metacells sit on the NK branch; T and NK cells
+share much of their cytotoxic programme, so that is where the tree is least
+sure of the labels. What the metacell tree cannot show
+is anything inside a metacell, so pick the compression to match the resolution
+you care about.
+
 ## Scaling
 
 The search grows a little faster than linearly with the cell number. In
@@ -284,8 +347,9 @@ cores):
 | `bonsai_gpu_sc()` | 8 s | 74 s | 82 s |
 
 Both kept the same 2,751 genes. With Sanity on the GPU the tree search is the
-cost, and that is where 100k cells will hurt. Without a GPU, restricting the
-candidates with `hvg` is the cheap way out.
+cost, and that is where 100k cells will hurt. Metacells are the way around it:
+compress first and the tree has a few thousand leaves instead of 100k. Without
+a GPU, restricting the candidates with `hvg` also helps.
 
 ## Clean up
 
