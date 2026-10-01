@@ -502,7 +502,73 @@ binarise_regulon_activity <- function(
   return(list(binary = binary, thresholds = thresholds))
 }
 
-# binary heatmaps --------------------------------------------------------------
+# plotting ---------------------------------------------------------------------
+
+## helpers ---------------------------------------------------------------------
+
+#' Assert an optional group mapping
+#'
+#' @param groups Optional named character vector or factor.
+#' @param ids Character vector. Ids that all need a group.
+#'
+#' @returns Invisibly `TRUE`, errors otherwise.
+#'
+#' @keywords internal
+.assert_group_map <- function(groups, ids) {
+  checkmate::qassert(ids, "S+")
+  if (is.null(groups)) {
+    return(invisible(TRUE))
+  }
+  checkmate::assert(
+    checkmate::checkCharacter(groups, any.missing = FALSE),
+    checkmate::checkFactor(groups, any.missing = FALSE)
+  )
+  checkmate::assertNames(names(groups), must.include = ids)
+  invisible(TRUE)
+}
+
+#' Align a group mapping to ids as a factor
+#'
+#' @param groups Optional named character vector or factor. `NULL` puts
+#' everything into a single group `"all"`.
+#' @param ids Character vector. Ids to align to.
+#'
+#' @returns Factor of the same length as `ids`, without unused levels.
+#'
+#' @keywords internal
+.as_group_factor <- function(groups, ids) {
+  checkmate::qassert(ids, "S+")
+  checkmate::assert(
+    checkmate::checkNull(groups),
+    checkmate::checkCharacter(groups),
+    checkmate::checkFactor(groups)
+  )
+  if (is.null(groups)) {
+    return(factor(rep("all", length(ids))))
+  }
+  droplevels(as.factor(groups[ids]))
+}
+
+#' Order indices group by group
+#'
+#' @param groups Factor. Groups in the original order.
+#' @param order_fun Function. Takes the integer indices of one group and
+#' returns them reordered.
+#'
+#' @returns Integer vector of indices, groups in level order.
+#'
+#' @keywords internal
+.order_within_groups <- function(groups, order_fun) {
+  checkmate::assertFactor(groups)
+  checkmate::assertFunction(order_fun)
+  unlist(
+    purrr::map(levels(groups), \(lvl) order_fun(which(groups == lvl))),
+    use.names = FALSE
+  )
+}
+
+
+## binary heatmaps -------------------------------------------------------------
 
 #' Extract plot-ready data for a binary heatmap
 #'
@@ -683,67 +749,4 @@ extract_binary_heatmap_data <- function(
   class(res) <- "BinaryHeatmapData"
 
   return(res)
-}
-
-## helpers ---------------------------------------------------------------------
-
-#' Assert an optional group mapping
-#'
-#' @param groups Optional named character vector or factor.
-#' @param ids Character vector. Ids that all need a group.
-#'
-#' @returns Invisibly `TRUE`, errors otherwise.
-#'
-#' @keywords internal
-.assert_group_map <- function(groups, ids) {
-  checkmate::qassert(ids, "S+")
-  if (is.null(groups)) {
-    return(invisible(TRUE))
-  }
-  checkmate::assert(
-    checkmate::checkCharacter(groups, any.missing = FALSE),
-    checkmate::checkFactor(groups, any.missing = FALSE)
-  )
-  checkmate::assertNames(names(groups), must.include = ids)
-  invisible(TRUE)
-}
-
-#' Align a group mapping to ids as a factor
-#'
-#' @param groups Optional named character vector or factor. `NULL` puts
-#' everything into a single group `"all"`.
-#' @param ids Character vector. Ids to align to.
-#'
-#' @returns Factor of the same length as `ids`, without unused levels.
-#'
-#' @keywords internal
-.as_group_factor <- function(groups, ids) {
-  checkmate::qassert(ids, "S+")
-  checkmate::assert(
-    checkmate::checkNull(groups),
-    checkmate::checkCharacter(groups),
-    checkmate::checkFactor(groups)
-  )
-  if (is.null(groups)) {
-    return(factor(rep("all", length(ids))))
-  }
-  droplevels(as.factor(groups[ids]))
-}
-
-#' Order indices group by group
-#'
-#' @param groups Factor. Groups in the original order.
-#' @param order_fun Function. Takes the integer indices of one group and
-#' returns them reordered.
-#'
-#' @returns Integer vector of indices, groups in level order.
-#'
-#' @keywords internal
-.order_within_groups <- function(groups, order_fun) {
-  checkmate::assertFactor(groups)
-  checkmate::assertFunction(order_fun)
-  unlist(
-    purrr::map(levels(groups), \(lvl) order_fun(which(groups == lvl))),
-    use.names = FALSE
-  )
 }
