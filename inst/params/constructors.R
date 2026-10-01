@@ -755,6 +755,60 @@ spec_scenic_binarise <- param_spec(
   )
 )
 
+spec_binary_heatmap <- param_spec(
+  name = "binary_heatmap",
+  title = "Wrapper function for parameters for binary heatmap data",
+  description = paste(
+    "Controls filtering, ordering and binning in",
+    "[extract_binary_heatmap_data()]. Features are clustered on the",
+    "Jaccard distance, samples on the Hamming distance within their",
+    "group. Groups larger than `max_cluster_n` are ordered by",
+    "barycentre instead, which skips the distance matrix. More",
+    "samples than `max_cols` get binned within their group into",
+    "fraction-on columns."
+  ),
+  checker = "BinaryHeatmap",
+  label = "binary heatmap params",
+  hint = paste(
+    "min_frac_on and max_frac_on must be numerics in [0, 1];",
+    "cluster_features and cluster_samples must be booleans; max_cols",
+    "and max_cluster_n must be integers >= 1."
+  ),
+  fields = list(
+    min_frac_on = p_dbl(
+      0.01,
+      range = "[0,1]",
+      doc = "Features on in a smaller fraction of samples are dropped."
+    ),
+    max_frac_on = p_dbl(
+      0.99,
+      range = "[0,1]",
+      doc = "Features on in a larger fraction of samples are dropped."
+    ),
+    cluster_features = p_lgl(
+      TRUE,
+      doc = "Shall the features be clustered within their group."
+    ),
+    cluster_samples = p_lgl(
+      TRUE,
+      doc = "Shall the samples be ordered within their group."
+    ),
+    max_cols = p_int(
+      2000L,
+      range = "[1,)",
+      doc = "Maximum number of columns before samples get binned."
+    ),
+    max_cluster_n = p_int(
+      2000L,
+      range = "[1,)",
+      doc = paste(
+        "Groups with more samples than this are ordered by barycentre",
+        "instead of hierarchical clustering."
+      )
+    )
+  )
+)
+
 spec_sc_hotspot <- param_spec(
   name = "sc_hotspot",
   title = "Wrapper function for parameters for HotSpot",

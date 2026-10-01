@@ -408,3 +408,82 @@ expect_error(
   ),
   info = "binarise - the params validator rejects a malformed list"
 )
+
+## binary heatmap data ---------------------------------------------------------
+
+# three sample groups, three feature blocks, block g on in group g plus noise
+set.seed(1L)
+hm_grp <- rep(c("g1", "g2", "g3"), each = 60L)
+hm_blk <- rep(c("g1", "g2", "g3"), each = 5L)
+hm_mat <- xor(
+  outer(hm_grp, hm_blk, "=="),
+  matrix(runif(180L * 15L) < 0.1, 180L)
+)
+dimnames(hm_mat) <- list(sprintf("cell_%i", 1:180), sprintf("tf_%i", 1:15))
+hm_mat <- cbind(hm_mat, tf_off = FALSE)
+hm_mat <- hm_mat[sample(180L), ]
+hm_groups <- setNames(hm_grp, sprintf("cell_%i", 1:180))
+
+hm_res <- extract_binary_heatmap_data(
+  hm_mat,
+  sample_groups = hm_groups,
+  .verbose = FALSE
+)
+
+expect_inherits(
+  current = hm_res,
+  class = "BinaryHeatmapData",
+  info = "binary heatmap - returns the S3 class"
+)
+
+expect_false(
+  current = "tf_off" %in% hm_res$row_annot$feature,
+  info = "binary heatmap - a feature that is never on is filtered"
+)
+
+expect_equal(
+  current = rle(
+    hm_blk[as.integer(sub("tf_", "", hm_res$row_annot$feature))]
+  )$lengths,
+  target = c(5L, 5L, 5L),
+  info = "binary heatmap - feature blocks come out contiguous"
+)
+
+expect_equal(
+  current = as.character(hm_res$col_annot$group),
+  target = hm_grp,
+  info = "binary heatmap - samples are ordered group by group"
+)
+
+hm_binned <- extract_binary_heatmap_data(
+  hm_mat,
+  sample_groups = hm_groups,
+  heatmap_params = params_binary_heatmap(max_cols = 30L, max_cluster_n = 10L),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = hm_binned$binned && ncol(hm_binned$mat) == 30L,
+  info = "binary heatmap - samples get binned down to max_cols"
+)
+
+expect_equal(
+  current = hm_binned$col_annot[, sum(n_samples), by = group]$V1,
+  target = c(60L, 60L, 60L),
+  info = "binary heatmap - bins keep every sample within its group"
+)
+
+expect_equal(
+  current = unname(hm_binned$mat %*% hm_binned$col_annot$n_samples)[, 1],
+  target = unname(colSums(hm_mat[, hm_binned$row_annot$feature])),
+  info = "binary heatmap - binned fractions add back up to the on counts"
+)
+
+expect_error(
+  current = extract_binary_heatmap_data(
+    hm_mat,
+    sample_groups = hm_groups[1:10],
+    .verbose = FALSE
+  ),
+  info = "binary heatmap - samples without a group are rejected"
+)

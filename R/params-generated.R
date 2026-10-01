@@ -3,6 +3,73 @@
 
 # parameter wrappers -----------------------------------------------------------
 
+#' Wrapper function for parameters for binary heatmap data
+#'
+#' @description Controls filtering, ordering and binning in
+#' [extract_binary_heatmap_data()]. Features are clustered on the Jaccard
+#' distance, samples on the Hamming distance within their group. Groups larger
+#' than `max_cluster_n` are ordered by barycentre instead, which skips the
+#' distance matrix. More samples than `max_cols` get binned within their group
+#' into fraction-on columns.
+#'
+#' @param min_frac_on Numeric. Features on in a smaller fraction of samples are
+#' dropped. Defaults to `0.01`.
+#' @param max_frac_on Numeric. Features on in a larger fraction of samples are
+#' dropped. Defaults to `0.99`.
+#' @param cluster_features Boolean. Shall the features be clustered within their
+#' group. Defaults to `TRUE`.
+#' @param cluster_samples Boolean. Shall the samples be ordered within their
+#' group. Defaults to `TRUE`.
+#' @param max_cols Integer. Maximum number of columns before samples get binned.
+#' Defaults to `2000L`.
+#' @param max_cluster_n Integer. Groups with more samples than this are ordered
+#' by barycentre instead of hierarchical clustering. Defaults to `2000L`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item min_frac_on - Numeric. Features on in a smaller fraction of samples
+#'  are dropped. Defaults to `0.01`.
+#'  \item max_frac_on - Numeric. Features on in a larger fraction of samples are
+#'  dropped. Defaults to `0.99`.
+#'  \item cluster_features - Boolean. Shall the features be clustered within
+#'  their group. Defaults to `TRUE`.
+#'  \item cluster_samples - Boolean. Shall the samples be ordered within their
+#'  group. Defaults to `TRUE`.
+#'  \item max_cols - Integer. Maximum number of columns before samples get
+#'  binned. Defaults to `2000L`.
+#'  \item max_cluster_n - Integer. Groups with more samples than this are
+#'  ordered by barycentre instead of hierarchical clustering. Defaults to
+#'  `2000L`.
+#' }
+#'
+#' @export
+params_binary_heatmap <- function(
+  min_frac_on = 0.01,
+  max_frac_on = 0.99,
+  cluster_features = TRUE,
+  cluster_samples = TRUE,
+  max_cols = 2000L,
+  max_cluster_n = 2000L
+) {
+  # Checks
+  checkmate::qassert(min_frac_on, "N1[0,1]")
+  checkmate::qassert(max_frac_on, "N1[0,1]")
+  checkmate::qassert(cluster_features, "B1")
+  checkmate::qassert(cluster_samples, "B1")
+  checkmate::qassert(max_cols, "I1[1,)")
+  checkmate::qassert(max_cluster_n, "I1[1,)")
+
+  # Return
+  list(
+    min_frac_on = min_frac_on,
+    max_frac_on = max_frac_on,
+    cluster_features = cluster_features,
+    cluster_samples = cluster_samples,
+    max_cols = max_cols,
+    max_cluster_n = max_cluster_n
+  )
+}
+
 #' Wrapper function to generate blitzGSEA parameters
 #'
 #' @param min_size Integer. Minimum number of genes per gene set. Defaults to

@@ -3,6 +3,71 @@
 
 # parameter checkers -----------------------------------------------------------
 
+#' Check binary heatmap params
+#'
+#' @description Checkmate extension for the output of [params_binary_heatmap()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkBinaryHeatmapParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "min_frac_on",
+      "max_frac_on",
+      "cluster_features",
+      "cluster_samples",
+      "max_cols",
+      "max_cluster_n"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      min_frac_on = "N1[0,1]",
+      max_frac_on = "N1[0,1]",
+      cluster_features = "B1",
+      cluster_samples = "B1",
+      max_cols = "I1[1,)",
+      max_cluster_n = "I1[1,)"
+    ),
+    label = "binary heatmap params",
+    hint = paste(
+      "min_frac_on and max_frac_on must be numerics in [0, 1];",
+      "cluster_features and cluster_samples must be booleans; max_cols",
+      "and max_cluster_n must be integers >= 1."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert binary heatmap params
+#'
+#' @inheritParams checkBinaryHeatmapParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertBinaryHeatmapParams <- checkmate::makeAssertionFunction(
+  checkBinaryHeatmapParams
+)
+
 #' Check blitzGSEA params
 #'
 #' @description Checkmate extension for the output of [params_blitzgsea()].
