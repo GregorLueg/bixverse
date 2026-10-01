@@ -164,14 +164,14 @@ read_motif_annotation_file <- function(annot_file) {
   # fcase is cool!
   motif_annotations[,
     annotationSource := data.table::fcase(
-      inferred_orthology & inferred_motif_sim,
-      "inferredBy_MotifSimilarity_n_Orthology",
-      inferred_motif_sim,
-      "inferredBy_MotifSimilarity",
-      inferred_orthology,
-      "inferredBy_Orthology",
-      direct_annotation,
-      "directAnnotation",
+      inferred_orthology & inferred_motif_sim  ,
+      "inferredBy_MotifSimilarity_n_Orthology" ,
+      inferred_motif_sim                       ,
+      "inferredBy_MotifSimilarity"             ,
+      inferred_orthology                       ,
+      "inferredBy_Orthology"                   ,
+      direct_annotation                        ,
+      "directAnnotation"                       ,
       default = ""
     )
   ]
@@ -500,4 +500,250 @@ binarise_regulon_activity <- function(
   }
 
   return(list(binary = binary, thresholds = thresholds))
+}
+
+# binary heatmaps --------------------------------------------------------------
+
+#' Extract plot-ready data for a binary heatmap
+#'
+#' @description
+#' Filters, orders and optionally bins a logical samples x features matrix,
+#' e.g. the regulon on/off calls from [binarise_regulon_activity()], so it can
+#' be drawn as a single raster with `bixverse.plots::plot_binary_heatmap()`.
+#'
+#' Features are clustered within their group on the Jaccard distance, so
+#' shared absences do not count as similarity. Samples are clustered within
+#' their group on the Hamming distance. Groups larger than `max_cluster_n` are
+#' instead ordered by barycentre, the mean plot position of the features a
+#' sample has on, which avoids the quadratic distance matrix. With more
+#' samples than `max_cols`, consecutive samples within a group are collapsed
+#' into roughly `max_cols` bins that hold the fraction of samples on. Every
+#' group keeps at least one bin.
+#'
+#' @param binary_mat Logical matrix of samples x features with unique row and
+#' column names.
+#' @param sample_groups Optional named character vector or factor mapping
+#' every row name of `binary_mat` to a group. Factor levels set the group
+#' order, otherwise groups are sorted.
+#' @param feature_groups Optional named character vector or factor mapping
+#' every column name of `binary_mat` to a group. Factor levels set the group
+#' order, otherwise groups are sorted.
+#' @param heatmap_params List. Output of [params_binary_heatmap()].
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns An object of class `BinaryHeatmapData`, a list with:
+#' \itemize{
+#'   \item{mat - Numeric matrix of features x columns in plot order. Values
+#'   are 0/1, or the fraction of samples on if binned.}
+#'   \item{col_annot - data.table with one row per column: `col_idx`, `group`
+#'   (factor) and `n_samples` in that column.}
+#'   \item{row_annot - data.table with one row per feature: `row_idx`,
+#'   `feature` and `group` (factor).}
+#'   \item{binned - Boolean. Whether the samples were binned.}
+#' }
+#' Without groups, `group` is a single level `"all"`.
+#'
+#' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @export
+#'
+#' @examples
+#' set.seed(7L)
+#' binary_mat <- matrix(runif(200 * 30) > 0.7, nrow = 200)
+#' dimnames(binary_mat) <- list(
+#'   sprintf("cell_%i", 1:200),
+#'   sprintf("regulon_%i", 1:30)
+#' )
+#' sample_groups <- setNames(rep(c("a", "b"), each = 100), rownames(binary_mat))
+#' res <- extract_binary_heatmap_data(
+#'   binary_mat,
+#'   sample_groups = sample_groups,
+#'   .verbose = FALSE
+#' )
+#' dim(res$mat)
+extract_binary_heatmap_data <- function(
+  binary_mat,
+  sample_groups = NULL,
+  feature_groups = NULL,
+  heatmap_params = params_binary_heatmap(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertMatrix(
+    binary_mat,
+    mode = "logical",
+    any.missing = FALSE,
+    min.rows = 1L,
+    min.cols = 1L,
+    row.names = "unique",
+    col.names = "unique"
+  )
+  .assert_group_map(sample_groups, rownames(binary_mat))
+  .assert_group_map(feature_groups, colnames(binary_mat))
+  assertBinaryHeatmapParams(heatmap_params)
+  checkmate::qassert(.verbose, "B1")
+
+  # filter
+  frac_on <- colMeans(binary_mat)
+  keep <- frac_on >= heatmap_params$min_frac_on &
+    frac_on <= heatmap_params$max_frac_on
+  if (!any(keep)) {
+    stop("No features pass the min_frac_on / max_frac_on filter.")
+  }
+  if (.verbose) {
+    message(sprintf(
+      "Kept %d of %d features after the on-fraction filter.",
+      sum(keep),
+      length(keep)
+    ))
+  }
+  binary_mat <- binary_mat[, keep, drop = FALSE]
+
+  sample_groups <- .as_group_factor(sample_groups, rownames(binary_mat))
+  feature_groups <- .as_group_factor(feature_groups, colnames(binary_mat))
+
+  # ordering
+  feature_ord <- .order_within_groups(feature_groups, \(idx) {
+    if (!heatmap_params$cluster_features || length(idx) < 3L) {
+      return(idx)
+    }
+    d <- stats::dist(t(binary_mat[, idx, drop = FALSE]), method = "binary")
+    idx[fastcluster::hclust(d, method = "ward.D2")$order]
+  })
+
+  # inverse permutation, i.e. plot position of each feature
+  feature_pos <- order(feature_ord)
+
+  sample_ord <- .order_within_groups(sample_groups, \(idx) {
+    if (!heatmap_params$cluster_samples || length(idx) < 3L) {
+      return(idx)
+    }
+    sub_mat <- binary_mat[idx, , drop = FALSE]
+    if (length(idx) <= heatmap_params$max_cluster_n) {
+      storage.mode(sub_mat) <- "integer"
+      d <- stats::as.dist(rs_hamming_dist(t(sub_mat)))
+      return(idx[fastcluster::hclust(d, method = "ward.D2")$order])
+    }
+    n_on <- rowSums(sub_mat)
+    # samples with nothing on give NaN and go last
+    barycentre <- as.vector(sub_mat %*% feature_pos) / n_on
+    idx[order(barycentre, n_on, na.last = TRUE)]
+  })
+
+  ordered_mat <- binary_mat[sample_ord, feature_ord, drop = FALSE]
+  storage.mode(ordered_mat) <- "double"
+  ordered_groups <- sample_groups[sample_ord]
+
+  # binning
+  n_samples <- nrow(ordered_mat)
+  binned <- n_samples > heatmap_params$max_cols
+
+  if (binned) {
+    grp_n <- as.vector(table(ordered_groups))
+    # n_bins <= grp_n, so every bin id within a group gets hit
+    n_bins <- pmax(1L, round(grp_n / n_samples * heatmap_params$max_cols))
+    offsets <- cumsum(c(0, utils::head(n_bins, -1L)))
+    bin_id <- unlist(
+      purrr::map(seq_along(grp_n), \(i) {
+        ceiling(seq_len(grp_n[i]) * n_bins[i] / grp_n[i]) + offsets[i]
+      }),
+      use.names = FALSE
+    )
+    bin_size <- as.vector(table(bin_id))
+    ordered_mat <- rowsum(ordered_mat, bin_id, reorder = TRUE) / bin_size
+    rownames(ordered_mat) <- NULL
+    col_groups <- ordered_groups[!duplicated(bin_id)]
+  } else {
+    bin_size <- rep(1L, n_samples)
+    col_groups <- ordered_groups
+  }
+
+  if (.verbose && binned) {
+    message(sprintf(
+      "Binned %d samples into %d columns.",
+      n_samples,
+      nrow(ordered_mat)
+    ))
+  }
+
+  res <- list(
+    mat = t(ordered_mat),
+    col_annot = data.table::data.table(
+      col_idx = seq_along(col_groups),
+      group = unname(col_groups),
+      n_samples = as.integer(bin_size)
+    ),
+    row_annot = data.table::data.table(
+      row_idx = seq_along(feature_ord),
+      feature = colnames(binary_mat)[feature_ord],
+      group = unname(feature_groups[feature_ord])
+    ),
+    binned = binned
+  )
+  class(res) <- "BinaryHeatmapData"
+
+  return(res)
+}
+
+## helpers ---------------------------------------------------------------------
+
+#' Assert an optional group mapping
+#'
+#' @param groups Optional named character vector or factor.
+#' @param ids Character vector. Ids that all need a group.
+#'
+#' @returns Invisibly `TRUE`, errors otherwise.
+#'
+#' @keywords internal
+.assert_group_map <- function(groups, ids) {
+  checkmate::qassert(ids, "S+")
+  if (is.null(groups)) {
+    return(invisible(TRUE))
+  }
+  checkmate::assert(
+    checkmate::checkCharacter(groups, any.missing = FALSE),
+    checkmate::checkFactor(groups, any.missing = FALSE)
+  )
+  checkmate::assertNames(names(groups), must.include = ids)
+  invisible(TRUE)
+}
+
+#' Align a group mapping to ids as a factor
+#'
+#' @param groups Optional named character vector or factor. `NULL` puts
+#' everything into a single group `"all"`.
+#' @param ids Character vector. Ids to align to.
+#'
+#' @returns Factor of the same length as `ids`, without unused levels.
+#'
+#' @keywords internal
+.as_group_factor <- function(groups, ids) {
+  checkmate::qassert(ids, "S+")
+  checkmate::assert(
+    checkmate::checkNull(groups),
+    checkmate::checkCharacter(groups),
+    checkmate::checkFactor(groups)
+  )
+  if (is.null(groups)) {
+    return(factor(rep("all", length(ids))))
+  }
+  droplevels(as.factor(groups[ids]))
+}
+
+#' Order indices group by group
+#'
+#' @param groups Factor. Groups in the original order.
+#' @param order_fun Function. Takes the integer indices of one group and
+#' returns them reordered.
+#'
+#' @returns Integer vector of indices, groups in level order.
+#'
+#' @keywords internal
+.order_within_groups <- function(groups, order_fun) {
+  checkmate::assertFactor(groups)
+  checkmate::assertFunction(order_fun)
+  unlist(
+    purrr::map(levels(groups), \(lvl) order_fun(which(groups == lvl))),
+    use.names = FALSE
+  )
 }
