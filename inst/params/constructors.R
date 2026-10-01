@@ -755,6 +755,60 @@ spec_scenic_binarise <- param_spec(
   )
 )
 
+spec_binary_heatmap <- param_spec(
+  name = "binary_heatmap",
+  title = "Wrapper function for parameters for binary heatmap data",
+  description = paste(
+    "Controls filtering, ordering and binning in",
+    "[extract_binary_heatmap_data()]. Features are clustered on the",
+    "Jaccard distance, samples on the Hamming distance within their",
+    "group. Groups larger than `max_cluster_n` are ordered by",
+    "barycentre instead, which skips the distance matrix. More",
+    "samples than `max_cols` get binned within their group into",
+    "fraction-on columns."
+  ),
+  checker = "BinaryHeatmap",
+  label = "binary heatmap params",
+  hint = paste(
+    "min_frac_on and max_frac_on must be numerics in [0, 1];",
+    "cluster_features and cluster_samples must be booleans; max_cols",
+    "and max_cluster_n must be integers >= 1."
+  ),
+  fields = list(
+    min_frac_on = p_dbl(
+      0.01,
+      range = "[0,1]",
+      doc = "Features on in a smaller fraction of samples are dropped."
+    ),
+    max_frac_on = p_dbl(
+      0.99,
+      range = "[0,1]",
+      doc = "Features on in a larger fraction of samples are dropped."
+    ),
+    cluster_features = p_lgl(
+      TRUE,
+      doc = "Shall the features be clustered within their group."
+    ),
+    cluster_samples = p_lgl(
+      TRUE,
+      doc = "Shall the samples be ordered within their group."
+    ),
+    max_cols = p_int(
+      2000L,
+      range = "[1,)",
+      doc = "Maximum number of columns before samples get binned."
+    ),
+    max_cluster_n = p_int(
+      2000L,
+      range = "[1,)",
+      doc = paste(
+        "Groups with more samples than this are ordered by barycentre",
+        "instead of hierarchical clustering."
+      )
+    )
+  )
+)
+
 spec_sc_hotspot <- param_spec(
   name = "sc_hotspot",
   title = "Wrapper function for parameters for HotSpot",
@@ -2251,6 +2305,124 @@ spec_sc_palantir <- param_spec(
         "`ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`",
         "and `n_probe`."
       )
+    )
+  )
+)
+
+spec_sc_bonsai <- param_spec(
+  name = "sc_bonsai",
+  title = "Wrapper function for Bonsai parameters",
+  description = paste(
+    "Parameters for [bixverse::bonsai_sc()]. Sanity turns the raw",
+    "counts into posterior log fold changes with error bars, Bonsai",
+    "builds a tree over the cells from those, and the tree is laid",
+    "out in 2D for plotting. The Sanity defaults come from",
+    "sanity-sc-rs, the search defaults from bonsai-rs."
+  ),
+  references = paste(
+    "de Groot, et al., Nat. Biotechnol., 2026; Breda, et al., Nat.",
+    "Biotechnol., 2021."
+  ),
+  checker = "ScBonsai",
+  label = "Bonsai params",
+  hint = paste(
+    "variance_rule must be one of marginalise, posterior_mean,",
+    "max_posterior or fixed; fixed_variance must be NULL or > 0;",
+    "variance_bins must be >= 2; variance_min and variance_max must be",
+    "> 0; start must be linkage or greedy_merge; spr_search and",
+    "nni_search must be approximate or exact; layout must be one of",
+    "equal_angle, equal_daylight or dendrogram; seed must be an",
+    "integer; reroot and hyperbolic must be booleans."
+  ),
+  fields = list(
+    variance_rule = p_choice(
+      "marginalise",
+      c("marginalise", "posterior_mean", "max_posterior", "fixed"),
+      doc = paste(
+        "How Sanity treats each gene's variance in log fold change.",
+        "`\"marginalise\"` integrates over the variance grid,",
+        "`\"posterior_mean\"` and `\"max_posterior\"` collapse it to",
+        "one value first (cheaper, less accurate error bars), and",
+        "`\"fixed\"` uses `fixed_variance` for every gene."
+      )
+    ),
+    fixed_variance = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = "The variance for `variance_rule = \"fixed\"`. Ignored otherwise."
+    ),
+    variance_bins = p_int(
+      161L,
+      range = "[2,)",
+      doc = "Bins in the log-spaced variance grid."
+    ),
+    variance_min = p_dbl(
+      1e-3,
+      range = "(0,)",
+      doc = "Smallest variance on the grid."
+    ),
+    variance_max = p_dbl(
+      50,
+      range = "(0,)",
+      doc = "Largest variance on the grid."
+    ),
+    min_signal_to_noise = p_dbl(
+      1,
+      doc = paste(
+        "Genes whose signal-to-noise ratio falls below this are left",
+        "out of the tree."
+      )
+    ),
+    start = p_choice(
+      "linkage",
+      c("linkage", "greedy_merge"),
+      doc = paste(
+        "Initial topology. `\"linkage\"` is a Ward linkage over a",
+        "neighbour graph: faster and a better tree on real data.",
+        "`\"greedy_merge\"` is the paper's star merge, kept for",
+        "comparisons with the published method."
+      )
+    ),
+    spr_search = p_choice(
+      "approximate",
+      c("approximate", "exact"),
+      doc = paste(
+        "Subtree pruning and regrafting. `\"approximate\"` stays",
+        "within a few nats of `\"exact\"` on bonsai-rs's benchmarks at",
+        "up to twice the speed."
+      )
+    ),
+    nni_search = p_choice(
+      "approximate",
+      c("approximate", "exact"),
+      doc = paste(
+        "Nearest-neighbour interchange. `\"approximate\"` found the",
+        "same tree as `\"exact\"` on every bonsai-rs benchmark, and",
+        "faster."
+      )
+    ),
+    seed = p_int(42L, doc = "Seed for the linkage, SPR and NNI searches."),
+    reroot = p_lgl(
+      TRUE,
+      doc = paste(
+        "Reroot the finished tree for display. Changes the drawing,",
+        "not the likelihood."
+      )
+    ),
+    layout = p_choice(
+      "equal_angle",
+      c("equal_angle", "equal_daylight", "dendrogram"),
+      doc = paste(
+        "2D layout. `\"equal_daylight\"` refines equal angle but falls",
+        "back to it above 2,048 nodes, so it only matters for small",
+        "trees. Can be changed later with",
+        "[bixverse::relayout_bonsai()]."
+      )
+    ),
+    hyperbolic = p_lgl(
+      FALSE,
+      doc = "Project the layout onto the hyperbolic disk."
     )
   )
 )

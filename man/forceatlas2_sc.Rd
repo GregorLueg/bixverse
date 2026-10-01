@@ -14,7 +14,7 @@ forceatlas2_sc(
   init_embd = NULL,
   modality = c("rna", "adt", "wnn"),
   k = 15L,
-  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   fa2_params = manifoldsR::params_fa2(),
   seed = 42L,
@@ -50,7 +50,8 @@ multi-modal versions with the added data.}
 only.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
-\code{"hnsw"}, \code{"balltree"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.
+\code{c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}. Only used when neighbours are
+computed from the embedding.
 \code{"knn"} only.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}. \code{"knn"} only.}

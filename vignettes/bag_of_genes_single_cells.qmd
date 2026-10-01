@@ -709,6 +709,42 @@ embedding_plot_sc(
 )
 ```
 
+### Visualising the binary matrix
+
+One regulon at a time on the UMAP is fine, but the whole matrix is the more
+interesting picture: which regulons switch on together, and in which cells.
+Drawing a cells x regulons heatmap naively gets heavy fast, so the work is
+split in two. `extract_binary_heatmap_data()` drops regulons that are on
+almost nowhere or almost everywhere, clusters the regulons on the Jaccard
+distance and orders the cells within each group. With more cells than
+`max_cols` it bins them within their group into fraction-on columns, see
+`params_binary_heatmap()`. `bixverse.plots::plot_binary_heatmap()` then draws
+every block as a single raster, black for on, in the style of the SCENIC paper.
+Give it the logical matrix and it calls the extractor for you.
+
+```{r}
+#| label: scenic-binary-heatmap
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.2.8"
+#| fig-width: 10
+#| fig-height: 9
+#| fig-cap: "Regulon on/off calls per cell, grouped by Leiden cluster."
+obs_kept <- get_sc_obs(sc_object, filtered = TRUE)
+
+cell_clusters <- setNames(
+  factor(obs_kept$leiden_clusters),
+  obs_kept$cell_id
+)
+
+plot_binary_heatmap(
+  binary_matrix,
+  sample_groups = cell_clusters[rownames(binary_matrix)]
+)
+```
+
+With the cells grouped by cluster the lineage regulons come out as blocks that
+sit in a few clusters only, while the housekeeping-like ones run across the
+whole width.
+
 This is how you work with all types of `"bag of genes"` analyses for single
 cell in `bixverse`.
 
@@ -821,6 +857,31 @@ patchwork::wrap_plots(topic_plots, ncol = 2)
 Because the assignment is soft, a cell sitting between two programmes shows up
 as genuinely intermediate rather than being forced into one cluster. That is
 the main thing a topic model buys you over hard clustering on the same matrix.
+
+The topics also give you a grouping for the regulons. Assign each regulon to
+the topic it carries the most mass in and hand that to the binary heatmap as
+`feature_groups`: the topics then show up as row blocks, and you can check by
+eye whether they line up with the clusters.
+
+```{r}
+#| label: lda-binary-heatmap
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.2.8"
+#| fig-width: 10
+#| fig-height: 9
+#| fig-cap: "Regulon on/off calls, regulons grouped by their top LDA topic."
+term_topic <- as.matrix(lda_res, "term_topic")
+
+regulon_topics <- setNames(
+  colnames(term_topic)[max.col(term_topic, ties.method = "first")],
+  rownames(term_topic)
+)
+
+plot_binary_heatmap(
+  binary_matrix,
+  sample_groups = cell_clusters[rownames(binary_matrix)],
+  feature_groups = regulon_topics
+)
+```
 
 ## NMF on single cells
 

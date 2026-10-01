@@ -13,7 +13,7 @@ phate_sc(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   k = 5L,
-  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   phate_params = manifoldsR::params_phate(),
   seed = 42L,
@@ -46,7 +46,8 @@ supported. Defaults to \code{2L}.}
 Defaults to \code{5L}.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
-\code{"hnsw"}, \code{"balltree"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
+\code{c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}. Only used when neighbours are
+computed from the embedding.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}.}
 

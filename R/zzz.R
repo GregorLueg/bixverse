@@ -34,6 +34,7 @@
     "ScStep",
     "PalantirRes",
     "PagaRes",
+    "BonsaiTree",
     "ScMagic",
     "GeneTrendsRes",
     "ScSpecificMarkers",

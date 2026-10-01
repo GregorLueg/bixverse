@@ -83,6 +83,8 @@ navbar:
           href: articles/dialogue.html
         - text: "Trajectory inference with Palantir and PAGA"
           href: articles/trajectory_inference.html
+        - text: "Cell trees with Bonsai"
+          href: articles/bonsai.html
         - text: "Reference mapping via Symphony"
           href: articles/symphony.html
         - text: "Multi-modal analysis"
@@ -144,6 +146,7 @@ articles:
       - differential_expression
       - differential_abundance
       - trajectory_inference
+      - bonsai
       - single_cell_big_data
       - multi_modal_single_cells
       - single_cell_visualisation
@@ -552,7 +555,7 @@ reference:
       - params_sc_harmony_v2
       - params_sc_bbknn
       - params_sc_seurat_cca
-      - params_sc_seurat_rpca      
+      - params_sc_seurat_rpca
   # Single cell analysis
   - title: Single cell analysis methods
     desc: 
@@ -580,6 +583,9 @@ reference:
       - run_palantir_sc
       - run_paga_sc
       - run_gene_trends_sc
+      - bonsai_sc
+      - relayout_bonsai
+      - set_bonsai_embedding
       - get_index_cells
       - add_nhoods_info
       - test_nhoods
@@ -594,6 +600,7 @@ reference:
       - tf_to_genes_motif_enrichment
       - binarise_regulon_activity
       - build_regulons
+      - extract_binary_heatmap_data
       - nmf_sc
       - stabilised_nmf_sc
       - consensus_nmf_sc
@@ -619,10 +626,12 @@ reference:
       - params_scenic_gradient_boosting_defaults
       - params_scenic_random_forest_defaults
       - params_scenic_binarise
+      - params_binary_heatmap
       - params_meld
       - params_sc_palantir
       - params_sc_branch_selection
       - params_sc_gene_trends
+      - params_sc_bonsai
       - params_nmf_hals
       - params_nmf_consensus
       - params_lda
