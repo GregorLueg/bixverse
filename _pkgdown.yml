@@ -555,7 +555,7 @@ reference:
       - params_sc_harmony_v2
       - params_sc_bbknn
       - params_sc_seurat_cca
-      - params_sc_seurat_rpca      
+      - params_sc_seurat_rpca
   # Single cell analysis
   - title: Single cell analysis methods
     desc: 
@@ -600,6 +600,7 @@ reference:
       - tf_to_genes_motif_enrichment
       - binarise_regulon_activity
       - build_regulons
+      - extract_binary_heatmap_data
       - nmf_sc
       - stabilised_nmf_sc
       - consensus_nmf_sc
@@ -625,6 +626,7 @@ reference:
       - params_scenic_gradient_boosting_defaults
       - params_scenic_random_forest_defaults
       - params_scenic_binarise
+      - params_binary_heatmap
       - params_meld
       - params_sc_palantir
       - params_sc_branch_selection
