@@ -662,6 +662,45 @@ head(dt)
 #> 6: ENSG00000167286      5 0.00000000  0.000000 0.00000000
 ```
 
+## Heatmaps
+
+Dot plots summarise each group. Want to see every single cell instead?
+The marker heatmap puts genes on the rows and cells on the columns, with
+a gap between clusters. Expression is z-scored per gene and clipped at
+2.5 by default, otherwise a few extreme cells eat the whole colour
+range. These plots need `bixverse.plots >= "0.2.8"`
+
+``` r
+
+heatmap_plot_sc(
+  object = sc_object,
+  features = features,
+  feature_labels = feature_labels,
+  grouping_variable = "leiden_clusters",
+  feature_grouping = cell_markers
+)
+```
+
+Big clusters hog the width and the platelets end up as a sliver.
+`max_cells_per_group` subsamples every group, which gives the small ones
+a fair share of the plot.
+
+``` r
+
+heatmap_plot_sc(
+  object = sc_object,
+  features = features,
+  feature_labels = feature_labels,
+  grouping_variable = "sc_type",
+  feature_grouping = cell_markers,
+  max_cells_per_group = 100L
+)
+```
+
+The data behind it comes from
+[`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md),
+in case you want to build your own.
+
 ## Stacked Violin Plots
 
 Stacked violins show the per-group expression distribution of several
