@@ -153,7 +153,7 @@ different variables than those considered in the QC.
 
 ```{r}
 #| label: violin-plot-ribo
-obs <- get_sc_obs(sc_object)
+obs <- get_sc_obs(sc_object, filtered = TRUE)
 
 violin_plot_sc(
   obs,
