@@ -546,7 +546,50 @@ dt <- extract_dot_plot_data(
 head(dt)
 ```
 
-# Stacked Violin Plots 
+# Heatmaps
+
+Dot plots summarise each group. Want to see every single cell instead? The
+marker heatmap puts genes on the rows and cells on the columns, with a gap
+between clusters. Expression is z-scored per gene and clipped at 2.5 by
+default, otherwise a few extreme cells eat the whole colour range.
+
+```{r}
+#| label: heatmap
+#| fig-width: 9
+#| fig-height: 5
+#| fig-cap: "Heatmap of canonical marker genes across Leiden clusters. Genes are grouped by the cell type they mark, expression is z-scored per gene."
+heatmap_plot_sc(
+  object = sc_object,
+  features = features,
+  feature_labels = feature_labels,
+  grouping_variable = "leiden_clusters",
+  feature_grouping = cell_markers
+)
+```
+
+Big clusters hog the width and the platelets end up as a sliver.
+`max_cells_per_group` subsamples every group, which gives the small ones a fair
+share of the plot.
+
+```{r}
+#| label: heatmap-subsampled
+#| fig-width: 9
+#| fig-height: 5
+#| fig-cap: "Same heatmap grouped by cell type, at most 100 cells per group."
+heatmap_plot_sc(
+  object = sc_object,
+  features = features,
+  feature_labels = feature_labels,
+  grouping_variable = "sc_type",
+  feature_grouping = cell_markers,
+  max_cells_per_group = 100L
+)
+```
+
+The data behind it comes from `extract_gene_expression()`, in case you want to
+build your own.
+
+# Stacked Violin Plots
 
 Stacked violins show the per-group expression distribution of several genes in a
 compact vertical layout.
