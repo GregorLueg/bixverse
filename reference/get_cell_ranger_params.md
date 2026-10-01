@@ -60,9 +60,9 @@ write_cellranger_output(
 )
 str(get_cell_ranger_params(dir, has_hdr = TRUE))
 #> List of 5
-#>  $ path_mtx     : chr "/tmp/Rtmp7kZ37U/cellrangere3787b5d1245/matrix.mtx"
-#>  $ path_obs     : chr "/tmp/Rtmp7kZ37U/cellrangere3787b5d1245/barcodes.tsv"
-#>  $ path_var     : chr "/tmp/Rtmp7kZ37U/cellrangere3787b5d1245/features.tsv"
+#>  $ path_mtx     : chr "/tmp/RtmpzIpZFo/cellranger48bf4e69b342/matrix.mtx"
+#>  $ path_obs     : chr "/tmp/RtmpzIpZFo/cellranger48bf4e69b342/barcodes.tsv"
+#>  $ path_var     : chr "/tmp/RtmpzIpZFo/cellranger48bf4e69b342/features.tsv"
 #>  $ cells_as_rows: logi FALSE
 #>  $ has_hdr      : logi TRUE
 

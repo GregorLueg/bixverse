@@ -903,6 +903,15 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 - [`run_gene_trends_sc()`](https://gregorlueg.github.io/bixverse/reference/run_gene_trends_sc.md)
   : Fit gene trends over Palantir pseudotime
 
+- [`bonsai_sc()`](https://gregorlueg.github.io/bixverse/reference/bonsai_sc.md)
+  : Build a Bonsai tree over the cells
+
+- [`relayout_bonsai()`](https://gregorlueg.github.io/bixverse/reference/relayout_bonsai.md)
+  : Recompute the layout of a Bonsai tree
+
+- [`set_bonsai_embedding()`](https://gregorlueg.github.io/bixverse/reference/set_bonsai_embedding.md)
+  : Store the leaf coordinates of a Bonsai tree as an embedding
+
 - [`get_index_cells()`](https://gregorlueg.github.io/bixverse/reference/get_index_cells.md)
   : Get the index cells
 
@@ -944,6 +953,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`build_regulons()`](https://gregorlueg.github.io/bixverse/reference/build_regulons.md)
   : Build the final regulons
+
+- [`extract_binary_heatmap_data()`](https://gregorlueg.github.io/bixverse/reference/extract_binary_heatmap_data.md)
+  : Extract plot-ready data for a binary heatmap
 
 - [`nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_sc.md)
   : Run single-run NMF on single cell or meta cell data
@@ -1021,6 +1033,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 - [`params_scenic_binarise()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_binarise.md)
   : Wrapper function for parameters for the SCENIC binarisation
 
+- [`params_binary_heatmap()`](https://gregorlueg.github.io/bixverse/reference/params_binary_heatmap.md)
+  : Wrapper function for parameters for binary heatmap data
+
 - [`params_meld()`](https://gregorlueg.github.io/bixverse/reference/params_meld.md)
   : Constructor for MELD parameters
 
@@ -1032,6 +1047,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`params_sc_gene_trends()`](https://gregorlueg.github.io/bixverse/reference/params_sc_gene_trends.md)
   : Wrapper function for gene trend parameters
+
+- [`params_sc_bonsai()`](https://gregorlueg.github.io/bixverse/reference/params_sc_bonsai.md)
+  : Wrapper function for Bonsai parameters
 
 - [`params_nmf_hals()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.md)
   : Wrapper function for NMF (HALS) parameters

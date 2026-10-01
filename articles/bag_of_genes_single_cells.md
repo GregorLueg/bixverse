@@ -407,16 +407,16 @@ hotspot_autocor[, gene_symbol := ensembl_to_symbol[gene_id]]
 head(hotspot_autocor[order(fdr)], 25L)
 #>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
 #>              <char>     <num>     <num> <num> <num>      <char>
-#>  1: ENSG00000188290 0.3293835  39.08509     0     0        HES4
+#>  1: ENSG00000188290 0.3293836  39.08509     0     0        HES4
 #>  2: ENSG00000119535 0.2949539  46.16233     0     0       CSF3R
 #>  3: ENSG00000163131 0.5237190  62.76030     0     0        CTSS
 #>  4: ENSG00000163191 0.4090217  58.81076     0     0     S100A11
-#>  5: ENSG00000163220 0.7015916 115.38558     0     0      S100A9
+#>  5: ENSG00000163220 0.7015914 115.38558     0     0      S100A9
 #>  6: ENSG00000143546 0.6843269 119.58680     0     0      S100A8
-#>  7: ENSG00000197956 0.6383641 100.55820     0     0      S100A6
+#>  7: ENSG00000197956 0.6383640 100.55820     0     0      S100A6
 #>  8: ENSG00000196154 0.6470327  95.01012     0     0      S100A4
 #>  9: ENSG00000177954 0.6009150  93.19000     0     0       RPS27
-#> 10: ENSG00000158869 0.7041768  81.33603     0     0      FCER1G
+#> 10: ENSG00000158869 0.7041770  81.33603     0     0      FCER1G
 #> 11: ENSG00000203747 0.6096835  68.59921     0     0      FCGR3A
 #> 12: ENSG00000198574 0.2173397  41.63903     0     0      SH2D1B
 #> 13: ENSG00000198821 0.2205831  58.11088     0     0       CD247
@@ -858,6 +858,41 @@ embedding_plot_sc(
 
 ![](bag_of_genes_single_cells_files/figure-html/scenic-plot-spi1-1.png)
 
+### Visualising the binary matrix
+
+One regulon at a time on the UMAP is fine, but the whole matrix is the
+more interesting picture: which regulons switch on together, and in
+which cells. Drawing a cells x regulons heatmap naively gets heavy fast,
+so the work is split in two.
+[`extract_binary_heatmap_data()`](https://gregorlueg.github.io/bixverse/reference/extract_binary_heatmap_data.md)
+drops regulons that are on almost nowhere or almost everywhere, clusters
+the regulons on the Jaccard distance and orders the cells within each
+group. With more cells than `max_cols` it bins them within their group
+into fraction-on columns, see
+[`params_binary_heatmap()`](https://gregorlueg.github.io/bixverse/reference/params_binary_heatmap.md).
+`bixverse.plots::plot_binary_heatmap()` then draws every block as a
+single raster, black for on, in the style of the SCENIC paper. Give it
+the logical matrix and it calls the extractor for you.
+
+``` r
+
+obs_kept <- get_sc_obs(sc_object, filtered = TRUE)
+
+cell_clusters <- setNames(
+  factor(obs_kept$leiden_clusters),
+  obs_kept$cell_id
+)
+
+plot_binary_heatmap(
+  binary_matrix,
+  sample_groups = cell_clusters[rownames(binary_matrix)]
+)
+```
+
+With the cells grouped by cluster the lineage regulons come out as
+blocks that sit in a few clusters only, while the housekeeping-like ones
+run across the whole width.
+
 This is how you work with all types of `"bag of genes"` analyses for
 single cell in `bixverse`.
 
@@ -1027,6 +1062,27 @@ shows up as genuinely intermediate rather than being forced into one
 cluster. That is the main thing a topic model buys you over hard
 clustering on the same matrix.
 
+The topics also give you a grouping for the regulons. Assign each
+regulon to the topic it carries the most mass in and hand that to the
+binary heatmap as `feature_groups`: the topics then show up as row
+blocks, and you can check by eye whether they line up with the clusters.
+
+``` r
+
+term_topic <- as.matrix(lda_res, "term_topic")
+
+regulon_topics <- setNames(
+  colnames(term_topic)[max.col(term_topic, ties.method = "first")],
+  rownames(term_topic)
+)
+
+plot_binary_heatmap(
+  binary_matrix,
+  sample_groups = cell_clusters[rownames(binary_matrix)],
+  feature_groups = regulon_topics
+)
+```
+
 ## NMF on single cells
 
 The methods so far have all started from either a pre-defined gene set,
@@ -1136,13 +1192,13 @@ plus the parameters and convergence info.
 
 get_w(t_cell_nmf_results)[1:5, 1:5]
 #>                      comp_01      comp_02      comp_03      comp_04
-#> ENSG00000188976 2.756057e+00 1.516397e-01 9.978818e-11 3.985491e-01
-#> ENSG00000188290 9.983771e-11 1.001252e-10 9.978818e-11 7.743262e-02
-#> ENSG00000187608 9.983771e-11 2.746886e+00 1.624592e-01 9.984961e-11
-#> ENSG00000186827 9.983771e-11 1.001252e-10 7.541643e+00 9.984961e-11
-#> ENSG00000176022 9.073032e-01 7.618927e-03 1.844488e-01 9.984961e-11
+#> ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01
+#> ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02
+#> ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11
+#> ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11
+#> ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11
 #>                      comp_05
-#> ENSG00000188976 3.031699e-01
+#> ENSG00000188976 3.031700e-01
 #> ENSG00000188290 1.000227e-10
 #> ENSG00000187608 1.000227e-10
 #> ENSG00000186827 1.000227e-10
@@ -1153,17 +1209,17 @@ get_w(t_cell_nmf_results)[1:5, 1:5]
 
 get_h(t_cell_nmf_results)[1:5, 1:5]
 #>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1
-#> comp_01      0.029081339      0.028247045     2.750897e-02     2.642105e-02
-#> comp_02      0.032824829      0.004165604     5.788922e-03     4.683001e-02
-#> comp_03      0.009732792      0.053272992     5.238255e-02     1.002123e-10
-#> comp_04      0.064907387      0.017417077     1.001506e-10     3.876416e-02
-#> comp_05      0.004365175      0.047877818     9.997733e-11     1.034977e-02
+#> comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02
+#> comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02
+#> comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10
+#> comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02
+#> comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02
 #>         AAACTTGATCCAGA-1
-#> comp_01      0.032608394
-#> comp_02      0.002322546
-#> comp_03      0.007309148
-#> comp_04      0.018659715
-#> comp_05      0.049327463
+#> comp_01      0.032608423
+#> comp_02      0.002322522
+#> comp_03      0.007309146
+#> comp_04      0.018659594
+#> comp_05      0.049327504
 ```
 
 ### Running multiple NMF runs
@@ -1309,9 +1365,9 @@ t_cell_k_sweep
 #>  2:     3 0.7904969  0.3454919    0.3455086            FALSE         0
 #>  3:     4 0.7136912  0.3430810    0.3431764            FALSE         0
 #>  4:     5 0.7964178  0.3409729    0.3410496            FALSE         0
-#>  5:     6 0.6604626  0.3390599    0.3391575            FALSE         0
+#>  5:     6 0.5990908  0.3390599    0.3391575            FALSE         0
 #>  6:     7 0.7007527  0.3374616    0.3375218            FALSE         0
-#>  7:     8 0.6017957  0.3359818    0.3362038            FALSE         0
+#>  7:     8 0.6011498  0.3359818    0.3362038            FALSE         0
 #>  8:     9 0.6791331  0.3347037    0.3348030            FALSE         0
 #>  9:    10 0.6019418  0.3331404    0.3334405            FALSE         0
 #> 10:    11 0.5787128  0.3321190    0.3322654            FALSE         0
@@ -1414,11 +1470,11 @@ head(consensus_diag$clusters)
 #>      component_id   run component pooled_idx cluster local_density silhouette
 #>            <char> <int>     <int>      <int>   <int>         <num>      <num>
 #> 1: run_01.comp_01     1         1          1       5   0.013249557  0.7841961
-#> 2: run_01.comp_02     1         2          2       5   0.012458980  0.8275782
-#> 3: run_01.comp_03     1         3          3       1   0.004470190  0.9566821
-#> 4: run_01.comp_04     1         4          4       3   0.017579237  0.8770334
-#> 5: run_01.comp_05     1         5          5       4   0.017095864  0.6891547
-#> 6: run_02.comp_01     2         1          6       5   0.008731703  0.8714657
+#> 2: run_01.comp_02     1         2          2       5   0.012458861  0.8275782
+#> 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821
+#> 4: run_01.comp_04     1         4          4       3   0.017579218  0.8770334
+#> 5: run_01.comp_05     1         5          5       4   0.017095884  0.6891547
+#> 6: run_02.comp_01     2         1          6       5   0.008731663  0.8714657
 #>      kept
 #>    <lgcl>
 #> 1:   TRUE

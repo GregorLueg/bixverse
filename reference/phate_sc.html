@@ -37,7 +37,7 @@ continuous biological processes on denoised data."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,7 @@ continuous biological processes on denoised data."><meta property="og:image" con
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
+    <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -153,7 +154,7 @@ continuous biological processes on denoised data.</p>
 <span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"wnn"</span><span class="op">)</span>,</span>
 <span>  n_dim <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">5L</span>,</span>
-<span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"kmknn"</span>, <span class="st">"hnsw"</span>, <span class="st">"balltree"</span>, <span class="st">"annoy"</span>, <span class="st">"nndescent"</span>, <span class="st">"exhaustive"</span><span class="op">)</span>,</span>
+<span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"kmknn"</span>, <span class="st">"hnsw"</span>, <span class="st">"annoy"</span>, <span class="st">"nndescent"</span>, <span class="st">"balltree"</span>, <span class="st">"ivf"</span>, <span class="st">"exhaustive"</span><span class="op">)</span>,</span>
 <span>  nn_params <span class="op">=</span> <span class="fu">manifoldsR</span><span class="fu">::</span><span class="fu"><a href="https://gregorlueg.github.io/manifoldsR/reference/params_nn.html" class="external-link">params_nn</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  phate_params <span class="op">=</span> <span class="fu">manifoldsR</span><span class="fu">::</span><span class="fu"><a href="https://gregorlueg.github.io/manifoldsR/reference/params_phate.html" class="external-link">params_phate</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
@@ -207,7 +208,8 @@ Defaults to <code>5L</code>.</p></dd>
 
 <dt id="arg-knn-method">knn_method<a class="anchor" aria-label="anchor" href="#arg-knn-method"></a></dt>
 <dd><p>String. Approximate nearest neighbour algorithm. One of
-<code>"hnsw"</code>, <code>"balltree"</code>, <code>"annoy"</code>, <code>"nndescent"</code>, or <code>"exhaustive"</code>.</p></dd>
+<code>c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")</code>. Defaults to <code>"kmknn"</code>. Only used when neighbours are
+computed from the embedding.</p></dd>
 
 
 <dt id="arg-nn-params">nn_params<a class="anchor" aria-label="anchor" href="#arg-nn-params"></a></dt>

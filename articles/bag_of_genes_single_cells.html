@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,6 +92,7 @@
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
+    <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -126,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-29</p>
+      <p class="date">2026-10-01</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -467,16 +468,16 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hotspot_autocor</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">fdr</span><span class="op">)</span><span class="op">]</span>, <span class="fl">25L</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             gene_id  gaerys_c   z_score  pval   fdr gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt;  1: ENSG00000188290 0.3293835  39.08509     0     0        HES4</span></span>
+<span><span class="co">#&gt;  1: ENSG00000188290 0.3293836  39.08509     0     0        HES4</span></span>
 <span><span class="co">#&gt;  2: ENSG00000119535 0.2949539  46.16233     0     0       CSF3R</span></span>
 <span><span class="co">#&gt;  3: ENSG00000163131 0.5237190  62.76030     0     0        CTSS</span></span>
 <span><span class="co">#&gt;  4: ENSG00000163191 0.4090217  58.81076     0     0     S100A11</span></span>
-<span><span class="co">#&gt;  5: ENSG00000163220 0.7015916 115.38558     0     0      S100A9</span></span>
+<span><span class="co">#&gt;  5: ENSG00000163220 0.7015914 115.38558     0     0      S100A9</span></span>
 <span><span class="co">#&gt;  6: ENSG00000143546 0.6843269 119.58680     0     0      S100A8</span></span>
-<span><span class="co">#&gt;  7: ENSG00000197956 0.6383641 100.55820     0     0      S100A6</span></span>
+<span><span class="co">#&gt;  7: ENSG00000197956 0.6383640 100.55820     0     0      S100A6</span></span>
 <span><span class="co">#&gt;  8: ENSG00000196154 0.6470327  95.01012     0     0      S100A4</span></span>
 <span><span class="co">#&gt;  9: ENSG00000177954 0.6009150  93.19000     0     0       RPS27</span></span>
-<span><span class="co">#&gt; 10: ENSG00000158869 0.7041768  81.33603     0     0      FCER1G</span></span>
+<span><span class="co">#&gt; 10: ENSG00000158869 0.7041770  81.33603     0     0      FCER1G</span></span>
 <span><span class="co">#&gt; 11: ENSG00000203747 0.6096835  68.59921     0     0      FCGR3A</span></span>
 <span><span class="co">#&gt; 12: ENSG00000198574 0.2173397  41.63903     0     0      SH2D1B</span></span>
 <span><span class="co">#&gt; 13: ENSG00000198821 0.2205831  58.11088     0     0       CD247</span></span>
@@ -826,6 +827,24 @@
 </div>
 </div>
 </div>
+</section><section class="level3"><h3 id="visualising-the-binary-matrix">Visualising the binary matrix<a class="anchor" aria-label="anchor" href="#visualising-the-binary-matrix"></a>
+</h3>
+<p>One regulon at a time on the UMAP is fine, but the whole matrix is the more interesting picture: which regulons switch on together, and in which cells. Drawing a cells x regulons heatmap naively gets heavy fast, so the work is split in two. <code><a href="../reference/extract_binary_heatmap_data.html">extract_binary_heatmap_data()</a></code> drops regulons that are on almost nowhere or almost everywhere, clusters the regulons on the Jaccard distance and orders the cells within each group. With more cells than <code>max_cols</code> it bins them within their group into fraction-on columns, see <code><a href="../reference/params_binary_heatmap.html">params_binary_heatmap()</a></code>. <code>bixverse.plots::plot_binary_heatmap()</code> then draws every block as a single raster, black for on, in the style of the SCENIC paper. Give it the logical matrix and it calls the extractor for you.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">obs_kept</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cell_clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">obs_kept</span><span class="op">$</span><span class="va">leiden_clusters</span><span class="op">)</span>,</span>
+<span>  <span class="va">obs_kept</span><span class="op">$</span><span class="va">cell_id</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">plot_binary_heatmap</span><span class="op">(</span></span>
+<span>  <span class="va">binary_matrix</span>,</span>
+<span>  sample_groups <span class="op">=</span> <span class="va">cell_clusters</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>With the cells grouped by cluster the lineage regulons come out as blocks that sit in a few clusters only, while the housekeeping-like ones run across the whole width.</p>
 <p>This is how you work with all types of <code>"bag of genes"</code> analyses for single cell in <code>bixverse</code>.</p>
 </section></section><section class="level2"><h2 id="topic-models-with-lda">Topic models with LDA<a class="anchor" aria-label="anchor" href="#topic-models-with-lda"></a>
 </h2>
@@ -836,7 +855,7 @@
 </h3>
 <p>Same eternal question as with NMF, and <code><a href="../reference/lda_k_sweep.html">lda_k_sweep()</a></code> gives you three different answers to argue with. Arun 2010 compares the singular values of the topic-term matrix against the document length distribution; Cao Juan 2009 is the mean pairwise cosine similarity between topics, which climbs once <code>k</code> gets large enough that topics start duplicating each other; Mimno 2011 is UMass coherence. <code>combined_score</code> rescales all three onto <code>[0, 1]</code> and adds them up.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sweep_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lda_k_sweep.html">lda_k_sweep</a></span><span class="op">(</span><span class="va">binary_matrix</span>, k_range <span class="op">=</span> <span class="fl">5</span><span class="op">:</span><span class="fl">12</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sweep_res</span></span>
@@ -867,7 +886,7 @@
 <span><span class="co">#&gt; 8:       2.025017      TRUE</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sweep_res</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -881,7 +900,7 @@
 </h3>
 <p><code><a href="../reference/get_best_model.html">get_best_model()</a></code> pulls the winning fit straight out of the sweep, no refitting.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lda_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_best_model.html">get_best_model</a></span><span class="op">(</span><span class="va">sweep_res</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">lda_res</span></span>
@@ -895,7 +914,7 @@
 </div>
 <p><code><a href="../reference/get_top_terms.html">get_top_terms()</a></code> is where the interpretation happens: per topic, the regulons carrying the most probability mass.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">top_tfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_top_terms.html">get_top_terms</a></span><span class="op">(</span><span class="va">lda_res</span>, n <span class="op">=</span> <span class="fl">8L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">top_tfs</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>tfs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">term</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span><span class="op">)</span>, by <span class="op">=</span> <span class="va">topic</span><span class="op">]</span></span>
@@ -912,7 +931,7 @@
 <p>On PBMC3k the myeloid topic is usually unmistakable: <code>SPI1</code>, <code>CEBPD</code>, <code>KLF4</code> and friends land together, because those regulons switch on in the same cells. The T cell topics split along the naive/cytotoxic axis, with <code>TCF7</code> and <code>LEF1</code> on one side and <code>STAT4</code>, <code>RUNX3</code>, <code>ETS1</code> on the other. Which topic index gets which programme is arbitrary and changes with the seed, so always read the loadings rather than trusting the numbering.</p>
 <p>The other half of the model is the cell-topic matrix, which is a soft assignment: every cell gets a distribution over topics summing to one. Drop a column into the object and it plots like any other cell-level covariate.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">doc_topic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">lda_res</span>, <span class="st">"doc_topic"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">topic</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">doc_topic</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -937,6 +956,22 @@
 </div>
 </div>
 <p>Because the assignment is soft, a cell sitting between two programmes shows up as genuinely intermediate rather than being forced into one cluster. That is the main thing a topic model buys you over hard clustering on the same matrix.</p>
+<p>The topics also give you a grouping for the regulons. Assign each regulon to the topic it carries the most mass in and hand that to the binary heatmap as <code>feature_groups</code>: the topics then show up as row blocks, and you can check by eye whether they line up with the clusters.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">term_topic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">lda_res</span>, <span class="st">"term_topic"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">regulon_topics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">term_topic</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/maxCol.html" class="external-link">max.col</a></span><span class="op">(</span><span class="va">term_topic</span>, ties.method <span class="op">=</span> <span class="st">"first"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">term_topic</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">plot_binary_heatmap</span><span class="op">(</span></span>
+<span>  <span class="va">binary_matrix</span>,</span>
+<span>  sample_groups <span class="op">=</span> <span class="va">cell_clusters</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  feature_groups <span class="op">=</span> <span class="va">regulon_topics</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
 </section></section><section class="level2"><h2 id="nmf-on-single-cells">NMF on single cells<a class="anchor" aria-label="anchor" href="#nmf-on-single-cells"></a>
 </h2>
 <p>The methods so far have all started from either a pre-defined gene set, a graph-based notion of locality, or a TF-centric regression framework. NMF (non-negative matrix factorisation) takes yet another angle: it factorises the expression matrix <code>V ≈ W H</code> into a small number of latent factors, where <code>W</code> carries non-negative gene loadings and <code>H</code> carries non-negative cell activations. The non-negativity constraint tends to push the factors into something interpretable as additive gene programmes rather than abstract directions of variance like PCA. <code>bixverse</code> implements <a href="https://proceedings.mlr.press/v39/kimura14.pdf" class="external-link">HALS</a> (Hierarchical Alternating Least Squares) in Rust, which converges fast and scales nicely.</p>
@@ -951,7 +986,7 @@
 </h3>
 <p>We will use the AUC scores from earlier to pull out the T cell population. <a href="https://en.wikipedia.org/wiki/Otsu%27s_method" class="external-link">Otsu’s method</a> gives us a data-driven threshold for the bimodal AUC distribution.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">otsu_t_cell</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_threshold_otsu.html">find_threshold_otsu</a></span><span class="op">(</span><span class="va">auc_dt</span><span class="op">$</span><span class="va">`T cell`</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">auc_dt</span>, mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`T cell`</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -969,7 +1004,7 @@
 <p>With the threshold in hand we grab the T cell IDs and recompute HVGs <em>within</em> this subset. This matters: HVGs computed across all PBMCs are dominated by inter-cell-type variation (T vs B vs monocyte). HVGs within T cells expose the genes that actually vary across T cell states, which is what we want NMF to factorise.</p>
 <p><code><a href="../reference/get_hvg_data_sc.html">get_hvg_data_sc()</a></code> is a non-mutating variant of <code><a href="../reference/find_hvg_sc.html">find_hvg_sc()</a></code>: it returns a data.table with the HVG metrics and an <code>is_hvg</code> flag, without overwriting the HVGs stored on the object. Convenient when you want HVGs for a specific downstream analysis without disturbing the global state.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_ids</span> <span class="op">&lt;-</span> <span class="va">auc_dt</span><span class="op">[</span><span class="va">`T cell`</span> <span class="op">&gt;=</span> <span class="va">otsu_t_cell</span>, <span class="va">cell_id</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">hvg_t_cell_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_hvg_data_sc.html">get_hvg_data_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, cell_ids <span class="op">=</span> <span class="va">t_cell_ids</span><span class="op">)</span></span>
@@ -980,7 +1015,7 @@
 </h3>
 <p><code><a href="../reference/nmf_sc.html">nmf_sc()</a></code> runs one NMF on the chosen cells and genes. The default initialisation is NNDSVD, which is deterministic and usually gives a sensible starting point.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_nmf_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nmf_sc.html">nmf_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">10L</span>,</span>
@@ -990,42 +1025,42 @@
 </div>
 <p>The result is an <code>NmfResult</code> carrying the <code>W</code> gene-loading matrix (genes x components) and the <code>H</code> cell-activation matrix (components x cells), plus the parameters and convergence info.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                      comp_01      comp_02      comp_03      comp_04</span></span>
-<span><span class="co">#&gt; ENSG00000188976 2.756057e+00 1.516397e-01 9.978818e-11 3.985491e-01</span></span>
-<span><span class="co">#&gt; ENSG00000188290 9.983771e-11 1.001252e-10 9.978818e-11 7.743262e-02</span></span>
-<span><span class="co">#&gt; ENSG00000187608 9.983771e-11 2.746886e+00 1.624592e-01 9.984961e-11</span></span>
-<span><span class="co">#&gt; ENSG00000186827 9.983771e-11 1.001252e-10 7.541643e+00 9.984961e-11</span></span>
-<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.618927e-03 1.844488e-01 9.984961e-11</span></span>
+<span><span class="co">#&gt; ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02</span></span>
+<span><span class="co">#&gt; ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11</span></span>
 <span><span class="co">#&gt;                      comp_05</span></span>
-<span><span class="co">#&gt; ENSG00000188976 3.031699e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188976 3.031700e-01</span></span>
 <span><span class="co">#&gt; ENSG00000188290 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000187608 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000186827 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000176022 1.000227e-10</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1</span></span>
-<span><span class="co">#&gt; comp_01      0.029081339      0.028247045     2.750897e-02     2.642105e-02</span></span>
-<span><span class="co">#&gt; comp_02      0.032824829      0.004165604     5.788922e-03     4.683001e-02</span></span>
-<span><span class="co">#&gt; comp_03      0.009732792      0.053272992     5.238255e-02     1.002123e-10</span></span>
-<span><span class="co">#&gt; comp_04      0.064907387      0.017417077     1.001506e-10     3.876416e-02</span></span>
-<span><span class="co">#&gt; comp_05      0.004365175      0.047877818     9.997733e-11     1.034977e-02</span></span>
+<span><span class="co">#&gt; comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02</span></span>
+<span><span class="co">#&gt; comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02</span></span>
+<span><span class="co">#&gt; comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10</span></span>
+<span><span class="co">#&gt; comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02</span></span>
+<span><span class="co">#&gt; comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02</span></span>
 <span><span class="co">#&gt;         AAACTTGATCCAGA-1</span></span>
-<span><span class="co">#&gt; comp_01      0.032608394</span></span>
-<span><span class="co">#&gt; comp_02      0.002322546</span></span>
-<span><span class="co">#&gt; comp_03      0.007309148</span></span>
-<span><span class="co">#&gt; comp_04      0.018659715</span></span>
-<span><span class="co">#&gt; comp_05      0.049327463</span></span></code></pre></div>
+<span><span class="co">#&gt; comp_01      0.032608423</span></span>
+<span><span class="co">#&gt; comp_02      0.002322522</span></span>
+<span><span class="co">#&gt; comp_03      0.007309146</span></span>
+<span><span class="co">#&gt; comp_04      0.018659594</span></span>
+<span><span class="co">#&gt; comp_05      0.049327504</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="running-multiple-nmf-runs">Running multiple NMF runs<a class="anchor" aria-label="anchor" href="#running-multiple-nmf-runs"></a>
 </h3>
 <p>For anything beyond exploratory work you want multiple restarts. <code><a href="../reference/stabilised_nmf_sc.html">stabilised_nmf_sc()</a></code> runs <code>n_runs</code> HALS NMFs with random initialisations (seeded by <code>seed + i</code>) and column-binds the resulting <code>W</code> matrices. Looking at this stabilised data allows you to identify components that constantly show up between random initialisations.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_nmf_results_stabilised</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stabilised_nmf_sc.html">stabilised_nmf_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">10L</span>,</span>
@@ -1036,7 +1071,7 @@
 </div>
 <p>The W matrix here is wide: <code>n_genes x (k * n_runs)</code>. Each block of <code>k</code> columns corresponds to one run. You can then use it for downstream consensus analyses.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results_stabilised</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 run_01.comp_01 run_01.comp_02 run_01.comp_03 run_01.comp_04</span></span>
 <span><span class="co">#&gt; ENSG00000188976   2.047948e+00   6.749125e-01     0.42683131   1.000597e-10</span></span>
@@ -1053,7 +1088,7 @@
 </div>
 <p>The H matrices are kept per-run, since each random initialisation gives a different cell-activation pattern (components are not aligned across runs without further work).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results_stabilised</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 10</span></span>
 <span><span class="co">#&gt;  $ run_01: num [1:10, 1:1150] 4.46e-02 1.84e-03 1.00e-10 2.27e-02 1.68e-02 ...</span></span>
@@ -1099,7 +1134,7 @@
 </div>
 <p>The run with the lowest final reconstruction loss is the most natural starting point for a single-run analysis. <code><a href="../reference/get_best_run.html">get_best_run()</a></code> returns it as an <code>NmfResult</code>, identical in shape to the output of <code><a href="../reference/nmf_sc.html">nmf_sc()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">best_run</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_best_run.html">get_best_run</a></span><span class="op">(</span><span class="va">t_cell_nmf_results_stabilised</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="consensus-nmf">Consensus NMF<a class="anchor" aria-label="anchor" href="#consensus-nmf"></a>
@@ -1107,7 +1142,7 @@
 <p>Picking the lowest-loss restart is a reasonable default, but it dodges the question you actually care about: did the restarts agree? Consensus NMF (cNMF, <a href="https://elifesciences.org/articles/43803" class="external-link">Kotliar, et al.</a>) answers it directly. Pool the components of every restart, drop the ones sitting on their own in the pool, k-means the survivors into <code>k</code> groups, and take the median of each group. What comes out is the programme structure the restarts agree on, and the mean silhouette of those clusters says how strongly they agreed.</p>
 <p>Before fitting, though, you need a <code>k</code>. <code><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc()</a></code> runs the consensus step across a range of ranks and reports stability against reconstruction error, keeping no factors, so a wide sweep stays affordable.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_k_sweep</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  k_range <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">12</span>,</span>
@@ -1130,9 +1165,9 @@
 <span><span class="co">#&gt;  2:     3 0.7904969  0.3454919    0.3455086            FALSE         0</span></span>
 <span><span class="co">#&gt;  3:     4 0.7136912  0.3430810    0.3431764            FALSE         0</span></span>
 <span><span class="co">#&gt;  4:     5 0.7964178  0.3409729    0.3410496            FALSE         0</span></span>
-<span><span class="co">#&gt;  5:     6 0.6604626  0.3390599    0.3391575            FALSE         0</span></span>
+<span><span class="co">#&gt;  5:     6 0.5990908  0.3390599    0.3391575            FALSE         0</span></span>
 <span><span class="co">#&gt;  6:     7 0.7007527  0.3374616    0.3375218            FALSE         0</span></span>
-<span><span class="co">#&gt;  7:     8 0.6017957  0.3359818    0.3362038            FALSE         0</span></span>
+<span><span class="co">#&gt;  7:     8 0.6011498  0.3359818    0.3362038            FALSE         0</span></span>
 <span><span class="co">#&gt;  8:     9 0.6791331  0.3347037    0.3348030            FALSE         0</span></span>
 <span><span class="co">#&gt;  9:    10 0.6019418  0.3331404    0.3334405            FALSE         0</span></span>
 <span><span class="co">#&gt; 10:    11 0.5787128  0.3321190    0.3322654            FALSE         0</span></span>
@@ -1152,7 +1187,7 @@
 <span><span class="co">#&gt; 11:                0          10</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">t_cell_k_sweep</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1169,7 +1204,7 @@
 </blockquote>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_nmf_consensus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/consensus_nmf_sc.html">consensus_nmf_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">5L</span>,</span>
@@ -1193,7 +1228,7 @@
 </div>
 <p><code>W</code> and <code>H</code> come back in exactly the shape <code><a href="../reference/nmf_sc.html">nmf_sc()</a></code> gives you, so everything downstream is unchanged. What is new is <code><a href="../reference/get_stability.html">get_stability()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">consensus_diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stability.html">get_stability</a></span><span class="op">(</span><span class="va">t_cell_nmf_consensus</span><span class="op">)</span></span>
 <span><span class="va">consensus_diag</span><span class="op">$</span><span class="va">stability</span></span>
 <span><span class="co">#&gt; [1] 0.7876265</span></span>
@@ -1208,16 +1243,16 @@
 </div>
 <p>The per-component table records where each restart’s components landed. <code>component_id</code> uses the same <code>run_XX.comp_YY</code> naming as the <code>w_all</code> columns of a stabilised fit, so at matching <code>k</code> and <code>n_runs</code> the two line up directly and you can go back to the raw restarts behind any cluster.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">consensus_diag</span><span class="op">$</span><span class="va">clusters</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      component_id   run component pooled_idx cluster local_density silhouette</span></span>
 <span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;     &lt;int&gt;      &lt;int&gt;   &lt;int&gt;         &lt;num&gt;      &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       5   0.013249557  0.7841961</span></span>
-<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458980  0.8275782</span></span>
-<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470190  0.9566821</span></span>
-<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017579237  0.8770334</span></span>
-<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095864  0.6891547</span></span>
-<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731703  0.8714657</span></span>
+<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458861  0.8275782</span></span>
+<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821</span></span>
+<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017579218  0.8770334</span></span>
+<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095884  0.6891547</span></span>
+<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731663  0.8714657</span></span>
 <span><span class="co">#&gt;      kept</span></span>
 <span><span class="co">#&gt;    &lt;lgcl&gt;</span></span>
 <span><span class="co">#&gt; 1:   TRUE</span></span>
@@ -1249,7 +1284,7 @@
 </section></section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_pbmc</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

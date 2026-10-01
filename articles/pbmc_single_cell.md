@@ -330,12 +330,12 @@ fast_clusted_dt <- get_data(fast_cluster_res)
 head(fast_clusted_dt)
 #>    cell_idx res_5 res_3 res_2 res_1.5 res_1 res_0.5
 #>       <int> <int> <int> <int>   <int> <int>   <int>
-#> 1:        1     2     0     0       0     0       0
-#> 2:        3     2     0     0       0     0       0
-#> 3:        4     3     4     4       4     4       3
+#> 1:        1     4     0     0       0     0       0
+#> 2:        3     4     0     0       0     0       0
+#> 3:        4     3     4     4       4     3       3
 #> 4:        6     8     0     0       0     0       0
-#> 5:        8     2     0     0       0     0       0
-#> 6:        9     4     0     0       0     0       0
+#> 5:        8     4     0     0       0     0       0
+#> 6:        9     2     0     0       0     0       0
 ```
 
 If you want to explore the k-means memberships or centroids, there are
@@ -368,12 +368,12 @@ head(sc_object)
 #> 6:        9 AAACGCTGTAGCCA-1   530     1273    TRUE 0.011783189 0.3794187
 #>    outlier leiden_clusters res_5 res_3 res_2 res_1.5 res_1 res_0.5
 #>     <lgcl>           <int> <int> <int> <int>   <int> <int>   <int>
-#> 1:   FALSE               0     2     0     0       0     0       0
-#> 2:   FALSE               1     2     0     0       0     0       0
-#> 3:   FALSE               6     3     4     4       4     4       3
+#> 1:   FALSE               0     4     0     0       0     0       0
+#> 2:   FALSE               1     4     0     0       0     0       0
+#> 3:   FALSE               6     3     4     4       4     3       3
 #> 4:   FALSE               1     8     0     0       0     0       0
-#> 5:   FALSE               5     2     0     0       0     0       0
-#> 6:   FALSE               0     4     0     0       0     0       0
+#> 5:   FALSE               5     4     0     0       0     0       0
+#> 6:   FALSE               0     2     0     0       0     0       0
 ```
 
 ### Dimensionality reduction

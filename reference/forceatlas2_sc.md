@@ -36,7 +36,7 @@ forceatlas2_sc(
   init_embd = NULL,
   modality = c("rna", "adt", "wnn"),
   k = 15L,
-  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   fa2_params = manifoldsR::params_fa2(),
   seed = 42L,
@@ -93,9 +93,10 @@ forceatlas2_sc(
 
 - knn_method:
 
-  String. Approximate nearest neighbour algorithm. One of `"hnsw"`,
-  `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`. `"knn"`
-  only.
+  String. Approximate nearest neighbour algorithm. One of
+  `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")`.
+  Defaults to `"kmknn"`. Only used when neighbours are computed from the
+  embedding. `"knn"` only.
 
 - nn_params:
 

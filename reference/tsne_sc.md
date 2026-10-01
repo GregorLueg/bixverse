@@ -41,7 +41,7 @@ tsne_sc(
   n_dim = 2L,
   perplexity = 10,
   approx_type = c("bh", "fft", "fft_3k"),
-  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
@@ -98,8 +98,10 @@ tsne_sc(
 
 - knn_method:
 
-  String. Approximate nearest neighbour algorithm. One of `"hnsw"`,
-  `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+  String. Approximate nearest neighbour algorithm. One of
+  `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")`.
+  Defaults to `"kmknn"`. Only used when neighbours are computed from the
+  embedding.
 
 - nn_params:
 

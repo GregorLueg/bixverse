@@ -3,6 +3,7 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   bag_of_genes_single_cells: bag_of_genes_single_cells.html
+  bonsai: bonsai.html
   bulk_coexpression_modules: bulk_coexpression_modules.html
   bulk_dge: bulk_dge.html
   cell_sweep: cell_sweep.html
@@ -31,7 +32,7 @@ articles:
   symphony: symphony.html
   thinking_single_cell: thinking_single_cell.html
   trajectory_inference: trajectory_inference.html
-last_built: 2026-09-29T18:49Z
+last_built: 2026-10-01T15:27Z
 urls:
   reference: https://gregorlueg.github.io/bixverse/reference
   article: https://gregorlueg.github.io/bixverse/articles

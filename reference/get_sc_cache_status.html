@@ -13,7 +13,7 @@ flagged stale, because nothing is known about them either way."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,7 @@ flagged stale, because nothing is known about them either way."><meta property="
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
+    <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -139,14 +140,14 @@ flagged stale, because nothing is known about them either way.</p>
 <span class="r-in"><span><span class="fu">get_sc_cache_status</span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    modality artefact   name stamped  stale reason               id</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;   &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; e38540d80eef83ac</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; cab08b72cb2bc0a0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; b41ff90c8b61c3cb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; b2e5c221d2787e59</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; ee88a4eb037180ca</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 3087dcab3ad813d0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                from</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              &lt;list&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1:                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: e38540d80eef83ac</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cab08b72cb2bc0a0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: b2e5c221d2787e59</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: ee88a4eb037180ca</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

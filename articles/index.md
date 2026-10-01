@@ -55,6 +55,8 @@
   MELD](https://gregorlueg.github.io/bixverse/articles/differential_abundance.md):
 - [Trajectory inference with Palantir and
   PAGA](https://gregorlueg.github.io/bixverse/articles/trajectory_inference.md):
+- [Cell trees with
+  Bonsai](https://gregorlueg.github.io/bixverse/articles/bonsai.md):
 - [Scaling to millions of cells with
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.md):
 - [Multi-modal single cell analysis with

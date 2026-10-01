@@ -445,7 +445,7 @@ purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
 #>        method      mean    median
 #>        <char>     <num>     <num>
 #> 1:    hdWGCNA 0.8830769 0.9615385
-#> 2:   SEACells 0.8989494 1.0000000
+#> 2:   SEACells 0.9028250 1.0000000
 #> 3: SuperCells 0.8994530 0.9933382
 ```
 
@@ -569,14 +569,14 @@ metrics_dt[,
 ]
 #>        method mean_separation median_separation mean_compactness
 #>        <char>           <num>             <num>            <num>
-#> 1:    hdWGCNA       0.2339971         0.1693764       0.04087564
-#> 2:   SEACells       0.3216844         0.3050879       0.04622756
-#> 3: SuperCells       0.3207075         0.2726717       0.03308518
+#> 1:    hdWGCNA       0.2339971         0.1693764       0.04087566
+#> 2:   SEACells       0.3134914         0.2836786       0.04295322
+#> 3: SuperCells       0.3207075         0.2726717       0.03308519
 #>    median_compactness
 #>                 <num>
 #> 1:         0.02295962
-#> 2:         0.02351401
-#> 3:         0.01812797
+#> 2:         0.02311406
+#> 3:         0.01812798
 ```
 
 Some differences are visible here. hdWGCNA has the worst separation and
@@ -602,26 +602,26 @@ setorder(per_region_stats, method, region)
 per_region_stats[]
 #>        method region mean_separation median_separation mean_compactness
 #>        <char> <fctr>           <num>             <num>            <num>
-#> 1:   SEACells   high      0.06975375        0.06016931       0.01541759
-#> 2:   SEACells    mid      0.27321856        0.25506155       0.01812798
-#> 3:   SEACells    low      0.42790092        0.41315186       0.07423175
-#> 4: SuperCells   high      0.09665623        0.08661918       0.01280926
-#> 5: SuperCells    mid      0.25111705        0.22342812       0.01421471
-#> 6: SuperCells    low      0.46611306        0.45285431       0.05986442
-#> 7:    hdWGCNA   high      0.06435012        0.06328138       0.02032015
-#> 8:    hdWGCNA    mid      0.19515541        0.18222150       0.02435652
-#> 9:    hdWGCNA    low      0.50090869        0.43333513       0.10098681
+#> 1:   SEACells   high      0.07319907        0.06349503       0.01637868
+#> 2:   SEACells    mid      0.26737634        0.23203357       0.02386465
+#> 3:   SEACells    low      0.41589476        0.38051564       0.06393706
+#> 4: SuperCells   high      0.09665623        0.08661894       0.01280926
+#> 5: SuperCells    mid      0.25111707        0.22342809       0.01421471
+#> 6: SuperCells    low      0.46611318        0.45285472       0.05986444
+#> 7:    hdWGCNA   high      0.06435012        0.06328158       0.02032015
+#> 8:    hdWGCNA    mid      0.19515544        0.18222144       0.02435653
+#> 9:    hdWGCNA    low      0.50090877        0.43333533       0.10098685
 #>    median_compactness
 #>                 <num>
-#> 1:         0.01500222
-#> 2:         0.01580496
-#> 3:         0.05980478
+#> 1:         0.01604975
+#> 2:         0.01608617
+#> 3:         0.05383534
 #> 4:         0.01208875
 #> 5:         0.01235253
-#> 6:         0.05131564
+#> 6:         0.05131559
 #> 7:         0.01789758
 #> 8:         0.01973435
-#> 9:         0.09385924
+#> 9:         0.09385915
 ```
 
 We can also look at this per density region in the manifold where we can
@@ -835,7 +835,7 @@ scenic_res <- tf_to_genes_correlations(
 
 # no motif filter here, so the leading edge column does not exist yet
 tf_to_gene_ls <- build_regulons(scenic_res, use_leading_edge = FALSE)
-#> Built 561 regulons (116 dropped below 10 genes). Median size: 342
+#> Built 569 regulons (121 dropped below 10 genes). Median size: 346
 ```
 
 In a proper situation we would filter down the TF to gene associations
@@ -912,21 +912,21 @@ mc_k_sweep
 #>   Source class:     MetaCells
 #>   k range:          2 to 12
 #>   No runs per k:    10
-#>   Most stable k:    3 (stability = 0.9999)
+#>   Most stable k:    2 (stability = 0.9998)
 #> 
 #>         k stability best_error median_error consensus_failed n_dropped
 #>     <int>     <num>      <num>        <num>           <lgcl>     <int>
-#>  1:     2 0.9995964 0.16650522   0.16651130            FALSE         0
-#>  2:     3 0.9999022 0.13283667   0.13284354            FALSE         0
-#>  3:     4 0.9843847 0.11638101   0.11642584            FALSE         0
-#>  4:     5 0.9953822 0.10387902   0.10390189            FALSE         0
-#>  5:     6 0.8865273 0.09348567   0.09353829            FALSE         0
-#>  6:     7 0.9482146 0.08663906   0.08666288            FALSE         0
-#>  7:     8 0.8594779 0.08255456   0.08289073            FALSE         0
-#>  8:     9 0.8788263 0.07877479   0.07914108            FALSE         0
-#>  9:    10 0.9923226 0.07533229   0.07538870            FALSE         0
-#> 10:    11 0.7926584 0.07317816   0.07342423            FALSE         0
-#> 11:    12 0.7276266 0.07152093   0.07206462            FALSE         0
+#>  1:     2 0.9997959 0.16330993   0.16331996            FALSE         0
+#>  2:     3 0.9997468 0.13010874   0.13012092            FALSE         0
+#>  3:     4 0.9939768 0.11392675   0.11397874            FALSE         0
+#>  4:     5 0.9976947 0.10158291   0.10161521            FALSE         0
+#>  5:     6 0.8989323 0.09131577   0.09135193            FALSE         0
+#>  6:     7 0.9079670 0.08452595   0.08457154            FALSE         0
+#>  7:     8 0.8108747 0.08065770   0.08085661            FALSE         0
+#>  8:     9 0.8396232 0.07667959   0.07700805            FALSE         0
+#>  9:    10 0.9718102 0.07326508   0.07332969            FALSE         0
+#> 10:    11 0.8436224 0.07117445   0.07136755            FALSE         0
+#> 11:    12 0.8337578 0.06975791   0.06993613            FALSE         0
 #>     n_empty_clusters n_converged
 #>                <int>       <int>
 #>  1:                0          10
@@ -974,8 +974,8 @@ mc_nmf
 #>   No cells:         250
 #>   No components:    6
 #>   No runs:          10
-#>   Stability:        0.9981
-#>   Relative error:   0.0935
+#>   Stability:        0.9963
+#>   Relative error:   0.09132
 #>   Dropped:          0 / 60 components
 #>   Preprocessing:    none
 ```
@@ -989,7 +989,7 @@ where it landed.
 
 mc_nmf_diag <- get_stability(mc_nmf)
 mc_nmf_diag$stability
-#> [1] 0.998086
+#> [1] 0.9962956
 mc_nmf_diag$cluster_sizes
 #>    cluster     n
 #>      <int> <int>
@@ -1053,15 +1053,15 @@ top_genes <- lapply(colnames(mc_w), \(comp) {
 names(top_genes) <- colnames(mc_w)
 top_genes[1:3]
 #> $comp_01
-#>  [1] "IGLL1"      "MSI2"       "NEGR1"      "DNTT"       "CDK6"      
-#>  [6] "MIR181A1HG" "SSBP2"      "ETV6"       "CHST11"     "PLCB1"     
+#>  [1] "MPO"    "ATP8B4" "LRMDA"  "FNDC3B" "AZU1"   "KCNQ5"  "EREG"   "ETV6"  
+#>  [9] "PLCB1"  "ANXA1" 
 #> 
 #> $comp_02
-#>  [1] "CST3"      "AFF3"      "PLD4"      "SAMHD1"    "IRF8"      "FAM160A1" 
-#>  [7] "SULF2"     "RUNX2"     "RAB11FIP1" "PIK3R5"   
+#>  [1] "XACT"    "ZNF385D" "RYR3"    "CDK6"    "S100A6"  "S100A4"  "LRBA"   
+#>  [8] "NFIA"    "ANK1"    "HBB"    
 #> 
 #> $comp_03
-#>  [1] "NKAIN2"  "MSI2"    "ZNF385D" "CALN1"   "MEIS1"   "INPP4B"  "ANGPT1" 
+#>  [1] "NKAIN2"  "ZNF385D" "MSI2"    "CALN1"   "MEIS1"   "INPP4B"  "ANGPT1" 
 #>  [8] "CHRM3"   "ETV6"    "ATP8B4"
 ```
 

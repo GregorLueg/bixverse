@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,6 +92,7 @@
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
+    <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -126,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Analysing PBMCs with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-09-29</p>
+      <p class="date">2026-10-01</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -429,12 +430,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fast_clusted_dt</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    cell_idx res_5 res_3 res_2 res_1.5 res_1 res_0.5</span></span>
 <span><span class="co">#&gt;       &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        1     2     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 2:        3     2     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 3:        4     3     4     4       4     4       3</span></span>
+<span><span class="co">#&gt; 1:        1     4     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 2:        3     4     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 3:        4     3     4     4       4     3       3</span></span>
 <span><span class="co">#&gt; 4:        6     8     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 5:        8     2     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 6:        9     4     0     0       0     0       0</span></span></code></pre></div>
+<span><span class="co">#&gt; 5:        8     4     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 6:        9     2     0     0       0     0       0</span></span></code></pre></div>
 </div>
 <p>If you want to explore the k-means memberships or centroids, there are getters for this.</p>
 <div class="cell">
@@ -462,12 +463,12 @@
 <span><span class="co">#&gt; 6:        9 AAACGCTGTAGCCA-1   530     1273    TRUE 0.011783189 0.3794187</span></span>
 <span><span class="co">#&gt;    outlier leiden_clusters res_5 res_3 res_2 res_1.5 res_1 res_0.5</span></span>
 <span><span class="co">#&gt;     &lt;lgcl&gt;           &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   FALSE               0     2     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 2:   FALSE               1     2     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 3:   FALSE               6     3     4     4       4     4       3</span></span>
+<span><span class="co">#&gt; 1:   FALSE               0     4     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 2:   FALSE               1     4     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 3:   FALSE               6     3     4     4       4     3       3</span></span>
 <span><span class="co">#&gt; 4:   FALSE               1     8     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 5:   FALSE               5     2     0     0       0     0       0</span></span>
-<span><span class="co">#&gt; 6:   FALSE               0     4     0     0       0     0       0</span></span></code></pre></div>
+<span><span class="co">#&gt; 5:   FALSE               5     4     0     0       0     0       0</span></span>
+<span><span class="co">#&gt; 6:   FALSE               0     2     0     0       0     0       0</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="dimensionality-reduction">Dimensionality reduction<a class="anchor" aria-label="anchor" href="#dimensionality-reduction"></a>
 </h3>
