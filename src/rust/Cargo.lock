@@ -127,7 +127,8 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.5.7"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-bonsai-wiring#d6f6c94a8d68307468d13c8434a248bc784acdd1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d77259b19fbf4a95f1aa7e58c19dea400535c8987f1c0ce45caba4f9ae329478"
 dependencies = [
  "ann-search-rs",
  "approx",
