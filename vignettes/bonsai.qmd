@@ -17,15 +17,16 @@ author:
 ## Intro
 
 UMAP and t-SNE squash a kNN graph into two dimensions and lose most of the
-global structure on the way. Bonsai (de Groot, et al., Nat. Biotechnol., 2026)
+global structure on the way. 
+[Bonsai (de Groot, et al., Nat. Biotechnol., 2026)](https://www.nature.com/articles/s41587-026-03220-2)
 takes a different route: it reconstructs a tree over the cells, every cell a
 leaf and every internal node an inferred ancestral state, with branch lengths
 that carry how much changed between them. The tree is the representation; a 2D
 layout is just a way to draw it.
 
 What makes it work is that Bonsai uses the error bar on every measurement, not
-only the measurement. Those come from Sanity (Breda, et al., Nat. Biotechnol.,
-2021), which turns raw UMI counts into posterior log fold changes with error
+only the measurement. Those come from 
+[Sanity (Breda, et al., Nat. Biotechnol., 2021)](https://www.nature.com/articles/s41587-021-00875-x), which turns raw UMI counts into posterior log fold changes with error
 bars, gene by gene. `bonsai_sc()` runs both: counts from disk, Sanity, Bonsai,
 layout. Both are Rust ports under the hood,
 [`sanity-sc-rs`](https://github.com/GregorLueg/sanity-sc-rs) and
@@ -365,22 +366,22 @@ you care about.
 The search grows a little faster than linearly with the cell number. In
 `bonsai-rs`'s own benchmarks on ten cores it took about 70 seconds at 10,000
 cells and 210 seconds at 25,000. Sanity comes on top and grows with the number
-of candidate genes, and on the CPU it is the bigger share once every gene goes
-in. The GPU fixes that: `bonsai_gpu_sc()` in `bixverse.gpu` takes the same
-arguments, returns the same `BonsaiTree`, and runs Sanity on the device.
+of candidate genes; CPU has been made fast, GPU is even faster. 
+`bonsai_gpu_sc()` in `bixverse.gpu` takes the same arguments, returns the same 
+`BonsaiTree`, and runs Sanity on the device.
 
 On 10,000 simulated cells with all 16,974 genes as candidates (M1 Max, ten
 cores):
 
 | | Sanity | Bonsai search | total |
 |---|---|---|---|
-| `bonsai_sc()` | 570 s | 80 s | 650 s |
-| `bonsai_gpu_sc()` | 8 s | 74 s | 82 s |
+| `bonsai_sc()` | 60 s | 80 s | 140 s |
+| `bonsai_gpu_sc()` | 5 s | 80 s | 65 s |
 
 Both kept the same 2,751 genes. With Sanity on the GPU the tree search is the
-cost, and that is where 100k cells will hurt. Metacells are the way around it:
-compress first and the tree has a few thousand leaves instead of 100k. Without
-a GPU, restricting the candidates with `hvg` also helps.
+clear  cost, and that is where 100k cells will hurt. Metacells are the way 
+around it: compress first and the tree has a few thousand leaves instead of 
+100k.
 
 ## Clean up
 
