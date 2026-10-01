@@ -551,10 +551,12 @@ head(dt)
 Dot plots summarise each group. Want to see every single cell instead? The
 marker heatmap puts genes on the rows and cells on the columns, with a gap
 between clusters. Expression is z-scored per gene and clipped at 2.5 by
-default, otherwise a few extreme cells eat the whole colour range.
+default, otherwise a few extreme cells eat the whole colour range. These plots
+need `bixverse.plots >= "0.2.8"`
 
 ```{r}
 #| label: heatmap
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.2.8"
 #| fig-width: 9
 #| fig-height: 5
 #| fig-cap: "Heatmap of canonical marker genes across Leiden clusters. Genes are grouped by the cell type they mark, expression is z-scored per gene."
@@ -573,6 +575,7 @@ share of the plot.
 
 ```{r}
 #| label: heatmap-subsampled
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.2.8"
 #| fig-width: 9
 #| fig-height: 5
 #| fig-cap: "Same heatmap grouped by cell type, at most 100 cells per group."
