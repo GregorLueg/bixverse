@@ -1,3 +1,20 @@
+# bixverse 0.5.5
+
+## Features
+
+* [Bonsai](https://www.nature.com/articles/s41587-026-03220-2) and 
+  [Sanity](https://www.nature.com/articles/s41587-026-03220-2) wired in via 
+  their respective Rust implementations, 
+  [bonsai-rs](https://crates.io/crates/bonsai-rs) and 
+  [sanity-sc-rs](https://crates.io/crates/sanity-sc-rs).
+* Helper function to transform TF on/off matrices into heatmap inputs, see
+  `extract_binary_heatmap_data()`.
+
+## Fixes
+
+* Full access to all of the kNN backends in `manifoldsR` from the single 
+  cell-related 2D embedding methods.
+
 # bixverse 0.5.4
 
 ## Features
