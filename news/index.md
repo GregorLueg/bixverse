@@ -1,5 +1,11 @@
 # Changelog
 
+## bixverse 0.5.6
+
+### Features
+
+- `Accelerate` for MacOS users properly wired in.
+
 ## bixverse 0.5.5
 
 ### Features

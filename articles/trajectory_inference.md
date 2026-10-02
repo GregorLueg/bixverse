@@ -249,18 +249,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> 2641f605ed0586f1
-#> 2:      rna embedding   umap    TRUE  FALSE   <NA> ac864d96bdb38fd2
-#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> aecab8d1af46de9d
-#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 1e773aed2295a1b6
-#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> c41f7d717bcce9db
+#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> afa5072532df38fe
+#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 717b1ed1b3814a85
+#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 64475b13238d8c33
+#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> fe210d18cfa1f75d
+#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> 1517eaceaf2ac9ef
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: 2641f605ed0586f1,aecab8d1af46de9d
-#> 3:                  2641f605ed0586f1
-#> 4:                  aecab8d1af46de9d
-#> 5:                  aecab8d1af46de9d
+#> 2: afa5072532df38fe,64475b13238d8c33
+#> 3:                  afa5072532df38fe
+#> 4:                  64475b13238d8c33
+#> 5:                  64475b13238d8c33
 ```
 
 ## PAGA

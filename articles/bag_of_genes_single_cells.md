@@ -870,9 +870,10 @@ the regulons on the Jaccard distance and orders the cells within each
 group. With more cells than `max_cols` it bins them within their group
 into fraction-on columns, see
 [`params_binary_heatmap()`](https://gregorlueg.github.io/bixverse/reference/params_binary_heatmap.md).
-`bixverse.plots::plot_binary_heatmap()` then draws every block as a
-single raster, black for on, in the style of the SCENIC paper. Give it
-the logical matrix and it calls the extractor for you.
+[`bixverse.plots::plot_binary_heatmap()`](https://gregorlueg.github.io/bixverse.plots/reference/plot_binary_heatmap.html)
+then draws every block as a single raster, black for on, in the style of
+the SCENIC paper. Give it the logical matrix and it calls the extractor
+for you.
 
 ``` r
 
@@ -888,6 +889,10 @@ plot_binary_heatmap(
   sample_groups = cell_clusters[rownames(binary_matrix)]
 )
 ```
+
+![](bag_of_genes_single_cells_files/figure-html/scenic-binary-heatmap-1.png)
+
+Regulon on/off calls per cell, grouped by Leiden cluster.
 
 With the cells grouped by cluster the lineage regulons come out as
 blocks that sit in a few clusters only, while the housekeeping-like ones
@@ -1082,6 +1087,10 @@ plot_binary_heatmap(
   feature_groups = regulon_topics
 )
 ```
+
+![](bag_of_genes_single_cells_files/figure-html/lda-binary-heatmap-1.png)
+
+Regulon on/off calls, regulons grouped by their top LDA topic.
 
 ## NMF on single cells
 

@@ -681,6 +681,11 @@ heatmap_plot_sc(
 )
 ```
 
+![](single_cell_visualisation_files/figure-html/heatmap-1.png)
+
+Heatmap of canonical marker genes across Leiden clusters. Genes are
+grouped by the cell type they mark, expression is z-scored per gene.
+
 Big clusters hog the width and the platelets end up as a sliver.
 `max_cells_per_group` subsamples every group, which gives the small ones
 a fair share of the plot.
@@ -696,6 +701,10 @@ heatmap_plot_sc(
   max_cells_per_group = 100L
 )
 ```
+
+![](single_cell_visualisation_files/figure-html/heatmap-subsampled-1.png)
+
+Same heatmap grouped by cell type, at most 100 cells per group.
 
 The data behind it comes from
 [`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md),

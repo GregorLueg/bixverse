@@ -4,7 +4,7 @@ Filters, orders and optionally bins a logical samples x features matrix,
 e.g. the regulon on/off calls from
 [`binarise_regulon_activity()`](https://gregorlueg.github.io/bixverse/reference/binarise_regulon_activity.md),
 so it can be drawn as a single raster with
-`bixverse.plots::plot_binary_heatmap()`.
+[`bixverse.plots::plot_binary_heatmap()`](https://gregorlueg.github.io/bixverse.plots/reference/plot_binary_heatmap.html).
 
 Features are clustered within their group on the Jaccard distance, so
 shared absences do not count as similarity. Samples are clustered within

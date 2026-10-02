@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-01</p>
+      <p class="date">2026-10-02</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -829,7 +829,7 @@
 </div>
 </section><section class="level3"><h3 id="visualising-the-binary-matrix">Visualising the binary matrix<a class="anchor" aria-label="anchor" href="#visualising-the-binary-matrix"></a>
 </h3>
-<p>One regulon at a time on the UMAP is fine, but the whole matrix is the more interesting picture: which regulons switch on together, and in which cells. Drawing a cells x regulons heatmap naively gets heavy fast, so the work is split in two. <code><a href="../reference/extract_binary_heatmap_data.html">extract_binary_heatmap_data()</a></code> drops regulons that are on almost nowhere or almost everywhere, clusters the regulons on the Jaccard distance and orders the cells within each group. With more cells than <code>max_cols</code> it bins them within their group into fraction-on columns, see <code><a href="../reference/params_binary_heatmap.html">params_binary_heatmap()</a></code>. <code>bixverse.plots::plot_binary_heatmap()</code> then draws every block as a single raster, black for on, in the style of the SCENIC paper. Give it the logical matrix and it calls the extractor for you.</p>
+<p>One regulon at a time on the UMAP is fine, but the whole matrix is the more interesting picture: which regulons switch on together, and in which cells. Drawing a cells x regulons heatmap naively gets heavy fast, so the work is split in two. <code><a href="../reference/extract_binary_heatmap_data.html">extract_binary_heatmap_data()</a></code> drops regulons that are on almost nowhere or almost everywhere, clusters the regulons on the Jaccard distance and orders the cells within each group. With more cells than <code>max_cols</code> it bins them within their group into fraction-on columns, see <code><a href="../reference/params_binary_heatmap.html">params_binary_heatmap()</a></code>. <code><a href="https://gregorlueg.github.io/bixverse.plots/reference/plot_binary_heatmap.html">bixverse.plots::plot_binary_heatmap()</a></code> then draws every block as a single raster, black for on, in the style of the SCENIC paper. Give it the logical matrix and it calls the extractor for you.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs_kept</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -839,10 +839,16 @@
 <span>  <span class="va">obs_kept</span><span class="op">$</span><span class="va">cell_id</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">plot_binary_heatmap</span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/plot_binary_heatmap.html">plot_binary_heatmap</a></span><span class="op">(</span></span>
 <span>  <span class="va">binary_matrix</span>,</span>
 <span>  sample_groups <span class="op">=</span> <span class="va">cell_clusters</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="bag_of_genes_single_cells_files/figure-html/scenic-binary-heatmap-1.png" width="960"></p>
+<figcaption>Regulon on/off calls per cell, grouped by Leiden cluster.</figcaption></figure>
+</div>
+</div>
 </div>
 <p>With the cells grouped by cluster the lineage regulons come out as blocks that sit in a few clusters only, while the housekeeping-like ones run across the whole width.</p>
 <p>This is how you work with all types of <code>"bag of genes"</code> analyses for single cell in <code>bixverse</code>.</p>
@@ -966,11 +972,17 @@
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">term_topic</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">plot_binary_heatmap</span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/plot_binary_heatmap.html">plot_binary_heatmap</a></span><span class="op">(</span></span>
 <span>  <span class="va">binary_matrix</span>,</span>
 <span>  sample_groups <span class="op">=</span> <span class="va">cell_clusters</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  feature_groups <span class="op">=</span> <span class="va">regulon_topics</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="bag_of_genes_single_cells_files/figure-html/lda-binary-heatmap-1.png" width="960"></p>
+<figcaption>Regulon on/off calls, regulons grouped by their top LDA topic.</figcaption></figure>
+</div>
+</div>
 </div>
 </section></section><section class="level2"><h2 id="nmf-on-single-cells">NMF on single cells<a class="anchor" aria-label="anchor" href="#nmf-on-single-cells"></a>
 </h2>
