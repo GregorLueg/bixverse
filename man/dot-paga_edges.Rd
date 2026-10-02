@@ -2,25 +2,24 @@
 % Please edit documentation in R/functions_single_cell.R
 \name{.paga_edges}
 \alias{.paga_edges}
-\title{Melt a PAGA connectivity matrix into a one-row-per-edge table}
+\title{Melt a symmetric graph matrix into a one-row-per-edge table}
 \usage{
 .paga_edges(conn, threshold, keep)
 }
 \arguments{
-\item{conn}{Sparse matrix. The abstracted graph, named by cluster.}
+\item{conn}{Sparse matrix. The graph, named by node.}
 
 \item{threshold}{Numeric. Edges below this connectivity are dropped.}
 
-\item{keep}{Character vector. Clusters that survived the empty-cluster
-filter. Edges touching anything else are dropped, as they have no end point
-to attach to.}
+\item{keep}{Character vector. Nodes that survived upstream filtering. Edges
+touching anything else are dropped, as they have no end point to attach to.}
 }
 \value{
 A data.table with \code{from}, \code{to} and \code{weight}.
 }
 \description{
-Both abstracted graphs are stored symmetrically with a zero diagonal, so the
-lower triangle is dropped here. Keeping it would draw every edge twice, at
+Used for the PAGA abstracted graphs and the miloR neighbourhood overlap. Both
+are symmetric, so the lower triangle and the diagonal are dropped here. Keeping it would draw every edge twice, at
 twice the apparent width.
 }
 \keyword{internal}

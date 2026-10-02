@@ -126,8 +126,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.5.8"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-better-one-vs-all-dge#9649b69bf4f80ba28b9710917a959c9f704c3d57"
+version = "0.5.9"
+source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=fix-milor#f36f66f3e085a771b40ff99241550232842a608a"
 dependencies = [
  "ann-search-rs",
  "approx",
