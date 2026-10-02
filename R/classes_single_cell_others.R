@@ -5261,58 +5261,56 @@ set_bonsai_embedding <- function(object, tree, name = "bonsai") {
 
 ## specific markers ------------------------------------------------------------
 
-#' Melt one reference arm of the one-vs-many marker results
+#' Melt the one-vs-many marker results
 #'
 #' @description
-#' Takes the raw Rust output of [bixverse::rs_calculate_dge_one_vs_many()] for a
-#' single reference group and splits it into the per-rival statistics and the
-#' per-gene summaries across those rivals. The per-comparison elements come back
-#' comparison-major, so the gene names are recycled and each rival name covers
-#' one block of genes.
+#' Takes the raw Rust output of [bixverse::rs_calculate_dge_one_vs_many()] and
+#' splits it into the per-rival statistics and the per-gene summaries across
+#' those rivals. Both come back with 0-indexed group indices and are flattened
+#' reference-major, so the kept gene names are recycled per block.
 #'
 #' @param rs_res List. The raw return of
 #' [bixverse::rs_calculate_dge_one_vs_many()]. Must have at least one gene that
 #' passed the proportion filter.
 #' @param gene_names Character vector. All gene names in the original gene
 #' order, subset with `rs_res$genes_to_keep`.
-#' @param ref_grp String. Name of the reference group.
-#' @param rival_grps Character vector. Names of the comparison groups, in the
-#' order they were handed to Rust.
+#' @param grp_names Character vector. Names of all groups, in the order they
+#' were handed to Rust.
 #'
 #' @returns A list with elements `summary` and `per_comparison`, both
 #' data.tables.
 #'
 #' @keywords internal
-.melt_one_vs_many_res <- function(rs_res, gene_names, ref_grp, rival_grps) {
+.melt_one_vs_many_res <- function(rs_res, gene_names, grp_names) {
   # checks
   checkmate::assertList(rs_res)
   checkmate::assertNames(
     names(rs_res),
     must.include = c(
-      "comparison",
-      "auroc",
-      "worst_comparison",
-      "min_rank",
+      "reference",
+      "rival",
+      "summary_reference",
+      "worst_rival",
       "genes_to_keep"
     )
   )
   checkmate::qassert(gene_names, "S+")
-  checkmate::qassert(ref_grp, "S1")
-  checkmate::qassert(rival_grps, "S+")
+  checkmate::qassert(grp_names, "S+")
 
   genes_kept <- gene_names[rs_res$genes_to_keep]
-  no_rivals <- length(rival_grps)
+  no_genes <- length(genes_kept)
+  no_rivals <- length(grp_names) - 1L
+  no_refs <- length(rs_res$summary_reference) %/% no_genes
 
   summary_dt <- data.table::data.table(
-    ref_grp = ref_grp,
-    gene_id = genes_kept,
+    ref_grp = grp_names[rs_res$summary_reference + 1L],
+    gene_id = rep(genes_kept, times = no_refs),
     prop_ref = rs_res$prop_ref,
     median_auroc = rs_res$median_auroc,
     min_auroc = rs_res$min_auroc,
     mean_auroc = rs_res$mean_auroc,
     max_auroc = rs_res$max_auroc,
-    # Rust returns the 0-indexed position within rival_grps
-    worst_rival = rival_grps[rs_res$worst_comparison + 1L],
+    worst_rival = grp_names[rs_res$worst_rival + 1L],
     min_rank = rs_res$min_rank,
     simes_p = rs_res$simes_p,
     simes_fdr = rs_res$simes_fdr,
@@ -5320,13 +5318,18 @@ set_bonsai_embedding <- function(object, tree, name = "bonsai") {
     max_p_fdr = rs_res$max_p_fdr
   )
 
+  # one column of reference proportions per reference, repeated per rival
+  prop_ref_mat <- matrix(rs_res$prop_ref, nrow = no_genes)
+
   per_comparison_dt <- data.table::data.table(
-    ref_grp = ref_grp,
-    rival_grp = rival_grps[rs_res$comparison + 1L],
-    gene_id = rep(genes_kept, times = no_rivals),
+    ref_grp = grp_names[rs_res$reference + 1L],
+    rival_grp = grp_names[rs_res$rival + 1L],
+    gene_id = rep(genes_kept, times = no_refs * no_rivals),
     auroc = rs_res$auroc,
     lfc = rs_res$lfc,
-    prop_ref = rep(rs_res$prop_ref, times = no_rivals),
+    prop_ref = as.vector(
+      prop_ref_mat[, rep(seq_len(no_refs), each = no_rivals), drop = FALSE]
+    ),
     prop_rival = rs_res$prop_other,
     z_scores = rs_res$z_scores,
     p_values = rs_res$p_values,

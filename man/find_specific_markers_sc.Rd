@@ -11,8 +11,6 @@ find_specific_markers_sc(
   method = "wilcox",
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
-  downsampling = TRUE,
-  seed = 42L,
   .verbose = TRUE
 )
 }
@@ -36,12 +34,6 @@ for future features.}
 \item{min_prop}{Numeric. The minimum proportion of cells that need to express
 the gene in at least one of the groups. Applied once, globally, so every
 comparison's FDR is calculated over the same gene set.}
-
-\item{downsampling}{Boolean. If any group exceeds 100,000 cells, a random
-subsample of 100,000 cells is used for it. The subsample is drawn once per
-group, so a group is represented by the same cells in every arm.}
-
-\item{seed}{Integer. Seed that is used for the downsampling.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
@@ -71,7 +63,8 @@ the gene has to hold up against every rival, and the per-gene summaries
 (\code{min_auroc}, \code{median_auroc}, \code{min_rank}) tell you whether it does.
 
 Leave \code{reference_group} as \code{NULL} to run every group of the column as the
-reference in turn, or name one group to only get that arm.
+reference, or name one group to only get that arm. Either way, everything is
+calculated in a single pass over the genes.
 
 The summaries rank on AUROC rather than the p-value on purpose. Group sizes
 vary a lot in practice and p-values scale with the group sizes, so a large
