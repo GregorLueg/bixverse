@@ -49,6 +49,7 @@ vignette they do, which is a better check on both than either provides alone.
 #| message: false
 #| warning: false
 library(bixverse)
+library(bixverse.plots)
 library(data.table)
 library(SingleCellExperiment)
 ```
@@ -256,6 +257,43 @@ The medullary subsets split both ways, so "mTECs go up" would be the wrong
 summary to take away. That is the point of testing neighbourhoods rather than
 clusters: a cluster level test would have averaged those subsets into one
 number and reported whichever direction happened to win.
+
+### On the embedding
+
+The figure everyone expects from Milo is the neighbourhood graph on a UMAP.
+Each neighbourhood sits at its index cell, sized by how many cells it holds and
+connected to the neighbourhoods it shares cells with. Significant ones are
+coloured by logFC, the rest stay white. The UMAP is only for the picture, the
+test above never touched it.
+
+```{r}
+#| label: milo-umap
+sc_object <- umap_sc(sc_object, .verbose = FALSE)
+```
+
+```{r}
+#| label: milo-graph
+#| fig-width: 8
+#| fig-height: 6
+#| eval: !expr exists("milo_nhood_plot_sc", asNamespace("bixverse.plots"))
+milo_nhood_plot_sc(sc_object, milo_obj, embedding = "umap", alpha = 0.1)
+```
+
+`colour_by = "majority_celltype"` swaps the logFC for the annotation from
+`add_nhoods_info()`, which helps to read the logFC plot next to it.
+
+```{r}
+#| label: milo-graph-ct
+#| fig-width: 8
+#| fig-height: 6
+#| eval: !expr exists("milo_nhood_plot_sc", asNamespace("bixverse.plots"))
+milo_nhood_plot_sc(
+  sc_object,
+  milo_obj,
+  embedding = "umap",
+  colour_by = "majority_celltype"
+)
+```
 
 ### On the spatial FDR
 

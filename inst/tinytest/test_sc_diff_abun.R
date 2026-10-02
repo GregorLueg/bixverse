@@ -606,6 +606,95 @@ for (i in seq_along(sample_to_cell)) {
   )
 }
 
+## plot data -------------------------------------------------------------------
+
+milo_plot <- extract_milo_plot_data(
+  sc_object,
+  milo_res = miloR_obj_index_v2,
+  embedding = "pca"
+)
+milo_da <- get_differential_abundance_res(miloR_obj_index_v2)
+milo_embd <- get_embedding(sc_object, "pca")
+
+expect_equal(
+  current = milo_plot$nodes$Nhood,
+  target = milo_da$Nhood,
+  info = "one node per tested neighbourhood"
+)
+
+expect_equal(
+  current = unname(milo_plot$nodes$dim_1),
+  target = unname(milo_embd[
+    get_index_cells(miloR_obj_index_v2)[milo_da$Nhood] + 1L,
+    1
+  ]),
+  info = "nodes sit on their index cell"
+)
+
+shared <- as.matrix(Matrix::crossprod(miloR_obj_index_v2$nhoods))
+
+expect_equal(
+  current = milo_plot$edges$weight,
+  target = shared[cbind(milo_plot$edges$from, milo_plot$edges$to)],
+  info = "edge weights are the shared cell counts"
+)
+
+expect_true(
+  current = all(milo_plot$edges$from < milo_plot$edges$to),
+  info = "upper triangle only, no self edges"
+)
+
+expect_equal(
+  current = milo_plot$nodes$is_sig,
+  target = !is.na(milo_da$SpatialFDR) & milo_da$SpatialFDR <= 0.1,
+  info = "significance flag follows the spatial FDR"
+)
+
+# the synthetic neighbourhoods all have the same mean count, so `min_mean`
+# cannot drop a subset here; trim the results the way it would
+milo_filtered <- miloR_obj_index_v2
+milo_filtered$nhoods_info <- milo_filtered$nhoods_info[seq(1, .N, by = 2)]
+milo_plot_filtered <- extract_milo_plot_data(
+  sc_object,
+  milo_res = milo_filtered,
+  embedding = "pca"
+)
+kept <- milo_filtered$nhoods_info$Nhood
+
+expect_true(
+  current = length(kept) < ncol(milo_filtered$nhoods) &&
+    all(milo_plot_filtered$edges$from %in% kept) &&
+    all(milo_plot_filtered$edges$to %in% kept),
+  info = "filtered neighbourhoods drop out of the edges"
+)
+
+expect_error(
+  current = extract_milo_plot_data(
+    sc_object,
+    milo_res = get_miloR_abundances_sc(
+      sc_object,
+      sample_id_col = "sample_id",
+      .verbose = FALSE
+    ),
+    embedding = "pca"
+  ),
+  pattern = "test_nhoods",
+  info = "untested miloR object errors"
+)
+
+milo_short <- miloR_obj_index_v2
+milo_short$nhoods <- milo_short$nhoods[-1, ]
+
+expect_error(
+  current = extract_milo_plot_data(
+    sc_object,
+    milo_res = milo_short,
+    embedding = "pca"
+  ),
+  pattern = "subset or refiltered",
+  info = "cell count mismatch errors"
+)
+
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)
