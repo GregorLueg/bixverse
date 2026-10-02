@@ -344,12 +344,29 @@ expect_true(
   info = "the neighbourhood counts are non-negative"
 )
 
-# every neighbourhood holds its index cell plus its k neighbours, deduplicated,
-# so its total across samples cannot exceed k + 1
+# Milo's neighbourhood is the index cell plus its neighbours in the
+# symmetrised kNN graph, the cells it lists and the cells that list it
+knn_sym <- Matrix::sparseMatrix(
+  i = rep(seq_len(nrow(get_knn_mat(sc_object))), ncol(get_knn_mat(sc_object))),
+  j = as.vector(get_knn_mat(sc_object)) + 1L,
+  x = 1,
+  dims = rep(nrow(get_knn_mat(sc_object)), 2)
+)
+knn_sym <- (knn_sym + Matrix::t(knn_sym)) > 0
+Matrix::diag(knn_sym) <- TRUE
+
+expect_equal(
+  current = as.matrix(miloR_obj_index$nhoods),
+  target = as.matrix(
+    knn_sym[, get_index_cells(miloR_obj_index) + 1L]
+  ) *
+    1,
+  check.attributes = FALSE,
+  info = "neighbourhoods follow the symmetrised kNN graph"
+)
+
 expect_true(
-  current = all(
-    rowSums(miloR_obj_index$sample_counts) <= ncol(get_knn_mat(sc_object)) + 1
-  ),
+  current = all(miloR_obj_index$nhoods@x == 1),
   info = "no cell is counted twice within a neighbourhood"
 )
 

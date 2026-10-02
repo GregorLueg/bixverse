@@ -1101,8 +1101,7 @@ extract_paga_plot_data <- function(
 #' Places every tested neighbourhood of a [get_miloR_abundances_sc()] result at
 #' the embedding coordinate of its index cell, as Milo's `plotNhoodGraphDA()`
 #' does, and returns the neighbourhood graph as node and edge tables. Two
-#' neighbourhoods are connected by the number of cells they share. Unlike Milo,
-#' every neighbourhood holds `k + 1` cells, so there is no size to return.
+#' neighbourhoods are connected by the number of cells they share.
 #'
 #' The logFC is returned as is. Masking non-significant neighbourhoods is left
 #' to the plot, `is_sig` carries the call.
@@ -1118,8 +1117,9 @@ extract_paga_plot_data <- function(
 #'
 #' @returns A list with the embedding stored as an `embedding` attribute and
 #' \itemize{
-#'   \item nodes - data.table with `Nhood`, `dim_1`, `dim_2`, every column of
-#'   the differential abundance results and `is_sig`.
+#'   \item nodes - data.table with `Nhood`, `dim_1`, `dim_2`, `size` (cells in
+#'   the neighbourhood), every column of the differential abundance results and
+#'   `is_sig`.
 #'   \item edges - data.table with `from`, `to`, `weight` (shared cells) and
 #'   the segment coordinates `x`, `y`, `xend`, `yend`.
 #' }
@@ -1170,7 +1170,8 @@ extract_milo_plot_data <- function(
   nodes <- data.table::data.table(
     Nhood = da_res$Nhood,
     dim_1 = embd$dim_1[index_cell],
-    dim_2 = embd$dim_2[index_cell]
+    dim_2 = embd$dim_2[index_cell],
+    size = Matrix::colSums(nhoods)[da_res$Nhood]
   )
   nodes <- cbind(nodes, da_res[, !"Nhood"])
   data.table::set(

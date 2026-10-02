@@ -31,8 +31,9 @@ onward to \code{\link[=get_embedding]{get_embedding()}} (e.g. \code{modality}).}
 \value{
 A list with the embedding stored as an \code{embedding} attribute and
 \itemize{
-\item nodes - data.table with \code{Nhood}, \code{dim_1}, \code{dim_2}, every column of
-the differential abundance results and \code{is_sig}.
+\item nodes - data.table with \code{Nhood}, \code{dim_1}, \code{dim_2}, \code{size} (cells in
+the neighbourhood), every column of the differential abundance results and
+\code{is_sig}.
 \item edges - data.table with \code{from}, \code{to}, \code{weight} (shared cells) and
 the segment coordinates \code{x}, \code{y}, \code{xend}, \code{yend}.
 }
@@ -41,8 +42,7 @@ the segment coordinates \code{x}, \code{y}, \code{xend}, \code{yend}.
 Places every tested neighbourhood of a \code{\link[=get_miloR_abundances_sc]{get_miloR_abundances_sc()}} result at
 the embedding coordinate of its index cell, as Milo's \code{plotNhoodGraphDA()}
 does, and returns the neighbourhood graph as node and edge tables. Two
-neighbourhoods are connected by the number of cells they share. Unlike Milo,
-every neighbourhood holds \code{k + 1} cells, so there is no size to return.
+neighbourhoods are connected by the number of cells they share.
 
 The logFC is returned as is. Masking non-significant neighbourhoods is left
 to the plot, \code{is_sig} carries the call.

@@ -140,14 +140,15 @@ sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, .verbose = FALSE)
 ```
 
 The default `k` of 15 is fine for clustering and too small for Milo. A
-neighbourhood holds `k + 1` cells, and those get spread over the samples. With
-eighteen samples and `k = 15` that is under one cell per sample per
-neighbourhood, and a negative binomial fitted to counts that are mostly zero or
-one has very little to work with.
+neighbourhood is the index cell, its `k` neighbours and every cell that lists it
+as a neighbour, so it holds at least `k + 1` cells, and those get spread over
+the samples. With eighteen samples and `k = 15` the smallest neighbourhoods have
+under one cell per sample, and a negative binomial fitted to counts that are
+mostly zero or one has very little to work with.
 
 Rough rule: pick `k` so the average neighbourhood holds at least a few cells
-per sample. Eighteen samples and `k = 60` gives around three, which is enough
-here.
+per sample. Eighteen samples and `k = 60` gives around eight here, the
+neighbourhoods averaging just under 150 cells.
 
 ```{r}
 #| label: knn
