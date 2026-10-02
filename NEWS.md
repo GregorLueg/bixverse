@@ -1,3 +1,12 @@
+# bixverse 0.5.7
+
+## Features
+
+* Dramatically improved speed for `find_all_markers_sc()` and 
+  `find_specific_markers_sc()`.
+* Added `extract_milo_plot_data()` to generate plots in conjuction with 
+  `bixverse.plots≥0.2.9`.
+
 # bixverse 0.5.6
 
 ## Features

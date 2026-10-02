@@ -61,4 +61,4 @@ name = "document"
 path = "document.rs"
 
 [patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-better-one-vs-all-dge" }
+bixverse-rs = { path = "../../../bixverse-rs" }

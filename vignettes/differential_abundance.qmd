@@ -174,7 +174,7 @@ milo_obj <- get_miloR_abundances_sc(
   object = sc_object,
   sample_id_col = "sample",
   miloR_params = params_sc_miloR(prop = 0.1),
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 dim(milo_obj$sample_counts)
