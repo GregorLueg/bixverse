@@ -269,6 +269,7 @@ test above never touched it.
 
 ```{r}
 #| label: milo-umap
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.2.9"
 sc_object <- umap_sc(sc_object, .verbose = FALSE)
 ```
 
@@ -276,7 +277,7 @@ sc_object <- umap_sc(sc_object, .verbose = FALSE)
 #| label: milo-graph
 #| fig-width: 8
 #| fig-height: 6
-#| eval: !expr exists("milo_nhood_plot_sc", asNamespace("bixverse.plots"))
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.2.9"
 milo_nhood_plot_sc(sc_object, milo_obj, embedding = "umap", alpha = 0.1)
 ```
 
@@ -287,7 +288,7 @@ milo_nhood_plot_sc(sc_object, milo_obj, embedding = "umap", alpha = 0.1)
 #| label: milo-graph-ct
 #| fig-width: 8
 #| fig-height: 6
-#| eval: !expr exists("milo_nhood_plot_sc", asNamespace("bixverse.plots"))
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.2.9"
 milo_nhood_plot_sc(
   sc_object,
   milo_obj,
