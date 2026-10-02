@@ -59,6 +59,3 @@ bixverse-rs = { version = "0.5.9", default-features = false, features = [
 [[bin]]
 name = "document"
 path = "document.rs"
-
-[patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs.git" , branch = "fix-milor"}
