@@ -1,21 +1,21 @@
 # Calculate one-vs-many AUROC DGEs for specific markers
 
-**\[experimental\]** The function scores one reference group of cells
-against each comparison group separately and summarises the results per
-gene across all of the comparisons. This is the marker question: a gene
-that is specific to the reference has to hold up against every rival,
-which a single pooled test cannot answer because it is dominated by
-whichever rival contributes the most cells. Genes are filtered once,
-globally, so every comparison's FDR is calculated over the same gene
-set.
+**\[experimental\]** The function scores each reference group of cells
+against every other group separately and summarises the results per gene
+across all of the comparisons. This is the marker question: a gene that
+is specific to the reference has to hold up against every rival, which a
+single pooled test cannot answer because it is dominated by whichever
+rival contributes the most cells. All reference groups come out of a
+single pass over the gene-based file. Genes are filtered once, globally,
+so every comparison's FDR is calculated over the same gene set.
 
 ## Usage
 
 ``` r
 rs_calculate_dge_one_vs_many(
   f_path,
-  cell_indices_ref,
-  cell_indices_other,
+  cell_groups,
+  references,
   min_prop,
   alternative,
   verbose
@@ -26,17 +26,18 @@ rs_calculate_dge_one_vs_many(
 
 - f_path:
 
-  String. Path to the `counts_cells.bin` file.
+  String. Path to the `counts_genes.bin` file.
 
-- cell_indices_ref:
-
-  Integer. Index positions (0-indexed) of the cells of the reference
-  group.
-
-- cell_indices_other:
+- cell_groups:
 
   List. List of integer vectors, each containing the index positions
-  (0-indexed) of the cells of one comparison group.
+  (0-indexed) of the cells of one group.
+
+- references:
+
+  Integer. Index positions (0-indexed) into `cell_groups` of the
+  reference groups to report. The rivals of each reference are all other
+  groups, in the order of `cell_groups`.
 
 - min_prop:
 
@@ -55,18 +56,19 @@ rs_calculate_dge_one_vs_many(
 ## Value
 
 A list with the elements below. The per-comparison elements are
-flattened comparison-major, i.e., all genes of the first comparison,
-then all genes of the second, and so on.
+flattened reference-major, then rival-major, then gene. The summary
+elements are flattened reference-major, then gene.
 
-- comparison - Index (0-indexed) of the comparison group the
-  per-comparison statistics belong to.
+- reference - Index (0-indexed) of the reference group, per comparison
+  row.
 
-- auroc - AUROC of the reference against the comparison group.
+- rival - Index (0-indexed) of the rival group, per comparison row.
 
-- lfc - Log fold change of the reference against the comparison group.
+- auroc - AUROC of the reference against the rival.
 
-- prop_other - Proportion of cells expressing the gene in the comparison
-  group.
+- lfc - Log fold change of the reference against the rival.
+
+- prop_other - Proportion of cells expressing the gene in the rival.
 
 - z_scores - Z-scores based on the Mann Whitney statistic.
 
@@ -74,27 +76,30 @@ then all genes of the second, and so on.
 
 - fdr - False discovery rate after BH adjustment, per comparison.
 
+- summary_reference - Index (0-indexed) of the reference group, per
+  summary row.
+
 - prop_ref - Proportion of reference cells expressing the gene.
 
-- median_auroc - Median AUROC across the comparisons.
+- median_auroc - Median AUROC across the rivals.
 
-- min_auroc - Worst AUROC across the comparisons.
+- min_auroc - Worst AUROC across the rivals.
 
-- mean_auroc - Mean AUROC across the comparisons.
+- mean_auroc - Mean AUROC across the rivals.
 
-- max_auroc - Best AUROC across the comparisons.
+- max_auroc - Best AUROC across the rivals.
 
-- worst_comparison - Index (0-indexed) of the comparison group achieving
+- worst_rival - Index (0-indexed) of the rival group achieving
   `min_auroc`.
 
-- min_rank - Best rank the gene achieves in any single comparison when
+- min_rank - Best rank the gene achieves against any single rival when
   the genes are ordered by descending AUROC.
 
-- simes_p - Simes-combined p-value across the comparisons.
+- simes_p - Simes-combined p-value across the rivals.
 
 - simes_fdr - False discovery rate over `simes_p`.
 
-- max_p - Largest p-value across the comparisons.
+- max_p - Largest p-value across the rivals.
 
 - max_p_fdr - False discovery rate over `max_p`.
 

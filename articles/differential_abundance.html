@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Differential abundance with Milo and MELD</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-02</p>
+      <p class="date">2026-10-03</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -149,6 +149,7 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse">bixverse</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse.plots/">bixverse.plots</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">SingleCellExperiment</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -248,8 +249,8 @@
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, hvg_no <span class="op">=</span> <span class="fl">2000L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, no_pcs <span class="op">=</span> <span class="fl">30L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>The default <code>k</code> of 15 is fine for clustering and too small for Milo. A neighbourhood holds <code>k + 1</code> cells, and those get spread over the samples. With eighteen samples and <code>k = 15</code> that is under one cell per sample per neighbourhood, and a negative binomial fitted to counts that are mostly zero or one has very little to work with.</p>
-<p>Rough rule: pick <code>k</code> so the average neighbourhood holds at least a few cells per sample. Eighteen samples and <code>k = 60</code> gives around three, which is enough here.</p>
+<p>The default <code>k</code> of 15 is fine for clustering and too small for Milo. A neighbourhood is the index cell, its <code>k</code> neighbours and every cell that lists it as a neighbour, so it holds at least <code>k + 1</code> cells, and those get spread over the samples. With eighteen samples and <code>k = 15</code> the smallest neighbourhoods have under one cell per sample, and a negative binomial fitted to counts that are mostly zero or one has very little to work with.</p>
+<p>Rough rule: pick <code>k</code> so the average neighbourhood holds at least a few cells per sample. Eighteen samples and <code>k = 60</code> gives around eight here, the neighbourhoods averaging just under 150 cells.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
@@ -272,13 +273,13 @@
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  sample_id_col <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>  miloR_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_miloR.html">params_sc_miloR</a></span><span class="op">(</span>prop <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span>
-<span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">milo_obj</span><span class="op">$</span><span class="va">sample_counts</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 5191   18</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">milo_obj</span><span class="op">$</span><span class="va">sample_counts</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 61</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 146.5026</span></span></code></pre></div>
 </div>
 <p>The test needs a design table with one row per sample, and its rownames have to cover the sample names on the counts. Blocking on the run is worth it: every run contributes all three ages, so run-to-run variation is a nuisance term the model can remove.</p>
 <div class="cell">
@@ -318,19 +319,19 @@
 <span><span class="va">da_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_differential_abundance_res.html">get_differential_abundance_res</a></span><span class="op">(</span><span class="va">milo_obj</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">da_res</span><span class="op">[</span><span class="va">SpatialFDR</span> <span class="op">&lt;=</span> <span class="fl">0.1</span>, <span class="va">.N</span><span class="op">]</span></span>
-<span><span class="co">#&gt; [1] 2284</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 3135</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">da_res</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">PValue</span><span class="op">)</span>, <span class="fu">.</span><span class="op">(</span><span class="va">Nhood</span>, <span class="va">logFC</span>, <span class="cn">F</span>, <span class="va">PValue</span>, <span class="va">FDR</span>, <span class="va">SpatialFDR</span><span class="op">)</span><span class="op">]</span>, <span class="fl">6</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    Nhood    logFC        F       PValue          FDR   SpatialFDR</span></span>
-<span><span class="co">#&gt;    &lt;int&gt;    &lt;num&gt;    &lt;num&gt;        &lt;num&gt;        &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:  1003 4.960701 39.56129 3.343176e-10 1.140286e-06 1.044614e-06</span></span>
-<span><span class="co">#&gt; 2:  1247 4.932224 38.86377 4.770520e-10 1.140286e-06 1.044614e-06</span></span>
-<span><span class="co">#&gt; 3:  4224 4.947840 38.23022 6.589981e-10 1.140286e-06 1.044614e-06</span></span>
-<span><span class="co">#&gt; 4:  2498 4.373940 36.67675 1.456154e-09 1.701967e-06 1.785296e-06</span></span>
-<span><span class="co">#&gt; 5:  1510 4.761871 36.37330 1.700256e-09 1.701967e-06 1.785296e-06</span></span>
-<span><span class="co">#&gt; 6:  4936 4.847082 36.01303 2.043860e-09 1.701967e-06 1.785296e-06</span></span></code></pre></div>
+<span><span class="co">#&gt;    Nhood     logFC        F       PValue          FDR   SpatialFDR</span></span>
+<span><span class="co">#&gt;    &lt;int&gt;     &lt;num&gt;    &lt;num&gt;        &lt;num&gt;        &lt;num&gt;        &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:  4500  3.669117 85.82945 1.011859e-13 2.376116e-10 1.672688e-10</span></span>
+<span><span class="co">#&gt; 2:  2167  3.334926 84.10430 1.494970e-13 2.376116e-10 1.672688e-10</span></span>
+<span><span class="co">#&gt; 3:  1421  3.947703 84.01501 1.525664e-13 2.376116e-10 1.672688e-10</span></span>
+<span><span class="co">#&gt; 4:  2900  3.455329 83.21505 1.831360e-13 2.376116e-10 1.672688e-10</span></span>
+<span><span class="co">#&gt; 5:  3721  2.955785 82.19818 2.313184e-13 2.376116e-10 1.672688e-10</span></span>
+<span><span class="co">#&gt; 6:  2404 -3.491821 81.45520 2.746425e-13 2.376116e-10 1.672688e-10</span></span></code></pre></div>
 </div>
 <p>A neighbourhood is not a cell type, so on its own a list of neighbourhood indices is not much use. <code><a href="../reference/add_nhoods_info.html">add_nhoods_info()</a></code> tags each with the cell type its cells mostly belong to.</p>
 <div class="cell">
@@ -349,43 +350,67 @@
 <span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">`up at Wk16`</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      majority_celltype down at Wk16 up at Wk16</span></span>
 <span><span class="co">#&gt;                 &lt;char&gt;        &lt;int&gt;      &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1: Intertypical.TEC.4           98        270</span></span>
-<span><span class="co">#&gt;  2: Intertypical.TEC.2           32        258</span></span>
-<span><span class="co">#&gt;  3: Intertypical.TEC.1          464        218</span></span>
-<span><span class="co">#&gt;  4: Intertypical.TEC.3           33        186</span></span>
-<span><span class="co">#&gt;  5:             mTEC.2           54         41</span></span>
-<span><span class="co">#&gt;  6:             cTEC.2           45         39</span></span>
-<span><span class="co">#&gt;  7:             mTEC.6            0         22</span></span>
-<span><span class="co">#&gt;  8:             mTEC.3            0         18</span></span>
-<span><span class="co">#&gt;  9:             mTEC.1          191         15</span></span>
-<span><span class="co">#&gt; 10:    PostAire.mTEC.1           10          7</span></span>
-<span><span class="co">#&gt; 11:             mTEC.4            0          7</span></span>
-<span><span class="co">#&gt; 12:        Tuft.mTEC.2           13          6</span></span>
-<span><span class="co">#&gt; 13:              eTEC1            0          6</span></span>
-<span><span class="co">#&gt; 14:          New.TEC.2            0          5</span></span>
-<span><span class="co">#&gt; 15:       Prolif.TEC.2           84          0</span></span>
-<span><span class="co">#&gt; 16:       Prolif.TEC.3           96          0</span></span>
-<span><span class="co">#&gt; 17:         Sca1.TEC.1           11          0</span></span>
-<span><span class="co">#&gt; 18:        Tuft.mTEC.1            1          0</span></span>
-<span><span class="co">#&gt; 19:             cTEC.1           33          0</span></span>
-<span><span class="co">#&gt; 20:             mTEC.5           21          0</span></span>
+<span><span class="co">#&gt;  1: Intertypical.TEC.1          576        381</span></span>
+<span><span class="co">#&gt;  2: Intertypical.TEC.2           48        347</span></span>
+<span><span class="co">#&gt;  3: Intertypical.TEC.4          184        343</span></span>
+<span><span class="co">#&gt;  4: Intertypical.TEC.3           46        230</span></span>
+<span><span class="co">#&gt;  5:             mTEC.2          157         55</span></span>
+<span><span class="co">#&gt;  6:             cTEC.2           46         49</span></span>
+<span><span class="co">#&gt;  7:             mTEC.1          254         22</span></span>
+<span><span class="co">#&gt;  8:             mTEC.4            0         20</span></span>
+<span><span class="co">#&gt;  9:             mTEC.3            0         17</span></span>
+<span><span class="co">#&gt; 10:             mTEC.6            0         16</span></span>
+<span><span class="co">#&gt; 11:          New.TEC.2            0         10</span></span>
+<span><span class="co">#&gt; 12:    PostAire.mTEC.1           21          9</span></span>
+<span><span class="co">#&gt; 13:              eTEC1            0          7</span></span>
+<span><span class="co">#&gt; 14:        Tuft.mTEC.2           19          5</span></span>
+<span><span class="co">#&gt; 15:          New.TEC.1            1          0</span></span>
+<span><span class="co">#&gt; 16:    PostAire.mTEC.2            4          0</span></span>
+<span><span class="co">#&gt; 17:       Prolif.TEC.2           93          0</span></span>
+<span><span class="co">#&gt; 18:       Prolif.TEC.3           95          0</span></span>
+<span><span class="co">#&gt; 19:         Sca1.TEC.1           12          0</span></span>
+<span><span class="co">#&gt; 20:        Tuft.mTEC.1            1          0</span></span>
+<span><span class="co">#&gt; 21:             cTEC.1           36          0</span></span>
+<span><span class="co">#&gt; 22:             mTEC.5           28          0</span></span>
+<span><span class="co">#&gt; 23:             mTEC.7            3          0</span></span>
 <span><span class="co">#&gt;      majority_celltype down at Wk16 up at Wk16</span></span>
 <span><span class="co">#&gt;                 &lt;char&gt;        &lt;int&gt;      &lt;int&gt;</span></span></code></pre></div>
 </div>
 <p>The two proliferating populations are the most strongly depleted of anything here, which is the clearest ageing signal the tissue has: an involuting thymus stops making new cells. The intertypical TECs dominate the enriched side.</p>
 <p>The medullary subsets split both ways, so “mTECs go up” would be the wrong summary to take away. That is the point of testing neighbourhoods rather than clusters: a cluster level test would have averaged those subsets into one number and reported whichever direction happened to win.</p>
-<section class="level3"><h3 id="on-the-spatial-fdr">On the spatial FDR<a class="anchor" aria-label="anchor" href="#on-the-spatial-fdr"></a>
+<section class="level3"><h3 id="on-the-embedding">On the embedding<a class="anchor" aria-label="anchor" href="#on-the-embedding"></a>
+</h3>
+<p>The figure everyone expects from Milo is the neighbourhood graph on a UMAP. Each neighbourhood sits at its index cell, sized by how many cells it holds and connected to the neighbourhoods it shares cells with. Significant ones are coloured by logFC, the rest stay white. The UMAP is only for the picture, the test above never touched it.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">milo_nhood_plot_sc</span><span class="op">(</span><span class="va">sc_object</span>, <span class="va">milo_obj</span>, embedding <span class="op">=</span> <span class="st">"umap"</span>, alpha <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p><code>colour_by = "majority_celltype"</code> swaps the logFC for the annotation from <code><a href="../reference/add_nhoods_info.html">add_nhoods_info()</a></code>, which helps to read the logFC plot next to it.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">milo_nhood_plot_sc</span><span class="op">(</span></span>
+<span>  <span class="va">sc_object</span>,</span>
+<span>  <span class="va">milo_obj</span>,</span>
+<span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
+<span>  colour_by <span class="op">=</span> <span class="st">"majority_celltype"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+</section><section class="level3"><h3 id="on-the-spatial-fdr">On the spatial FDR<a class="anchor" aria-label="anchor" href="#on-the-spatial-fdr"></a>
 </h3>
 <p>Neighbourhoods overlap, so their tests are not independent and a plain Benjamini-Hochberg adjustment is anti-conservative. Milo’s spatial FDR weights each p-value by the reciprocal of its connectivity and runs the step-up on those weights.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>  plain_fdr <span class="op">=</span> <span class="va">da_res</span><span class="op">[</span><span class="va">FDR</span> <span class="op">&lt;=</span> <span class="fl">0.1</span>, <span class="va">.N</span><span class="op">]</span>,</span>
 <span>  spatial_fdr <span class="op">=</span> <span class="va">da_res</span><span class="op">[</span><span class="va">SpatialFDR</span> <span class="op">&lt;=</span> <span class="fl">0.1</span>, <span class="va">.N</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;    plain_fdr spatial_fdr</span></span>
 <span><span class="co">#&gt;        &lt;int&gt;       &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:      2271        2284</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:      3109        3135</span></span></code></pre></div>
 </div>
 <p>On this data the two barely differ. That is worth knowing rather than disappointing: the correction bites when neighbourhoods overlap heavily and the connectivity varies a lot between them, and here it does not. Do not assume it is always doing work.</p>
 <p>The weighting scheme is a choice. <code>"k-distance"</code> weights by the distance to the k-th neighbour, <code>"graph-overlap"</code> by how many cells a neighbourhood shares with the others. Both are precomputed, so switching is cheap.</p>
@@ -393,7 +418,7 @@
 </h2>
 <p>MELD needs no design and no neighbourhood sampling. Hand it the condition column and it smooths the indicator over the graph.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">meld_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/meld_sc.html">meld_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  sample_id_col <span class="op">=</span> <span class="st">"age"</span>,</span>
@@ -412,7 +437,7 @@
 <p>The normalised scores are clamped at zero and L1 normalised per cell, so each row is a likelihood over the three ages. A cell sitting at 0.6 for Wk16 lives in a part of the manifold that is enriched for sixteen week old thymus.</p>
 <p>Averaging per cell type turns that into something readable.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">meld_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>  cluster <span class="op">=</span> <span class="va">obs</span><span class="op">$</span><span class="va">cluster_annot</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="va">meld_res</span><span class="op">$</span><span class="va">norm_scores</span><span class="op">)</span></span>
@@ -436,7 +461,7 @@
 </h2>
 <p>They are different methods on the same graph, so this is a real check rather than a formality. Milo’s mean log fold change per cell type against MELD’s mean Wk16 likelihood per cell type.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">milo_per_ct</span> <span class="op">&lt;-</span> <span class="va">sig</span><span class="op">[</span>,</span>
 <span>  <span class="fu">.</span><span class="op">(</span>milo_logfc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">logFC</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  by <span class="op">=</span> <span class="fu">.</span><span class="op">(</span>cluster <span class="op">=</span> <span class="va">majority_celltype</span><span class="op">)</span></span>
@@ -446,33 +471,36 @@
 <span><span class="va">comparison</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">milo_logfc</span><span class="op">)</span>, <span class="fu">.</span><span class="op">(</span><span class="va">cluster</span>, <span class="va">Wk1</span>, <span class="va">Wk16</span>, <span class="va">milo_logfc</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                cluster       Wk1      Wk16 milo_logfc</span></span>
 <span><span class="co">#&gt;                 &lt;char&gt;     &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1:             mTEC.6 0.1770806 0.5682456  2.0664120</span></span>
-<span><span class="co">#&gt;  2: Intertypical.TEC.2 0.2703171 0.4047897  1.8820430</span></span>
-<span><span class="co">#&gt;  3: Intertypical.TEC.3 0.2877266 0.3647245  1.6350700</span></span>
-<span><span class="co">#&gt;  4:             mTEC.3 0.3254357 0.3683957  1.5435736</span></span>
-<span><span class="co">#&gt;  5:             mTEC.4 0.2855591 0.4333534  1.4085801</span></span>
-<span><span class="co">#&gt;  6:              eTEC1 0.3353299 0.3469043  1.3988366</span></span>
-<span><span class="co">#&gt;  7:          New.TEC.2 0.3010342 0.3924626  1.3761448</span></span>
-<span><span class="co">#&gt;  8: Intertypical.TEC.4 0.3057111 0.3968813  1.0289145</span></span>
-<span><span class="co">#&gt;  9:             cTEC.2 0.3056120 0.3373034 -0.1282260</span></span>
-<span><span class="co">#&gt; 10:    PostAire.mTEC.1 0.3753332 0.2747342 -0.1494940</span></span>
-<span><span class="co">#&gt; 11:             mTEC.2 0.3794611 0.2840836 -0.1722100</span></span>
-<span><span class="co">#&gt; 12:        Tuft.mTEC.2 0.3230736 0.2527644 -0.5186232</span></span>
-<span><span class="co">#&gt; 13: Intertypical.TEC.1 0.3343522 0.3136527 -0.9849975</span></span>
-<span><span class="co">#&gt; 14:        Tuft.mTEC.1 0.3345616 0.2984189 -1.2410790</span></span>
-<span><span class="co">#&gt; 15:         Sca1.TEC.1 0.4224332 0.1967016 -1.5250325</span></span>
-<span><span class="co">#&gt; 16:             mTEC.1 0.4464053 0.2144022 -1.6054470</span></span>
-<span><span class="co">#&gt; 17:             mTEC.5 0.4041162 0.2327593 -1.6058872</span></span>
-<span><span class="co">#&gt; 18:             cTEC.1 0.4649790 0.2659894 -1.7592808</span></span>
-<span><span class="co">#&gt; 19:       Prolif.TEC.2 0.4804880 0.1791882 -1.9918520</span></span>
-<span><span class="co">#&gt; 20:       Prolif.TEC.3 0.5147457 0.1555439 -2.4611161</span></span>
+<span><span class="co">#&gt;  1:             mTEC.6 0.1770806 0.5682456  1.7937274</span></span>
+<span><span class="co">#&gt;  2: Intertypical.TEC.2 0.2703171 0.4047897  1.5911538</span></span>
+<span><span class="co">#&gt;  3:             mTEC.3 0.3254357 0.3683957  1.3727827</span></span>
+<span><span class="co">#&gt;  4: Intertypical.TEC.3 0.2877266 0.3647245  1.2893126</span></span>
+<span><span class="co">#&gt;  5:             mTEC.4 0.2855591 0.4333534  1.0972278</span></span>
+<span><span class="co">#&gt;  6:              eTEC1 0.3353299 0.3469043  0.9650014</span></span>
+<span><span class="co">#&gt;  7:          New.TEC.2 0.3010342 0.3924626  0.9281692</span></span>
+<span><span class="co">#&gt;  8: Intertypical.TEC.4 0.3057111 0.3968813  0.6439599</span></span>
+<span><span class="co">#&gt;  9:             cTEC.2 0.3056120 0.3373034  0.1408709</span></span>
+<span><span class="co">#&gt; 10: Intertypical.TEC.1 0.3343522 0.3136527 -0.5325424</span></span>
+<span><span class="co">#&gt; 11:    PostAire.mTEC.1 0.3753332 0.2747342 -0.5653124</span></span>
+<span><span class="co">#&gt; 12:             mTEC.2 0.3794611 0.2840836 -0.5875689</span></span>
+<span><span class="co">#&gt; 13:        Tuft.mTEC.2 0.3230736 0.2527644 -0.8223745</span></span>
+<span><span class="co">#&gt; 14:          New.TEC.1 0.3712302 0.3629886 -1.0003930</span></span>
+<span><span class="co">#&gt; 15:    PostAire.mTEC.2 0.3359724 0.3439290 -1.1167300</span></span>
+<span><span class="co">#&gt; 16:             mTEC.5 0.4041162 0.2327593 -1.1572635</span></span>
+<span><span class="co">#&gt; 17:        Tuft.mTEC.1 0.3345616 0.2984189 -1.1745815</span></span>
+<span><span class="co">#&gt; 18:             mTEC.7 0.3852273 0.2806892 -1.2730840</span></span>
+<span><span class="co">#&gt; 19:             mTEC.1 0.4464053 0.2144022 -1.3845189</span></span>
+<span><span class="co">#&gt; 20:         Sca1.TEC.1 0.4224332 0.1967016 -1.4761205</span></span>
+<span><span class="co">#&gt; 21:             cTEC.1 0.4649790 0.2659894 -1.6419000</span></span>
+<span><span class="co">#&gt; 22:       Prolif.TEC.2 0.4804880 0.1791882 -1.7606735</span></span>
+<span><span class="co">#&gt; 23:       Prolif.TEC.3 0.5147457 0.1555439 -2.1050597</span></span>
 <span><span class="co">#&gt;                cluster       Wk1      Wk16 milo_logfc</span></span>
 <span><span class="co">#&gt;                 &lt;char&gt;     &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">Wk16</span>, <span class="va">comparison</span><span class="op">$</span><span class="va">milo_logfc</span>, method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.9112782</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.8853755</span></span></code></pre></div>
 </div>
 <p>Strong agreement, and the disagreements are informative rather than embarrassing. Milo tests neighbourhoods and reports only the ones that clear a threshold, so a cell type that shifted a little everywhere can score low on the Milo axis while MELD still registers the shift. The two are measuring related but not identical things.</p>
 </section><section class="level2"><h2 id="which-one-to-reach-for">Which one to reach for<a class="anchor" aria-label="anchor" href="#which-one-to-reach-for"></a>

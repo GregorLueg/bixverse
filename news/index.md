@@ -1,5 +1,23 @@
 # Changelog
 
+## bixverse 0.5.7
+
+### Features
+
+- Dramatically improved speed for
+  [`find_all_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_all_markers_sc.md)
+  and
+  [`find_specific_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_specific_markers_sc.md).
+- Added
+  [`extract_milo_plot_data()`](https://gregorlueg.github.io/bixverse/reference/extract_milo_plot_data.md)
+  to generate plots in conjuction with `bixverse.plots≥0.2.9`.
+
+### Fixes
+
+- Added reverse edges to the miloR kNN graph which yields larger
+  neighbourhoods and better statistics. This changes results to prior
+  versions.
+
 ## bixverse 0.5.6
 
 ### Features

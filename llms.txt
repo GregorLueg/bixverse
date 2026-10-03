@@ -1426,6 +1426,8 @@ their summaries) from the binary storage files.
   : Extract per-cell expression grouped for violin plots
 - [`extract_paga_plot_data()`](https://gregorlueg.github.io/bixverse/reference/extract_paga_plot_data.md)
   : Extract the PAGA graph positioned on an embedding
+- [`extract_milo_plot_data()`](https://gregorlueg.github.io/bixverse/reference/extract_milo_plot_data.md)
+  : Extract the miloR neighbourhood graph positioned on an embedding
 
 ## Statistical functions
 

@@ -495,6 +495,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/extract_feature_plot_data.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/extract_gene_violin_data.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/extract_milo_plot_data.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/extract_paga_plot_data.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/f1_score_confusion_mat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/fast_cluster_sc.html</loc></url>
@@ -895,6 +896,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_calc_norm_factors.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_calculate_dge_mann_whitney.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_calculate_dge_one_vs_many.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_calculate_dge_one_vs_rest.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_cell_type_asw.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_cistarget.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_cluster_stability.html</loc></url>

@@ -10,7 +10,8 @@ and the per-gene summaries (`min_auroc`, `median_auroc`, `min_rank`)
 tell you whether it does.
 
 Leave `reference_group` as `NULL` to run every group of the column as
-the reference in turn, or name one group to only get that arm.
+the reference, or name one group to only get that arm. Either way,
+everything is calculated in a single pass over the genes.
 
 The summaries rank on AUROC rather than the p-value on purpose. Group
 sizes vary a lot in practice and p-values scale with the group sizes, so
@@ -27,8 +28,6 @@ find_specific_markers_sc(
   method = "wilcox",
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
-  downsampling = TRUE,
-  seed = 42L,
   .verbose = TRUE
 )
 ```
@@ -66,16 +65,6 @@ find_specific_markers_sc(
   Numeric. The minimum proportion of cells that need to express the gene
   in at least one of the groups. Applied once, globally, so every
   comparison's FDR is calculated over the same gene set.
-
-- downsampling:
-
-  Boolean. If any group exceeds 100,000 cells, a random subsample of
-  100,000 cells is used for it. The subsample is drawn once per group,
-  so a group is represented by the same cells in every arm.
-
-- seed:
-
-  Integer. Seed that is used for the downsampling.
 
 - .verbose:
 

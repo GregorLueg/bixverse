@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Analysing PBMCs with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-10-02</p>
+      <p class="date">2026-10-03</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -383,20 +383,13 @@
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  column_of_interest <span class="op">=</span> <span class="st">"leiden_clusters"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Processing group 1 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 2 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 3 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 4 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 5 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 6 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 7 out of 7.</span></span>
 <span></span>
 <span><span class="va">all_markers</span><span class="op">[</span>, <span class="va">gene_symbol</span> <span class="op">:=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">gene_id</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_markers</span><span class="op">[</span><span class="va">fdr</span> <span class="op">&lt;=</span> <span class="fl">0.05</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lfc</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      grp         gene_id      lfc     prop1     prop2 z_scores      p_values</span></span>
 <span><span class="co">#&gt;    &lt;int&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     2 ENSG00000163220 4.194226 0.9884726 0.2042952 34.46479 1.352011e-260</span></span>
+<span><span class="co">#&gt; 1:     2 ENSG00000163220 4.194227 0.9884726 0.2042952 34.46479 1.352011e-260</span></span>
 <span><span class="co">#&gt; 2:     4 ENSG00000105374 4.155993 1.0000000 0.2162301 29.70839 2.991490e-194</span></span>
 <span><span class="co">#&gt; 3:     2 ENSG00000090382 4.083348 1.0000000 0.5126652 30.45956 4.474529e-204</span></span>
 <span><span class="co">#&gt; 4:     2 ENSG00000143546 3.677881 0.9711816 0.1189427 36.95369 3.177281e-299</span></span>
@@ -611,6 +604,7 @@
 <span>      <span class="va">cell_type_anno</span><span class="op">$</span><span class="va">cluster_id</span></span>
 <span>    <span class="op">)</span><span class="op">]</span></span>
 <span>  <span class="op">]</span></span>
+<span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"sc_type"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">obs</span><span class="op">$</span><span class="va">sc_type</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -665,6 +659,7 @@
 <span>  <span class="st">"MS4A1"</span></span>
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="va">feature_labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">features</span><span class="op">)</span>, nm <span class="op">=</span> <span class="va">features</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/stacked_violin_plot_sc.html">stacked_violin_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  features <span class="op">=</span> <span class="va">features</span>,</span>

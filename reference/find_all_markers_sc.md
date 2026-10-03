@@ -2,11 +2,10 @@
 
 This function can be used to run differential gene expression for every
 group of an unsupervised clustering method for example. You specify a
-column and the function will start calculating differential gene
-expression of the first cluster vs. everything else, second cluster vs.
-everything else, etc. The function will automatically downsample
-everything else to a random set of 100,000 cells if it should exceed
-that. This automatic downsampling can be turned off however.
+column and the function calculates differential gene expression of the
+first cluster vs. everything else, second cluster vs. everything else,
+etc. All groups are tested in a single pass over the genes, so memory
+stays bounded however many cells there are.
 
 ## Usage
 
@@ -17,8 +16,6 @@ find_all_markers_sc(
   method = "wilcox",
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
-  downsampling = TRUE,
-  seed = 42L,
   .verbose = TRUE
 )
 ```
@@ -49,16 +46,7 @@ find_all_markers_sc(
 - min_prop:
 
   Numeric. The minimum proportion of cells that need to express the gene
-  to be tested in any of the two groups.
-
-- downsampling:
-
-  Boolean. If the other group exceeds 100,000 cells, a random subsample
-  of 100,000 cells will be used.
-
-- seed:
-
-  Integer. Seed that is used for the downsampling.
+  to be tested in the group or in the rest.
 
 - .verbose:
 
@@ -84,9 +72,9 @@ res <- find_all_markers_sc(
 head(res)
 #>      grp gene_id      lfc     prop1     prop2 z_scores     p_values
 #>    <int>  <char>    <num>     <num>     <num>    <num>        <num>
-#> 1:     0 gene_01 3.211139 0.9881657 0.7280967 16.50891 1.582561e-61
+#> 1:     0 gene_01 3.211140 0.9881657 0.7280967 16.50891 1.582561e-61
 #> 2:     0 gene_02 3.121258 0.9881657 0.7129909 16.00064 6.323246e-58
-#> 3:     0 gene_03 3.216300 0.9881657 0.7311178 16.73337 3.744067e-63
+#> 3:     0 gene_03 3.216301 0.9881657 0.7311178 16.73337 3.744067e-63
 #> 4:     0 gene_04 3.098137 0.9644970 0.6706949 15.48991 2.029132e-54
 #> 5:     0 gene_05 2.711545 0.8284023 0.4290030 12.43032 8.944763e-36
 #> 6:     0 gene_06 3.202754 0.9822485 0.6767372 16.24377 1.236194e-59

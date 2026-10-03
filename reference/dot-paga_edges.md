@@ -1,8 +1,9 @@
-# Melt a PAGA connectivity matrix into a one-row-per-edge table
+# Melt a symmetric graph matrix into a one-row-per-edge table
 
-Both abstracted graphs are stored symmetrically with a zero diagonal, so
-the lower triangle is dropped here. Keeping it would draw every edge
-twice, at twice the apparent width.
+Used for the PAGA abstracted graphs and the miloR neighbourhood overlap.
+Both are symmetric, so the lower triangle and the diagonal are dropped
+here. Keeping it would draw every edge twice, at twice the apparent
+width.
 
 ## Usage
 
@@ -14,7 +15,7 @@ twice, at twice the apparent width.
 
 - conn:
 
-  Sparse matrix. The abstracted graph, named by cluster.
+  Sparse matrix. The graph, named by node.
 
 - threshold:
 
@@ -22,8 +23,8 @@ twice, at twice the apparent width.
 
 - keep:
 
-  Character vector. Clusters that survived the empty-cluster filter.
-  Edges touching anything else are dropped, as they have no end point to
+  Character vector. Nodes that survived upstream filtering. Edges
+  touching anything else are dropped, as they have no end point to
   attach to.
 
 ## Value

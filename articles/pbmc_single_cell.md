@@ -275,20 +275,13 @@ all_markers <- find_all_markers_sc(
   object = sc_object,
   column_of_interest = "leiden_clusters"
 )
-#> Processing group 1 out of 7.
-#> Processing group 2 out of 7.
-#> Processing group 3 out of 7.
-#> Processing group 4 out of 7.
-#> Processing group 5 out of 7.
-#> Processing group 6 out of 7.
-#> Processing group 7 out of 7.
 
 all_markers[, gene_symbol := ensembl_to_symbol[gene_id]]
 
 head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 #>      grp         gene_id      lfc     prop1     prop2 z_scores      p_values
 #>    <int>          <char>    <num>     <num>     <num>    <num>         <num>
-#> 1:     2 ENSG00000163220 4.194226 0.9884726 0.2042952 34.46479 1.352011e-260
+#> 1:     2 ENSG00000163220 4.194227 0.9884726 0.2042952 34.46479 1.352011e-260
 #> 2:     4 ENSG00000105374 4.155993 1.0000000 0.2162301 29.70839 2.991490e-194
 #> 3:     2 ENSG00000090382 4.083348 1.0000000 0.5126652 30.45956 4.474529e-204
 #> 4:     2 ENSG00000143546 3.677881 0.9711816 0.1189427 36.95369 3.177281e-299
@@ -522,6 +515,7 @@ obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
       cell_type_anno$cluster_id
     )]
   ]
+
 sc_object[["sc_type"]] <- obs$sc_type
 ```
 
@@ -576,6 +570,7 @@ features <- symbol_to_ensembl[c(
   "MS4A1"
 )]
 feature_labels <- setNames(names(features), nm = features)
+
 stacked_violin_plot_sc(
   sc_object,
   features = features,

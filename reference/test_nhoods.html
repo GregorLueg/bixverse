@@ -23,7 +23,7 @@ if you want to drop sparsely populated neighbourhoods."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -243,14 +243,14 @@ F1000Research, 2016</p>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">milo</span> <span class="op">&lt;-</span> <span class="fu">test_nhoods</span><span class="op">(</span><span class="va">milo</span>, design <span class="op">=</span> <span class="op">~</span><span class="va">grp</span>, design_df <span class="op">=</span> <span class="va">design_df</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_differential_abundance_res.html">get_differential_abundance_res</a></span><span class="op">(</span><span class="va">milo</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Nhood        logFC   logCPM            F    PValue       FDR SpatialFDR</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;int&gt;        &lt;num&gt;    &lt;num&gt;        &lt;num&gt;     &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     1  0.696761445 14.32139 8.523319e-01 0.3565560 0.8319639  0.8269572</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     2  0.340283155 14.32108 2.207650e-01 0.6387624 0.8455142  0.8402161</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     3 -1.087351007 14.31886 2.594503e+00 0.1267721 0.8163203  0.8108069</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     4 -0.005885377 14.31889 8.100235e-05 0.9931983 0.9945522  0.9945522</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:     5  0.696752491 14.30611 3.770292e-01 0.5396130 0.8455142  0.8402161</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:     6 -0.351990673 14.32160 2.136750e-01 0.6442013 0.8455142  0.8402161</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Nhood       logFC   logCPM           F    PValue       FDR SpatialFDR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;int&gt;       &lt;num&gt;    &lt;num&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     1  0.43394889 13.84157 0.433206314 0.5108705 0.9640042  0.9599185</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     2  0.12629598 14.15793 0.053925002 0.8165104 0.9640042  0.9644670</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     3 -0.53221669 13.79775 0.599966995 0.4391353 0.9640042  0.9598125</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     4 -0.36980693 13.84297 0.313858391 0.5756954 0.9640042  0.9599185</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:     5  0.73814666 13.60314 1.138735255 0.2936231 0.9640042  0.9598125</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:     6  0.03387627 13.70417 0.002060917 0.9638176 0.9754298  0.9772304</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

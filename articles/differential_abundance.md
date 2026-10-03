@@ -35,6 +35,7 @@ alone.
 ``` r
 
 library(bixverse)
+library(bixverse.plots)
 library(data.table)
 library(SingleCellExperiment)
 ```
@@ -164,14 +165,16 @@ sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, .verbose = FALSE)
 ```
 
 The default `k` of 15 is fine for clustering and too small for Milo. A
-neighbourhood holds `k + 1` cells, and those get spread over the
-samples. With eighteen samples and `k = 15` that is under one cell per
-sample per neighbourhood, and a negative binomial fitted to counts that
-are mostly zero or one has very little to work with.
+neighbourhood is the index cell, its `k` neighbours and every cell that
+lists it as a neighbour, so it holds at least `k + 1` cells, and those
+get spread over the samples. With eighteen samples and `k = 15` the
+smallest neighbourhoods have under one cell per sample, and a negative
+binomial fitted to counts that are mostly zero or one has very little to
+work with.
 
 Rough rule: pick `k` so the average neighbourhood holds at least a few
-cells per sample. Eighteen samples and `k = 60` gives around three,
-which is enough here.
+cells per sample. Eighteen samples and `k = 60` gives around eight here,
+the neighbourhoods averaging just under 150 cells.
 
 ``` r
 
@@ -201,13 +204,13 @@ milo_obj <- get_miloR_abundances_sc(
   object = sc_object,
   sample_id_col = "sample",
   miloR_params = params_sc_miloR(prop = 0.1),
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 dim(milo_obj$sample_counts)
 #> [1] 5191   18
 mean(rowSums(milo_obj$sample_counts))
-#> [1] 61
+#> [1] 146.5026
 ```
 
 The test needs a design table with one row per sample, and its rownames
@@ -256,20 +259,20 @@ milo_obj <- test_nhoods(
 da_res <- get_differential_abundance_res(milo_obj)
 
 da_res[SpatialFDR <= 0.1, .N]
-#> [1] 2284
+#> [1] 3135
 ```
 
 ``` r
 
 head(da_res[order(PValue), .(Nhood, logFC, F, PValue, FDR, SpatialFDR)], 6)
-#>    Nhood    logFC        F       PValue          FDR   SpatialFDR
-#>    <int>    <num>    <num>        <num>        <num>        <num>
-#> 1:  1003 4.960701 39.56129 3.343176e-10 1.140286e-06 1.044614e-06
-#> 2:  1247 4.932224 38.86377 4.770520e-10 1.140286e-06 1.044614e-06
-#> 3:  4224 4.947840 38.23022 6.589981e-10 1.140286e-06 1.044614e-06
-#> 4:  2498 4.373940 36.67675 1.456154e-09 1.701967e-06 1.785296e-06
-#> 5:  1510 4.761871 36.37330 1.700256e-09 1.701967e-06 1.785296e-06
-#> 6:  4936 4.847082 36.01303 2.043860e-09 1.701967e-06 1.785296e-06
+#>    Nhood     logFC        F       PValue          FDR   SpatialFDR
+#>    <int>     <num>    <num>        <num>        <num>        <num>
+#> 1:  4500  3.669117 85.82945 1.011859e-13 2.376116e-10 1.672688e-10
+#> 2:  2167  3.334926 84.10430 1.494970e-13 2.376116e-10 1.672688e-10
+#> 3:  1421  3.947703 84.01501 1.525664e-13 2.376116e-10 1.672688e-10
+#> 4:  2900  3.455329 83.21505 1.831360e-13 2.376116e-10 1.672688e-10
+#> 5:  3721  2.955785 82.19818 2.313184e-13 2.376116e-10 1.672688e-10
+#> 6:  2404 -3.491821 81.45520 2.746425e-13 2.376116e-10 1.672688e-10
 ```
 
 A neighbourhood is not a cell type, so on its own a list of
@@ -293,26 +296,29 @@ dcast(
 )[order(-`up at Wk16`)]
 #>      majority_celltype down at Wk16 up at Wk16
 #>                 <char>        <int>      <int>
-#>  1: Intertypical.TEC.4           98        270
-#>  2: Intertypical.TEC.2           32        258
-#>  3: Intertypical.TEC.1          464        218
-#>  4: Intertypical.TEC.3           33        186
-#>  5:             mTEC.2           54         41
-#>  6:             cTEC.2           45         39
-#>  7:             mTEC.6            0         22
-#>  8:             mTEC.3            0         18
-#>  9:             mTEC.1          191         15
-#> 10:    PostAire.mTEC.1           10          7
-#> 11:             mTEC.4            0          7
-#> 12:        Tuft.mTEC.2           13          6
-#> 13:              eTEC1            0          6
-#> 14:          New.TEC.2            0          5
-#> 15:       Prolif.TEC.2           84          0
-#> 16:       Prolif.TEC.3           96          0
-#> 17:         Sca1.TEC.1           11          0
-#> 18:        Tuft.mTEC.1            1          0
-#> 19:             cTEC.1           33          0
-#> 20:             mTEC.5           21          0
+#>  1: Intertypical.TEC.1          576        381
+#>  2: Intertypical.TEC.2           48        347
+#>  3: Intertypical.TEC.4          184        343
+#>  4: Intertypical.TEC.3           46        230
+#>  5:             mTEC.2          157         55
+#>  6:             cTEC.2           46         49
+#>  7:             mTEC.1          254         22
+#>  8:             mTEC.4            0         20
+#>  9:             mTEC.3            0         17
+#> 10:             mTEC.6            0         16
+#> 11:          New.TEC.2            0         10
+#> 12:    PostAire.mTEC.1           21          9
+#> 13:              eTEC1            0          7
+#> 14:        Tuft.mTEC.2           19          5
+#> 15:          New.TEC.1            1          0
+#> 16:    PostAire.mTEC.2            4          0
+#> 17:       Prolif.TEC.2           93          0
+#> 18:       Prolif.TEC.3           95          0
+#> 19:         Sca1.TEC.1           12          0
+#> 20:        Tuft.mTEC.1            1          0
+#> 21:             cTEC.1           36          0
+#> 22:             mTEC.5           28          0
+#> 23:             mTEC.7            3          0
 #>      majority_celltype down at Wk16 up at Wk16
 #>                 <char>        <int>      <int>
 ```
@@ -327,6 +333,39 @@ wrong summary to take away. That is the point of testing neighbourhoods
 rather than clusters: a cluster level test would have averaged those
 subsets into one number and reported whichever direction happened to
 win.
+
+### On the embedding
+
+The figure everyone expects from Milo is the neighbourhood graph on a
+UMAP. Each neighbourhood sits at its index cell, sized by how many cells
+it holds and connected to the neighbourhoods it shares cells with.
+Significant ones are coloured by logFC, the rest stay white. The UMAP is
+only for the picture, the test above never touched it.
+
+``` r
+
+sc_object <- umap_sc(sc_object, .verbose = FALSE)
+```
+
+``` r
+
+milo_nhood_plot_sc(sc_object, milo_obj, embedding = "umap", alpha = 0.1)
+```
+
+`colour_by = "majority_celltype"` swaps the logFC for the annotation
+from
+[`add_nhoods_info()`](https://gregorlueg.github.io/bixverse/reference/add_nhoods_info.md),
+which helps to read the logFC plot next to it.
+
+``` r
+
+milo_nhood_plot_sc(
+  sc_object,
+  milo_obj,
+  embedding = "umap",
+  colour_by = "majority_celltype"
+)
+```
 
 ### On the spatial FDR
 
@@ -343,7 +382,7 @@ data.table(
 )
 #>    plain_fdr spatial_fdr
 #>        <int>       <int>
-#> 1:      2271        2284
+#> 1:      3109        3135
 ```
 
 On this data the two barely differ. That is worth knowing rather than
@@ -425,26 +464,29 @@ comparison <- merge(per_celltype, milo_per_ct, by = "cluster")
 comparison[order(-milo_logfc), .(cluster, Wk1, Wk16, milo_logfc)]
 #>                cluster       Wk1      Wk16 milo_logfc
 #>                 <char>     <num>     <num>      <num>
-#>  1:             mTEC.6 0.1770806 0.5682456  2.0664120
-#>  2: Intertypical.TEC.2 0.2703171 0.4047897  1.8820430
-#>  3: Intertypical.TEC.3 0.2877266 0.3647245  1.6350700
-#>  4:             mTEC.3 0.3254357 0.3683957  1.5435736
-#>  5:             mTEC.4 0.2855591 0.4333534  1.4085801
-#>  6:              eTEC1 0.3353299 0.3469043  1.3988366
-#>  7:          New.TEC.2 0.3010342 0.3924626  1.3761448
-#>  8: Intertypical.TEC.4 0.3057111 0.3968813  1.0289145
-#>  9:             cTEC.2 0.3056120 0.3373034 -0.1282260
-#> 10:    PostAire.mTEC.1 0.3753332 0.2747342 -0.1494940
-#> 11:             mTEC.2 0.3794611 0.2840836 -0.1722100
-#> 12:        Tuft.mTEC.2 0.3230736 0.2527644 -0.5186232
-#> 13: Intertypical.TEC.1 0.3343522 0.3136527 -0.9849975
-#> 14:        Tuft.mTEC.1 0.3345616 0.2984189 -1.2410790
-#> 15:         Sca1.TEC.1 0.4224332 0.1967016 -1.5250325
-#> 16:             mTEC.1 0.4464053 0.2144022 -1.6054470
-#> 17:             mTEC.5 0.4041162 0.2327593 -1.6058872
-#> 18:             cTEC.1 0.4649790 0.2659894 -1.7592808
-#> 19:       Prolif.TEC.2 0.4804880 0.1791882 -1.9918520
-#> 20:       Prolif.TEC.3 0.5147457 0.1555439 -2.4611161
+#>  1:             mTEC.6 0.1770806 0.5682456  1.7937274
+#>  2: Intertypical.TEC.2 0.2703171 0.4047897  1.5911538
+#>  3:             mTEC.3 0.3254357 0.3683957  1.3727827
+#>  4: Intertypical.TEC.3 0.2877266 0.3647245  1.2893126
+#>  5:             mTEC.4 0.2855591 0.4333534  1.0972278
+#>  6:              eTEC1 0.3353299 0.3469043  0.9650014
+#>  7:          New.TEC.2 0.3010342 0.3924626  0.9281692
+#>  8: Intertypical.TEC.4 0.3057111 0.3968813  0.6439599
+#>  9:             cTEC.2 0.3056120 0.3373034  0.1408709
+#> 10: Intertypical.TEC.1 0.3343522 0.3136527 -0.5325424
+#> 11:    PostAire.mTEC.1 0.3753332 0.2747342 -0.5653124
+#> 12:             mTEC.2 0.3794611 0.2840836 -0.5875689
+#> 13:        Tuft.mTEC.2 0.3230736 0.2527644 -0.8223745
+#> 14:          New.TEC.1 0.3712302 0.3629886 -1.0003930
+#> 15:    PostAire.mTEC.2 0.3359724 0.3439290 -1.1167300
+#> 16:             mTEC.5 0.4041162 0.2327593 -1.1572635
+#> 17:        Tuft.mTEC.1 0.3345616 0.2984189 -1.1745815
+#> 18:             mTEC.7 0.3852273 0.2806892 -1.2730840
+#> 19:             mTEC.1 0.4464053 0.2144022 -1.3845189
+#> 20:         Sca1.TEC.1 0.4224332 0.1967016 -1.4761205
+#> 21:             cTEC.1 0.4649790 0.2659894 -1.6419000
+#> 22:       Prolif.TEC.2 0.4804880 0.1791882 -1.7606735
+#> 23:       Prolif.TEC.3 0.5147457 0.1555439 -2.1050597
 #>                cluster       Wk1      Wk16 milo_logfc
 #>                 <char>     <num>     <num>      <num>
 ```
@@ -452,7 +494,7 @@ comparison[order(-milo_logfc), .(cluster, Wk1, Wk16, milo_logfc)]
 ``` r
 
 cor(comparison$Wk16, comparison$milo_logfc, method = "spearman")
-#> [1] 0.9112782
+#> [1] 0.8853755
 ```
 
 Strong agreement, and the disagreements are informative rather than

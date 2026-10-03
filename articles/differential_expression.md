@@ -172,7 +172,7 @@ wilcox_res <- find_markers_sc(
   mono,
   cells_1 = mono_obs[stim == "stim", cell_id],
   cells_2 = mono_obs[stim == "ctrl", cell_id],
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 wilcox_res[gene_id %in% hvgs & fdr <= 0.05, .N]
@@ -199,7 +199,7 @@ pb_res <- pseudobulk_dge_sc(
   design = design_pb,
   coef = "stimstim",
   edger_params = params_edger_ql(filter = FALSE),
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 pb_res[feature_id %in% hvgs & fdr <= 0.05, .N]

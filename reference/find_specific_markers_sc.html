@@ -7,7 +7,8 @@ as high in one small rival still comes out looking like a clean marker. Here
 the gene has to hold up against every rival, and the per-gene summaries
 (min_auroc, median_auroc, min_rank) tell you whether it does.
 Leave reference_group as NULL to run every group of the column as the
-reference in turn, or name one group to only get that arm.
+reference, or name one group to only get that arm. Either way, everything is
+calculated in a single pass over the genes.
 The summaries rank on AUROC rather than the p-value on purpose. Group sizes
 vary a lot in practice and p-values scale with the group sizes, so a large
 rival would otherwise crowd out a small one regardless of effect size."><meta property="og:description" content="This function scores one group of cells against every other group of a column
@@ -18,7 +19,8 @@ as high in one small rival still comes out looking like a clean marker. Here
 the gene has to hold up against every rival, and the per-gene summaries
 (min_auroc, median_auroc, min_rank) tell you whether it does.
 Leave reference_group as NULL to run every group of the column as the
-reference in turn, or name one group to only get that arm.
+reference, or name one group to only get that arm. Either way, everything is
+calculated in a single pass over the genes.
 The summaries rank on AUROC rather than the p-value on purpose. Group sizes
 vary a lot in practice and p-values scale with the group sizes, so a large
 rival would otherwise crowd out a small one regardless of effect size."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
@@ -29,7 +31,7 @@ rival would otherwise crowd out a small one regardless of effect size."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -125,7 +127,8 @@ as high in one small rival still comes out looking like a clean marker. Here
 the gene has to hold up against every rival, and the per-gene summaries
 (<code>min_auroc</code>, <code>median_auroc</code>, <code>min_rank</code>) tell you whether it does.</p>
 <p>Leave <code>reference_group</code> as <code>NULL</code> to run every group of the column as the
-reference in turn, or name one group to only get that arm.</p>
+reference, or name one group to only get that arm. Either way, everything is
+calculated in a single pass over the genes.</p>
 <p>The summaries rank on AUROC rather than the p-value on purpose. Group sizes
 vary a lot in practice and p-values scale with the group sizes, so a large
 rival would otherwise crowd out a small one regardless of effect size.</p>
@@ -140,8 +143,6 @@ rival would otherwise crowd out a small one regardless of effect size.</p>
 <span>  method <span class="op">=</span> <span class="st">"wilcox"</span>,</span>
 <span>  alternative <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"greater"</span>, <span class="st">"less"</span>, <span class="st">"twosided"</span><span class="op">)</span>,</span>
 <span>  min_prop <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  downsampling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -180,16 +181,6 @@ for future features.</p></dd>
 <dd><p>Numeric. The minimum proportion of cells that need to express
 the gene in at least one of the groups. Applied once, globally, so every
 comparison's FDR is calculated over the same gene set.</p></dd>
-
-
-<dt id="arg-downsampling">downsampling<a class="anchor" aria-label="anchor" href="#arg-downsampling"></a></dt>
-<dd><p>Boolean. If any group exceeds 100,000 cells, a random
-subsample of 100,000 cells is used for it. The subsample is drawn once per
-group, so a group is represented by the same cells in every arm.</p></dd>
-
-
-<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Integer. Seed that is used for the downsampling.</p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
