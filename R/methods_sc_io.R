@@ -1501,6 +1501,354 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
   return(object)
 }
 
+#### export --------------------------------------------------------------------
+
+#' Save a `SingleCells` object to h5ad
+#'
+#' @description
+#' Writes the counts, the DuckDB obs/var tables and whatever is cached in
+#' memory (PCA, embeddings, sNN graph) to a spec-compliant h5ad file, so that
+#' the experiment can be handed to ScanPy or shared. The counts are streamed
+#' cell batch by cell batch and never fully materialised in R.
+#'
+#' Only the cells that are currently kept are written, i.e. the export matches
+#' what `object[]` and `object[[]]` return. Counts are stored as `float32`,
+#' which is the ScanPy convention.
+#'
+#' A `SingleCellsMultiModal` object inherits this method and exports its RNA
+#' modality; the ADT layer is not written.
+#'
+#' @param object `SingleCells` class.
+#' @param h5_path File path to write the h5ad file to.
+#' @param assay String. One of `c("raw", "norm")`. Which count assay to place
+#' in `X`.
+#' @param chunk_size Integer. Number of cells per streaming batch. Defaults to
+#' `10000L`.
+#' @param overwrite Boolean. Shall an existing file be overwritten. Defaults to
+#' `TRUE`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return Returns the path to the written file, invisibly.
+#'
+#' @export
+save_h5ad <- S7::new_generic(
+  name = "save_h5ad",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    h5_path,
+    assay = c("raw", "norm"),
+    chunk_size = 10000L,
+    overwrite = TRUE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method save_h5ad SingleCells
+#'
+#' @export
+S7::method(save_h5ad, SingleCells) <- function(
+  object,
+  h5_path,
+  assay = c("raw", "norm"),
+  chunk_size = 10000L,
+  overwrite = TRUE,
+  .verbose = TRUE
+) {
+  assay <- match.arg(assay)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(h5_path, "S1")
+  checkmate::assertChoice(assay, c("raw", "norm"))
+  checkmate::qassert(chunk_size, "I1")
+  checkmate::assertTRUE(chunk_size > 0L)
+  checkmate::qassert(overwrite, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  h5_path <- path.expand(h5_path)
+  checkmate::assertPathForOutput(h5_path, overwrite = TRUE)
+
+  if (file.exists(h5_path)) {
+    if (!overwrite) {
+      stop("The h5ad file already exists and overwrite = FALSE.")
+    }
+    file.remove(h5_path)
+  }
+
+  obs <- .h5ad_export_obs(object)
+  var <- .h5ad_export_var(object)
+
+  # `set_cells_to_keep()` keeps whatever order it was handed, while the obs
+  # table comes back in cell index order; sorting here is what keeps the two
+  # aligned. 0-based, as Rust wants it.
+  cell_indices <- sort(get_cells_to_keep(object))
+
+  # the DuckDB and the ScMap both track which cells are kept; a mismatch here
+  # would silently misalign the obs table against the counts
+  checkmate::assertTRUE(nrow(obs) == length(cell_indices))
+  checkmate::assertTRUE(nrow(var) == S7::prop(object, "dims")[2L])
+
+  cache <- .h5ad_export_cache(object = object, .verbose = .verbose)
+
+  if (.verbose) {
+    message(sprintf(
+      "Writing %i cells x %i genes to h5ad.",
+      nrow(obs),
+      nrow(var)
+    ))
+  }
+
+  # a failed write must not leave a half written file behind that looks valid
+  written <- FALSE
+  on.exit(
+    if (!written && file.exists(h5_path)) {
+      file.remove(h5_path)
+    },
+    add = TRUE
+  )
+
+  rs_save_h5ad(
+    f_path_cells = get_rust_count_cell_f_path(object),
+    h5_path = h5_path,
+    cell_indices = as.integer(cell_indices),
+    norm = assay == "norm",
+    obs_index = as.character(obs[["cell_id"]]),
+    obs = .h5ad_columns(obs[, !"cell_id"]),
+    var_index = as.character(var[["gene_id"]]),
+    var = .h5ad_columns(var[, !"gene_id"]),
+    obsm = cache$obsm,
+    varm = cache$varm,
+    obsp = cache$obsp,
+    uns_json = cache$uns_json,
+    chunk_size = chunk_size
+  )
+  written <- TRUE
+
+  invisible(h5_path)
+}
+
+##### export helpers -----------------------------------------------------------
+
+#' Assemble the obs table for an h5ad export
+#'
+#' @param object `SingleCells` class.
+#'
+#' @return A data.table with `cell_id` first and the bixverse bookkeeping
+#' columns dropped.
+#'
+#' @keywords internal
+.h5ad_export_obs <- function(object) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+
+  obs <- data.table::copy(get_sc_obs(object, filtered = TRUE))
+
+  # the counts are streamed in cell index order, so the obs table has to be
+  if ("cell_idx" %in% names(obs)) {
+    data.table::setorderv(obs, "cell_idx")
+  }
+
+  drop_cols <- intersect(c("cell_idx", "to_keep"), names(obs))
+  if (length(drop_cols) > 0L) {
+    obs[, (drop_cols) := NULL]
+  }
+
+  data.table::setcolorder(obs, "cell_id")
+
+  return(obs)
+}
+
+#' Assemble the var table for an h5ad export
+#'
+#' @param object `SingleCells` class.
+#'
+#' @return A data.table with `gene_id` first and the bixverse bookkeeping
+#' columns dropped.
+#'
+#' @keywords internal
+.h5ad_export_var <- function(object) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+
+  var <- data.table::copy(get_sc_var(object))
+
+  if ("gene_idx" %in% names(var)) {
+    data.table::setorderv(var, "gene_idx")
+    var[, "gene_idx" := NULL]
+  }
+
+  data.table::setcolorder(var, "gene_id")
+
+  return(var)
+}
+
+#' Bring table columns into the types the h5ad writer encodes
+#'
+#' @description The Rust side maps factors to categoricals, characters to
+#' string arrays, and doubles, integers and logicals to plain arrays. This
+#' picks which of those each column becomes:
+#'
+#' - a character column with repeated values becomes a factor, which is what
+#'   pandas would hold it as
+#' - a column with nothing but missing values has no category to write and
+#'   becomes the literal string `"NA"`
+#' - integers and logicals with missing values are widened to double, the
+#'   only one of the three with a representation for them (`NA_integer_` is
+#'   `INT_MIN` on disk, a silently wrong number)
+#' - anything else (dates, lists) is stringified rather than dropped
+#'
+#' @param dt data.table. The columns to write, without the index.
+#'
+#' @return A named list of factor, character, double, integer or logical
+#' vectors.
+#'
+#' @keywords internal
+.h5ad_columns <- function(dt) {
+  # checks
+  checkmate::assertDataTable(dt)
+
+  purrr::map(as.list(dt), function(x) {
+    if (is.character(x) && data.table::uniqueN(x) < length(x)) {
+      x <- factor(x)
+    }
+    if (is.factor(x)) {
+      if (nlevels(x) == 0L) as.character(x) else x
+    } else if (is.character(x)) {
+      x
+    } else if ((is.integer(x) || is.logical(x)) && anyNA(x)) {
+      as.numeric(x)
+    } else if (is.numeric(x) || is.logical(x)) {
+      x
+    } else {
+      as.character(x)
+    }
+  })
+}
+
+#' Collect the cached embeddings and graphs of a `SingleCells` object
+#'
+#' @description PCA factors go to `obsm/X_pca` and the loadings to
+#' `varm/PCs`, every other embedding to `obsm/X_<name>`, and the sNN graph to
+#' `obsp/connectivities` together with the `uns/neighbors` block ScanPy looks
+#' for. Anything that is not cached, or that no longer matches the cells being
+#' written, is skipped.
+#'
+#' @param object `SingleCells` class.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return A list with `obsm` and `varm` (named lists of double matrices),
+#' `obsp` (named list of CSR matrices as `indptr`, `indices`, `data`) and
+#' `uns_json` (string).
+#'
+#' @keywords internal
+.h5ad_export_cache <- function(object, .verbose = TRUE) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(.verbose, "B1")
+
+  sc_cache <- get_sc_cache(object)
+  no_cells <- length(get_cells_to_keep(object))
+  no_genes <- S7::prop(object, "dims")[2L]
+
+  obsm <- list()
+  varm <- list()
+  obsp <- list()
+  uns <- list()
+
+  embeddings <- setdiff(get_available_embeddings(sc_cache), "")
+
+  for (embd_name in embeddings) {
+    embd <- .drop_stamp(get_embedding(sc_cache, embd_name = embd_name))
+    if (!is.matrix(embd)) {
+      next
+    }
+    # a cached embedding can predate the current cell filter, in which case
+    # anndata would reject the file; skip it rather than write something that
+    # cannot be read back
+    if (nrow(embd) != no_cells) {
+      warning(sprintf(
+        paste(
+          "Embedding '%s' has %i rows but %i cells are being written.",
+          "Skipping it in the h5ad export."
+        ),
+        embd_name,
+        nrow(embd),
+        no_cells
+      ))
+      next
+    }
+    h5_name <- sprintf("X_%s", embd_name)
+    if (.verbose) {
+      message(sprintf(
+        "Adding the %s embedding as obsm/%s.",
+        embd_name,
+        h5_name
+      ))
+    }
+    storage.mode(embd) <- "double"
+    obsm[[h5_name]] <- unname(embd)
+  }
+
+  loadings <- .drop_stamp(get_pca_loadings(sc_cache))
+  if (is.matrix(loadings)) {
+    # the loadings only cover the HVGs, so they are padded back out to every
+    # gene; ScanPy expects varm to be aligned with var. `get_hvg()` is 0-based
+    # for Rust.
+    hvg <- get_hvg(object)
+    if (length(hvg) == nrow(loadings)) {
+      padded <- matrix(0, nrow = no_genes, ncol = ncol(loadings))
+      padded[hvg + 1L, ] <- loadings
+      varm[["PCs"]] <- padded
+    } else {
+      warning(sprintf(
+        paste(
+          "The cached PCA loadings cover %i genes but %i HVGs are set.",
+          "Skipping varm/PCs in the h5ad export."
+        ),
+        nrow(loadings),
+        length(hvg)
+      ))
+    }
+  }
+
+  snn_graph <- .drop_stamp(get_snn_graph(sc_cache))
+  if (inherits(snn_graph, "igraph") && igraph::vcount(snn_graph) == no_cells) {
+    if (.verbose) {
+      message("Adding the sNN graph as obsp/connectivities.")
+    }
+    attr_name <- if ("weight" %in% igraph::edge_attr_names(snn_graph)) {
+      "weight"
+    } else {
+      NULL
+    }
+    adj <- igraph::as_adjacency_matrix(
+      snn_graph,
+      attr = attr_name,
+      sparse = TRUE
+    )
+    adj <- methods::as(
+      methods::as(methods::as(adj, "dMatrix"), "generalMatrix"),
+      "RsparseMatrix"
+    )
+    obsp[["connectivities"]] <- list(
+      indptr = adj@p,
+      indices = adj@j,
+      data = adj@x
+    )
+    uns[["neighbors"]] <- list(connectivities_key = "connectivities")
+  }
+
+  list(
+    obsm = obsm,
+    varm = varm,
+    obsp = obsp,
+    uns_json = as.character(jsonlite::toJSON(uns, auto_unbox = TRUE))
+  )
+}
+
 ### mtx ------------------------------------------------------------------------
 
 #' Load in mtx/plain text files to `SingleCells`

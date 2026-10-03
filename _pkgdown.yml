@@ -480,6 +480,7 @@ reference:
       - load_multi_tenx_h5
       - read_h5ad_metadata
       - read_h5ad_x_summary
+      - save_h5ad
       - save_sc_exp_to_disk
       - merge_sc_experiments
       - params_sc_min_quality
