@@ -3772,6 +3772,38 @@ rs_mc_bonsai <- function(sparse_data, gene_indices, bonsai_params, verbose) .Cal
 #' @keywords internal
 rs_bonsai_layout <- function(parent, branch, n_leaves, layout, hyperbolic) .Call(wrap__rs_bonsai_layout, parent, branch, n_leaves, layout, hyperbolic)
 
+#' Write a single cell experiment to h5ad
+#'
+#' @description
+#' Streams the counts out of the cell-based binary file, cell batch by cell
+#' batch, into a spec-compliant h5ad file via
+#' [scx-core](https://github.com/btraven00/scx), together with the obs and
+#' var tables, dense embeddings and sparse cell x cell graphs supplied from
+#' R. Counts are stored as `float32`.
+#'
+#' @param f_path_cells String. Path to the `counts_cells.bin` file.
+#' @param h5_path String. Path of the h5ad file to create.
+#' @param cell_indices Integer vector. The cells to write (0-indexed!), in
+#' the order they shall appear in the file.
+#' @param norm Boolean. Write the normalised instead of the raw counts.
+#' @param obs_index Character vector. One name per cell.
+#' @param obs Named list. The obs columns, see the R wrapper for the types.
+#' @param var_index Character vector. One name per gene.
+#' @param var Named list. The var columns.
+#' @param obsm Named list of numeric matrices with one row per cell.
+#' @param varm Named list of numeric matrices with one row per gene.
+#' @param obsp Named list of CSR matrices, each a list with `indptr`,
+#' `indices` (0-indexed) and `data`.
+#' @param uns_json String. JSON object written to `uns`.
+#' @param chunk_size Integer. Number of cells per streaming batch.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_save_h5ad <- function(f_path_cells, h5_path, cell_indices, norm, obs_index, obs, var_index, var, obsm, varm, obsp, uns_json, chunk_size) .Call(wrap__rs_save_h5ad, f_path_cells, h5_path, cell_indices, norm, obs_index, obs, var_index, var, obsm, varm, obsp, uns_json, chunk_size)
+
 #' Scrublet Rust interface
 #'
 #' @description
