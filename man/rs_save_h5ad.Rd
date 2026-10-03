@@ -57,6 +57,7 @@ Streams the counts out of the cell-based binary file, cell batch by cell
 batch, into a spec-compliant h5ad file via
 \href{https://github.com/btraven00/scx}{scx-core}, together with the obs and
 var tables, dense embeddings and sparse cell x cell graphs supplied from
-R. Counts are stored as \code{float32}.
+R. Counts are stored as \code{float32}. All inputs are checked before the file
+is created.
 }
 \keyword{internal}

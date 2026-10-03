@@ -3779,7 +3779,8 @@ rs_bonsai_layout <- function(parent, branch, n_leaves, layout, hyperbolic) .Call
 #' batch, into a spec-compliant h5ad file via
 #' [scx-core](https://github.com/btraven00/scx), together with the obs and
 #' var tables, dense embeddings and sparse cell x cell graphs supplied from
-#' R. Counts are stored as `float32`.
+#' R. Counts are stored as `float32`. All inputs are checked before the file
+#' is created.
 #'
 #' @param f_path_cells String. Path to the `counts_cells.bin` file.
 #' @param h5_path String. Path of the h5ad file to create.

@@ -12,6 +12,8 @@ use bixverse_rs::single_cell::sc_processing::cellsweep::{
 };
 use bixverse_rs::single_cell::sc_r_wrappers::cellsweep_sample_from_r_list;
 
+use crate::single_cell::utils::norm_counts_to_f32;
+
 /////////////
 // extendR //
 /////////////
@@ -120,16 +122,7 @@ fn get_cell_data(
 
     let data = match assay_type {
         AssayType::Raw => AssayData::Raw(data_raw.iter().map(|x| x as i32).collect()),
-        AssayType::Norm => {
-            let norm_data: Vec<f32> = data_norm
-                .iter()
-                .map(|&x| {
-                    let f16_val: half::f16 = x.into();
-                    f16_val.to_f32()
-                })
-                .collect();
-            AssayData::Norm(norm_data)
-        }
+        AssayType::Norm => AssayData::Norm(norm_counts_to_f32(data_norm).collect()),
     };
 
     (all_indices, data)
@@ -157,16 +150,7 @@ fn get_gene_data(
 
     let data = match assay_type {
         AssayType::Raw => AssayData::Raw(data_raw.iter().map(|x| x as i32).collect()),
-        AssayType::Norm => {
-            let norm_data: Vec<f32> = data_norm
-                .iter()
-                .map(|&x| {
-                    let f16_val: half::f16 = x.into();
-                    f16_val.to_f32()
-                })
-                .collect();
-            AssayData::Norm(norm_data)
-        }
+        AssayType::Norm => AssayData::Norm(norm_counts_to_f32(data_norm).collect()),
     };
 
     (all_indices, data)

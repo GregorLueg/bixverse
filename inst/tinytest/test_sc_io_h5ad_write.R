@@ -14,6 +14,9 @@ fixture <- sc_test_fixture()
 obs <- data.table::copy(fixture$obs)
 obs[, "unique_tag" := sprintf("tag_%04d", seq_len(.N))]
 obs[, "is_even" := seq_len(.N) %% 2L == 0L]
+# missing values in a categorical and in an integer column, both legal h5ad
+obs[, "grp_na" := c("a", "b", NA)[seq_len(.N) %% 3L + 1L]]
+obs[, "n_na" := ifelse(seq_len(.N) %% 4L == 0L, NA_integer_, seq_len(.N))]
 
 sc_object <- sc_test_object(dir = test_temp_dir, fixture = fixture, obs = obs)
 sc_object <- sc_test_prepped(object = sc_object, fixture = fixture)
@@ -174,6 +177,28 @@ expect_equal(
   current = as.logical(as.character(rhdf5::h5read(h5_out, "obs/is_even"))),
   target = obs_expected$is_even,
   info = "h5ad export - logical columns survive the boolean enum"
+)
+
+na_codes <- as.vector(rhdf5::h5read(h5_out, "obs/grp_na/codes"))
+
+expect_equal(
+  current = na_codes == -1L,
+  target = is.na(obs_expected$grp_na),
+  info = "h5ad export - a missing categorical value is written as code -1"
+)
+
+n_na_written <- as.vector(rhdf5::h5read(h5_out, "obs/n_na"))
+
+# NA_integer_ has no float representation but NaN; rhdf5 reads NaN back as NA
+expect_true(
+  current = is.double(n_na_written),
+  info = "h5ad export - an integer column with NA is widened to float"
+)
+
+expect_equal(
+  current = is.na(n_na_written),
+  target = is.na(obs_expected$n_na),
+  info = "h5ad export - a missing integer stays missing"
 )
 
 ## counts ----------------------------------------------------------------------
@@ -458,6 +483,38 @@ expect_equal(
   current = cols$day,
   target = c("2026-01-01", "2026-01-02", "2026-01-03"),
   info = "h5ad columns - unsupported types are stringified, not dropped"
+)
+
+## input checks --------------------------------------------------------------
+
+# a bad input has to fail before the file exists, not after the counts were
+# streamed into it
+
+h5_bad <- file.path(test_temp_dir, "bad.h5ad")
+
+expect_error(
+  current = rs_save_h5ad(
+    f_path_cells = bixverse:::get_rust_count_cell_f_path(sc_object),
+    h5_path = h5_bad,
+    cell_indices = 0:9,
+    norm = FALSE,
+    obs_index = sprintf("c%i", 1:10),
+    obs = list(too_short = 1:5),
+    var_index = var_expected$gene_id,
+    var = list(),
+    obsm = list(),
+    varm = list(),
+    obsp = list(),
+    uns_json = "{}",
+    chunk_size = 5L
+  ),
+  pattern = "too_short",
+  info = "h5ad export - a column of the wrong length is rejected"
+)
+
+expect_false(
+  current = file.exists(h5_bad),
+  info = "h5ad export - a rejected input leaves no file behind"
 )
 
 # clean up ---------------------------------------------------------------------

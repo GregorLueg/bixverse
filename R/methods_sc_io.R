@@ -1601,6 +1601,15 @@ S7::method(save_h5ad, SingleCells) <- function(
     ))
   }
 
+  # a failed write must not leave a half written file behind that looks valid
+  written <- FALSE
+  on.exit(
+    if (!written && file.exists(h5_path)) {
+      file.remove(h5_path)
+    },
+    add = TRUE
+  )
+
   rs_save_h5ad(
     f_path_cells = get_rust_count_cell_f_path(object),
     h5_path = h5_path,
@@ -1616,6 +1625,7 @@ S7::method(save_h5ad, SingleCells) <- function(
     uns_json = cache$uns_json,
     chunk_size = chunk_size
   )
+  written <- TRUE
 
   invisible(h5_path)
 }
