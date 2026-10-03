@@ -9,7 +9,9 @@
 
 ## consts ----------------------------------------------------------------------
 
-# Auto-streaming fires up with more than 100,000 cells
+#' Auto-streaming fires up with more than 100,000 cells
+#'
+#' @keywords internal
 .N_CELLS_STREAMING_THRESHOLD <- 1e5
 
 ## utils -----------------------------------------------------------------------
@@ -1063,8 +1065,8 @@ extract_paga_plot_data <- function(
 #'
 #' @description
 #' Used for the PAGA abstracted graphs and the miloR neighbourhood overlap. Both
-#' are symmetric, so the lower triangle and the diagonal are dropped here. Keeping it would draw every edge twice, at
-#' twice the apparent width.
+#' are symmetric, so the lower triangle and the diagonal are dropped here.
+#' Keeping it would draw every edge twice, at twice the apparent width.
 #'
 #' @param conn Sparse matrix. The graph, named by node.
 #' @param threshold Numeric. Edges below this connectivity are dropped.
