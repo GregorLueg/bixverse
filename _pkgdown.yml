@@ -718,6 +718,7 @@ reference:
       - extract_feature_plot_data
       - extract_gene_violin_data
       - extract_paga_plot_data
+      - extract_milo_plot_data
   
   # Different statistical functions
   - title: Statistical functions

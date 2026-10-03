@@ -10,8 +10,6 @@ find_all_markers_sc(
   method = "wilcox",
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
-  downsampling = TRUE,
-  seed = 42L,
   .verbose = TRUE
 )
 }
@@ -30,12 +28,7 @@ for future features.}
 \code{"greater"}, i.e., genes upregulated in the group.}
 
 \item{min_prop}{Numeric. The minimum proportion of cells that need to express
-the gene to be tested in any of the two groups.}
-
-\item{downsampling}{Boolean. If the other group exceeds 100,000 cells, a
-random subsample of 100,000 cells will be used.}
-
-\item{seed}{Integer. Seed that is used for the downsampling.}
+the gene to be tested in the group or in the rest.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
@@ -47,11 +40,10 @@ data.table with the DGE results from the test.
 \description{
 This function can be used to run differential gene expression for every
 group of an unsupervised clustering method for example. You specify a column
-and the function will start calculating differential gene expression of the
-first cluster vs. everything else, second cluster vs. everything else, etc.
-The function will automatically downsample everything else to a random set
-of 100,000 cells if it should exceed that. This automatic downsampling can
-be turned off however.
+and the function calculates differential gene expression of the first
+cluster vs. everything else, second cluster vs. everything else, etc. All
+groups are tested in a single pass over the genes, so memory stays bounded
+however many cells there are.
 }
 \examples{
 # one versus rest across the Leiden clusters

@@ -39,6 +39,7 @@ extendr_module! {
     mod r_sc_analysis;
     // dge
     fn rs_calculate_dge_mann_whitney;
+    fn rs_calculate_dge_one_vs_rest;
     fn rs_calculate_dge_one_vs_many;
     // aucell
     fn rs_aucell;
@@ -169,23 +170,139 @@ fn rs_calculate_dge_mann_whitney(
     ))
 }
 
+/// Convert an R list of integer vectors into cell groups
+///
+/// ### Params
+///
+/// * `cell_groups` - R list of 0-indexed integer cell index vectors.
+///
+/// ### Returns
+///
+/// One `Vec<usize>` per list element.
+fn r_cell_groups_to_rust(cell_groups: &List) -> extendr_api::Result<Vec<Vec<usize>>> {
+    (0..cell_groups.len())
+        .map(|i| {
+            Ok(cell_groups
+                .elt(i)?
+                .as_integer_vector()
+                .ok_or_else(|| {
+                    extendr_api::Error::Other(format!(
+                        "Element {} of `cell_groups` is not an integer vector.",
+                        i + 1
+                    ))
+                })?
+                .r_int_convert())
+        })
+        .collect()
+}
+
+/// Calculate one-vs-rest Mann Whitney DGEs for every cell group
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Tests every cell group against all other grouped cells pooled, in a single
+/// pass over the gene-based file. Cells in no group are ignored. Each group
+/// filters genes on its own: a gene is tested for a group if it clears
+/// `min_prop` in the group or in the rest, and the FDR is calculated over that
+/// group's tested genes.
+///
+/// @param f_path String. Path to the `counts_genes.bin` file.
+/// @param cell_groups List. List of integer vectors, each containing the index
+/// positions (0-indexed) of the cells of one group.
+/// @param min_prop Numeric. Minimum proportion of expression in the group or in
+/// the rest to be tested.
+/// @param alternative String. One of `c("twosided", "greater", "less")`. Null
+/// hypothesis.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the elements below, one entry per tested gene and
+/// group, flattened group-major.
+/// \itemize{
+///   \item group - Index (0-indexed) of the group in `cell_groups`.
+///   \item gene_idx - Index (0-indexed) of the gene.
+///   \item lfc - Log fold change of the group against the rest.
+///   \item prop1 - Proportion of cells expressing the gene in the group.
+///   \item prop2 - Proportion of cells expressing the gene in the rest.
+///   \item auroc - AUROC of the group against the rest.
+///   \item z_scores - Z-scores based on the Mann Whitney statistic.
+///   \item p_values - P-values of the Mann Whitney statistic.
+///   \item fdr - False discovery rate after BH adjustment, per group.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_calculate_dge_one_vs_rest(
+    f_path: String,
+    cell_groups: List,
+    min_prop: f64,
+    alternative: String,
+    verbose: usize,
+) -> extendr_api::Result<List> {
+    let groups = r_cell_groups_to_rust(&cell_groups)?;
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
+    let arms: Vec<DgeMannWhitneyRes> = calculate_dge_one_vs_rest_mann_whitney(
+        &reader,
+        &groups,
+        min_prop as f32,
+        &alternative,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let mut group: Vec<i32> = Vec::new();
+    let mut gene_idx: Vec<i32> = Vec::new();
+    for (g, arm) in arms.iter().enumerate() {
+        for (gene, _) in arm.genes_to_keep.iter().enumerate().filter(|(_, &k)| k) {
+            group.push(g as i32);
+            gene_idx.push(gene as i32);
+        }
+    }
+
+    let concat_f32 = |f: fn(&DgeMannWhitneyRes) -> &Vec<f32>| -> Vec<f64> {
+        arms.iter()
+            .flat_map(|a| f(a).iter().map(|&x| x as f64))
+            .collect()
+    };
+    let concat_f64 = |f: fn(&DgeMannWhitneyRes) -> &Vec<f64>| -> Vec<f64> {
+        arms.iter().flat_map(|a| f(a).iter().copied()).collect()
+    };
+
+    Ok(list!(
+        group = group,
+        gene_idx = gene_idx,
+        lfc = concat_f32(|a| &a.lfc),
+        prop1 = concat_f32(|a| &a.prop1),
+        prop2 = concat_f32(|a| &a.prop2),
+        auroc = concat_f32(|a| &a.auroc),
+        z_scores = concat_f64(|a| &a.z_scores),
+        p_values = concat_f64(|a| &a.p_vals),
+        fdr = concat_f64(|a| &a.fdr)
+    ))
+}
+
 /// Calculate one-vs-many AUROC DGEs for specific markers
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// The function scores one reference group of cells against each comparison
+/// The function scores each reference group of cells against every other
 /// group separately and summarises the results per gene across all of the
 /// comparisons. This is the marker question: a gene that is specific to the
 /// reference has to hold up against every rival, which a single pooled test
 /// cannot answer because it is dominated by whichever rival contributes the
-/// most cells. Genes are filtered once, globally, so every comparison's FDR is
-/// calculated over the same gene set.
+/// most cells. All reference groups come out of a single pass over the
+/// gene-based file. Genes are filtered once, globally, so every comparison's
+/// FDR is calculated over the same gene set.
 ///
-/// @param f_path String. Path to the `counts_cells.bin` file.
-/// @param cell_indices_ref Integer. Index positions (0-indexed) of the cells
-/// of the reference group.
-/// @param cell_indices_other List. List of integer vectors, each containing the
-/// index positions (0-indexed) of the cells of one comparison group.
+/// @param f_path String. Path to the `counts_genes.bin` file.
+/// @param cell_groups List. List of integer vectors, each containing the index
+/// positions (0-indexed) of the cells of one group.
+/// @param references Integer. Index positions (0-indexed) into `cell_groups` of
+/// the reference groups to report. The rivals of each reference are all other
+/// groups, in the order of `cell_groups`.
 /// @param min_prop Numeric. Minimum proportion of expression in at least one
 /// of the groups to be tested.
 /// @param alternative String. One of `c("twosided", "greater", "less")`. Null
@@ -194,30 +311,32 @@ fn rs_calculate_dge_mann_whitney(
 /// detailed verbosity.
 ///
 /// @returns A list with the elements below. The per-comparison elements are
-/// flattened comparison-major, i.e., all genes of the first comparison, then
-/// all genes of the second, and so on.
+/// flattened reference-major, then rival-major, then gene. The summary elements
+/// are flattened reference-major, then gene.
 /// \itemize{
-///   \item comparison - Index (0-indexed) of the comparison group the
-///   per-comparison statistics belong to.
-///   \item auroc - AUROC of the reference against the comparison group.
-///   \item lfc - Log fold change of the reference against the comparison group.
-///   \item prop_other - Proportion of cells expressing the gene in the
-///   comparison group.
+///   \item reference - Index (0-indexed) of the reference group, per
+///   comparison row.
+///   \item rival - Index (0-indexed) of the rival group, per comparison row.
+///   \item auroc - AUROC of the reference against the rival.
+///   \item lfc - Log fold change of the reference against the rival.
+///   \item prop_other - Proportion of cells expressing the gene in the rival.
 ///   \item z_scores - Z-scores based on the Mann Whitney statistic.
 ///   \item p_values - P-values of the Mann Whitney statistic.
 ///   \item fdr - False discovery rate after BH adjustment, per comparison.
+///   \item summary_reference - Index (0-indexed) of the reference group, per
+///   summary row.
 ///   \item prop_ref - Proportion of reference cells expressing the gene.
-///   \item median_auroc - Median AUROC across the comparisons.
-///   \item min_auroc - Worst AUROC across the comparisons.
-///   \item mean_auroc - Mean AUROC across the comparisons.
-///   \item max_auroc - Best AUROC across the comparisons.
-///   \item worst_comparison - Index (0-indexed) of the comparison group
-///   achieving `min_auroc`.
-///   \item min_rank - Best rank the gene achieves in any single comparison when
+///   \item median_auroc - Median AUROC across the rivals.
+///   \item min_auroc - Worst AUROC across the rivals.
+///   \item mean_auroc - Mean AUROC across the rivals.
+///   \item max_auroc - Best AUROC across the rivals.
+///   \item worst_rival - Index (0-indexed) of the rival group achieving
+///   `min_auroc`.
+///   \item min_rank - Best rank the gene achieves against any single rival when
 ///   the genes are ordered by descending AUROC.
-///   \item simes_p - Simes-combined p-value across the comparisons.
+///   \item simes_p - Simes-combined p-value across the rivals.
 ///   \item simes_fdr - False discovery rate over `simes_p`.
-///   \item max_p - Largest p-value across the comparisons.
+///   \item max_p - Largest p-value across the rivals.
 ///   \item max_p_fdr - False discovery rate over `max_p`.
 ///   \item genes_to_keep - Boolean indicating which genes were tested.
 /// }
@@ -228,67 +347,92 @@ fn rs_calculate_dge_mann_whitney(
 #[extendr]
 fn rs_calculate_dge_one_vs_many(
     f_path: String,
-    cell_indices_ref: &[i32],
-    cell_indices_other: List,
+    cell_groups: List,
+    references: &[i32],
     min_prop: f64,
     alternative: String,
     verbose: usize,
 ) -> extendr_api::Result<List> {
-    let cell_indices_ref = cell_indices_ref.r_int_convert();
-
-    let mut other_indices: Vec<Vec<usize>> = Vec::with_capacity(cell_indices_other.len());
-    for i in 0..cell_indices_other.len() {
-        let r_obj = cell_indices_other.elt(i)?;
-        let int = r_obj
-            .as_integer_vector()
-            .ok_or_else(|| {
-                extendr_api::Error::Other(format!(
-                    "Element {} of `cell_indices_other` is not an integer vector.",
-                    i + 1
-                ))
-            })?
-            .r_int_convert();
-        other_indices.push(int);
-    }
-
+    let groups = r_cell_groups_to_rust(&cell_groups)?;
+    let references = references.r_int_convert();
     let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
 
-    let dge_results: DgeAurocMultiRes = calculate_dge_one_vs_many_auroc(
+    let arms: Vec<DgeAurocMultiRes> = calculate_dge_one_vs_many_auroc(
         &reader,
-        &cell_indices_ref,
-        &other_indices,
+        &groups,
+        &references,
         min_prop as f32,
         &alternative,
         verbose,
     )
     .to_extendr()?;
 
-    let no_genes_kept = dge_results.prop_ref.len();
+    let n_groups = groups.len();
+    let genes_to_keep = arms
+        .first()
+        .map(|a| a.genes_to_keep.clone())
+        .unwrap_or_default();
+    let n_kept = arms.first().map_or(0, |a| a.prop_ref.len());
 
-    let comparison = (0..other_indices.len())
-        .flat_map(|group| std::iter::repeat_n(group as i32, no_genes_kept))
-        .collect::<Vec<i32>>();
+    let mut reference: Vec<i32> = Vec::new();
+    let mut rival: Vec<i32> = Vec::new();
+    let mut summary_reference: Vec<i32> = Vec::new();
+    let mut worst_rival: Vec<i32> = Vec::new();
+    for (&r, arm) in references.iter().zip(&arms) {
+        let rivals: Vec<usize> = (0..n_groups).filter(|&k| k != r).collect();
+        for &k in &rivals {
+            reference.extend(std::iter::repeat_n(r as i32, n_kept));
+            rival.extend(std::iter::repeat_n(k as i32, n_kept));
+        }
+        summary_reference.extend(std::iter::repeat_n(r as i32, n_kept));
+        worst_rival.extend(arm.worst_comparison.iter().map(|&c| rivals[c] as i32));
+    }
+
+    let per_comp_f32 = |f: fn(&DgeAurocMultiRes) -> &Vec<Vec<f32>>| -> Vec<f64> {
+        arms.iter()
+            .flat_map(|a| f(a).iter().flatten().map(|&x| x as f64))
+            .collect()
+    };
+    let per_comp_f64 = |f: fn(&DgeAurocMultiRes) -> &Vec<Vec<f64>>| -> Vec<f64> {
+        arms.iter()
+            .flat_map(|a| f(a).iter().flatten().copied())
+            .collect()
+    };
+    let summary_f32 = |f: fn(&DgeAurocMultiRes) -> &Vec<f32>| -> Vec<f64> {
+        arms.iter()
+            .flat_map(|a| f(a).iter().map(|&x| x as f64))
+            .collect()
+    };
+    let summary_f64 = |f: fn(&DgeAurocMultiRes) -> &Vec<f64>| -> Vec<f64> {
+        arms.iter().flat_map(|a| f(a).iter().copied()).collect()
+    };
+    let min_rank: Vec<i32> = arms
+        .iter()
+        .flat_map(|a| a.min_rank.iter().map(|&x| x as i32))
+        .collect();
 
     Ok(list!(
-        comparison = comparison,
-        auroc = dge_results.auroc.concat().r_float_convert(),
-        lfc = dge_results.lfc.concat().r_float_convert(),
-        prop_other = dge_results.prop_other.concat().r_float_convert(),
-        z_scores = dge_results.z_scores.concat(),
-        p_values = dge_results.p_vals.concat(),
-        fdr = dge_results.fdr.concat(),
-        prop_ref = dge_results.prop_ref.r_float_convert(),
-        median_auroc = dge_results.median_auroc.r_float_convert(),
-        min_auroc = dge_results.min_auroc.r_float_convert(),
-        mean_auroc = dge_results.mean_auroc.r_float_convert(),
-        max_auroc = dge_results.max_auroc.r_float_convert(),
-        worst_comparison = dge_results.worst_comparison.r_int_convert(),
-        min_rank = dge_results.min_rank.r_int_convert(),
-        simes_p = dge_results.simes_p,
-        simes_fdr = dge_results.simes_fdr,
-        max_p = dge_results.max_p,
-        max_p_fdr = dge_results.max_p_fdr,
-        genes_to_keep = dge_results.genes_to_keep
+        reference = reference,
+        rival = rival,
+        auroc = per_comp_f32(|a| &a.auroc),
+        lfc = per_comp_f32(|a| &a.lfc),
+        prop_other = per_comp_f32(|a| &a.prop_other),
+        z_scores = per_comp_f64(|a| &a.z_scores),
+        p_values = per_comp_f64(|a| &a.p_vals),
+        fdr = per_comp_f64(|a| &a.fdr),
+        summary_reference = summary_reference,
+        prop_ref = summary_f32(|a| &a.prop_ref),
+        median_auroc = summary_f32(|a| &a.median_auroc),
+        min_auroc = summary_f32(|a| &a.min_auroc),
+        mean_auroc = summary_f32(|a| &a.mean_auroc),
+        max_auroc = summary_f32(|a| &a.max_auroc),
+        worst_rival = worst_rival,
+        min_rank = min_rank,
+        simes_p = summary_f64(|a| &a.simes_p),
+        simes_fdr = summary_f64(|a| &a.simes_fdr),
+        max_p = summary_f64(|a| &a.max_p),
+        max_p_fdr = summary_f64(|a| &a.max_p_fdr),
+        genes_to_keep = genes_to_keep
     ))
 }
 

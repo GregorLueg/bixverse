@@ -2,9 +2,9 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{.melt_one_vs_many_res}
 \alias{.melt_one_vs_many_res}
-\title{Melt one reference arm of the one-vs-many marker results}
+\title{Melt the one-vs-many marker results}
 \usage{
-.melt_one_vs_many_res(rs_res, gene_names, ref_grp, rival_grps)
+.melt_one_vs_many_res(rs_res, gene_names, grp_names)
 }
 \arguments{
 \item{rs_res}{List. The raw return of
@@ -14,20 +14,17 @@ passed the proportion filter.}
 \item{gene_names}{Character vector. All gene names in the original gene
 order, subset with \code{rs_res$genes_to_keep}.}
 
-\item{ref_grp}{String. Name of the reference group.}
-
-\item{rival_grps}{Character vector. Names of the comparison groups, in the
-order they were handed to Rust.}
+\item{grp_names}{Character vector. Names of all groups, in the order they
+were handed to Rust.}
 }
 \value{
 A list with elements \code{summary} and \code{per_comparison}, both
 data.tables.
 }
 \description{
-Takes the raw Rust output of \code{\link[=rs_calculate_dge_one_vs_many]{rs_calculate_dge_one_vs_many()}} for a
-single reference group and splits it into the per-rival statistics and the
-per-gene summaries across those rivals. The per-comparison elements come back
-comparison-major, so the gene names are recycled and each rival name covers
-one block of genes.
+Takes the raw Rust output of \code{\link[=rs_calculate_dge_one_vs_many]{rs_calculate_dge_one_vs_many()}} and
+splits it into the per-rival statistics and the per-gene summaries across
+those rivals. Both come back with 0-indexed group indices and are flattened
+reference-major, so the kept gene names are recycled per block.
 }
 \keyword{internal}

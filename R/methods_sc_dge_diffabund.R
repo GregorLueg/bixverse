@@ -141,11 +141,10 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
 #' @description
 #' This function can be used to run differential gene expression for every
 #' group of an unsupervised clustering method for example. You specify a column
-#' and the function will start calculating differential gene expression of the
-#' first cluster vs. everything else, second cluster vs. everything else, etc.
-#' The function will automatically downsample everything else to a random set
-#' of 100,000 cells if it should exceed that. This automatic downsampling can
-#' be turned off however.
+#' and the function calculates differential gene expression of the first
+#' cluster vs. everything else, second cluster vs. everything else, etc. All
+#' groups are tested in a single pass over the genes, so memory stays bounded
+#' however many cells there are.
 #'
 #' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param column_of_interest String. The column you wish to use to identify
@@ -157,10 +156,7 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
 #' `c("twosided", "greater", "less")`. This function will default to
 #' `"greater"`, i.e., genes upregulated in the group.
 #' @param min_prop Numeric. The minimum proportion of cells that need to express
-#' the gene to be tested in any of the two groups.
-#' @param downsampling Boolean. If the other group exceeds 100,000 cells, a
-#' random subsample of 100,000 cells will be used.
-#' @param seed Integer. Seed that is used for the downsampling.
+#' the gene to be tested in the group or in the rest.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -190,8 +186,6 @@ find_all_markers_sc <- S7::new_generic(
     method = "wilcox",
     alternative = c("greater", "less", "twosided"),
     min_prop = 0.05,
-    downsampling = TRUE,
-    seed = 42L,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -200,7 +194,6 @@ find_all_markers_sc <- S7::new_generic(
 
 #' @method find_all_markers_sc ScOrScSubset
 #'
-#' @importFrom zeallot %<-%
 #' @importFrom magrittr %>%
 S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   object,
@@ -208,8 +201,6 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   method = "wilcox",
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
-  downsampling = TRUE,
-  seed = 42L,
   .verbose = TRUE
 ) {
   alternative <- match.arg(alternative)
@@ -223,8 +214,6 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   checkmate::assertChoice(method, c("wilcox"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
   checkmate::qassert(min_prop, "N1[0, 1]")
-  checkmate::qassert(downsampling, "B1")
-  checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   obs_data <- object[[c("cell_id", column_of_interest)]][
@@ -233,90 +222,55 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
 
   unique_groups <- unique(obs_data[[column_of_interest]])
 
-  dge_dts <- vector(mode = "list", length = length(unique_groups))
-
-  # loops are my friend...
-  for (i in seq_along(unique_groups)) {
-    if (.verbose) {
-      message(sprintf(
-        "Processing group %i out of %i.",
-        i,
-        length(unique_groups)
-      ))
-    }
-
-    cell_ids_i <- obs_data[get(column_of_interest) == unique_groups[i], cell_id]
-    cell_ids_not_i <- obs_data[
-      get(column_of_interest) != unique_groups[i],
-      cell_id
-    ]
-    if (downsampling && length(cell_ids_not_i) > 100000) {
-      if (.verbose) {
-        message(
-          paste(
-            " Large number of cells in reference group found.",
-            "Downsampling to 100,000 cells."
-          )
-        )
-      }
-      set.seed(seed + i)
-      cell_ids_not_i <- sample(cell_ids_not_i, 100000)
-    }
-
-    dge_results_i <- switch(
-      method,
-      "wilcox" = rs_calculate_dge_mann_whitney(
-        f_path = get_rust_count_cell_f_path(object),
-        cell_indices_1 = get_cell_indices(
-          x = object,
-          cell_ids = cell_ids_i,
-          rust_index = TRUE
-        ),
-        cell_indices_2 = get_cell_indices(
-          x = object,
-          cell_ids = cell_ids_not_i,
-          rust_index = TRUE
-        ),
-        min_prop = min_prop,
-        alternative = alternative,
-        verbose = 0L
-      )
+  cell_groups <- purrr::map(unique_groups, \(grp) {
+    get_cell_indices(
+      x = object,
+      cell_ids = obs_data[get(column_of_interest) == grp, cell_id],
+      rust_index = TRUE
     )
+  })
 
-    dge_dt_i <- data.table::as.data.table(dge_results_i[c(
+  dge_results <- switch(
+    method,
+    "wilcox" = rs_calculate_dge_one_vs_rest(
+      f_path = get_rust_count_gene_f_path(object),
+      cell_groups = cell_groups,
+      min_prop = min_prop,
+      alternative = alternative,
+      verbose = parse_verbosity(.verbose)
+    )
+  )
+
+  # Rust returns 0-indexed groups and genes
+  dge_dt <- data.table::as.data.table(dge_results[c(
+    "lfc",
+    "prop1",
+    "prop2",
+    "z_scores",
+    "p_values",
+    "fdr"
+  )])[,
+    `:=`(
+      gene_id = get_gene_names(object)[dge_results$gene_idx + 1L],
+      grp = unique_groups[dge_results$group + 1L]
+    )
+  ]
+
+  data.table::setcolorder(
+    dge_dt,
+    c(
+      "grp",
+      "gene_id",
       "lfc",
       "prop1",
       "prop2",
       "z_scores",
       "p_values",
       "fdr"
-    )])[,
-      `:=`(
-        gene_id = get_gene_names(object)[dge_results_i$genes_to_keep],
-        grp = unique_groups[i]
-      )
-    ]
-
-    data.table::setcolorder(
-      dge_dt_i,
-      c(
-        "grp",
-        "gene_id",
-        "lfc",
-        "prop1",
-        "prop2",
-        "z_scores",
-        "p_values",
-        "fdr"
-      )
     )
+  )
 
-    dge_dts[[i]] <- dge_dt_i
-  }
-
-  dge_dt_final <- data.table::rbindlist(dge_dts)
-
-  return(dge_dt_final)
+  return(dge_dt)
 }
 
 ### find specific markers ------------------------------------------------------
@@ -333,7 +287,8 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
 #' (`min_auroc`, `median_auroc`, `min_rank`) tell you whether it does.
 #'
 #' Leave `reference_group` as `NULL` to run every group of the column as the
-#' reference in turn, or name one group to only get that arm.
+#' reference, or name one group to only get that arm. Either way, everything is
+#' calculated in a single pass over the genes.
 #'
 #' The summaries rank on AUROC rather than the p-value on purpose. Group sizes
 #' vary a lot in practice and p-values scale with the group sizes, so a large
@@ -353,10 +308,6 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
 #' @param min_prop Numeric. The minimum proportion of cells that need to express
 #' the gene in at least one of the groups. Applied once, globally, so every
 #' comparison's FDR is calculated over the same gene set.
-#' @param downsampling Boolean. If any group exceeds 100,000 cells, a random
-#' subsample of 100,000 cells is used for it. The subsample is drawn once per
-#' group, so a group is represented by the same cells in every arm.
-#' @param seed Integer. Seed that is used for the downsampling.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -400,8 +351,6 @@ find_specific_markers_sc <- S7::new_generic(
     method = "wilcox",
     alternative = c("greater", "less", "twosided"),
     min_prop = 0.05,
-    downsampling = TRUE,
-    seed = 42L,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -416,8 +365,6 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
   method = "wilcox",
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
-  downsampling = TRUE,
-  seed = 42L,
   .verbose = TRUE
 ) {
   alternative <- match.arg(alternative)
@@ -432,8 +379,6 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
   checkmate::assertChoice(method, c("wilcox"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
   checkmate::qassert(min_prop, "N1[0, 1]")
-  checkmate::qassert(downsampling, "B1")
-  checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   .assert_group_by(object, column_of_interest)
@@ -455,8 +400,7 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
     ))
   }
 
-  # obs cell_idx is 1-based, Rust wants 0-based. split() orders the groups by
-  # name, which keeps the downsampling seed stable across the reference arms
+  # obs cell_idx is 1-based, Rust wants 0-based
   cell_groups <- split(
     as.integer(obs_data$cell_idx[annotated] - 1L),
     grp_vec[annotated]
@@ -484,81 +428,26 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
 
   grp_names <- names(cell_groups)
 
-  if (downsampling) {
-    cell_groups <- purrr::imap(cell_groups, \(indices, grp) {
-      if (length(indices) <= 100000) {
-        return(indices)
-      }
-      if (.verbose) {
-        message(sprintf(
-          " Large number of cells in group '%s'. Downsampling to 100,000.",
-          grp
-        ))
-      }
-      set.seed(seed + which(grp_names == grp))
-      sample(indices, 100000)
-    })
-  }
-
   ref_groups <- if (is.null(reference_group)) {
     grp_names
   } else {
     reference_group
   }
 
-  # the per-arm progress messages cover normal verbosity, so only hand the Rust
-  # side the detailed level where its per-comparison timings are wanted
-  rust_verbosity <- if (parse_verbosity(.verbose) >= 2L) 2L else 0L
-
-  summary_dts <- vector(mode = "list", length = length(ref_groups))
-  per_comparison_dts <- vector(mode = "list", length = length(ref_groups))
-
-  for (i in seq_along(ref_groups)) {
-    if (.verbose) {
-      message(sprintf(
-        "Processing reference group %i out of %i.",
-        i,
-        length(ref_groups)
-      ))
-    }
-
-    rival_grps <- setdiff(grp_names, ref_groups[i])
-
-    res_i <- switch(
-      method,
-      "wilcox" = rs_calculate_dge_one_vs_many(
-        f_path = get_rust_count_cell_f_path(object),
-        cell_indices_ref = cell_groups[[ref_groups[i]]],
-        cell_indices_other = cell_groups[rival_grps],
-        min_prop = min_prop,
-        alternative = alternative,
-        verbose = rust_verbosity
-      )
+  rs_res <- switch(
+    method,
+    "wilcox" = rs_calculate_dge_one_vs_many(
+      f_path = get_rust_count_gene_f_path(object),
+      cell_groups = unname(cell_groups),
+      references = match(ref_groups, grp_names) - 1L,
+      min_prop = min_prop,
+      alternative = alternative,
+      verbose = parse_verbosity(.verbose)
     )
+  )
 
-    if (!any(res_i$genes_to_keep)) {
-      warning(sprintf(
-        "No gene passed the proportion filter for group '%s'. Skipping it.",
-        ref_groups[i]
-      ))
-      next
-    }
-
-    melted_i <- .melt_one_vs_many_res(
-      rs_res = res_i,
-      gene_names = get_gene_names(object),
-      ref_grp = ref_groups[i],
-      rival_grps = rival_grps
-    )
-
-    summary_dts[[i]] <- melted_i$summary
-    per_comparison_dts[[i]] <- melted_i$per_comparison
-  }
-
-  summary_dt <- data.table::rbindlist(summary_dts)
-
-  # early return if every arm was skipped by the proportion filter
-  if (nrow(summary_dt) == 0L) {
+  # early return if the proportion filter removed every gene
+  if (!any(rs_res$genes_to_keep)) {
     warning(
       paste(
         "No gene passed the proportion filter for any group.",
@@ -568,19 +457,23 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
     return(NULL)
   }
 
+  melted <- .melt_one_vs_many_res(
+    rs_res = rs_res,
+    gene_names = get_gene_names(object),
+    grp_names = grp_names
+  )
+
   params <- list(
     method = method,
     alternative = alternative,
     min_prop = min_prop,
     column_of_interest = column_of_interest,
-    reference_group = reference_group,
-    downsampling = downsampling,
-    seed = seed
+    reference_group = reference_group
   )
 
   new_sc_specific_markers(
-    summary = summary_dt,
-    per_comparison = data.table::rbindlist(per_comparison_dts),
+    summary = melted$summary,
+    per_comparison = melted$per_comparison,
     params = params
   )
 }

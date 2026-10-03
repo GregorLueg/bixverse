@@ -6,21 +6,22 @@
 \usage{
 rs_calculate_dge_one_vs_many(
   f_path,
-  cell_indices_ref,
-  cell_indices_other,
+  cell_groups,
+  references,
   min_prop,
   alternative,
   verbose
 )
 }
 \arguments{
-\item{f_path}{String. Path to the \code{counts_cells.bin} file.}
+\item{f_path}{String. Path to the \code{counts_genes.bin} file.}
 
-\item{cell_indices_ref}{Integer. Index positions (0-indexed) of the cells
-of the reference group.}
+\item{cell_groups}{List. List of integer vectors, each containing the index
+positions (0-indexed) of the cells of one group.}
 
-\item{cell_indices_other}{List. List of integer vectors, each containing the
-index positions (0-indexed) of the cells of one comparison group.}
+\item{references}{Integer. Index positions (0-indexed) into \code{cell_groups} of
+the reference groups to report. The rivals of each reference are all other
+groups, in the order of \code{cell_groups}.}
 
 \item{min_prop}{Numeric. Minimum proportion of expression in at least one
 of the groups to be tested.}
@@ -33,42 +34,45 @@ detailed verbosity.}
 }
 \value{
 A list with the elements below. The per-comparison elements are
-flattened comparison-major, i.e., all genes of the first comparison, then
-all genes of the second, and so on.
+flattened reference-major, then rival-major, then gene. The summary elements
+are flattened reference-major, then gene.
 \itemize{
-\item comparison - Index (0-indexed) of the comparison group the
-per-comparison statistics belong to.
-\item auroc - AUROC of the reference against the comparison group.
-\item lfc - Log fold change of the reference against the comparison group.
-\item prop_other - Proportion of cells expressing the gene in the
-comparison group.
+\item reference - Index (0-indexed) of the reference group, per
+comparison row.
+\item rival - Index (0-indexed) of the rival group, per comparison row.
+\item auroc - AUROC of the reference against the rival.
+\item lfc - Log fold change of the reference against the rival.
+\item prop_other - Proportion of cells expressing the gene in the rival.
 \item z_scores - Z-scores based on the Mann Whitney statistic.
 \item p_values - P-values of the Mann Whitney statistic.
 \item fdr - False discovery rate after BH adjustment, per comparison.
+\item summary_reference - Index (0-indexed) of the reference group, per
+summary row.
 \item prop_ref - Proportion of reference cells expressing the gene.
-\item median_auroc - Median AUROC across the comparisons.
-\item min_auroc - Worst AUROC across the comparisons.
-\item mean_auroc - Mean AUROC across the comparisons.
-\item max_auroc - Best AUROC across the comparisons.
-\item worst_comparison - Index (0-indexed) of the comparison group
-achieving \code{min_auroc}.
-\item min_rank - Best rank the gene achieves in any single comparison when
+\item median_auroc - Median AUROC across the rivals.
+\item min_auroc - Worst AUROC across the rivals.
+\item mean_auroc - Mean AUROC across the rivals.
+\item max_auroc - Best AUROC across the rivals.
+\item worst_rival - Index (0-indexed) of the rival group achieving
+\code{min_auroc}.
+\item min_rank - Best rank the gene achieves against any single rival when
 the genes are ordered by descending AUROC.
-\item simes_p - Simes-combined p-value across the comparisons.
+\item simes_p - Simes-combined p-value across the rivals.
 \item simes_fdr - False discovery rate over \code{simes_p}.
-\item max_p - Largest p-value across the comparisons.
+\item max_p - Largest p-value across the rivals.
 \item max_p_fdr - False discovery rate over \code{max_p}.
 \item genes_to_keep - Boolean indicating which genes were tested.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-The function scores one reference group of cells against each comparison
+The function scores each reference group of cells against every other
 group separately and summarises the results per gene across all of the
 comparisons. This is the marker question: a gene that is specific to the
 reference has to hold up against every rival, which a single pooled test
 cannot answer because it is dominated by whichever rival contributes the
-most cells. Genes are filtered once, globally, so every comparison's FDR is
-calculated over the same gene set.
+most cells. All reference groups come out of a single pass over the
+gene-based file. Genes are filtered once, globally, so every comparison's
+FDR is calculated over the same gene set.
 }
 \keyword{internal}

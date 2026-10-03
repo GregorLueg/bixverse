@@ -1069,6 +1069,34 @@ expect_true(
   info = "all expected cell markers identified"
 )
 
+# each arm is the pairwise test of the group against all other grouped cells
+leiden_obs <- sc_object[[c("cell_id", "leiden_clustering")]][
+  !is.na(leiden_clustering)
+]
+first_cluster <- unique(leiden_obs$leiden_clustering)[1]
+
+pairwise_rest <- find_markers_sc(
+  object = sc_object,
+  cells_1 = leiden_obs[leiden_clustering == first_cluster, cell_id],
+  cells_2 = leiden_obs[leiden_clustering != first_cluster, cell_id],
+  alternative = "greater",
+  .verbose = FALSE
+)
+
+one_vs_rest_arm <- dge_test_2[grp == first_cluster]
+
+expect_equal(
+  current = one_vs_rest_arm$gene_id,
+  target = pairwise_rest$gene_id,
+  info = "find all markers: same genes tested as the pairwise test"
+)
+
+expect_equal(
+  current = one_vs_rest_arm[, .(lfc, prop1, prop2, z_scores, p_values, fdr)],
+  target = pairwise_rest[, .(lfc, prop1, prop2, z_scores, p_values, fdr)],
+  info = "find all markers: one arm matches the pairwise test against the rest"
+)
+
 ### find specific markers ------------------------------------------------------
 
 specific_markers <- find_specific_markers_sc(
@@ -1211,11 +1239,11 @@ expect_equal(
   info = "specific markers: only the requested reference group is returned"
 )
 
-# the rivals are unchanged, so the single arm has to reproduce the loop exactly
+# the rivals are unchanged, so the single arm has to reproduce the full run
 expect_equal(
   current = specific_markers_one$summary,
   target = specific_markers$summary[ref_grp == "cell_type_1"],
-  info = "specific markers: single reference arm matches the full loop"
+  info = "specific markers: single reference arm matches the full run"
 )
 
 ### agreement with the pairwise test -------------------------------------------

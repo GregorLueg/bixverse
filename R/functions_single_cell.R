@@ -9,7 +9,9 @@
 
 ## consts ----------------------------------------------------------------------
 
-# Auto-streaming fires up with more than 100,000 cells
+#' Auto-streaming fires up with more than 100,000 cells
+#'
+#' @keywords internal
 .N_CELLS_STREAMING_THRESHOLD <- 1e5
 
 ## utils -----------------------------------------------------------------------
@@ -1059,18 +1061,17 @@ extract_paga_plot_data <- function(
   res
 }
 
-#' Melt a PAGA connectivity matrix into a one-row-per-edge table
+#' Melt a symmetric graph matrix into a one-row-per-edge table
 #'
 #' @description
-#' Both abstracted graphs are stored symmetrically with a zero diagonal, so the
-#' lower triangle is dropped here. Keeping it would draw every edge twice, at
-#' twice the apparent width.
+#' Used for the PAGA abstracted graphs and the miloR neighbourhood overlap. Both
+#' are symmetric, so the lower triangle and the diagonal are dropped here.
+#' Keeping it would draw every edge twice, at twice the apparent width.
 #'
-#' @param conn Sparse matrix. The abstracted graph, named by cluster.
+#' @param conn Sparse matrix. The graph, named by node.
 #' @param threshold Numeric. Edges below this connectivity are dropped.
-#' @param keep Character vector. Clusters that survived the empty-cluster
-#' filter. Edges touching anything else are dropped, as they have no end point
-#' to attach to.
+#' @param keep Character vector. Nodes that survived upstream filtering. Edges
+#' touching anything else are dropped, as they have no end point to attach to.
 #'
 #' @returns A data.table with `from`, `to` and `weight`.
 #'
@@ -1094,6 +1095,110 @@ extract_paga_plot_data <- function(
     to = to[wanted],
     weight = trip$x[wanted]
   )
+}
+
+#' Extract the miloR neighbourhood graph positioned on an embedding
+#'
+#' @description
+#' Places every tested neighbourhood of a [get_miloR_abundances_sc()] result at
+#' the embedding coordinate of its index cell, as Milo's `plotNhoodGraphDA()`
+#' does, and returns the neighbourhood graph as node and edge tables. Two
+#' neighbourhoods are connected by the number of cells they share.
+#'
+#' The logFC is returned as is. Masking non-significant neighbourhoods is left
+#' to the plot, `is_sig` carries the call.
+#'
+#' @param object A single cell class. The one the miloR result was built on.
+#' @param milo_res `miloR` class. Needs to have been through [test_nhoods()].
+#' @param embedding String. Name of the embedding to position the nodes in.
+#' @param alpha Numeric. Spatial FDR threshold for `is_sig`. Defaults to `0.1`.
+#' @param overlap Integer. Minimum number of shared cells for an edge. Defaults
+#' to `1L`.
+#' @param ... Additional arguments forwarded to [extract_embedding_data()] and
+#' onward to [get_embedding()] (e.g. `modality`).
+#'
+#' @returns A list with the embedding stored as an `embedding` attribute and
+#' \itemize{
+#'   \item nodes - data.table with `Nhood`, `dim_1`, `dim_2`, `size` (cells in
+#'   the neighbourhood), every column of the differential abundance results and
+#'   `is_sig`.
+#'   \item edges - data.table with `from`, `to`, `weight` (shared cells) and
+#'   the segment coordinates `x`, `y`, `xend`, `yend`.
+#' }
+#'
+#' @export
+#'
+#' @references Dann, et al., Nat Biotechnol, 2022
+extract_milo_plot_data <- function(
+  object,
+  milo_res,
+  embedding = "umap",
+  alpha = 0.1,
+  overlap = 1L,
+  ...
+) {
+  # checks
+  checkmate::assertClass(milo_res, "miloR")
+  checkmate::qassert(embedding, "S1")
+  checkmate::qassert(alpha, "N1[0,1]")
+  checkmate::qassert(overlap, "I1[1,)")
+
+  da_res <- milo_res$nhoods_info
+  if (is.null(da_res)) {
+    stop("No differential abundance results found. Did you run test_nhoods()?")
+  }
+
+  embd <- extract_embedding_data(
+    object = object,
+    embedding = embedding,
+    ...
+  )
+
+  nhoods <- milo_res$nhoods
+  if (nrow(embd) != nrow(nhoods)) {
+    stop(sprintf(
+      paste(
+        "The embedding has %i cells, the miloR neighbourhoods %i. Was the",
+        "object subset or refiltered after get_miloR_abundances_sc()?"
+      ),
+      nrow(embd),
+      nrow(nhoods)
+    ))
+  }
+
+  # index cells come back 0-based from Rust
+  index_cell <- get_index_cells(milo_res)[da_res$Nhood] + 1L
+
+  nodes <- data.table::data.table(
+    Nhood = da_res$Nhood,
+    dim_1 = embd$dim_1[index_cell],
+    dim_2 = embd$dim_2[index_cell],
+    size = Matrix::colSums(nhoods)[da_res$Nhood]
+  )
+  nodes <- cbind(nodes, da_res[, !"Nhood"])
+  data.table::set(
+    nodes,
+    j = "is_sig",
+    value = !is.na(nodes$SpatialFDR) & nodes$SpatialFDR <= alpha
+  )
+
+  shared <- Matrix::crossprod(nhoods)
+  dimnames(shared) <- list(seq_len(ncol(nhoods)), seq_len(ncol(nhoods)))
+
+  edges <- .paga_edges(shared, overlap, as.character(nodes$Nhood))
+  data.table::set(edges, j = "from", value = as.integer(edges$from))
+  data.table::set(edges, j = "to", value = as.integer(edges$to))
+
+  for (end in list(c("from", "x", "y"), c("to", "xend", "yend"))) {
+    idx <- match(edges[[end[1]]], nodes$Nhood)
+    data.table::set(edges, j = end[2], value = nodes$dim_1[idx])
+    data.table::set(edges, j = end[3], value = nodes$dim_2[idx])
+  }
+
+  res <- list(nodes = nodes, edges = edges)
+  data.table::setattr(res, "embedding", embedding)
+
+  res
 }
 
 #' Extract per-cell expression mapped onto an embedding

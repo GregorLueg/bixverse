@@ -1,5 +1,5 @@
 [package]
-version = '0.5.6'
+version = '0.5.7'
 name = 'bixverse'
 publish = false
 edition = '2021'
@@ -31,7 +31,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.5.7", default-features = false, features = [
+bixverse-rs = { version = "0.5.10", default-features = false, features = [
     "single-cell",
     "multi-modal",
     "dge",
@@ -52,7 +52,7 @@ thousands = "*"
 # c-blosc compiles its own win32 pthread shim into blosc.o, which clashes with
 # the winpthread that Rust std links on windows-gnu. No Blosc/LZF on Windows.
 [target.'cfg(not(windows))'.dependencies]
-bixverse-rs = { version = "0.5.7", default-features = false, features = [
+bixverse-rs = { version = "0.5.10", default-features = false, features = [
     "hdf5-filters",
 ] }
 

@@ -413,6 +413,7 @@ obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
       cell_type_anno$cluster_id
     )]
   ]
+
 sc_object[["sc_type"]] <- obs$sc_type
 ``` 
 
@@ -461,6 +462,7 @@ features <- symbol_to_ensembl[c(
   "MS4A1"
 )]
 feature_labels <- setNames(names(features), nm = features)
+
 stacked_violin_plot_sc(
   sc_object,
   features = features,
