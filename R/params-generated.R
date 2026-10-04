@@ -190,8 +190,8 @@ params_blitzgsea <- function(
 #' `min_gene_var_pctl`, `hvg_method`, `loess_span`, `clip_max`. See
 #' [params_hvg_defaults()] for the available elements. Defaults to `list()`.
 #' @param pca List. Optional overrides for PCA parameters. See
-#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs`,
-#' `random_svd`. See [params_pca_defaults()] for the available elements.
+#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs` and
+#' `svd_solver`. See [params_pca_defaults()] for the available elements.
 #' Defaults to `list()`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
@@ -2351,22 +2351,19 @@ params_norm_doublets_defaults <- function() {
 #' @returns A named list with the following elements:
 #' \itemize{
 #'  \item no_pcs - Integer. Number of PCs to consider. Defaults to `30L`.
-#'  \item random_svd - Boolean. Shall randomised SVD be used. Defaults to
-#'  `TRUE`.
-#'  \item sparse - Boolean. Shall sparse solvers be used that do not do scaling.
-#'  If set to yes, in the case of `random_svd = FALSE`, Lanczos iterations are
-#'  used to solve the sparse SVD. With `random_svd = TRUE`, the sparse initial
-#'  matrix is multiplied with the random matrix, yielding a much smaller dense
-#'  matrix that does not increase the memory pressure massively. Defaults to
-#'  `FALSE`.
+#'  \item svd_solver - String. Which solver to use. `"covariance"` builds the
+#'  gene x gene cross-product and eigendecomposes it. `"randomised"` is a
+#'  randomised SVD, approximate in the trailing components. `"exact"` is Lanczos
+#'  on the sparse path and a full SVD on the dense one. See [params_sc_pca()]
+#'  for the trade-offs. One of `c("covariance", "randomised", "exact")`.
+#'  Defaults to `"covariance"`.
 #' }
 #'
 #' @export
 params_pca_defaults <- function() {
   list(
     no_pcs = 30L,
-    random_svd = TRUE,
-    sparse = FALSE
+    svd_solver = "covariance"
   )
 }
 
@@ -5955,9 +5952,9 @@ params_scenic_random_forest_defaults <- function() {
 #' `min_gene_var_pctl`, `hvg_method`, `loess_span`, `clip_max`. See
 #' [params_hvg_defaults()] for the available elements. Defaults to `list()`.
 #' @param pca List. Optional overrides for PCA parameters. See
-#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs`,
-#' `random_svd`, `sparse` and `skip_first_pc`. See [params_pca_defaults()] for
-#' the available elements. Defaults to `list()`.
+#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs` and
+#' `svd_solver`. See [params_pca_defaults()] for the available elements.
+#' Defaults to `list()`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,

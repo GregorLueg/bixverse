@@ -192,16 +192,15 @@ spec_pca_defaults <- param_defaults(
   label = "PCA params",
   fields = list(
     no_pcs = p_int(30L, range = "[1,)", doc = "Number of PCs to consider."),
-    random_svd = p_lgl(TRUE, doc = "Shall randomised SVD be used."),
-    sparse = p_lgl(
-      FALSE,
+    svd_solver = p_choice(
+      "covariance",
+      c("covariance", "randomised", "exact"),
       doc = paste(
-        "Shall sparse solvers be used that do not do scaling. If set to",
-        "yes, in the case of `random_svd = FALSE`, Lanczos iterations",
-        "are used to solve the sparse SVD. With `random_svd = TRUE`, the",
-        "sparse initial matrix is multiplied with the random matrix,",
-        "yielding a much smaller dense matrix that does not increase the",
-        "memory pressure massively."
+        "Which solver to use. `\"covariance\"` builds the gene x gene",
+        "cross-product and eigendecomposes it. `\"randomised\"` is a",
+        "randomised SVD, approximate in the trailing components.",
+        "`\"exact\"` is Lanczos on the sparse path and a full SVD on the",
+        "dense one. See [params_sc_pca()] for the trade-offs."
       )
     )
   )

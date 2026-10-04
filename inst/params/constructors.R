@@ -25,9 +25,10 @@ spec_scrublet <- param_spec(
     "must be >= 1; min_gene_var_pctl, expected_doublet_rate and",
     "stdev_doublet_rate must be in [0, 1]; loess_span and",
     "sim_doublet_ratio must be > 0; target_size must be >= 0;",
-    "log_transform, mean_center, normalise_variance and",
-    "random_svd must be booleans; clip_max and manual_threshold",
-    "must be NULL or positive numerics."
+    "log_transform, mean_center and normalise_variance must be",
+    "booleans; svd_solver must be one of covariance, randomised or",
+    "exact; clip_max and manual_threshold must be NULL or positive",
+    "numerics."
   ),
   fields = list(
     sim_doublet_ratio = p_dbl(
@@ -94,7 +95,7 @@ spec_scrublet <- param_spec(
       doc = paste(
         "Optional overrides for PCA parameters. See",
         "[bixverse::params_pca_defaults()] for available parameters:",
-        "`no_pcs`, `random_svd`, `sparse` and `skip_first_pc`."
+        "`no_pcs` and `svd_solver`."
       )
     ),
     knn = p_merge(
@@ -136,9 +137,10 @@ spec_boost <- param_spec(
     "no_pcs, n_bins and n_iters must be >= 1; min_gene_var_pctl,",
     "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
     "resolution and p_thresh must be > 0; target_size must be >",
-    "0; log_transform, mean_center, normalise_variance, replace,",
-    "random_svd and fast_cluster must be booleans; clip_max must",
-    "be NULL or a positive numeric."
+    "0; log_transform, mean_center, normalise_variance, replace",
+    "and fast_cluster must be booleans; svd_solver must be one of",
+    "covariance, randomised or exact; clip_max must be NULL or a",
+    "positive numeric."
   ),
   fields = list(
     boost_rate = p_dbl(
@@ -206,7 +208,7 @@ spec_boost <- param_spec(
       doc = paste(
         "Optional overrides for PCA parameters. See",
         "[bixverse::params_pca_defaults()] for available parameters:",
-        "`no_pcs`, `random_svd`."
+        "`no_pcs` and `svd_solver`."
       )
     ),
     knn = p_merge(

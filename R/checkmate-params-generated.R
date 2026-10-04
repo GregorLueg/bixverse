@@ -161,8 +161,7 @@ checkScBoostParams <- function(x) {
       "n_bins",
       "binning_strategy",
       "no_pcs",
-      "random_svd",
-      "sparse",
+      "svd_solver",
       "k",
       "knn_method",
       "ann_dist",
@@ -206,8 +205,6 @@ checkScBoostParams <- function(x) {
       clip_max = c("N1(0,)", "0"),
       n_bins = "I1[1,)",
       no_pcs = "I1[1,)",
-      random_svd = "B1",
-      sparse = "B1",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -236,9 +233,10 @@ checkScBoostParams <- function(x) {
       "no_pcs, n_bins and n_iters must be >= 1; min_gene_var_pctl,",
       "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
       "resolution and p_thresh must be > 0; target_size must be > 0;",
-      "log_transform, mean_center, normalise_variance, replace,",
-      "random_svd and fast_cluster must be booleans; clip_max must be",
-      "NULL or a positive numeric."
+      "log_transform, mean_center, normalise_variance, replace and",
+      "fast_cluster must be booleans; svd_solver must be one of",
+      "covariance, randomised or exact; clip_max must be NULL or a",
+      "positive numeric."
     )
   )
   if (!isTRUE(res)) {
@@ -250,6 +248,7 @@ checkScBoostParams <- function(x) {
     list(
       hvg_method = c("vst", "mvb", "dispersion"),
       binning_strategy = c("equal_width", "equal_frequency"),
+      svd_solver = c("covariance", "randomised", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -266,9 +265,10 @@ checkScBoostParams <- function(x) {
       "no_pcs, n_bins and n_iters must be >= 1; min_gene_var_pctl,",
       "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
       "resolution and p_thresh must be > 0; target_size must be > 0;",
-      "log_transform, mean_center, normalise_variance, replace,",
-      "random_svd and fast_cluster must be booleans; clip_max must be",
-      "NULL or a positive numeric."
+      "log_transform, mean_center, normalise_variance, replace and",
+      "fast_cluster must be booleans; svd_solver must be one of",
+      "covariance, randomised or exact; clip_max must be NULL or a",
+      "positive numeric."
     )
   )
   if (!isTRUE(res)) {
@@ -5564,8 +5564,7 @@ checkScDblFinderParams <- function(x) {
       "normalise_variance",
       "target_size",
       "no_pcs",
-      "random_svd",
-      "sparse",
+      "svd_solver",
       "k",
       "knn_method",
       "ann_dist",
@@ -5617,8 +5616,6 @@ checkScDblFinderParams <- function(x) {
       normalise_variance = "B1",
       target_size = "N1[0,)",
       no_pcs = "I1[1,)",
-      random_svd = "B1",
-      sparse = "B1",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -5662,6 +5659,7 @@ checkScDblFinderParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      svd_solver = c("covariance", "randomised", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -5932,8 +5930,7 @@ checkScScrubletParams <- function(x) {
       "n_bins",
       "binning_strategy",
       "no_pcs",
-      "random_svd",
-      "sparse",
+      "svd_solver",
       "k",
       "knn_method",
       "ann_dist",
@@ -5971,8 +5968,6 @@ checkScScrubletParams <- function(x) {
       clip_max = c("N1(0,)", "0"),
       n_bins = "I1[1,)",
       no_pcs = "I1[1,)",
-      random_svd = "B1",
-      sparse = "B1",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -5997,9 +5992,10 @@ checkScScrubletParams <- function(x) {
       "be >= 1; min_gene_var_pctl, expected_doublet_rate and",
       "stdev_doublet_rate must be in [0, 1]; loess_span and",
       "sim_doublet_ratio must be > 0; target_size must be >= 0;",
-      "log_transform, mean_center, normalise_variance and random_svd",
-      "must be booleans; clip_max and manual_threshold must be NULL or",
-      "positive numerics."
+      "log_transform, mean_center and normalise_variance must be",
+      "booleans; svd_solver must be one of covariance, randomised or",
+      "exact; clip_max and manual_threshold must be NULL or positive",
+      "numerics."
     )
   )
   if (!isTRUE(res)) {
@@ -6011,6 +6007,7 @@ checkScScrubletParams <- function(x) {
     list(
       hvg_method = c("vst", "mvb", "dispersion"),
       binning_strategy = c("equal_width", "equal_frequency"),
+      svd_solver = c("covariance", "randomised", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -6027,9 +6024,10 @@ checkScScrubletParams <- function(x) {
       "be >= 1; min_gene_var_pctl, expected_doublet_rate and",
       "stdev_doublet_rate must be in [0, 1]; loess_span and",
       "sim_doublet_ratio must be > 0; target_size must be >= 0;",
-      "log_transform, mean_center, normalise_variance and random_svd",
-      "must be booleans; clip_max and manual_threshold must be NULL or",
-      "positive numerics."
+      "log_transform, mean_center and normalise_variance must be",
+      "booleans; svd_solver must be one of covariance, randomised or",
+      "exact; clip_max and manual_threshold must be NULL or positive",
+      "numerics."
     )
   )
   if (!isTRUE(res)) {

@@ -10,14 +10,12 @@ params_pca_defaults()
 A named list with the following elements:
 \itemize{
 \item no_pcs - Integer. Number of PCs to consider. Defaults to \code{30L}.
-\item random_svd - Boolean. Shall randomised SVD be used. Defaults to
-\code{TRUE}.
-\item sparse - Boolean. Shall sparse solvers be used that do not do scaling.
-If set to yes, in the case of \code{random_svd = FALSE}, Lanczos iterations are
-used to solve the sparse SVD. With \code{random_svd = TRUE}, the sparse initial
-matrix is multiplied with the random matrix, yielding a much smaller dense
-matrix that does not increase the memory pressure massively. Defaults to
-\code{FALSE}.
+\item svd_solver - String. Which solver to use. \code{"covariance"} builds the
+gene x gene cross-product and eigendecomposes it. \code{"randomised"} is a
+randomised SVD, approximate in the trailing components. \code{"exact"} is Lanczos
+on the sparse path and a full SVD on the dense one. See \code{\link[=params_sc_pca]{params_sc_pca()}}
+for the trade-offs. One of \code{c("covariance", "randomised", "exact")}.
+Defaults to \code{"covariance"}.
 }
 }
 \description{
