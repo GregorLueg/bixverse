@@ -481,6 +481,7 @@ reference:
       - read_h5ad_metadata
       - read_h5ad_x_summary
       - save_sc_exp_to_disk
+      - archive_sc_exp
       - merge_sc_experiments
       - params_sc_min_quality
       - params_sc_mtx_io

@@ -196,6 +196,54 @@ expect_equal(
   info = "HVGs loaded in correctly - RDS"
 )
 
+### archive --------------------------------------------------------------------
+
+raw_before <- sc_object[]
+norm_before <- sc_object[,, assay = "norm"]
+genes_before <- sc_object[,, return_format = "gene"]
+
+archive_stats <- archive_sc_exp(sc_object, level = 3L, .verbose = FALSE)
+
+expect_true(
+  current = file.exists(file.path(test_temp_dir, "counts.bxa")) &&
+    !any(file.exists(file.path(
+      test_temp_dir,
+      c("counts_cells.bin", "counts_genes.bin")
+    ))),
+  info = "archive written and binaries removed"
+)
+
+expect_equal(
+  current = archive_stats$n_norm_stored,
+  target = 0L,
+  info = "all norms recompute from the raw counts"
+)
+
+rm(sc_object)
+
+sc_object <- load_existing(
+  SingleCells(dir_data = test_temp_dir),
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = sc_object[],
+  target = raw_before,
+  info = "raw counts survive the archive round trip"
+)
+
+expect_equal(
+  current = sc_object[,, assay = "norm"],
+  target = norm_before,
+  info = "norm counts survive the archive round trip"
+)
+
+expect_equal(
+  current = sc_object[,, return_format = "gene"],
+  target = genes_before,
+  info = "gene file is rebuilt on restore"
+)
+
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)

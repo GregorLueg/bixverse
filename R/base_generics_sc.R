@@ -2036,6 +2036,48 @@ load_existing <- S7::new_generic(
   }
 )
 
+#' Archive the on-disk counts for cold storage
+#'
+#' @description
+#' Compresses `counts_cells.bin` into `counts.bxa` with zstd. The gene-based
+#' file is not archived, as it is a transpose of the cell-based one. Normalised
+#' values are only kept where they cannot be recomputed from the raw counts.
+#' [load_existing()] restores both binaries automatically when it finds only
+#' the archive. Save the in-memory data first with [save_sc_exp_to_disk()].
+#'
+#' @param object `SingleCells` class.
+#' @param level Integer. zstd compression level, between 1 and 22. Higher
+#' levels compress more and take longer; decompression speed barely changes.
+#' @param remove_bins Boolean. Delete `counts_cells.bin` and
+#' `counts_genes.bin` once the archive is written.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with `n_cells`, `nnz`, `n_norm_stored` and `archive_bytes`,
+#' invisibly.
+#'
+#' @export
+#'
+#' @examples
+#' sc <- demo_single_cells()
+#' dir <- sc@dir_data
+#' save_sc_exp_to_disk(sc, type = "rds")
+#' archive_sc_exp(sc, .verbose = FALSE)
+#' sc <- load_existing(SingleCells(dir_data = dir), .verbose = FALSE)
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
+archive_sc_exp <- S7::new_generic(
+  name = "archive_sc_exp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    level = 3L,
+    remove_bins = TRUE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
 #### plotting ------------------------------------------------------------------
 
 #' Extract grouped gene statistics for dot plots

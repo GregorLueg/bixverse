@@ -7248,6 +7248,47 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'}
 #'
+#'\subsection{Method `archive`}{
+#'Archive the cell-based binary for cold storage
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`f_path_archive`}{(`character`)\cr Path of the archive to write.}
+#'\item{`level`}{(`integer`)\cr zstd compression level, 1 to 22.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Writes a zstd-compressed archive of `f_path_cells`. The gene-based
+#'file is not archived; `restore_archive()` rebuilds it. Normalised
+#'values are only stored for cells where they cannot be recomputed from
+#'the raw counts.
+#'
+#'}
+#' \subsection{returns}{
+#'A list with `n_cells`, `nnz`, `n_norm_stored` and
+#'`archive_bytes`.
+#'}
+#'}
+#'
+#'\subsection{Method `restore_archive`}{
+#'Restore both binaries from an archive
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`f_path_archive`}{(`character`)\cr Path to the archive.}
+#'\item{`max_mem_gb`}{(`numeric` or `NULL`)\cr Memory for the gene file conversion buffers in GB. `NULL` converts in a single phase.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Rebuilds `f_path_cells` from the archive, then generates
+#'`f_path_genes` from it.
+#'
+#'}
+#' \subsection{returns}{
+#'Invisible `NULL`.
+#'}
+#'}
+#'
 #'\subsection{Method `get_genes_by_indices`}{
 #'Return genes by index positions
 #'
@@ -7357,6 +7398,10 @@ SingleCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Cal
 SingleCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_cells_by_indices, self, indices, assay)
 
 SingleCellCountData$generate_gene_based_data <- function(max_mem_gb, verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data, self, max_mem_gb, verbose)
+
+SingleCellCountData$archive <- function(f_path_archive, level, verbose) .Call(wrap__SingleCellCountData__archive, self, f_path_archive, level, verbose)
+
+SingleCellCountData$restore_archive <- function(f_path_archive, max_mem_gb, verbose) .Call(wrap__SingleCellCountData__restore_archive, self, f_path_archive, max_mem_gb, verbose)
 
 SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_genes_by_indices, self, indices, assay)
 
