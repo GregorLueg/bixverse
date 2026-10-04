@@ -1439,7 +1439,8 @@ spec_sc_harmony <- param_spec(
       len = "+",
       doc = paste(
         "Ridge regression penalty for the linear model. Typically a",
-        "single value that is broadcast to all design matrix columns."
+        "single value that is broadcast to every batch column of the",
+        "design matrix; the intercept is not penalised."
       )
     ),
     block_size = p_dbl(
@@ -1462,7 +1463,7 @@ spec_sc_harmony <- param_spec(
       doc = "Maximum number of Harmony outer iterations."
     ),
     epsilon_kmeans = p_dbl(
-      1e-05,
+      1e-03,
       range = "(0,)",
       doc = paste(
         "Convergence threshold for k-means clustering. Stops when the",
@@ -1471,7 +1472,7 @@ spec_sc_harmony <- param_spec(
       )
     ),
     epsilon_harmony = p_dbl(
-      1e-04,
+      1e-02,
       range = "(0,)",
       doc = paste(
         "Convergence threshold for Harmony. Stops when the relative",
@@ -1479,7 +1480,7 @@ spec_sc_harmony <- param_spec(
       )
     ),
     window_size = p_int(
-      2L,
+      3L,
       range = "[1,)",
       doc = paste(
         "Number of previous iterations to consider when checking",
@@ -1549,8 +1550,9 @@ spec_sc_harmony_v2 <- param_spec(
       len = "+",
       doc = paste(
         "Ridge regression penalty for the linear model. Typically a",
-        "single value that is broadcast to all design matrix columns.",
-        "Ignored when `use_dynamic_lambda = TRUE`."
+        "single value that is broadcast to every batch column of the",
+        "design matrix; the intercept is not penalised. Ignored when",
+        "`use_dynamic_lambda = TRUE`."
       )
     ),
     block_size = p_dbl(
@@ -1622,10 +1624,11 @@ spec_sc_harmony_v2 <- param_spec(
       )
     ),
     use_dynamic_lambda = p_lgl(
-      FALSE,
+      TRUE,
       doc = paste(
-        "If `TRUE`, lambda is estimated dynamically per cluster",
-        "instead of using the fixed `lambda` value."
+        "If `TRUE`, lambda is estimated per cluster as `alpha` times",
+        "the expected counts, as in R harmony v2, instead of using the",
+        "fixed `lambda` value."
       )
     ),
     kmeans = p_merge(

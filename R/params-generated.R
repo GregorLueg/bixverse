@@ -3525,8 +3525,8 @@ params_sc_gene_trends <- function(
 #' single value (broadcast to all variables) or a vector of length equal to the
 #' number of batch variables. Defaults to `2.0`.
 #' @param lambda Numeric vector. Ridge regression penalty for the linear model.
-#' Typically a single value that is broadcast to all design matrix columns.
-#' Defaults to `1.0`.
+#' Typically a single value that is broadcast to every batch column of the
+#' design matrix; the intercept is not penalised. Defaults to `1.0`.
 #' @param block_size Numeric. Fraction of cells to update per block during
 #' optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #' computation time. Defaults to `0.2`.
@@ -3536,12 +3536,12 @@ params_sc_gene_trends <- function(
 #' Defaults to `10L`.
 #' @param epsilon_kmeans Numeric. Convergence threshold for k-means clustering.
 #' Stops when the relative change in cluster assignments falls below this value.
-#' Defaults to `1e-05`.
+#' Defaults to `0.001`.
 #' @param epsilon_harmony Numeric. Convergence threshold for Harmony. Stops when
 #' the relative change in the objective function falls below this value.
-#' Defaults to `1e-04`.
+#' Defaults to `0.01`.
 #' @param window_size Integer. Number of previous iterations to consider when
-#' checking convergence. Defaults to `2L`.
+#' checking convergence. Defaults to `3L`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
 #' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
 #' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
@@ -3559,8 +3559,8 @@ params_sc_gene_trends <- function(
 #'  single value (broadcast to all variables) or a vector of length equal to the
 #'  number of batch variables. Defaults to `2.0`.
 #'  \item lambda - Numeric vector. Ridge regression penalty for the linear
-#'  model. Typically a single value that is broadcast to all design matrix
-#'  columns. Defaults to `1.0`.
+#'  model. Typically a single value that is broadcast to every batch column of
+#'  the design matrix; the intercept is not penalised. Defaults to `1.0`.
 #'  \item block_size - Numeric. Fraction of cells to update per block during
 #'  optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #'  computation time. Defaults to `0.2`.
@@ -3570,12 +3570,12 @@ params_sc_gene_trends <- function(
 #'  iterations. Defaults to `10L`.
 #'  \item epsilon_kmeans - Numeric. Convergence threshold for k-means
 #'  clustering. Stops when the relative change in cluster assignments falls
-#'  below this value. Defaults to `1e-05`.
+#'  below this value. Defaults to `0.001`.
 #'  \item epsilon_harmony - Numeric. Convergence threshold for Harmony. Stops
 #'  when the relative change in the objective function falls below this value.
-#'  Defaults to `1e-04`.
+#'  Defaults to `0.01`.
 #'  \item window_size - Integer. Number of previous iterations to consider when
-#'  checking convergence. Defaults to `2L`.
+#'  checking convergence. Defaults to `3L`.
 #'  \item The elements of [params_kmeans_defaults()], overridden by `kmeans`,
 #'  spliced in at this position.
 #' }
@@ -3589,9 +3589,9 @@ params_sc_harmony <- function(
   block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
-  epsilon_kmeans = 1e-05,
-  epsilon_harmony = 1e-04,
-  window_size = 2L,
+  epsilon_kmeans = 0.001,
+  epsilon_harmony = 0.01,
+  window_size = 3L,
   kmeans = list()
 ) {
   # Checks
@@ -3644,8 +3644,9 @@ params_sc_harmony <- function(
 #' single value (broadcast to all variables) or a vector of length equal to the
 #' number of batch variables. Defaults to `2.0`.
 #' @param lambda Numeric vector. Ridge regression penalty for the linear model.
-#' Typically a single value that is broadcast to all design matrix columns.
-#' Ignored when `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
+#' Typically a single value that is broadcast to every batch column of the
+#' design matrix; the intercept is not penalised. Ignored when
+#' `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 #' @param block_size Numeric. Fraction of cells to update per block during
 #' optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #' computation time. Defaults to `0.2`.
@@ -3667,8 +3668,9 @@ params_sc_harmony <- function(
 #' 0 disables batch-size scaling of theta. Defaults to `0.0`.
 #' @param batch_proportion_cutoff Numeric. Cutoff for pruning batches with small
 #' proportions during ridge regression. Defaults to `1e-05`.
-#' @param use_dynamic_lambda Boolean. If `TRUE`, lambda is estimated dynamically
-#' per cluster instead of using the fixed `lambda` value. Defaults to `FALSE`.
+#' @param use_dynamic_lambda Boolean. If `TRUE`, lambda is estimated per cluster
+#' as `alpha` times the expected counts, as in R harmony v2, instead of using
+#' the fixed `lambda` value. Defaults to `TRUE`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
 #' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
 #' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
@@ -3686,8 +3688,9 @@ params_sc_harmony <- function(
 #'  single value (broadcast to all variables) or a vector of length equal to the
 #'  number of batch variables. Defaults to `2.0`.
 #'  \item lambda - Numeric vector. Ridge regression penalty for the linear
-#'  model. Typically a single value that is broadcast to all design matrix
-#'  columns. Ignored when `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
+#'  model. Typically a single value that is broadcast to every batch column of
+#'  the design matrix; the intercept is not penalised. Ignored when
+#'  `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 #'  \item block_size - Numeric. Fraction of cells to update per block during
 #'  optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #'  computation time. Defaults to `0.2`.
@@ -3710,9 +3713,9 @@ params_sc_harmony <- function(
 #'  of 0 disables batch-size scaling of theta. Defaults to `0.0`.
 #'  \item batch_proportion_cutoff - Numeric. Cutoff for pruning batches with
 #'  small proportions during ridge regression. Defaults to `1e-05`.
-#'  \item use_dynamic_lambda - Boolean. If `TRUE`, lambda is estimated
-#'  dynamically per cluster instead of using the fixed `lambda` value. Defaults
-#'  to `FALSE`.
+#'  \item use_dynamic_lambda - Boolean. If `TRUE`, lambda is estimated per
+#'  cluster as `alpha` times the expected counts, as in R harmony v2, instead of
+#'  using the fixed `lambda` value. Defaults to `TRUE`.
 #'  \item The elements of [params_kmeans_defaults()], overridden by `kmeans`,
 #'  spliced in at this position.
 #' }
@@ -3732,7 +3735,7 @@ params_sc_harmony_v2 <- function(
   alpha = 0.2,
   tau = 0.0,
   batch_proportion_cutoff = 1e-05,
-  use_dynamic_lambda = FALSE,
+  use_dynamic_lambda = TRUE,
   kmeans = list()
 ) {
   # Checks
