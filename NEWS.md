@@ -1,3 +1,17 @@
+# bixverse 0.5.8
+
+## Features
+
+* CellPhoneDB wired in, see `cellphonedb_sc()` and `get_cellphonedb_db()`.
+  The NicheNet vignette is now a general ligand-receptor vignette.
+* scran-style HVG detection via `params_sc_hvg(method = "scran")`.
+* `svd_solver` for the PCA in the doublet detection methods.
+
+## Fixes
+
+* `hvg_method = "mvb"` in the doublet params silently fell back to VST. The
+  choice is now `"meanvarbin"`, plus the new `"scran"`.
+
 # bixverse 0.5.7
 
 ## Features
