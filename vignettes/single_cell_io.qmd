@@ -31,6 +31,7 @@ runs end-to-end without any downloads. It covers:
 - 10x CellRanger HDF5, single and multi-sample (`load_tenx_h5`,
   `load_multi_tenx_h5`)
 - checkpointing to and from disk (`save_sc_exp_to_disk`, `load_existing`)
+- archiving the counts for cold storage (`archive_sc_exp`)
 
 If you have not seen the `SingleCells` class before, read the
 [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
@@ -399,6 +400,42 @@ sc_restored <- load_existing(sc_restored)
 sc_restored
 ```
 
+### Archiving for cold storage
+
+Project done, but you want to keep the data around? The two count binaries
+are uncompressed, so they eat disk. `archive_sc_exp()` compresses
+`counts_cells.bin` into a single zstd `counts.bxa` and, by default, deletes
+both binaries. The gene-based file is not archived at all, it's just a
+transpose of the cell-based one. Normalised values only go into the archive
+where they can't be recomputed from the raw counts. `level` (1 to 22) trades
+write time for size; decompression speed barely changes. Run
+`save_sc_exp_to_disk()` first, the archive only covers the counts.
+
+```{r}
+#| label: archive
+dir_h5 <- file.path(base, "store_h5")
+bin_bytes <- sum(file.size(
+  file.path(dir_h5, c("counts_cells.bin", "counts_genes.bin"))
+))
+
+archive_stats <- archive_sc_exp(sc_restored, .verbose = FALSE)
+
+c(
+  binaries_mb = bin_bytes / 1e6,
+  archive_mb = archive_stats$archive_bytes / 1e6
+)
+list.files(dir_h5)
+```
+
+Nothing changes on the way back in. `load_existing()` spots that only the
+archive is there and rebuilds both binaries before loading.
+
+```{r}
+#| label: restore from archive
+sc_archived <- load_existing(SingleCells(dir_data = dir_h5))
+all.equal(sc_archived[], sc_h5[])
+```
+
 ## Summary
 
 | Format | Single sample | Multiple samples |
@@ -408,6 +445,9 @@ sc_restored
 | AnnData h5ad | `load_h5ad()` | `prescan_h5ad_files()` + `load_multi_h5ad()` |
 | 10x HDF5 | `load_tenx_h5()` | `prescan_tenx_h5_files()` + `load_multi_tenx_h5()` |
 | Seurat | `load_seurat()` | -- |
+
+Checkpoint with `save_sc_exp_to_disk()` and `load_existing()`; archive with
+`archive_sc_exp()`.
 
 All readers share the same `sc_qc_param` QC interface and write into the same
 on-disk `SingleCells` layout, so everything downstream (normalisation, HVGs,
