@@ -117,6 +117,31 @@ pub fn flatten_scran_batches(results: Vec<HvgScranRes>) -> List {
     )
 }
 
+/////////////
+// Indices //
+/////////////
+
+/// Turn an R list of 0-indexed integer vectors into index vectors.
+///
+/// ### Params
+///
+/// * `r_list` - List of integer vectors, already 0-indexed on the R side.
+/// * `what` - Name of the argument, for the error message.
+///
+/// ### Returns
+///
+/// One `Vec<usize>` per list element, in list order.
+pub fn r_list_to_index_vecs(r_list: List, what: &str) -> Result<Vec<Vec<usize>>> {
+    r_list
+        .values()
+        .map(|elem| {
+            elem.as_integer_vector()
+                .map(|v| v.r_int_convert())
+                .ok_or_else(|| Error::Other(format!("`{what}` must be a list of integer vectors.")))
+        })
+        .collect()
+}
+
 /////////
 // kNN //
 /////////

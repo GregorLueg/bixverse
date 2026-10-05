@@ -1,6 +1,7 @@
 # ------------------------------------------------------------------------------
 # Single cell ligand receptor analysis frameworks
 # - NicheNet approach
+# - CellPhoneDB
 # ------------------------------------------------------------------------------
 
 # nichenet ---------------------------------------------------------------------
@@ -955,4 +956,305 @@ prioritise_interactions <- function(
   data.table::setcolorder(out, c(id_cols, setdiff(names(out), id_cols)))
 
   out
+}
+
+# cellphonedb ------------------------------------------------------------------
+
+## database --------------------------------------------------------------------
+
+#' Download the CellPhoneDB ligand-receptor database
+#'
+#' @description
+#' Fetches the CellPhoneDB v5.0.0 database from the
+#' [cellphonedb-data](https://github.com/ventolab/cellphonedb-data) repository
+#' and flattens it to one row per interaction. Each partner is resolved to
+#' the gene symbols of its subunits: one gene for a single protein, several
+#' for a complex. The download is cached in `dir`.
+#'
+#' @param dir String. Directory to store and look for `cellphonedb.zip`.
+#' Defaults to `tempdir()`.
+#' @param .verbose Boolean. Controls verbosity of the download.
+#'
+#' @returns A data.table with one row per interaction and the columns:
+#' \itemize{
+#'   \item interaction_id - The CellPhoneDB interaction identifier.
+#'   \item partner_a, partner_b - The partner names: the gene symbol for a
+#'   single protein, the complex name otherwise.
+#'   \item genes_a, genes_b - List columns with the gene symbols of the
+#'   subunits.
+#'   \item is_complex_a, is_complex_b - Is the partner a complex.
+#'   \item directionality - E.g. `"Ligand-Receptor"`.
+#'   \item classification - The signalling classification.
+#' }
+#'
+#' @export
+#'
+#' @references Troulé et al., Nat Protoc, 2025.
+get_cellphonedb_db <- function(dir = tempdir(), .verbose = TRUE) {
+  checkmate::assertDirectoryExists(dir, access = "w")
+  checkmate::qassert(.verbose, "B1")
+
+  zip_file <- file.path(dir, "cellphonedb.zip")
+  if (!file.exists(zip_file)) {
+    .download_with_retry(
+      urls = paste0(
+        "https://raw.githubusercontent.com/ventolab/cellphonedb-data/",
+        "v5.0.0/cellphonedb.zip"
+      ),
+      dest_file = zip_file,
+      quiet = !.verbose
+    )
+  }
+
+  tables <- c(
+    "interaction_table",
+    "multidata_table",
+    "protein_table",
+    "gene_table",
+    "complex_composition_table"
+  )
+  ex_dir <- file.path(dir, "cellphonedb")
+  utils::unzip(zip_file, files = paste0(tables, ".csv"), exdir = ex_dir)
+  db <- purrr::map(tables, \(tab) {
+    data.table::fread(file.path(ex_dir, paste0(tab, ".csv")))
+  })
+  names(db) <- tables
+
+  # protein multidata -> gene symbol; alternative haplotypes repeat a symbol
+  protein_genes <- merge(
+    db$protein_table[, .(id_protein, multidata_id = protein_multidata_id)],
+    unique(db$gene_table[, .(protein_id, gene_name)]),
+    by.x = "id_protein",
+    by.y = "protein_id"
+  )[, .(multidata_id, gene_name)]
+
+  complex_genes <- merge(
+    db$complex_composition_table[, .(
+      multidata_id = complex_multidata_id,
+      protein_multidata_id
+    )],
+    protein_genes,
+    by.x = "protein_multidata_id",
+    by.y = "multidata_id"
+  )[, .(multidata_id, gene_name)]
+
+  partners <- data.table::rbindlist(list(protein_genes, complex_genes))[,
+    .(genes = list(sort(unique(gene_name)))),
+    by = multidata_id
+  ]
+  partners <- merge(
+    partners,
+    db$multidata_table[, .(multidata_id = id_multidata, name, is_complex)],
+    by = "multidata_id"
+  )
+  partners[is_complex == FALSE, name := purrr::map_chr(genes, \(g) g[1])]
+
+  res <- db$interaction_table[, .(
+    interaction_id = id_cp_interaction,
+    multidata_1_id,
+    multidata_2_id,
+    directionality,
+    classification
+  )]
+  res <- merge(
+    res,
+    partners[, .(
+      multidata_1_id = multidata_id,
+      partner_a = name,
+      genes_a = genes,
+      is_complex_a = is_complex
+    )],
+    by = "multidata_1_id"
+  )
+  res <- merge(
+    res,
+    partners[, .(
+      multidata_2_id = multidata_id,
+      partner_b = name,
+      genes_b = genes,
+      is_complex_b = is_complex
+    )],
+    by = "multidata_2_id"
+  )
+
+  cols <- c(
+    "interaction_id",
+    "partner_a",
+    "partner_b",
+    "genes_a",
+    "genes_b",
+    "is_complex_a",
+    "is_complex_b",
+    "directionality",
+    "classification"
+  )
+  res <- res[, ..cols]
+  data.table::setorder(res, interaction_id)
+
+  res[]
+}
+
+## analysis --------------------------------------------------------------------
+
+#' CellPhoneDB ligand-receptor analysis
+#'
+#' @description
+#' Runs the CellPhoneDB v5 analysis on a `SingleCells` object. For every
+#' interaction and every ordered (sender, receiver) cluster pair, partner a is
+#' measured in the sender and partner b in the receiver. The interaction mean
+#' is the average of the two partner means, zero if either is not expressed.
+#' A complex takes the minimum over its subunits. The gate requires both
+#' partners to be expressed in more than `threshold` of their cluster's cells.
+#'
+#' Three methods, as in CellPhoneDB:
+#' \itemize{
+#'   \item `"statistical"` - Permutes the cluster labels and reports
+#'   `p = #(perm > real) / n_perm`, 1 where the mean is zero or the gate fails.
+#'   \item `"degs"` - No permutations. The gate also needs partner a to be
+#'   differentially expressed in the sender or partner b in the receiver, as
+#'   given by `deg_table`.
+#'   \item `"simple"` - Means and the expression gate only.
+#' }
+#'
+#' Reads the normalised layer of the L/R genes only, once. Interactions with
+#' any subunit missing from the object are dropped with a warning.
+#'
+#' @param object A `SingleCells` object.
+#' @param celltype_colname String. Name of the cluster column in `obs`. Cells
+#' with a missing label are ignored.
+#' @param lr_db data.table. The ligand-receptor database, see
+#' [get_cellphonedb_db()]. Needs `interaction_id`, `partner_a`, `partner_b`
+#' and the subunit list columns `genes_a` and `genes_b`.
+#' @param method String. One of `c("statistical", "degs", "simple")`.
+#' @param deg_table Optional data.table with the columns `cluster_id` and
+#' `gene`, holding the differentially expressed genes per cluster, e.g. a
+#' filtered [find_all_markers_sc()] result. Required for `method = "degs"`.
+#' @param senders,receivers Optional character vectors. Restrict the tested
+#' pairs to these sender and receiver clusters. `NULL` uses all clusters.
+#' @param gene_id_col String. The var column holding the gene symbols used in
+#' `lr_db`. Defaults to `"gene_id"`.
+#' @param params List. See [params_sc_cellphonedb()].
+#'
+#' @returns A data.table with one row per interaction and cluster pair:
+#' \itemize{
+#'   \item interaction_id, partner_a, partner_b - From `lr_db`.
+#'   \item sender, receiver - The cluster pair.
+#'   \item mean - The interaction mean.
+#'   \item pval - Permutation p-value, `NA` unless `method = "statistical"`.
+#'   \item gate - The expression gate, or the DEG gate for `method = "degs"`.
+#' }
+#'
+#' @export
+#'
+#' @references Efremova et al., Nat Protoc, 2020; Troulé et al., Nat Protoc,
+#' 2025.
+cellphonedb_sc <- function(
+  object,
+  celltype_colname,
+  lr_db,
+  method = c("statistical", "degs", "simple"),
+  deg_table = NULL,
+  senders = NULL,
+  receivers = NULL,
+  gene_id_col = "gene_id",
+  params = params_sc_cellphonedb()
+) {
+  method <- match.arg(method)
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(celltype_colname, "S1")
+  assertLrDb(lr_db)
+  checkmate::assertChoice(method, c("statistical", "degs", "simple"))
+  checkmate::qassert(senders, c("0", "S+"))
+  checkmate::qassert(receivers, c("0", "S+"))
+  checkmate::qassert(gene_id_col, "S1")
+  assertScCellPhoneDbParams(params)
+  if (method == "degs") {
+    checkmate::assertDataTable(deg_table)
+    checkmate::assertNames(
+      names(deg_table),
+      must.include = c("cluster_id", "gene")
+    )
+  } else if (!is.null(deg_table)) {
+    warning("`deg_table` is only used with method = 'degs'. Ignoring it.")
+  }
+
+  # genes -> 0-indexed positions
+  var <- get_sc_var(object)
+  checkmate::assertNames(names(var), must.include = gene_id_col)
+  gene_to_idx <- stats::setNames(seq_len(nrow(var)) - 1L, var[[gene_id_col]])
+
+  present <- purrr::map2_lgl(lr_db$genes_a, lr_db$genes_b, \(a, b) {
+    all(c(a, b) %in% names(gene_to_idx))
+  })
+  if (!any(present)) {
+    stop("No interaction has all of its subunits in `object`.")
+  }
+  if (!all(present)) {
+    warning(sprintf(
+      "Dropping %d of %d interactions with subunits missing from `object`.",
+      sum(!present),
+      length(present)
+    ))
+  }
+  lr_db <- lr_db[present]
+  to_idx <- \(genes) unname(gene_to_idx[genes])
+
+  # clusters -> 0-indexed cells, ordered like compute_expression_info_sc()
+  obs <- get_sc_obs(
+    object,
+    cols = c("cell_idx", celltype_colname),
+    filtered = TRUE
+  )
+  obs <- obs[!is.na(obs[[celltype_colname]])]
+  labels <- as.character(obs[[celltype_colname]])
+  cluster_levels <- sort(unique(labels))
+  clusters <- purrr::map(cluster_levels, \(cl) {
+    as.integer(obs$cell_idx[labels == cl] - 1L)
+  })
+
+  checkmate::assertSubset(senders, cluster_levels)
+  checkmate::assertSubset(receivers, cluster_levels)
+  pairs <- if (is.null(senders) && is.null(receivers)) {
+    NULL
+  } else {
+    data.table::CJ(
+      a = match(senders %||% cluster_levels, cluster_levels) - 1L,
+      b = match(receivers %||% cluster_levels, cluster_levels) - 1L
+    )
+  }
+
+  deg_genes <- if (method == "degs") {
+    deg_table <- deg_table[gene %in% names(gene_to_idx)]
+    purrr::map(cluster_levels, \(cl) {
+      to_idx(deg_table[as.character(cluster_id) == cl, unique(gene)])
+    })
+  } else {
+    NULL
+  }
+
+  res <- rs_sc_cellphonedb(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    partner_a = purrr::map(lr_db$genes_a, to_idx),
+    partner_b = purrr::map(lr_db$genes_b, to_idx),
+    clusters = clusters,
+    pair_a = pairs$a,
+    pair_b = pairs$b,
+    deg_genes = deg_genes,
+    statistical = method == "statistical",
+    params = params
+  )
+
+  # the matrices are (interactions, pairs) and flatten column-major
+  n_inter <- nrow(lr_db)
+  n_pairs <- length(res$pair_a)
+  data.table::data.table(
+    interaction_id = rep(lr_db$interaction_id, n_pairs),
+    partner_a = rep(lr_db$partner_a, n_pairs),
+    partner_b = rep(lr_db$partner_b, n_pairs),
+    sender = rep(cluster_levels[res$pair_a + 1L], each = n_inter),
+    receiver = rep(cluster_levels[res$pair_b + 1L], each = n_inter),
+    mean = as.numeric(res$means),
+    pval = if (is.null(res$pvals)) NA_real_ else as.numeric(res$pvals),
+    gate = as.logical(res$gate)
+  )
 }

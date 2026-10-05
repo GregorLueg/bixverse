@@ -595,3 +595,270 @@ expect_true(
     e2e_top$receptor == "REC_L1",
   info = "e2e - full pipeline recovers implanted ligand-receptor signal"
 )
+
+# cellphonedb ------------------------------------------------------------------
+
+source("helper_sc.R", local = TRUE)
+
+cpdb_dir <- sc_test_dir("cellphonedb")
+
+## object ----------------------------------------------------------------------
+
+# keep every gene: the planted markers sit in a third of the cells only
+cpdb_fixture <- sc_test_fixture(seed = 42L)
+
+cpdb_object <- sc_test_object(
+  cpdb_dir,
+  cpdb_fixture,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 0L,
+    min_lib_size = 0L,
+    min_cells = 0L
+  )
+)
+
+## database --------------------------------------------------------------------
+
+# ligand on a cell_type_1 marker, receptor on a cell_type_2 marker; one complex
+# with a background subunit; one background pair; one unknown gene
+cpdb_db <- data.table::data.table(
+  interaction_id = c("I_marker", "I_complex", "I_background", "I_missing"),
+  partner_a = c("gene_001", "gene_002", "gene_040", "gene_003"),
+  partner_b = c("gene_011", "REC_complex", "gene_041", "NOTAGENE"),
+  genes_a = list("gene_001", "gene_002", "gene_040", "gene_003"),
+  genes_b = list("gene_011", c("gene_012", "gene_050"), "gene_041", "NOTAGENE")
+)
+
+expect_true(
+  current = isTRUE(bixverse:::checkLrDb(cpdb_db)),
+  info = "cellphonedb - test database passes the checker"
+)
+
+expect_false(
+  current = isTRUE(bixverse:::checkLrDb(cpdb_db[, genes_b := NULL])),
+  info = "cellphonedb - checker needs the subunit columns"
+)
+
+cpdb_db[,
+  genes_b := list(
+    "gene_011",
+    c("gene_012", "gene_050"),
+    "gene_041",
+    "NOTAGENE"
+  )
+]
+
+## r reference -----------------------------------------------------------------
+
+cpdb_norm <- as.matrix(get_sc_counts(
+  cpdb_object,
+  assay = "norm",
+  .verbose = FALSE
+))
+cpdb_labels <- unlist(cpdb_object[["cell_grp"]])
+cpdb_levels <- sort(unique(cpdb_labels))
+
+cluster_mean <- \(gene, cl) mean(cpdb_norm[cpdb_labels == cl, gene])
+cluster_pct <- \(gene, cl) mean(cpdb_norm[cpdb_labels == cl, gene] > 0)
+
+# complexes take the minimum over their subunits
+partner_stat <- \(genes, cl, fun) min(purrr::map_dbl(genes, \(g) fun(g, cl)))
+
+cpdb_ref <- data.table::CJ(
+  interaction_id = c("I_marker", "I_complex", "I_background"),
+  sender = cpdb_levels,
+  receiver = cpdb_levels
+)
+cpdb_ref <- merge(cpdb_ref, cpdb_db, by = "interaction_id")
+cpdb_ref[,
+  c("x", "y", "pct_x", "pct_y") := list(
+    purrr::map2_dbl(genes_a, sender, \(g, s) partner_stat(g, s, cluster_mean)),
+    purrr::map2_dbl(genes_b, receiver, \(g, r) {
+      partner_stat(g, r, cluster_mean)
+    }),
+    purrr::map2_dbl(genes_a, sender, \(g, s) partner_stat(g, s, cluster_pct)),
+    purrr::map2_dbl(genes_b, receiver, \(g, r) partner_stat(g, r, cluster_pct))
+  )
+]
+cpdb_ref[, mean_ref := (x > 0) * (y > 0) * (x + y) / 2]
+cpdb_ref[, gate_ref := pct_x > 0.1 & pct_y > 0.1]
+
+## simple ----------------------------------------------------------------------
+
+expect_warning(
+  current = cpdb_simple <- cellphonedb_sc(
+    cpdb_object,
+    celltype_colname = "cell_grp",
+    lr_db = cpdb_db,
+    method = "simple",
+    gene_id_col = "gene_id"
+  ),
+  pattern = "Dropping 1 of 4 interactions",
+  info = "cellphonedb - interactions with unknown genes are dropped"
+)
+
+expect_true(
+  current = nrow(cpdb_simple) == 3L * length(cpdb_levels)^2,
+  info = "cellphonedb simple - one row per interaction and ordered pair"
+)
+
+expect_true(
+  current = all(is.na(cpdb_simple$pval)),
+  info = "cellphonedb simple - no p-values without permutations"
+)
+
+cpdb_cmp <- merge(
+  cpdb_simple,
+  cpdb_ref[, .(interaction_id, sender, receiver, mean_ref, gate_ref)],
+  by = c("interaction_id", "sender", "receiver")
+)
+
+# the norm layer is stored at reduced precision
+expect_equivalent(
+  current = cpdb_cmp$mean,
+  target = cpdb_cmp$mean_ref,
+  tolerance = 1e-3,
+  info = "cellphonedb simple - interaction means match R"
+)
+
+expect_equal(
+  current = cpdb_cmp$gate,
+  target = cpdb_cmp$gate_ref,
+  info = "cellphonedb simple - expression gate matches R"
+)
+
+## statistical -----------------------------------------------------------------
+
+cpdb_stat <- suppressWarnings(cellphonedb_sc(
+  cpdb_object,
+  celltype_colname = "cell_grp",
+  lr_db = cpdb_db,
+  params = params_sc_cellphonedb(n_perm = 200L)
+))
+
+expect_equivalent(
+  current = cpdb_stat$mean,
+  target = cpdb_simple$mean,
+  info = "cellphonedb statistical - same means as the simple run"
+)
+
+expect_true(
+  current = checkmate::qtest(cpdb_stat$pval, "N+[0,1]"),
+  info = "cellphonedb statistical - p-values in [0, 1]"
+)
+
+expect_true(
+  current = all(cpdb_stat[!gate | mean == 0, pval] == 1),
+  info = "cellphonedb statistical - p = 1 where the gate fails or mean is 0"
+)
+
+expect_true(
+  current = cpdb_stat[
+    interaction_id == "I_marker" &
+      sender == "cell_type_1" &
+      receiver == "cell_type_2",
+    pval
+  ] <
+    0.01,
+  info = "cellphonedb statistical - planted marker pair is significant"
+)
+
+expect_true(
+  current = cpdb_stat[
+    interaction_id == "I_marker" &
+      sender == "cell_type_2" &
+      receiver == "cell_type_1",
+    pval
+  ] >
+    0.5,
+  info = "cellphonedb statistical - reversed marker pair is not"
+)
+
+cpdb_stat_2 <- suppressWarnings(cellphonedb_sc(
+  cpdb_object,
+  celltype_colname = "cell_grp",
+  lr_db = cpdb_db,
+  params = params_sc_cellphonedb(n_perm = 200L)
+))
+
+expect_equal(
+  current = cpdb_stat_2$pval,
+  target = cpdb_stat$pval,
+  info = "cellphonedb statistical - same seed, same p-values"
+)
+
+## senders and receivers -------------------------------------------------------
+
+cpdb_sub <- suppressWarnings(cellphonedb_sc(
+  cpdb_object,
+  celltype_colname = "cell_grp",
+  lr_db = cpdb_db,
+  method = "simple",
+  senders = "cell_type_1",
+  receivers = c("cell_type_2", "cell_type_3")
+))
+
+expect_true(
+  current = nrow(cpdb_sub) == 3L * 2L &&
+    all(cpdb_sub$sender == "cell_type_1") &&
+    setequal(cpdb_sub$receiver, c("cell_type_2", "cell_type_3")),
+  info = "cellphonedb - senders and receivers restrict the pairs"
+)
+
+expect_equivalent(
+  current = cpdb_sub$mean,
+  target = merge(
+    cpdb_sub[, .(interaction_id, sender, receiver)],
+    cpdb_simple,
+    by = c("interaction_id", "sender", "receiver"),
+    sort = FALSE
+  )$mean,
+  info = "cellphonedb - restricting pairs does not change the means"
+)
+
+## degs ------------------------------------------------------------------------
+
+# only gene_001 is a DEG, in cell_type_1
+cpdb_degs <- suppressWarnings(cellphonedb_sc(
+  cpdb_object,
+  celltype_colname = "cell_grp",
+  lr_db = cpdb_db,
+  method = "degs",
+  deg_table = data.table::data.table(
+    cluster_id = "cell_type_1",
+    gene = "gene_001"
+  )
+))
+
+expect_true(
+  current = all(
+    cpdb_degs[
+      gate == TRUE,
+      interaction_id == "I_marker" & sender == "cell_type_1"
+    ]
+  ) &&
+    any(cpdb_degs$gate),
+  info = "cellphonedb degs - only pairs with the DEG in the sender pass"
+)
+
+expect_true(
+  current = all(
+    cpdb_degs[(gate), mean] > 0
+  ) &&
+    all(cpdb_simple[cpdb_degs$gate, gate]),
+  info = "cellphonedb degs - the DEG gate is a subset of the expression gate"
+)
+
+expect_error(
+  current = cellphonedb_sc(
+    cpdb_object,
+    celltype_colname = "cell_grp",
+    lr_db = cpdb_db,
+    method = "degs"
+  ),
+  info = "cellphonedb degs - needs a deg_table"
+)
+
+## clean up --------------------------------------------------------------------
+
+sc_test_cleanup(cpdb_dir)

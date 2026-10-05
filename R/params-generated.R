@@ -2937,6 +2937,52 @@ params_sc_bt_metacells <- function(
   )
 }
 
+#' Parameters for the CellPhoneDB analysis
+#'
+#' @description Defaults match CellPhoneDB v5: 1000 permutations and a 10%
+#' expression threshold.
+#'
+#' @param n_perm Integer. Number of cluster label permutations for the p-values.
+#' Defaults to `1000L`.
+#' @param threshold Numeric. Both partners need a fraction of expressing cells
+#' strictly above this value in their cluster. Defaults to `0.1`.
+#' @param seed Integer. Seed for the permutations. Defaults to `42L`.
+#' @param perm_batch Integer or `NULL`. Permutations that share one pass over
+#' the gene data. `NULL` uses the Rust default (16). Defaults to `NULL`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_perm - Integer. Number of cluster label permutations for the
+#'  p-values. Defaults to `1000L`.
+#'  \item threshold - Numeric. Both partners need a fraction of expressing cells
+#'  strictly above this value in their cluster. Defaults to `0.1`.
+#'  \item seed - Integer. Seed for the permutations. Defaults to `42L`.
+#'  \item perm_batch - Integer or `NULL`. Permutations that share one pass over
+#'  the gene data. `NULL` uses the Rust default (16). Defaults to `NULL`.
+#' }
+#'
+#' @export
+params_sc_cellphonedb <- function(
+  n_perm = 1000L,
+  threshold = 0.1,
+  seed = 42L,
+  perm_batch = NULL
+) {
+  # Checks
+  checkmate::qassert(n_perm, "I1[1,)")
+  checkmate::qassert(threshold, "N1[0,1]")
+  checkmate::qassert(seed, "I1[0,)")
+  checkmate::qassert(perm_batch, c("I1[1,)", "0"))
+
+  # Return
+  list(
+    n_perm = n_perm,
+    threshold = threshold,
+    seed = seed,
+    perm_batch = perm_batch
+  )
+}
+
 #' Default parameters for CellSweep denoising
 #'
 #' @description Mirrors the CellSweep reference implementation's defaults. The

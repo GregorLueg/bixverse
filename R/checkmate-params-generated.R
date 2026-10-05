@@ -2905,6 +2905,59 @@ assertScBootstrappedMetacellsParams <- checkmate::makeAssertionFunction(
   checkScBootstrappedMetacellsParams
 )
 
+#' Check CellPhoneDB params
+#'
+#' @description Checkmate extension for the output of [params_sc_cellphonedb()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkScCellPhoneDbParams <- function(x) {
+  res <- check_list_shape(x, c("n_perm", "threshold", "seed", "perm_batch"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_perm = "I1[1,)",
+      threshold = "N1[0,1]",
+      seed = "I1[0,)",
+      perm_batch = c("I1[1,)", "0")
+    ),
+    label = "CellPhoneDB params",
+    hint = paste(
+      "n_perm and perm_batch must be integers >= 1 (perm_batch may be",
+      "NULL); seed must be an integer >= 0; threshold must be in [0,",
+      "1]."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert CellPhoneDB params
+#'
+#' @inheritParams checkScCellPhoneDbParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertScCellPhoneDbParams <- checkmate::makeAssertionFunction(
+  checkScCellPhoneDbParams
+)
+
 #' Check CellSweep params
 #'
 #' @description Checkmate extension for the output of [params_sc_cellsweep()].

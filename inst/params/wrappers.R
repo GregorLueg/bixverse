@@ -2171,3 +2171,43 @@ spec_ligand_target <- param_spec(
     )
   )
 )
+
+spec_sc_cellphonedb <- param_spec(
+  name = "sc_cellphonedb",
+  title = "Parameters for the CellPhoneDB analysis",
+  description = paste(
+    "Defaults match CellPhoneDB v5: 1000 permutations and a 10% expression",
+    "threshold."
+  ),
+  checker = "ScCellPhoneDb",
+  label = "CellPhoneDB params",
+  hint = paste(
+    "n_perm and perm_batch must be integers >= 1 (perm_batch may be",
+    "NULL); seed must be an integer >= 0; threshold must be in [0, 1]."
+  ),
+  fields = list(
+    n_perm = p_int(
+      1000L,
+      range = "[1,)",
+      doc = "Number of cluster label permutations for the p-values."
+    ),
+    threshold = p_dbl(
+      0.1,
+      range = "[0,1]",
+      doc = paste(
+        "Both partners need a fraction of expressing cells strictly above",
+        "this value in their cluster."
+      )
+    ),
+    seed = p_int(42L, range = "[0,)", doc = "Seed for the permutations."),
+    perm_batch = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Permutations that share one pass over the gene data. `NULL` uses",
+        "the Rust default (16)."
+      )
+    )
+  )
+)

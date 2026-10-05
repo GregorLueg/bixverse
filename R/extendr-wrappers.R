@@ -5637,6 +5637,54 @@ rs_ligand_activity_scores <- function(ligand_influence, in_gene_sets) .Call(wrap
 #' @keywords internal
 rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .Call(wrap__rs_compute_cluster_expr_stats, f_path_gene, gene_indices, clusters)
 
+#' CellPhoneDB ligand/receptor analysis
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Mirrors the CellPhoneDB v5 numerics. A complex takes the minimum over its
+#' subunits for both the mean and the fraction expressing. With
+#' `statistical = TRUE`, cluster labels are permuted globally across the
+#' included cells and `p = #(perm > real) / n_perm`. With `deg_genes`, the
+#' expression gate is additionally restricted to interactions where partner a
+#' is differentially expressed in the sender or partner b in the receiver.
+#' Reads the normalised layer of the L/R genes only, once.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param partner_a List of integer vectors (0-indexed!). Subunit gene
+#' indices of partner a per interaction; a single gene is a length one vector.
+#' @param partner_b List of integer vectors (0-indexed!). Same for partner b.
+#' @param clusters List of integer vectors (0-indexed!). Disjoint cell indices
+#' per cluster. Cells in no cluster are ignored.
+#' @param pair_a,pair_b Optional integer vectors (0-indexed!) of equal length
+#' giving the ordered cluster pairs `(pair_a[i], pair_b[i])` to test. `NULL`
+#' tests all ordered pairs.
+#' @param deg_genes Optional list of integer vectors (0-indexed!), one per
+#' cluster in the order of `clusters`, with the differentially expressed
+#' genes. Replaces the expression gate with the DEG gate.
+#' @param statistical Boolean. Shall the permutation p-values be computed.
+#' @param params List. See [bixverse::params_sc_cellphonedb()].
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item means - Numeric matrix (interactions x pairs) of interaction means.
+#'   \item pvals - Numeric matrix (interactions x pairs) of permutation
+#'   p-values, 1 where the mean is zero or the gate fails. `NULL` unless
+#'   `statistical = TRUE`.
+#'   \item gate - Logical matrix (interactions x pairs). The expression gate,
+#'   or the DEG gate if `deg_genes` was supplied.
+#'   \item pair_a, pair_b - The tested cluster pairs (0-indexed), the columns
+#'   of the matrices above.
+#'   \item genes - Unique L/R gene indices (0-indexed), the rows of
+#'   `gene_mean` and `gene_pct`.
+#'   \item gene_mean, gene_pct - Numeric matrices (genes x clusters) with the
+#'   mean normalised expression and the fraction of expressing cells.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_cellphonedb <- function(f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params) .Call(wrap__rs_sc_cellphonedb, f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params)
+
 #' Generate meta cells (hdWGCNA method)
 #'
 #' @description

@@ -4,6 +4,7 @@ use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
 use bixverse_rs::single_cell::sc_analysis::{
+    cellphonedb::*,
     dge_pathway_scores::*,
     dialogue::{dialogue_run, DialogueParams},
     hotspot::*,
@@ -28,7 +29,7 @@ use std::cmp::Ordering;
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
     dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, nebula_res_to_r_list,
-    panel_size_from_mem, prep_nichenet_network,
+    panel_size_from_mem, prep_nichenet_network, r_list_to_index_vecs,
 };
 
 ////////////////////
@@ -77,6 +78,8 @@ extendr_module! {
     fn rs_generate_ligand_target_influence;
     fn rs_ligand_activity_scores;
     fn rs_compute_cluster_expr_stats;
+    // cellphonedb
+    fn rs_sc_cellphonedb;
 }
 
 //////////
@@ -2432,6 +2435,158 @@ fn rs_compute_cluster_expr_stats(
     Ok(list!(
         mean = faer_to_r_matrix(cluster_res.mean.as_ref()),
         frac = faer_to_r_matrix(cluster_res.frac.as_ref())
+    ))
+}
+
+/////////////////
+// CellPhoneDB //
+/////////////////
+
+/// CellPhoneDB ligand/receptor analysis
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Mirrors the CellPhoneDB v5 numerics. A complex takes the minimum over its
+/// subunits for both the mean and the fraction expressing. With
+/// `statistical = TRUE`, cluster labels are permuted globally across the
+/// included cells and `p = #(perm > real) / n_perm`. With `deg_genes`, the
+/// expression gate is additionally restricted to interactions where partner a
+/// is differentially expressed in the sender or partner b in the receiver.
+/// Reads the normalised layer of the L/R genes only, once.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param partner_a List of integer vectors (0-indexed!). Subunit gene
+/// indices of partner a per interaction; a single gene is a length one vector.
+/// @param partner_b List of integer vectors (0-indexed!). Same for partner b.
+/// @param clusters List of integer vectors (0-indexed!). Disjoint cell indices
+/// per cluster. Cells in no cluster are ignored.
+/// @param pair_a,pair_b Optional integer vectors (0-indexed!) of equal length
+/// giving the ordered cluster pairs `(pair_a[i], pair_b[i])` to test. `NULL`
+/// tests all ordered pairs.
+/// @param deg_genes Optional list of integer vectors (0-indexed!), one per
+/// cluster in the order of `clusters`, with the differentially expressed
+/// genes. Replaces the expression gate with the DEG gate.
+/// @param statistical Boolean. Shall the permutation p-values be computed.
+/// @param params List. See [bixverse::params_sc_cellphonedb()].
+///
+/// @returns A list with:
+/// \itemize{
+///   \item means - Numeric matrix (interactions x pairs) of interaction means.
+///   \item pvals - Numeric matrix (interactions x pairs) of permutation
+///   p-values, 1 where the mean is zero or the gate fails. `NULL` unless
+///   `statistical = TRUE`.
+///   \item gate - Logical matrix (interactions x pairs). The expression gate,
+///   or the DEG gate if `deg_genes` was supplied.
+///   \item pair_a, pair_b - The tested cluster pairs (0-indexed), the columns
+///   of the matrices above.
+///   \item genes - Unique L/R gene indices (0-indexed), the rows of
+///   `gene_mean` and `gene_pct`.
+///   \item gene_mean, gene_pct - Numeric matrices (genes x clusters) with the
+///   mean normalised expression and the fraction of expressing cells.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_sc_cellphonedb(
+    f_path_gene: &str,
+    partner_a: List,
+    partner_b: List,
+    clusters: List,
+    pair_a: Nullable<Vec<i32>>,
+    pair_b: Nullable<Vec<i32>>,
+    deg_genes: Nullable<List>,
+    statistical: bool,
+    params: List,
+) -> Result<List> {
+    let partner_a = r_list_to_index_vecs(partner_a, "partner_a")?;
+    let partner_b = r_list_to_index_vecs(partner_b, "partner_b")?;
+    if partner_a.len() != partner_b.len() {
+        return Err(Error::Other(
+            "`partner_a` and `partner_b` need the same length.".into(),
+        ));
+    }
+    let interactions: Vec<LrInteraction> = partner_a
+        .into_iter()
+        .zip(partner_b)
+        .map(|(partner_a, partner_b)| LrInteraction {
+            partner_a,
+            partner_b,
+        })
+        .collect();
+    let clusters = r_list_to_index_vecs(clusters, "clusters")?;
+
+    let pairs: Option<Vec<(usize, usize)>> = match (pair_a, pair_b) {
+        (Nullable::NotNull(a), Nullable::NotNull(b)) => {
+            if a.len() != b.len() {
+                return Err(Error::Other(
+                    "`pair_a` and `pair_b` need the same length.".into(),
+                ));
+            }
+            Some(
+                a.r_int_convert()
+                    .into_iter()
+                    .zip(b.r_int_convert())
+                    .collect(),
+            )
+        }
+        (Nullable::Null, Nullable::Null) => None,
+        _ => {
+            return Err(Error::Other(
+                "Supply both `pair_a` and `pair_b`, or neither.".into(),
+            ))
+        }
+    };
+
+    let params = CellPhoneDbParams::<f64>::from_r_list(params)?;
+    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
+
+    let (mut obs, pvals) = if statistical {
+        let res = cellphonedb_statistical(
+            &reader,
+            &interactions,
+            &clusters,
+            pairs.as_deref(),
+            Some(params),
+        )
+        .to_extendr()?;
+        (res.obs, Some(res.pvals))
+    } else {
+        let obs = cellphonedb_observed(
+            &reader,
+            &interactions,
+            &clusters,
+            pairs.as_deref(),
+            params.threshold,
+        )
+        .to_extendr()?;
+        (obs, None)
+    };
+
+    if let Nullable::NotNull(deg_genes) = deg_genes {
+        let deg_genes = r_list_to_index_vecs(deg_genes, "deg_genes")?;
+        obs.gate = cpdb_deg_gate(&interactions, &deg_genes, &obs).to_extendr()?;
+    }
+
+    // the gate comes back row-major (interactions, pairs)
+    let n_pairs = obs.pairs.len();
+    let gate = RMatrix::new_matrix(interactions.len(), n_pairs, |i, p| {
+        extendr_api::scalar::Rbool::from(obs.gate[i * n_pairs + p])
+    });
+    let (pair_a, pair_b): (Vec<i32>, Vec<i32>) =
+        obs.pairs.iter().map(|&(a, b)| (a as i32, b as i32)).unzip();
+
+    Ok(list!(
+        means = faer_to_r_matrix(obs.means.as_ref()),
+        pvals = pvals.map(|p| faer_to_r_matrix(p.as_ref())),
+        gate = gate,
+        pair_a = pair_a,
+        pair_b = pair_b,
+        genes = obs.genes.iter().map(|&g| g as i32).collect::<Vec<i32>>(),
+        gene_mean = faer_to_r_matrix(obs.gene_mean.as_ref()),
+        gene_pct = faer_to_r_matrix(obs.gene_pct.as_ref())
     ))
 }
 
