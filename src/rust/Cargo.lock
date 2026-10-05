@@ -39,6 +39,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ann-search-rs"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0abe18588fd9084a8a4fcffc42cda6cc55213650c48ad5d56e95e8ce27c0399b"
+dependencies = [
+ "document-features",
+ "faer",
+ "faer-traits",
+ "fixedbitset",
+ "num-traits",
+ "rand 0.9.5",
+ "rand_distr 0.5.1",
+ "rayon",
+ "rdst",
+ "rustc-hash",
+ "thiserror 2.0.21",
+ "thousands",
+ "wide 1.7.1",
+]
+
+[[package]]
 name = "anstyle"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -126,10 +147,10 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.5.11"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.5.11#1ad3cdff1fce2dd846bb84aa4c666a05b1936789"
+version = "0.6.0"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.6.0#b6deda75a0428e5b2204c62663df79dee3ae1480"
 dependencies = [
- "ann-search-rs",
+ "ann-search-rs 0.10.0",
  "approx",
  "bincode",
  "bonsai-rs",
@@ -190,7 +211,7 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "303cc7905a12ba9af7eb8494e8b3b1ffd875fe94810745bf9c2756df85fec376"
 dependencies = [
- "ann-search-rs",
+ "ann-search-rs 0.9.3",
  "num-traits",
  "rayon",
  "rustc-hash",
@@ -462,9 +483,9 @@ checksum = "e1d926b4d407d372f141f93bb444696142c29d32962ccbd3531117cf3aa0bfa9"
 
 [[package]]
 name = "edge-rs"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06dc972feaf20a5022552c62166d243e26f843493cec8e136f1a07ef474c3cf9"
+checksum = "41dabd1e5a999f845567652ecd74fa34f0bc201ff0d7c4a06bf969cbd2984454"
 dependencies = [
  "faer",
  "faer-traits",
