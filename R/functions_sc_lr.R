@@ -1132,7 +1132,8 @@ get_cellphonedb_db <- function(dir = tempdir(), .verbose = TRUE) {
 #' @param senders,receivers Optional character vectors. Restrict the tested
 #' pairs to these sender and receiver clusters. `NULL` uses all clusters.
 #' @param gene_id_col String. The var column holding the gene symbols used in
-#' `lr_db`. Defaults to `"gene_id"`.
+#' `lr_db`. A duplicated symbol resolves to its first gene. Defaults to
+#' `"gene_id"`.
 #' @param params List. See [params_sc_cellphonedb()].
 #'
 #' @returns A data.table with one row per interaction and cluster pair:

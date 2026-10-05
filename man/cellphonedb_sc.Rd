@@ -36,7 +36,8 @@ filtered \code{\link[=find_all_markers_sc]{find_all_markers_sc()}} result. Requi
 pairs to these sender and receiver clusters. \code{NULL} uses all clusters.}
 
 \item{gene_id_col}{String. The var column holding the gene symbols used in
-\code{lr_db}. Defaults to \code{"gene_id"}.}
+\code{lr_db}. A duplicated symbol resolves to its first gene. Defaults to
+\code{"gene_id"}.}
 
 \item{params}{List. See \code{\link[=params_sc_cellphonedb]{params_sc_cellphonedb()}}.}
 }

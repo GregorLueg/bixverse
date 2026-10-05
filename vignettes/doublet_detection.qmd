@@ -356,6 +356,26 @@ genes are VERY similar across all the cells for example in cell culture
 experiments), you can bump `cxds_genes` up. The default here is 500L, but you
 might want to increase this pending your experiment.
 
+### PCA solver and HVG method
+
+All three methods run their own PCA on the observed and simulated cells. You
+pick the solver via `svd_solver` in the `pca` list. The default,
+`"covariance"`, builds the gene x gene cross-product over the HVGs and
+eigendecomposes it, which is exact. `"randomised"` is a randomised SVD and is
+approximate in the trailing components. `"exact"` runs Lanczos on the sparse
+path and a full SVD on the dense one. Scrublet and the boosted method also
+take the HVG method via the `hvg` list, including the scran trend:
+
+```{r}
+#| label: solver options
+#| eval: false
+params_scrublet(
+  expected_doublet_rate = 0.12,
+  hvg = list(hvg_method = "scran"),
+  pca = list(svd_solver = "randomised")
+)
+```
+
 ### Conclusion
 
 All methods can help to identify in a data-driven way doublets in your data.
