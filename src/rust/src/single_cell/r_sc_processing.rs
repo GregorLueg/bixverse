@@ -528,22 +528,25 @@ fn rs_pairwise_gene_cors(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function identifies highly variable genes with the three methods known
-/// in Seurat.
+/// in Seurat, plus the scran mean-variance trend.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
 /// @param hvg_method String. Which HVG detection method to use. One of
-/// `c("vst", "meanvarbin", "dispersion")`.
+/// `c("vst", "meanvarbin", "dispersion", "scran")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep. Must be unique and within the store; duplicates or out-of-range
 /// positions raise an error.
 /// @param loess_span Numeric. The span parameter for the loess function
-/// (`"vst"` only). Must be within `(0, 1]`.
+/// (`"vst"`) or the lowess trend (`"scran"`). Must be within `(0, 1]`.
 /// @param binning String. The binning strategy for the `meanvarbin` and
 /// `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
 /// @param n_bins Integer. Number of bins for the `meanvarbin` and
 /// `dispersion` methods.
 /// @param clip_max Optional clipping number (`"vst"` only). Defaults to
 /// `sqrt(no_cells)` if not provided.
+/// @param scran_params List. Trend parameters for `"scran"`, see
+/// [bixverse::params_hvg_scran_defaults()]. Missing elements fall back to
+/// the scrapper defaults. The span is taken from `loess_span`.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -557,7 +560,15 @@ fn rs_pairwise_gene_cors(
 ///   \item var_exp - The expected variance of the gene.
 ///   \item var_std - The standardised variance of the gene.
 /// }
-/// For the other two methods, these elements can be found:
+/// If `hvg_method == "scran"`, all on the log2 scale:
+/// \itemize{
+///   \item scran_mean - The mean log-expression of the gene.
+///   \item scran_var - The variance of the log-expression of the gene.
+///   \item scran_fitted - The variance the trend expects at the gene's mean.
+///   \item scran_residual - `scran_var - scran_fitted`. Genes are ranked on
+///   this.
+/// }
+/// For `"meanvarbin"` and `"dispersion"`, these elements can be found:
 /// \itemize{
 ///   \item mean - The average expression of the gene.
 ///   \item dispersion - The dispersion of the gene
@@ -578,6 +589,7 @@ fn rs_sc_hvg(
     binning: String,
     n_bins: usize,
     clip_max: Option<f32>,
+    scran_params: List,
     streaming: bool,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
@@ -632,6 +644,24 @@ fn rs_sc_hvg(
                 bin = res.bin
             ))
         }
+        HvgMethod::Scran => {
+            let params = ScranTrendParams {
+                span: loess_span,
+                ..ScranTrendParams::from_r_list(scran_params)?
+            };
+            let res = if streaming {
+                get_hvg_scran_streaming(&reader, &cell_set, Some(params), verbose)
+            } else {
+                get_hvg_scran(&reader, &cell_set, Some(params), verbose)
+            }
+            .to_extendr()?;
+            Ok(list!(
+                scran_mean = res.mean,
+                scran_var = res.var,
+                scran_fitted = res.fitted,
+                scran_residual = res.residual
+            ))
+        }
     }
 }
 
@@ -645,7 +675,7 @@ fn rs_sc_hvg(
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
 /// @param hvg_method String. Which HVG detection method to use. One of
-/// `c("vst", "meanvarbin", "dispersion")`.
+/// `c("vst", "meanvarbin", "dispersion", "scran")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep. Must be unique and within the store; duplicates or out-of-range
 /// positions raise an error.
@@ -654,13 +684,16 @@ fn rs_sc_hvg(
 /// `0:(n_batches - 1)`; a length mismatch or an empty batch raises an error.
 /// `as.integer(factor(x)) - 1L` always satisfies this.
 /// @param loess_span Numeric. The span parameter for the loess function
-/// (`"vst"` only). Must be within `(0, 1]`.
+/// (`"vst"`) or the lowess trend (`"scran"`). Must be within `(0, 1]`.
 /// @param binning String. The binning strategy for the `meanvarbin` and
 /// `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
 /// @param n_bins Integer. Number of bins for the `meanvarbin` and
 /// `dispersion` methods.
 /// @param clip_max Optional clipping number (`"vst"` only). Defaults to
 /// `sqrt(no_cells)` per batch if not provided.
+/// @param scran_params List. Trend parameters for `"scran"`, see
+/// [bixverse::params_hvg_scran_defaults()]. Missing elements fall back to
+/// the scrapper defaults. The span is taken from `loess_span`.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -678,7 +711,9 @@ fn rs_sc_hvg(
 ///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 ///   n_batches).
 /// }
-/// For the other methods
+/// For `hvg_method == "scran"`, `scran_mean`, `scran_var`, `scran_fitted` and
+/// `scran_residual` (all on the log2 scale) plus `batch` and `gene_idx` as
+/// above. For the other methods
 /// \itemize{
 ///   \item mean - The average expression of each gene in each batch.
 ///   \item dispersion - The dispersion of the gene in each batch.
@@ -705,6 +740,7 @@ fn rs_sc_hvg_batch_aware(
     binning: String,
     n_bins: usize,
     clip_max: Option<f32>,
+    scran_params: List,
     streaming: bool,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
@@ -812,6 +848,26 @@ fn rs_sc_hvg_batch_aware(
             .to_extendr()?;
 
             Ok(flatten_dispersion_batches(results))
+        }
+        HvgMethod::Scran => {
+            let params = ScranTrendParams {
+                span: loess_span,
+                ..ScranTrendParams::from_r_list(scran_params)?
+            };
+            let results = if streaming {
+                get_hvg_scran_batch_aware_streaming(
+                    &reader,
+                    &cell_set,
+                    &batch_set,
+                    Some(params),
+                    verbose,
+                )
+            } else {
+                get_hvg_scran_batch_aware(&reader, &cell_set, &batch_set, Some(params), verbose)
+            }
+            .to_extendr()?;
+
+            Ok(flatten_scran_batches(results))
         }
     }
 }

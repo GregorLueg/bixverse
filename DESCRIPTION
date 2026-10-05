@@ -91,6 +91,7 @@ Suggests:
     qs2,
     quarto,
     singscore,
+    scrapper,
     SingleCellExperiment,
     SummarizedExperiment,
     StatMatch,

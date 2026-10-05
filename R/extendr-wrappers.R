@@ -3995,22 +3995,25 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function identifies highly variable genes with the three methods known
-#' in Seurat.
+#' in Seurat, plus the scran mean-variance trend.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
 #' @param hvg_method String. Which HVG detection method to use. One of
-#' `c("vst", "meanvarbin", "dispersion")`.
+#' `c("vst", "meanvarbin", "dispersion", "scran")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
 #' to keep. Must be unique and within the store; duplicates or out-of-range
 #' positions raise an error.
 #' @param loess_span Numeric. The span parameter for the loess function
-#' (`"vst"` only). Must be within `(0, 1]`.
+#' (`"vst"`) or the lowess trend (`"scran"`). Must be within `(0, 1]`.
 #' @param binning String. The binning strategy for the `meanvarbin` and
 #' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
 #' @param n_bins Integer. Number of bins for the `meanvarbin` and
 #' `dispersion` methods.
 #' @param clip_max Optional clipping number (`"vst"` only). Defaults to
 #' `sqrt(no_cells)` if not provided.
+#' @param scran_params List. Trend parameters for `"scran"`, see
+#' [bixverse::params_hvg_scran_defaults()]. Missing elements fall back to
+#' the scrapper defaults. The span is taken from `loess_span`.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -4024,7 +4027,15 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #'   \item var_exp - The expected variance of the gene.
 #'   \item var_std - The standardised variance of the gene.
 #' }
-#' For the other two methods, these elements can be found:
+#' If `hvg_method == "scran"`, all on the log2 scale:
+#' \itemize{
+#'   \item scran_mean - The mean log-expression of the gene.
+#'   \item scran_var - The variance of the log-expression of the gene.
+#'   \item scran_fitted - The variance the trend expects at the gene's mean.
+#'   \item scran_residual - `scran_var - scran_fitted`. Genes are ranked on
+#'   this.
+#' }
+#' For `"meanvarbin"` and `"dispersion"`, these elements can be found:
 #' \itemize{
 #'   \item mean - The average expression of the gene.
 #'   \item dispersion - The dispersion of the gene
@@ -4035,7 +4046,7 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' @export
 #'
 #' @keywords internal
-rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, streaming, verbose)
+rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose)
 
 #' Calculate HVG per batch
 #'
@@ -4047,7 +4058,7 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
 #' @param hvg_method String. Which HVG detection method to use. One of
-#' `c("vst", "meanvarbin", "dispersion")`.
+#' `c("vst", "meanvarbin", "dispersion", "scran")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
 #' to keep. Must be unique and within the store; duplicates or out-of-range
 #' positions raise an error.
@@ -4056,13 +4067,16 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' `0:(n_batches - 1)`; a length mismatch or an empty batch raises an error.
 #' `as.integer(factor(x)) - 1L` always satisfies this.
 #' @param loess_span Numeric. The span parameter for the loess function
-#' (`"vst"` only). Must be within `(0, 1]`.
+#' (`"vst"`) or the lowess trend (`"scran"`). Must be within `(0, 1]`.
 #' @param binning String. The binning strategy for the `meanvarbin` and
 #' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
 #' @param n_bins Integer. Number of bins for the `meanvarbin` and
 #' `dispersion` methods.
 #' @param clip_max Optional clipping number (`"vst"` only). Defaults to
 #' `sqrt(no_cells)` per batch if not provided.
+#' @param scran_params List. Trend parameters for `"scran"`, see
+#' [bixverse::params_hvg_scran_defaults()]. Missing elements fall back to
+#' the scrapper defaults. The span is taken from `loess_span`.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -4080,7 +4094,9 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #'   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 #'   n_batches).
 #' }
-#' For the other methods
+#' For `hvg_method == "scran"`, `scran_mean`, `scran_var`, `scran_fitted` and
+#' `scran_residual` (all on the log2 scale) plus `batch` and `gene_idx` as
+#' above. For the other methods
 #' \itemize{
 #'   \item mean - The average expression of each gene in each batch.
 #'   \item dispersion - The dispersion of the gene in each batch.
@@ -4096,7 +4112,7 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' @export
 #'
 #' @keywords internal
-rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, streaming, verbose)
+rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose)
 
 #' Calculates PCA for single cell
 #'
@@ -6135,17 +6151,20 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
 #' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
-#' raw counts for `"vst"` and normalised counts otherwise.
+#' raw counts for `"vst"` and log1p-normalised counts otherwise.
 #' @param hvg_method String. Which HVG detection method to use. Options
-#' are `c("vst", "meanvarbin", "dispersion")`.
+#' are `c("vst", "meanvarbin", "dispersion", "scran")`.
 #' @param loess_span Numeric. The span parameter for the loess function
-#' (only used for `"vst"`).
+#' (`"vst"`) or the lowess trend (`"scran"`).
 #' @param binning String. The binning strategy for the `meanvarbin` and
 #' `dispersion` methods. One of `c("equal_width", "equal_freq")`.
 #' @param n_bins Integer. Number of bins for the `meanvarbin` and
 #' `dispersion` methods.
 #' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 #' not provided (only used for `"vst"`).
+#' @param scran_params List. Trend parameters for `"scran"`, see
+#' [bixverse::params_hvg_scran_defaults()]. Missing elements fall back to
+#' the scrapper defaults. The span is taken from `loess_span`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -6156,6 +6175,14 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #'   \item var_exp - The expected variance of the gene.
 #'   \item var_std - The standardised variance of the gene.
 #' }
+#' If `hvg_method == "scran"`, all on the log2 scale:
+#' \itemize{
+#'   \item scran_mean - The mean log-expression of the gene.
+#'   \item scran_var - The variance of the log-expression of the gene.
+#'   \item scran_fitted - The variance the trend expects at the gene's mean.
+#'   \item scran_residual - `scran_var - scran_fitted`. Genes are ranked on
+#'   this.
+#' }
 #' For `"meanvarbin"` and `"dispersion"`:
 #' \itemize{
 #'   \item mean - The average expression of the gene.
@@ -6165,7 +6192,7 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #' }
 #'
 #' @export
-rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, verbose) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, verbose)
+rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, scran_params, verbose) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, scran_params, verbose)
 
 #' PCA on MetaCells (sparse data)
 #'

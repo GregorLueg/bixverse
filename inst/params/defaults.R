@@ -139,8 +139,11 @@ spec_hvg_defaults <- param_defaults(
     ),
     hvg_method = p_choice(
       "vst",
-      c("vst", "mvb", "dispersion"),
-      doc = "Which method to use to identify HVG."
+      c("vst", "meanvarbin", "dispersion", "scran"),
+      doc = paste(
+        "Which method to use to identify HVG. `\"scran\"` runs with the",
+        "default trend parameters, see [params_hvg_scran_defaults()]."
+      )
     ),
     loess_span = p_dbl(
       0.3,
@@ -156,12 +159,65 @@ spec_hvg_defaults <- param_defaults(
     n_bins = p_int(
       20L,
       range = "[1,)",
-      doc = "The number of bins to use for the `\"mvb\"` HVG detection."
+      doc = paste(
+        "The number of bins to use for the `\"meanvarbin\"` and",
+        "`\"dispersion\"` HVG detection."
+      )
     ),
     binning_strategy = p_choice(
       "equal_width",
       c("equal_width", "equal_frequency"),
-      doc = "Which binning strategy to use for `\"mvb\"`."
+      doc = paste(
+        "Which binning strategy to use for `\"meanvarbin\"` and",
+        "`\"dispersion\"`."
+      )
+    )
+  )
+)
+
+spec_hvg_scran_defaults <- param_defaults(
+  name = "hvg_scran_defaults",
+  title = "Helper function to generate the scran HVG trend defaults",
+  description = paste(
+    "Trend parameters for `method = \"scran\"` in [params_sc_hvg()]. They",
+    "mirror scrapper's `fitVarianceTrend()` defaults. The lowess span comes",
+    "from `loess_span` in [params_sc_hvg()]."
+  ),
+  checker = NULL,
+  label = "scran HVG trend params",
+  fields = list(
+    mean_filter = p_lgl(
+      TRUE,
+      doc = "Shall genes below `min_mean` be left out of the trend fit."
+    ),
+    min_mean = p_dbl(
+      0.1,
+      range = "[0,)",
+      doc = "Minimum mean log-expression for a gene to enter the trend fit."
+    ),
+    transform = p_lgl(
+      TRUE,
+      doc = "Shall the variances be fourth-root transformed before the fit."
+    ),
+    use_min_width = p_lgl(
+      FALSE,
+      doc = paste(
+        "Shall the lowess window be defined by `min_width` and",
+        "`min_window_count` instead of the span."
+      )
+    ),
+    min_width = p_dbl(
+      1,
+      range = "(0,)",
+      doc = "Minimum window width, only used with `use_min_width = TRUE`."
+    ),
+    min_window_count = p_int(
+      200L,
+      range = "[1,)",
+      doc = paste(
+        "Minimum number of genes per window, only used with",
+        "`use_min_width = TRUE`."
+      )
     )
   )
 )

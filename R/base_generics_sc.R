@@ -1120,12 +1120,15 @@ get_knn_dist <- function(x, ...) {
 #' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
 #' \itemize{
 #'   \item method - Which method to use. One of
-#'   `c("vst", "meanvarbin", "dispersion")`
+#'   `c("vst", "meanvarbin", "dispersion", "scran", "residual")`
 #'   \item loess_span - The span for the loess function to standardise the
-#'   variance
+#'   variance (`"vst"`), or of the lowess trend (`"scran"`)
 #'   \item num_bin - Integer. Not yet implemented.
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
+#'   \item mean_filter, min_mean, transform, use_min_width, min_width,
+#'   min_window_count - The `"scran"` trend parameters, see
+#'   [bixverse::params_hvg_scran_defaults()]
 #' }
 #' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
 #' larger data sets where you wish to avoid loading in the whole data. If
@@ -1134,8 +1137,11 @@ get_knn_dist <- function(x, ...) {
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @returns It will add the mean, var, var_exp, var_std of each gene to the
-#' the var table.
+#' @returns It will add the per-gene HVG statistics to the var table: `mean`,
+#' `var`, `var_exp` and `var_std` for `"vst"`; `mean`, `dispersion`,
+#' `dispersion_scaled` and `bin` for `"meanvarbin"` and `"dispersion"`;
+#' `scran_mean`, `scran_var`, `scran_fitted` and `scran_residual` (log2 scale)
+#' for `"scran"`.
 #'
 #' @export
 #'

@@ -1349,9 +1349,9 @@ spec_sc_fastmnn <- param_spec(
   label = "fastMNN params",
   hint = paste(
     "no_pcs must be an integer >= 1; ndist must be a positive",
-    "numeric; size_factor must be numeric; cos_norm, randomised,",
-    "sparse_svd, mean_center, normalise_variance and clr must be",
-    "booleans."
+    "numeric; size_factor must be numeric; svd_solver must be one of",
+    "covariance, randomised or exact; cos_norm, sparse_svd,",
+    "mean_center, normalise_variance and clr must be booleans."
   ),
   fields = list(
     ndist = p_dbl(

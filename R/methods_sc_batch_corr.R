@@ -1010,12 +1010,15 @@ S7::method(calculate_integration_metrics_sc, ScOrScSubset) <- function(
 #' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
 #' \itemize{
 #'   \item method - Which method to use. One of
-#'   `c("vst", "meanvarbin", "dispersion")`
+#'   `c("vst", "meanvarbin", "dispersion", "scran")`
 #'   \item loess_span - The span for the loess function to standardise the
-#'   variance
+#'   variance (`"vst"`), or of the lowess trend (`"scran"`)
 #'   \item num_bin - Integer. Not yet implemented.
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
+#'   \item mean_filter, min_mean, transform, use_min_width, min_width,
+#'   min_window_count - The `"scran"` trend parameters, see
+#'   [bixverse::params_hvg_scran_defaults()]
 #' }
 #' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
 #' larger data sets where you wish to avoid loading in the whole data. If
@@ -1118,6 +1121,7 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
       batch_labels = batch_indices,
       loess_span = loess_span,
       clip_max = NULL,
+      scran_params = hvg_params,
       n_bins = num_bin,
       binning = bin_method,
       streaming = streaming,
@@ -1128,13 +1132,7 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
   batch_hvgs_dt <- data.table::as.data.table(batch_hvgs)
   batch_hvgs_dt[, batch := levels(batch_factor)[batch + 1L]]
 
-  sort_col <- switch(
-    hvg_params$method,
-    "vst" = "var_std",
-    "dispersion" = "dispersion",
-    "meanvarbin" = "dispersion_scaled",
-    stop("Unknown HVG method: ", hvg_params$method)
-  )
+  sort_col <- hvg_rank_col(hvg_params$method)
 
   hvg_gene_idx <- switch(
     gene_comb_method,

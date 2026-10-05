@@ -246,7 +246,7 @@ checkScBoostParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      hvg_method = c("vst", "mvb", "dispersion"),
+      hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
       svd_solver = c("covariance", "randomised", "exact"),
       knn_method = c(
@@ -3339,9 +3339,9 @@ checkScFastmnnParams <- function(x) {
     label = "fastMNN params",
     hint = paste(
       "no_pcs must be an integer >= 1; ndist must be a positive",
-      "numeric; size_factor must be numeric; cos_norm, randomised,",
-      "sparse_svd, mean_center, normalise_variance and clr must be",
-      "booleans."
+      "numeric; size_factor must be numeric; svd_solver must be one of",
+      "covariance, randomised or exact; cos_norm, sparse_svd,",
+      "mean_center, normalise_variance and clr must be booleans."
     )
   )
   if (!isTRUE(res)) {
@@ -3365,9 +3365,9 @@ checkScFastmnnParams <- function(x) {
     label = "fastMNN params",
     hint = paste(
       "no_pcs must be an integer >= 1; ndist must be a positive",
-      "numeric; size_factor must be numeric; cos_norm, randomised,",
-      "sparse_svd, mean_center, normalise_variance and clr must be",
-      "booleans."
+      "numeric; size_factor must be numeric; svd_solver must be one of",
+      "covariance, randomised or exact; cos_norm, sparse_svd,",
+      "mean_center, normalise_variance and clr must be booleans."
     )
   )
   if (!isTRUE(res)) {
@@ -3792,7 +3792,21 @@ assertScHotspotParams <- checkmate::makeAssertionFunction(checkScHotspotParams)
 #'
 #' @keywords internal
 checkScHvgParams <- function(x) {
-  res <- check_list_shape(x, c("method", "loess_span", "num_bin", "bin_method"))
+  res <- check_list_shape(
+    x,
+    c(
+      "method",
+      "loess_span",
+      "num_bin",
+      "bin_method",
+      "mean_filter",
+      "min_mean",
+      "transform",
+      "use_min_width",
+      "min_width",
+      "min_window_count"
+    )
+  )
   if (!isTRUE(res)) {
     return(res)
   }
@@ -3801,10 +3815,21 @@ checkScHvgParams <- function(x) {
     x,
     list(
       loess_span = "N1[0.1, 1]",
-      num_bin = "I1"
+      num_bin = "I1",
+      mean_filter = "B1",
+      min_mean = "N1[0,)",
+      transform = "B1",
+      use_min_width = "B1",
+      min_width = "N1(0,)",
+      min_window_count = "I1[1,)"
     ),
     label = "HVG params",
-    hint = "loess_span must be in [0.1, 1]; num_bin must be an integer."
+    hint = paste(
+      "loess_span must be in [0.1, 1]; num_bin must be an integer;",
+      "min_mean must be >= 0; min_width must be > 0; min_window_count",
+      "must be an integer >= 1; mean_filter, transform and",
+      "use_min_width must be booleans."
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -3813,11 +3838,16 @@ checkScHvgParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      method = c("vst", "meanvarbin", "dispersion", "residual"),
+      method = c("vst", "meanvarbin", "dispersion", "scran", "residual"),
       bin_method = c("equal_width", "equal_freq")
     ),
     label = "HVG params",
-    hint = "loess_span must be in [0.1, 1]; num_bin must be an integer."
+    hint = paste(
+      "loess_span must be in [0.1, 1]; num_bin must be an integer;",
+      "min_mean must be >= 0; min_width must be > 0; min_window_count",
+      "must be an integer >= 1; mean_filter, transform and",
+      "use_min_width must be booleans."
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -6005,7 +6035,7 @@ checkScScrubletParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      hvg_method = c("vst", "mvb", "dispersion"),
+      hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
       svd_solver = c("covariance", "randomised", "exact"),
       knn_method = c(

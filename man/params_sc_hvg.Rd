@@ -5,40 +5,54 @@
 \title{Wrapper function for HVG detection parameters.}
 \usage{
 params_sc_hvg(
-  method = c("vst", "meanvarbin", "dispersion", "residual"),
+  method = c("vst", "meanvarbin", "dispersion", "scran", "residual"),
   loess_span = 0.3,
   num_bin = 20L,
-  bin_method = c("equal_width", "equal_freq")
+  bin_method = c("equal_width", "equal_freq"),
+  scran = list()
 )
 }
 \arguments{
-\item{method}{String. \code{"residual"} ranks genes by the residual variance of a
-model fitted with \code{\link[=fit_residuals_sc]{fit_residuals_sc()}}, and needs that fit on the
-object first. It also treats \code{hvg_no} as a per-group count and returns the
-union across groups, so a grouped fit can select more than \code{hvg_no} genes.
-One of \code{c("vst", "meanvarbin", "dispersion", "residual")}. Defaults to
-\code{"vst"}.}
+\item{method}{String. \code{"scran"} fits a weighted lowess trend to the variance
+of the log-expression against its mean and ranks genes by the residual, as in
+scran's \code{modelGeneVar()}. \code{"residual"} ranks genes by the residual variance
+of a model fitted with \code{\link[=fit_residuals_sc]{fit_residuals_sc()}}, and needs that fit on
+the object first. It also treats \code{hvg_no} as a per-group count and returns
+the union across groups, so a grouped fit can select more than \code{hvg_no}
+genes. One of \code{c("vst", "meanvarbin", "dispersion", "scran", "residual")}.
+Defaults to \code{"vst"}.}
 
 \item{loess_span}{Numeric. The span parameter for the loess function that is
-used to standardise the variance for \code{method = "vst"}. Defaults to \code{0.3}.}
+used to standardise the variance for \code{method = "vst"}, and the lowess span of
+the trend for \code{method = "scran"}. Defaults to \code{0.3}.}
 
 \item{num_bin}{Integer. Not yet implemented. Defaults to \code{20L}.}
 
 \item{bin_method}{String. The binning method. One of \code{c("equal_width", "equal_freq")}. Defaults to \code{"equal_width"}.}
+
+\item{scran}{List. Optional overrides for the \code{method = "scran"} trend. See
+\code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}} for available parameters:
+\code{mean_filter}, \code{min_mean}, \code{transform}, \code{use_min_width}, \code{min_width} and
+\code{min_window_count}. See \code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}} for the available
+elements. Defaults to \code{list()}.}
 }
 \value{
 A named list with the following elements:
 \itemize{
-\item method - String. \code{"residual"} ranks genes by the residual variance of
-a model fitted with \code{\link[=fit_residuals_sc]{fit_residuals_sc()}}, and needs that fit on
-the object first. It also treats \code{hvg_no} as a per-group count and returns
-the union across groups, so a grouped fit can select more than \code{hvg_no}
-genes. One of \code{c("vst", "meanvarbin", "dispersion", "residual")}. Defaults
-to \code{"vst"}.
+\item method - String. \code{"scran"} fits a weighted lowess trend to the
+variance of the log-expression against its mean and ranks genes by the
+residual, as in scran's \code{modelGeneVar()}. \code{"residual"} ranks genes by the
+residual variance of a model fitted with \code{\link[=fit_residuals_sc]{fit_residuals_sc()}}, and
+needs that fit on the object first. It also treats \code{hvg_no} as a per-group
+count and returns the union across groups, so a grouped fit can select more
+than \code{hvg_no} genes. One of \code{c("vst", "meanvarbin", "dispersion", "scran", "residual")}. Defaults to \code{"vst"}.
 \item loess_span - Numeric. The span parameter for the loess function that
-is used to standardise the variance for \code{method = "vst"}. Defaults to \code{0.3}.
+is used to standardise the variance for \code{method = "vst"}, and the lowess
+span of the trend for \code{method = "scran"}. Defaults to \code{0.3}.
 \item num_bin - Integer. Not yet implemented. Defaults to \code{20L}.
 \item bin_method - String. The binning method. One of \code{c("equal_width", "equal_freq")}. Defaults to \code{"equal_width"}.
+\item The elements of \code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}}, overridden by \code{scran},
+spliced in at this position.
 }
 }
 \description{

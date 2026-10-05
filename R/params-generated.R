@@ -1277,16 +1277,18 @@ params_gsva <- function(
 #' \itemize{
 #'  \item min_gene_var_pctl - Numeric. Which percentile of the highly variable
 #'  genes to include. Defaults to `0.7`.
-#'  \item hvg_method - String. Which method to use to identify HVG. One of
-#'  `c("vst", "mvb", "dispersion")`. Defaults to `"vst"`.
+#'  \item hvg_method - String. Which method to use to identify HVG. `"scran"`
+#'  runs with the default trend parameters, see [params_hvg_scran_defaults()].
+#'  One of `c("vst", "meanvarbin", "dispersion", "scran")`. Defaults to `"vst"`.
 #'  \item loess_span - Numeric. In case of `"vst"` the span of the loess
 #'  function. Defaults to `0.3`.
 #'  \item clip_max - Numeric or `NULL`. The maximum clipping value (optional).
 #'  Defaults to `NULL`.
-#'  \item n_bins - Integer. The number of bins to use for the `"mvb"` HVG
-#'  detection. Defaults to `20L`.
-#'  \item binning_strategy - String. Which binning strategy to use for `"mvb"`.
-#'  One of `c("equal_width", "equal_frequency")`. Defaults to `"equal_width"`.
+#'  \item n_bins - Integer. The number of bins to use for the `"meanvarbin"` and
+#'  `"dispersion"` HVG detection. Defaults to `20L`.
+#'  \item binning_strategy - String. Which binning strategy to use for
+#'  `"meanvarbin"` and `"dispersion"`. One of `c("equal_width",
+#'  "equal_frequency")`. Defaults to `"equal_width"`.
 #' }
 #'
 #' @export
@@ -1298,6 +1300,40 @@ params_hvg_defaults <- function() {
     clip_max = NULL,
     n_bins = 20L,
     binning_strategy = "equal_width"
+  )
+}
+
+#' Helper function to generate the scran HVG trend defaults
+#'
+#' @description Trend parameters for `method = "scran"` in [params_sc_hvg()].
+#' They mirror scrapper's `fitVarianceTrend()` defaults. The lowess span comes
+#' from `loess_span` in [params_sc_hvg()].
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item mean_filter - Boolean. Shall genes below `min_mean` be left out of the
+#'  trend fit. Defaults to `TRUE`.
+#'  \item min_mean - Numeric. Minimum mean log-expression for a gene to enter
+#'  the trend fit. Defaults to `0.1`.
+#'  \item transform - Boolean. Shall the variances be fourth-root transformed
+#'  before the fit. Defaults to `TRUE`.
+#'  \item use_min_width - Boolean. Shall the lowess window be defined by
+#'  `min_width` and `min_window_count` instead of the span. Defaults to `FALSE`.
+#'  \item min_width - Numeric. Minimum window width, only used with
+#'  `use_min_width = TRUE`. Defaults to `1.0`.
+#'  \item min_window_count - Integer. Minimum number of genes per window, only
+#'  used with `use_min_width = TRUE`. Defaults to `200L`.
+#' }
+#'
+#' @export
+params_hvg_scran_defaults <- function() {
+  list(
+    mean_filter = TRUE,
+    min_mean = 0.1,
+    transform = TRUE,
+    use_min_width = FALSE,
+    min_width = 1.0,
+    min_window_count = 200L
   )
 }
 
@@ -3854,39 +3890,53 @@ params_sc_hotspot <- function(
 
 #' Wrapper function for HVG detection parameters.
 #'
-#' @param method String. `"residual"` ranks genes by the residual variance of a
-#' model fitted with [bixverse::fit_residuals_sc()], and needs that fit on the
-#' object first. It also treats `hvg_no` as a per-group count and returns the
-#' union across groups, so a grouped fit can select more than `hvg_no` genes.
-#' One of `c("vst", "meanvarbin", "dispersion", "residual")`. Defaults to
-#' `"vst"`.
+#' @param method String. `"scran"` fits a weighted lowess trend to the variance
+#' of the log-expression against its mean and ranks genes by the residual, as in
+#' scran's `modelGeneVar()`. `"residual"` ranks genes by the residual variance
+#' of a model fitted with [bixverse::fit_residuals_sc()], and needs that fit on
+#' the object first. It also treats `hvg_no` as a per-group count and returns
+#' the union across groups, so a grouped fit can select more than `hvg_no`
+#' genes. One of `c("vst", "meanvarbin", "dispersion", "scran", "residual")`.
+#' Defaults to `"vst"`.
 #' @param loess_span Numeric. The span parameter for the loess function that is
-#' used to standardise the variance for `method = "vst"`. Defaults to `0.3`.
+#' used to standardise the variance for `method = "vst"`, and the lowess span of
+#' the trend for `method = "scran"`. Defaults to `0.3`.
 #' @param num_bin Integer. Not yet implemented. Defaults to `20L`.
 #' @param bin_method String. The binning method. One of `c("equal_width",
 #' "equal_freq")`. Defaults to `"equal_width"`.
+#' @param scran List. Optional overrides for the `method = "scran"` trend. See
+#' [bixverse::params_hvg_scran_defaults()] for available parameters:
+#' `mean_filter`, `min_mean`, `transform`, `use_min_width`, `min_width` and
+#' `min_window_count`. See [params_hvg_scran_defaults()] for the available
+#' elements. Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item method - String. `"residual"` ranks genes by the residual variance of
-#'  a model fitted with [bixverse::fit_residuals_sc()], and needs that fit on
-#'  the object first. It also treats `hvg_no` as a per-group count and returns
-#'  the union across groups, so a grouped fit can select more than `hvg_no`
-#'  genes. One of `c("vst", "meanvarbin", "dispersion", "residual")`. Defaults
-#'  to `"vst"`.
+#'  \item method - String. `"scran"` fits a weighted lowess trend to the
+#'  variance of the log-expression against its mean and ranks genes by the
+#'  residual, as in scran's `modelGeneVar()`. `"residual"` ranks genes by the
+#'  residual variance of a model fitted with [bixverse::fit_residuals_sc()], and
+#'  needs that fit on the object first. It also treats `hvg_no` as a per-group
+#'  count and returns the union across groups, so a grouped fit can select more
+#'  than `hvg_no` genes. One of `c("vst", "meanvarbin", "dispersion", "scran",
+#'  "residual")`. Defaults to `"vst"`.
 #'  \item loess_span - Numeric. The span parameter for the loess function that
-#'  is used to standardise the variance for `method = "vst"`. Defaults to `0.3`.
+#'  is used to standardise the variance for `method = "vst"`, and the lowess
+#'  span of the trend for `method = "scran"`. Defaults to `0.3`.
 #'  \item num_bin - Integer. Not yet implemented. Defaults to `20L`.
 #'  \item bin_method - String. The binning method. One of `c("equal_width",
 #'  "equal_freq")`. Defaults to `"equal_width"`.
+#'  \item The elements of [params_hvg_scran_defaults()], overridden by `scran`,
+#'  spliced in at this position.
 #' }
 #'
 #' @export
 params_sc_hvg <- function(
-  method = c("vst", "meanvarbin", "dispersion", "residual"),
+  method = c("vst", "meanvarbin", "dispersion", "scran", "residual"),
   loess_span = 0.3,
   num_bin = 20L,
-  bin_method = c("equal_width", "equal_freq")
+  bin_method = c("equal_width", "equal_freq"),
+  scran = list()
 ) {
   method <- match.arg(method)
   bin_method <- match.arg(bin_method)
@@ -3894,18 +3944,28 @@ params_sc_hvg <- function(
   # Checks
   checkmate::assertChoice(
     method,
-    c("vst", "meanvarbin", "dispersion", "residual")
+    c("vst", "meanvarbin", "dispersion", "scran", "residual")
   )
   checkmate::qassert(loess_span, "N1[0.1, 1]")
   checkmate::qassert(num_bin, "I1")
   checkmate::assertChoice(bin_method, c("equal_width", "equal_freq"))
 
+  # Merge
+  scran <- utils::modifyList(
+    params_hvg_scran_defaults(),
+    scran,
+    keep.null = TRUE
+  )
+
   # Return
-  list(
-    method = method,
-    loess_span = loess_span,
-    num_bin = num_bin,
-    bin_method = bin_method
+  c(
+    list(
+      method = method,
+      loess_span = loess_span,
+      num_bin = num_bin,
+      bin_method = bin_method
+    ),
+    scran
   )
 }
 
