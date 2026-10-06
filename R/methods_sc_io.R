@@ -1710,6 +1710,8 @@ S7::method(save_h5ad, SingleCells) <- function(
   # checks
   checkmate::assertDataTable(dt)
 
+  # TODO: the NA widening and the all-NA fallback go once rs_save_h5ad passes
+  # NA masks to scx (nullable-integer/-boolean/-string-array)
   purrr::map(as.list(dt), function(x) {
     if (is.character(x) && data.table::uniqueN(x) < length(x)) {
       x <- factor(x)

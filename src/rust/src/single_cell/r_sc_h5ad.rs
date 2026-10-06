@@ -77,6 +77,7 @@ fn factor_to_categorical(name: &str, x: &Robj) -> Result<ColumnData> {
         .ok_or_else(|| Error::Other(format!("Factor '{name}' has no levels.")))?;
     let codes = na_ok(name, x.as_integer_slice())?
         .iter()
+        // TODO: replace with an NA mask, see `r_list_to_columns`
         // `NA_integer_` becomes u32::MAX, which scx narrows to -1, the anndata
         // code for a missing value, in every code width
         .map(|&c| {
@@ -122,10 +123,9 @@ fn r_list_to_columns(cols: List, n: usize) -> Result<Vec<Column>> {
                 }
             };
             check_len(&format!("Column '{name}'"), data.len(), n)?;
-            Ok(Column {
-                name: name.to_string(),
-                data,
-            })
+            // TODO: pass NA masks (scx >= 0.4 `Column::with_missing`) to write
+            // pandas nullable columns instead of the R-side workarounds
+            Ok(Column::new(name, data))
         })
         .collect()
 }
