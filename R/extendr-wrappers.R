@@ -5663,6 +5663,8 @@ rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .
 #' genes. Replaces the expression gate with the DEG gate.
 #' @param statistical Boolean. Shall the permutation p-values be computed.
 #' @param params List. See [bixverse::params_sc_cellphonedb()].
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with:
 #' \itemize{
@@ -5683,7 +5685,7 @@ rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .
 #' @export
 #'
 #' @keywords internal
-rs_sc_cellphonedb <- function(f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params) .Call(wrap__rs_sc_cellphonedb, f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params)
+rs_sc_cellphonedb <- function(f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params, verbose) .Call(wrap__rs_sc_cellphonedb, f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params, verbose)
 
 #' Generate meta cells (hdWGCNA method)
 #'

@@ -137,7 +137,12 @@ raw counts for it.
 
 ```{r}
 #| label: normalise
-norm_counts <- rs_cpm(synth$counts, lib_size = NULL, log = TRUE, prior_count = 2)
+norm_counts <- rs_cpm(
+  synth$counts,
+  lib_size = NULL,
+  log = TRUE,
+  prior_count = 2
+)
 raw_cpm <- rs_cpm(synth$counts, lib_size = NULL, log = FALSE, prior_count = 2)
 
 data_log <- t(norm_counts)
@@ -147,6 +152,7 @@ meta_data <- data.table(sample_id = rownames(data_log))
 
 coexp <- BulkCoExp(raw_data = data_log, meta_data = meta_data)
 coexp <- preprocess_bulk_coexp(coexp, hvg = 0.5, .verbose = FALSE)
+
 coexp
 ```
 
@@ -293,7 +299,8 @@ leiden_modules[, .N, by = module_id]
 
 ICA whitens the data, then finds independent components across many random
 initialisations. The stability across restarts, the fraction of converged
-runs, and the mutual information between components combine into a
+runs, and the redundancy between components (the largest absolute
+correlation between two component loadings) combine into a
 `combined_score`: the loess inflection point of this score against the
 number of components gives you an "optimal" `ncomp`. (Please explore your data
 and see how it looks...)

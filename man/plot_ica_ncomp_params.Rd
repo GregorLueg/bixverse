@@ -21,8 +21,8 @@ have:
 no of components given random initialisations.
 \item \% Converged - The percentage of ICA runs that converged at this
 no of components.
-\item IC Orthogonality - The orthogonality (measured as \code{1 - abs(cos)})
-indicating how orthogonal the signals detected at this level are.
+\item IC redundancy - \code{1 - max_abs_loading_cor}, one minus the largest
+absolute correlation between two component loadings at this level.
 \item Combined score - The product of the three other scores.
 }
 If found, the function will also add the optimal number of components based

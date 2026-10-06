@@ -67,8 +67,9 @@ and other data to plot to choose the right \code{ncomp}.
 This function allows to iterate over a vector of ncomp to identify which
 ncomp parameter to choose for your data set. The idea is to generate stability
 profiles over the different ncomps and identify a 'sweet spot' of good
-stability, low mutual information and good convergence of the identified
-independent components
+stability, low redundancy (maximum absolute correlation between the
+component loadings) and good convergence of the identified independent
+components
 }
 \examples{
 # stability across a small grid of component counts

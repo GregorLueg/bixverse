@@ -18,6 +18,9 @@ different, hence, major release.
   compressed. Ideal for archiving after large analysis are done.
 * The sNN graph re-attaches small isolated islands after pruning in single cell
   again.
+* Changes to the ICA QC metrics. Instead of mean mutual information, it returns
+  now `1 - max(abs(cor))` to identify the point where two ICs are strongly 
+  correlated with each other.
 
 ## Fixes
 

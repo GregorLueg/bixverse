@@ -2359,7 +2359,9 @@ fn rs_ligand_activity_scores(ligand_influence: RMatrix<f64>, in_gene_sets: List)
         let vec_i: Vec<bool> = elem_i
             .as_logical_vector()
             .ok_or_else(|| {
-                Error::Other("One of the gene set memberships could not be transformed to logicals.".into())
+                Error::Other(
+                    "One of the gene set memberships could not be transformed to logicals.".into(),
+                )
             })?
             .iter()
             .map(|x| x.to_bool())
@@ -2468,6 +2470,8 @@ fn rs_compute_cluster_expr_stats(
 /// genes. Replaces the expression gate with the DEG gate.
 /// @param statistical Boolean. Shall the permutation p-values be computed.
 /// @param params List. See [bixverse::params_sc_cellphonedb()].
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with:
 /// \itemize{
@@ -2500,6 +2504,7 @@ fn rs_sc_cellphonedb(
     deg_genes: Nullable<List>,
     statistical: bool,
     params: List,
+    verbose: usize,
 ) -> Result<List> {
     let partner_a = r_list_to_index_vecs(partner_a, "partner_a")?;
     let partner_b = r_list_to_index_vecs(partner_b, "partner_b")?;
@@ -2550,6 +2555,7 @@ fn rs_sc_cellphonedb(
             &clusters,
             pairs.as_deref(),
             Some(params),
+            verbose,
         )
         .to_extendr()?;
         (res.obs, Some(res.pvals))

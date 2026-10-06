@@ -1135,6 +1135,9 @@ get_cellphonedb_db <- function(dir = tempdir(), .verbose = TRUE) {
 #' `lr_db`. A duplicated symbol resolves to its first gene. Defaults to
 #' `"gene_id"`.
 #' @param params List. See [params_sc_cellphonedb()].
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns A data.table with one row per interaction and cluster pair:
 #' \itemize{
@@ -1158,7 +1161,8 @@ cellphonedb_sc <- function(
   senders = NULL,
   receivers = NULL,
   gene_id_col = "gene_id",
-  params = params_sc_cellphonedb()
+  params = params_sc_cellphonedb(),
+  .verbose = TRUE
 ) {
   method <- match.arg(method)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -1169,6 +1173,7 @@ cellphonedb_sc <- function(
   checkmate::qassert(receivers, c("0", "S+"))
   checkmate::qassert(gene_id_col, "S1")
   assertScCellPhoneDbParams(params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
   if (method == "degs") {
     checkmate::assertDataTable(deg_table)
     checkmate::assertNames(
@@ -1242,7 +1247,8 @@ cellphonedb_sc <- function(
     pair_b = pairs$b,
     deg_genes = deg_genes,
     statistical = method == "statistical",
-    params = params
+    params = params,
+    verbose = parse_verbosity(.verbose)
   )
 
   # the matrices are (interactions, pairs) and flatten column-major

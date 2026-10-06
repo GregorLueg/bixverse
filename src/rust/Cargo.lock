@@ -41,7 +41,8 @@ dependencies = [
 [[package]]
 name = "ann-search-rs"
 version = "0.10.1"
-source = "git+https://github.com/GregorLueg/ann-search-rs?branch=feat-faster-k-means#f7863013b0b944efc71b9255972b3957477fe07f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25002034c07e04b2bb2ac846f9eaf732fc7686abd1fb310fc1bc2b8c3b258fed"
 dependencies = [
  "document-features",
  "faer",

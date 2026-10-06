@@ -691,7 +691,8 @@ expect_warning(
     celltype_colname = "cell_grp",
     lr_db = cpdb_db,
     method = "simple",
-    gene_id_col = "gene_id"
+    gene_id_col = "gene_id",
+    .verbose = FALSE
   ),
   pattern = "Dropping 1 of 4 interactions",
   info = "cellphonedb - interactions with unknown genes are dropped"
@@ -733,7 +734,8 @@ cpdb_stat <- suppressWarnings(cellphonedb_sc(
   cpdb_object,
   celltype_colname = "cell_grp",
   lr_db = cpdb_db,
-  params = params_sc_cellphonedb(n_perm = 200L)
+  params = params_sc_cellphonedb(n_perm = 200L),
+  .verbose = FALSE
 ))
 
 expect_equivalent(
@@ -778,7 +780,8 @@ cpdb_stat_2 <- suppressWarnings(cellphonedb_sc(
   cpdb_object,
   celltype_colname = "cell_grp",
   lr_db = cpdb_db,
-  params = params_sc_cellphonedb(n_perm = 200L)
+  params = params_sc_cellphonedb(n_perm = 200L),
+  .verbose = FALSE
 ))
 
 expect_equal(
@@ -795,7 +798,8 @@ cpdb_sub <- suppressWarnings(cellphonedb_sc(
   lr_db = cpdb_db,
   method = "simple",
   senders = "cell_type_1",
-  receivers = c("cell_type_2", "cell_type_3")
+  receivers = c("cell_type_2", "cell_type_3"),
+  .verbose = FALSE
 ))
 
 expect_true(
@@ -827,7 +831,8 @@ cpdb_degs <- suppressWarnings(cellphonedb_sc(
   deg_table = data.table::data.table(
     cluster_id = "cell_type_1",
     gene = "gene_001"
-  )
+  ),
+  .verbose = FALSE
 ))
 
 expect_true(
@@ -854,7 +859,8 @@ expect_error(
     cpdb_object,
     celltype_colname = "cell_grp",
     lr_db = cpdb_db,
-    method = "degs"
+    method = "degs",
+    .verbose = FALSE
   ),
   info = "cellphonedb degs - needs a deg_table"
 )

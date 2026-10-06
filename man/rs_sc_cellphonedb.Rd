@@ -13,7 +13,8 @@ rs_sc_cellphonedb(
   pair_b,
   deg_genes,
   statistical,
-  params
+  params,
+  verbose
 )
 }
 \arguments{
@@ -38,6 +39,9 @@ genes. Replaces the expression gate with the DEG gate.}
 \item{statistical}{Boolean. Shall the permutation p-values be computed.}
 
 \item{params}{List. See \code{\link[=params_sc_cellphonedb]{params_sc_cellphonedb()}}.}
+
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with:

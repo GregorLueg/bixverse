@@ -13,7 +13,8 @@ cellphonedb_sc(
   senders = NULL,
   receivers = NULL,
   gene_id_col = "gene_id",
-  params = params_sc_cellphonedb()
+  params = params_sc_cellphonedb(),
+  .verbose = TRUE
 )
 }
 \arguments{
@@ -40,6 +41,10 @@ pairs to these sender and receiver clusters. \code{NULL} uses all clusters.}
 \code{"gene_id"}.}
 
 \item{params}{List. See \code{\link[=params_sc_cellphonedb]{params_sc_cellphonedb()}}.}
+
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 A data.table with one row per interaction and cluster pair:
