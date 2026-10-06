@@ -55,7 +55,6 @@ Imports:
     lifecycle,
     magrittr,
     manifoldsR (>= 0.3.5),
-    MASS,
     matrixStats,
     Matrix,
     mirai,

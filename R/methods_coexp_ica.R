@@ -609,7 +609,11 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
 #' @param .verbose Boolean. Controls verbosity.
 #'
 #' @returns `BulkCoExp` with the the source matrix S, mixing matrix A and other
-#' parameters added to the slots.
+#' parameters added to the slots. The diagnostics carry
+#' `loading_condition_number` (condition number of S S') and
+#' `max_abs_loading_cor` (largest absolute correlation between two component
+#' loadings). High values mean near-duplicate components and an unstable
+#' sample activity A; reduce `no_comp`.
 #'
 #' @export
 #'
@@ -751,7 +755,13 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
   }
 
   S <- t(centrotype)
-  A <- t(X1) %*% MASS::ginv(S)
+  # least squares A = X1' S' (S S')^-1. The centrotypes are not orthogonal, at
+  # high no_comp near-duplicates make S S' ill-conditioned and a handful of
+  # samples blow up in A, hence the conditioning in the diagnostics
+  gram_s <- tcrossprod(S)
+  A <- t(solve(gram_s, S %*% X1))
+  loading_cor <- abs(cor(centrotype))
+  diag(loading_cor) <- 0
   rownames(A) <- rownames(X)
   colnames(A) <- rownames(S)
 
@@ -791,7 +801,9 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
       ica_meta = ica_meta,
       stability_scores = stability_scores,
       converged = converged,
-      no_comp = no_comp
+      no_comp = no_comp,
+      loading_condition_number = kappa(gram_s, exact = TRUE),
+      max_abs_loading_cor = max(loading_cor)
     )
   )
 
