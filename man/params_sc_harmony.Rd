@@ -56,9 +56,10 @@ Defaults to \code{0.01}.}
 checking convergence. Defaults to \code{3L}.}
 
 \item{kmeans}{List. Optional overrides for the k-means clustering algorithm
-Possible parameters are \code{"k_means_iter"}, \code{"k_means_init"}, \code{"gemm"} and
-\code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}. See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}
-for the available elements. Defaults to \code{list()}.}
+Possible parameters are \code{"k_means_iter"} (10 here, as in R harmony),
+\code{"k_means_init"}, \code{"gemm"} and \code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}.
+See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}} for the available elements. Defaults to
+\code{list()}.}
 }
 \value{
 A named list with the following elements:

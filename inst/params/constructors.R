@@ -1491,11 +1491,12 @@ spec_sc_harmony <- param_spec(
     ),
     kmeans = p_merge(
       "kmeans_defaults",
+      overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"`,",
-        "`\"k_means_init\"`, `\"gemm\"` and `\"hamerly\"`, see",
-        "[params_kmeans_defaults()]."
+        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
+        "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )
     )
   )
@@ -1635,11 +1636,12 @@ spec_sc_harmony_v2 <- param_spec(
     ),
     kmeans = p_merge(
       "kmeans_defaults",
+      overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"`,",
-        "`\"k_means_init\"`, `\"gemm\"` and `\"hamerly\"`, see",
-        "[params_kmeans_defaults()]."
+        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
+        "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )
     )
   )

@@ -1,5 +1,5 @@
 [package]
-version = '0.5.8'
+version = '0.6.0'
 name = 'bixverse'
 publish = false
 edition = '2021'
@@ -62,3 +62,4 @@ path = "document.rs"
 
 [patch.crates-io]
 bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.6.0" }
+ann-search-rs = { git = "https://github.com/GregorLueg/ann-search-rs", branch = "feat-faster-k-means" }

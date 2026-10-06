@@ -3622,9 +3622,10 @@ params_sc_gene_trends <- function(
 #' @param window_size Integer. Number of previous iterations to consider when
 #' checking convergence. Defaults to `3L`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
-#' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
-#' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
-#' for the available elements. Defaults to `list()`.
+#' Possible parameters are `"k_means_iter"` (10 here, as in R harmony),
+#' `"k_means_init"`, `"gemm"` and `"hamerly"`, see [params_kmeans_defaults()].
+#' See [params_kmeans_defaults()] for the available elements. Defaults to
+#' `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3688,7 +3689,7 @@ params_sc_harmony <- function(
   # Merge
   kmeans <- utils::modifyList(
     params_kmeans_defaults(),
-    kmeans,
+    utils::modifyList(list(k_means_iter = 10L), kmeans, keep.null = TRUE),
     keep.null = TRUE
   )
 
@@ -3751,9 +3752,10 @@ params_sc_harmony <- function(
 #' as `alpha` times the expected counts, as in R harmony v2, instead of using
 #' the fixed `lambda` value. Defaults to `TRUE`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
-#' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
-#' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
-#' for the available elements. Defaults to `list()`.
+#' Possible parameters are `"k_means_iter"` (10 here, as in R harmony),
+#' `"k_means_init"`, `"gemm"` and `"hamerly"`, see [params_kmeans_defaults()].
+#' See [params_kmeans_defaults()] for the available elements. Defaults to
+#' `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3836,7 +3838,7 @@ params_sc_harmony_v2 <- function(
   # Merge
   kmeans <- utils::modifyList(
     params_kmeans_defaults(),
-    kmeans,
+    utils::modifyList(list(k_means_iter = 10L), kmeans, keep.null = TRUE),
     keep.null = TRUE
   )
 

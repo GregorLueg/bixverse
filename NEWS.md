@@ -1,11 +1,23 @@
-# bixverse 0.5.8
+# bixverse 0.6.0
+
+**Larger release with performance improvements across the board and new methods.**
+The Rust backend got a sweep and parts that could be parallelised, but were not
+are now parallel, SIMD/GEMM integrated everywhere applicable and better memory
+access patterns across the board. Some of the rounding might be slightly
+different, hence, major release.
 
 ## Features
 
 * CellPhoneDB wired in, see `cellphonedb_sc()` and `get_cellphonedb_db()`.
   The NicheNet vignette is now a general ligand-receptor vignette.
-* scran-style HVG detection via `params_sc_hvg(method = "scran")`.
+* scran/scrapper-style HVG detection via `params_sc_hvg(method = "scran")`.
 * `svd_solver` for the PCA in the doublet detection methods.
+* The solver for Harmony version 1 was updated and is substantially faster.
+* Option to archive the binary files now via `archive_sc_exp()`. The 
+  gene-centric view gets deleted and the cell-centric view gets massively 
+  compressed. Ideal for archiving after large analysis are done.
+* The sNN graph re-attaches small isolated islands after pruning in single cell
+  again.
 
 ## Fixes
 

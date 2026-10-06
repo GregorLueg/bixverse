@@ -418,7 +418,7 @@ bin_bytes <- sum(file.size(
   file.path(dir_h5, c("counts_cells.bin", "counts_genes.bin"))
 ))
 
-archive_stats <- archive_sc_exp(sc_restored, .verbose = FALSE)
+archive_stats <- archive_sc_exp(sc_restored, .verbose = TRUE)
 
 c(
   binaries_mb = bin_bytes / 1e6,

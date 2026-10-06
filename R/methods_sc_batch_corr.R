@@ -1298,7 +1298,7 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
     embd <- embd[, 1:to_take]
   }
 
-  batch_index <- unlist(object[[batch_column]])
+  batch_index <- object[[batch_column]][[1]]
   batch_factor <- factor(batch_index)
   batch_index <- as.integer(batch_factor) - 1L
 
@@ -1485,7 +1485,7 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  batch_indices <- unlist(object[[batch_column]])
+  batch_indices <- object[[batch_column]][[1]]
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
 
@@ -1616,7 +1616,7 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
 
   batch_index_ls <- list()
 
-  batch_indices <- unlist(object[[batch_column]])
+  batch_indices <- object[[batch_column]][[1]]
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
 
@@ -1759,7 +1759,7 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
 
   batch_index_ls <- list()
 
-  batch_indices <- unlist(object[[batch_column]])
+  batch_indices <- object[[batch_column]][[1]]
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
 
@@ -1927,7 +1927,7 @@ S7::method(seurat_cca_sc, SingleCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function body
-  batch_indices <- unlist(object[[batch_column]])
+  batch_indices <- object[[batch_column]][[1]]
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
 
@@ -2084,7 +2084,7 @@ S7::method(seurat_rpca_sc, SingleCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function body
-  batch_indices <- unlist(object[[batch_column]])
+  batch_indices <- object[[batch_column]][[1]]
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
 
