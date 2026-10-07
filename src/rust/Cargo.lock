@@ -2153,9 +2153,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scx-core"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf41edaf97978bd02afba9d9210ddaf0ef440d9c97a75f91fad17f4a7ad4b12d"
+checksum = "e9eae5d35161c4ca1db080f82cf36edd7fb18db87f15242b8067b6806767455f"
 dependencies = [
  "async-trait",
  "bytemuck",

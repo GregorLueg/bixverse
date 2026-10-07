@@ -271,12 +271,11 @@ fn rs_save_h5ad(
         raw: serde_json::from_str(uns_json).to_extendr()?,
     };
 
-    let opts = H5AdOptions {
-        // ponytail: fixed gzip level, the one the rhdf5 writers used; expose
-        // it if anyone needs faster or smaller files
-        compression: Some(6),
-        chunk_size: Some(chunk_size),
-    };
+    let mut opts = H5AdOptions::default();
+    // ponytail: fixed gzip level, the one the rhdf5 writers used; expose
+    // it if anyone needs faster or smaller files
+    opts.compression = Some(6);
+    opts.chunk_size = Some(chunk_size);
     let mut builder = H5AdBuilder::new(Path::new(h5_path), n_obs, n_vars, &opts).to_extendr()?;
 
     for (i, batch) in cell_indices.chunks(chunk_size).enumerate() {
