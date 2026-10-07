@@ -148,7 +148,8 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.6.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.6.0#23530c470699f8a36b251fb16ceabdb702a74cb2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e3fc1389242294500b9c5f6e35175d133bb9a44bb38f5cde18f3d97443bde6a"
 dependencies = [
  "ann-search-rs 0.10.1",
  "approx",
@@ -499,9 +500,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.18.0"
+version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34"
+checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
 name = "enum-as-inner"

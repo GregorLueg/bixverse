@@ -1512,7 +1512,7 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
     mnn_params = fastmnn_params,
     precomputed_pca = pca_data,
     verbose = parse_verbosity(.verbose),
-    seed = 42L
+    seed = seed
   )
 
   colnames(mnn_embd) <- sprintf("mnn_%s", 1:ncol(mnn_embd))

@@ -59,6 +59,3 @@ bixverse-rs = { version = "0.6.0", default-features = false, features = [
 [[bin]]
 name = "document"
 path = "document.rs"
-
-[patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.6.0" }
