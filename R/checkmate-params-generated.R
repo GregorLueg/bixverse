@@ -248,7 +248,7 @@ checkScBoostParams <- function(x) {
     list(
       hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
-      svd_solver = c("covariance", "randomised", "exact"),
+      svd_solver = c("randomised", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -5742,7 +5742,7 @@ checkScDblFinderParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      svd_solver = c("covariance", "randomised", "exact"),
+      svd_solver = c("randomised", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -6090,7 +6090,7 @@ checkScScrubletParams <- function(x) {
     list(
       hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
-      svd_solver = c("covariance", "randomised", "exact"),
+      svd_solver = c("randomised", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",

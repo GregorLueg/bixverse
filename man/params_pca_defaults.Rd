@@ -10,12 +10,11 @@ params_pca_defaults()
 A named list with the following elements:
 \itemize{
 \item no_pcs - Integer. Number of PCs to consider. Defaults to \code{30L}.
-\item svd_solver - String. Which solver to use. \code{"covariance"} builds the
-gene x gene cross-product and eigendecomposes it. \code{"randomised"} is a
-randomised SVD, approximate in the trailing components. \code{"exact"} is Lanczos
-on the sparse path and a full SVD on the dense one. See \code{\link[=params_sc_pca]{params_sc_pca()}}
-for the trade-offs. One of \code{c("covariance", "randomised", "exact")}.
-Defaults to \code{"covariance"}.
+\item svd_solver - String. Which solver to use. \code{"randomised"} (default) is
+a randomised SVD, approximate in the trailing components. \code{"covariance"}
+builds the gene x gene cross-product and eigendecomposes it. \code{"exact"} is
+Lanczos on the sparse path and a full SVD on the dense one. See
+\code{\link[=params_sc_pca]{params_sc_pca()}} for the trade-offs. One of \code{c("randomised", "covariance", "exact")}. Defaults to \code{"randomised"}.
 }
 }
 \description{

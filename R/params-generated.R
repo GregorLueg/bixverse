@@ -2387,19 +2387,19 @@ params_norm_doublets_defaults <- function() {
 #' @returns A named list with the following elements:
 #' \itemize{
 #'  \item no_pcs - Integer. Number of PCs to consider. Defaults to `30L`.
-#'  \item svd_solver - String. Which solver to use. `"covariance"` builds the
-#'  gene x gene cross-product and eigendecomposes it. `"randomised"` is a
-#'  randomised SVD, approximate in the trailing components. `"exact"` is Lanczos
-#'  on the sparse path and a full SVD on the dense one. See [params_sc_pca()]
-#'  for the trade-offs. One of `c("covariance", "randomised", "exact")`.
-#'  Defaults to `"covariance"`.
+#'  \item svd_solver - String. Which solver to use. `"randomised"` (default) is
+#'  a randomised SVD, approximate in the trailing components. `"covariance"`
+#'  builds the gene x gene cross-product and eigendecomposes it. `"exact"` is
+#'  Lanczos on the sparse path and a full SVD on the dense one. See
+#'  [params_sc_pca()] for the trade-offs. One of `c("randomised", "covariance",
+#'  "exact")`. Defaults to `"randomised"`.
 #' }
 #'
 #' @export
 params_pca_defaults <- function() {
   list(
     no_pcs = 30L,
-    svd_solver = "covariance"
+    svd_solver = "randomised"
   )
 }
 
