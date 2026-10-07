@@ -1,3 +1,12 @@
+# bixverse 0.6.1
+
+## Features
+
+* `save_h5ad()` exports a `SingleCells` object to an AnnData `.h5ad` file for
+  ScanPy: raw or normalised counts in `X`, obs/var, and cached PCA, embeddings
+  and sNN graph (`obsm`/`varm`/`obsp`). Counts are streamed in cell batches and
+  written via [scx-core](https://crates.io/crates/scx-core).
+
 # bixverse 0.6.0
 
 **Larger release with performance improvements across the board and new methods.**
