@@ -11,6 +11,7 @@ nebula_mc(
   coef = NULL,
   contrast = NULL,
   genes_to_use = NULL,
+  cells_to_use = NULL,
   offset = NULL,
   nebula_params = params_nebula(),
   .verbose = TRUE
@@ -34,6 +35,10 @@ Mutually exclusive with \code{coef}.}
 
 \item{genes_to_use}{Optional character vector. The genes to fit. Defaults to
 every gene in the object.}
+
+\item{cells_to_use}{Optional character vector. Meta cell identifiers
+(\code{meta_cell_id}) to fit. Defaults to every meta cell. Identifiers that cannot
+be matched are dropped with a warning.}
 
 \item{offset}{Optional numeric vector. Strictly positive scaling factor per
 meta cell, aligned to the meta cells that survive the design. Defaults to
