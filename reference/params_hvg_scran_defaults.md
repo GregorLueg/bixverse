@@ -2,8 +2,9 @@
 
 Trend parameters for `method = "scran"` in
 [`params_sc_hvg()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hvg.md).
-They mirror scrapper's `fitVarianceTrend()` defaults. The lowess span
-comes from `loess_span` in
+They mirror scrapper's `fitVarianceTrend()` defaults before scrapper
+1.8, which switched `use.min.width` to `TRUE`. The lowess span comes
+from `loess_span` in
 [`params_sc_hvg()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hvg.md).
 
 ## Usage

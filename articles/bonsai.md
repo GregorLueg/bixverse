@@ -198,7 +198,7 @@ tree
 #>   Genes: 347 used, 10792 dropped
 #>   Loglikelihood: -450291.6
 #>   Layout: equal_angle
-#>   Seconds: sanity 28.6 | ingest 0.0 | bonsai 25.6 | layout 0.0 | total 54.2
+#>   Seconds: sanity 38.7 | ingest 0.0 | bonsai 37.5 | layout 0.0 | total 76.2
 ```
 
 Where did the time go? Every stage is timed, and `total` is the whole
@@ -212,11 +212,11 @@ few hundred that survive.
 tree$timings
 #>     stage      seconds
 #>    <char>        <num>
-#> 1: sanity 28.601340462
-#> 2: ingest  0.006877420
-#> 3: bonsai 25.605513527
-#> 4: layout  0.000078609
-#> 5:  total 54.222437143
+#> 1: sanity 38.723372386
+#> 2: ingest  0.009335502
+#> 3: bonsai 37.453490718
+#> 4: layout  0.000123786
+#> 5:  total 76.196405172
 ```
 
 The search reports its steps too: the loglikelihood after each and what
@@ -230,13 +230,13 @@ behind.
 tree$steps
 #>           step    loglik      seconds
 #>         <char>     <num>        <num>
-#> 1: 1-2 linkage -668287.8  0.125467303
-#> 2:  3 polytomy -668287.8  0.004730454
-#> 3:    4 branch -461620.0  0.544639025
-#> 4:       5 spr -450590.6 22.903377457
-#> 5:       6 nni -450581.4  0.974632777
-#> 6:    7 branch -450292.6  0.548619279
-#> 7:  8 collapse -450291.6  0.498934522
+#> 1: 1-2 linkage -668287.8  0.171307571
+#> 2:  3 polytomy -668287.8  0.007913878
+#> 3:    4 branch -461620.0  0.780324830
+#> 4:       5 spr -450590.6 33.405641812
+#> 5:       6 nni -450581.4  1.493568916
+#> 6:    7 branch -450292.6  0.834630699
+#> 7:  8 collapse -450291.6  0.751861670
 ```
 
 ### Which genes made it?
@@ -377,7 +377,7 @@ tree_mc
 #>   Genes: 2138 used, 9001 dropped
 #>   Loglikelihood: -119805.9
 #>   Layout: equal_angle
-#>   Seconds: sanity 9.0 | ingest 0.0 | bonsai 3.2 | layout 0.0 | total 12.2
+#>   Seconds: sanity 12.2 | ingest 0.0 | bonsai 4.6 | layout 0.0 | total 16.8
 ```
 
 The same PBMCs as 100 metacells: a few seconds instead of the minutes

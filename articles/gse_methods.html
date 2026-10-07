@@ -284,7 +284,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.1 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.541 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -381,7 +381,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.414 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.745 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -572,8 +572,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.087583 2.179231 2.357496 2.406901 2.458022 2.655740     5</span></span>
-<span><span class="co">#&gt;   rust 1.335013 1.354083 1.372882 1.361728 1.362554 1.451032     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.548486 2.645290 2.899153 2.970510 3.007500 3.323977     5</span></span>
+<span><span class="co">#&gt;   rust 1.892049 1.892885 1.908106 1.906612 1.918745 1.930240     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -679,14 +679,14 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr         min          lq        mean      median          uq</span></span>
-<span><span class="co">#&gt;       fgsea 1331.148413 1334.214481 1349.608797 1335.138477 1360.366045</span></span>
-<span><span class="co">#&gt;  blitz_cold  308.104977  309.310165  316.192512  320.360327  321.308830</span></span>
-<span><span class="co">#&gt;  blitz_warm    9.051314    9.401679    9.496441    9.417533    9.518915</span></span>
-<span><span class="co">#&gt;         max neval</span></span>
-<span><span class="co">#&gt;  1387.17657     5</span></span>
-<span><span class="co">#&gt;   321.87826     5</span></span>
-<span><span class="co">#&gt;    10.09277     5</span></span></code></pre></div>
+<span><span class="co">#&gt;        expr        min         lq       mean     median         uq        max</span></span>
+<span><span class="co">#&gt;       fgsea 1857.27598 1872.93827 1885.75286 1878.17945 1904.69219 1915.67841</span></span>
+<span><span class="co">#&gt;  blitz_cold  450.58957  451.93869  453.66046  452.59406  455.20394  457.97603</span></span>
+<span><span class="co">#&gt;  blitz_warm   11.94356   11.99447   12.56394   12.20347   12.29145   14.38673</span></span>
+<span><span class="co">#&gt;  neval</span></span>
+<span><span class="co">#&gt;      5</span></span>
+<span><span class="co">#&gt;      5</span></span>
+<span><span class="co">#&gt;      5</span></span></code></pre></div>
 </div>
 <p>On this data (586 pathways, ~12k genes) the cold run lands around 3x faster than the fgsea multilevel method and the warm one around 90x. Score five libraries against one ranking and you pay the calibration once.</p>
 <p>The catch: the null is specific to the signature it was drawn from, both its length and its values. <code><a href="../reference/calc_blitzgsea.html">calc_blitzgsea()</a></code> refuses a null whose gene count does not match rather than returning plausible-looking rubbish, but it cannot catch two different signatures of the same length. Recalibrate when the ranking changes.</p>

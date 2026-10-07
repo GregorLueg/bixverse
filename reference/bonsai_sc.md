@@ -119,7 +119,7 @@ tree
 #>   Genes: 50 used, 0 dropped
 #>   Loglikelihood: -5619.8
 #>   Layout: equal_angle
-#>   Seconds: sanity 0.2 | ingest 0.0 | bonsai 0.7 | layout 0.0 | total 0.8
+#>   Seconds: sanity 0.2 | ingest 0.0 | bonsai 0.9 | layout 0.0 | total 1.2
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```
