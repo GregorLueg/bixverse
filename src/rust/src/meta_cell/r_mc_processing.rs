@@ -60,17 +60,20 @@ extendr_module! {
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
 /// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
-/// raw counts for `"vst"` and normalised counts otherwise.
+/// raw counts for `"vst"` and log1p-normalised counts otherwise.
 /// @param hvg_method String. Which HVG detection method to use. Options
-/// are `c("vst", "meanvarbin", "dispersion")`.
+/// are `c("vst", "meanvarbin", "dispersion", "scran")`.
 /// @param loess_span Numeric. The span parameter for the loess function
-/// (only used for `"vst"`).
+/// (`"vst"`) or the lowess trend (`"scran"`).
 /// @param binning String. The binning strategy for the `meanvarbin` and
 /// `dispersion` methods. One of `c("equal_width", "equal_freq")`.
 /// @param n_bins Integer. Number of bins for the `meanvarbin` and
 /// `dispersion` methods.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 /// not provided (only used for `"vst"`).
+/// @param scran_params List. Trend parameters for `"scran"`, see
+/// [bixverse::params_hvg_scran_defaults()]. Missing elements fall back to
+/// the scrapper defaults. The span is taken from `loess_span`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
@@ -80,6 +83,14 @@ extendr_module! {
 ///   \item var - The variance of the gene.
 ///   \item var_exp - The expected variance of the gene.
 ///   \item var_std - The standardised variance of the gene.
+/// }
+/// If `hvg_method == "scran"`, all on the log2 scale:
+/// \itemize{
+///   \item scran_mean - The mean log-expression of the gene.
+///   \item scran_var - The variance of the log-expression of the gene.
+///   \item scran_fitted - The variance the trend expects at the gene's mean.
+///   \item scran_residual - `scran_var - scran_fitted`. Genes are ranked on
+///   this.
 /// }
 /// For `"meanvarbin"` and `"dispersion"`:
 /// \itemize{
@@ -91,6 +102,7 @@ extendr_module! {
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_mc_hvg(
     sparse_data: List,
     hvg_method: &str,
@@ -98,6 +110,7 @@ fn rs_mc_hvg(
     binning: String,
     n_bins: usize,
     clip_max: Option<f32>,
+    scran_params: List,
     verbose: usize,
 ) -> Result<List> {
     let start = Instant::now();
@@ -117,8 +130,7 @@ fn rs_mc_hvg(
     }
 
     let hvg_type = parse_hvg_method(hvg_method)
-        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
-        .unwrap();
+        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))?;
 
     let res = match hvg_type {
         HvgMethod::Vst => {
@@ -148,6 +160,20 @@ fn rs_mc_hvg(
                 bin = res.bin
             ))
         }
+        HvgMethod::Scran => {
+            let params = ScranTrendParams {
+                span: loess_span,
+                ..ScranTrendParams::from_r_list(scran_params)?
+            };
+            let (mean, var) = mc_log2_gene_stats(&sparse);
+            let (fitted, residual) = fit_variance_trend(&mean, &var, &params).to_extendr()?;
+            Ok(list!(
+                scran_mean = mean,
+                scran_var = var,
+                scran_fitted = fitted,
+                scran_residual = residual
+            ))
+        }
     };
 
     if verbosity.detailed_verbosity() {
@@ -158,6 +184,51 @@ fn rs_mc_hvg(
     }
 
     res
+}
+
+/// Per-gene mean and variance of the log2-expression of a metacell matrix.
+///
+/// The metacell `"norm"` assay is `log1p` on the natural scale, the same as
+/// the single cell `data_norm` layer, so the sums go through
+/// [log2_stats_from_sums] exactly like the streaming scran driver. Zero
+/// entries contribute nothing to either sum.
+///
+/// ### Params
+///
+/// * `matrix` - Log-normalised data in `data`, shape (metacells, genes), CSR
+///   or CSC.
+///
+/// ### Returns
+///
+/// `(mean, var)` per gene on the log2 scale.
+fn mc_log2_gene_stats(matrix: &CompressedSparseData2<f32>) -> (Vec<f64>, Vec<f64>) {
+    let (n_cells, n_genes) = matrix.shape;
+    let mut sums = vec![(0.0_f64, 0.0_f64); n_genes];
+
+    let mut add = |gene: usize, value: f32| {
+        let value = value as f64;
+        sums[gene].0 += value;
+        sums[gene].1 += value * value;
+    };
+
+    match matrix.cs_type {
+        CompressedSparseFormat::Csr => {
+            for (&gene, &value) in matrix.indices.iter().zip(&matrix.data) {
+                add(gene as usize, value);
+            }
+        }
+        CompressedSparseFormat::Csc => {
+            for (gene, window) in matrix.indptr.windows(2).enumerate() {
+                for &value in &matrix.data[window[0] as usize..window[1] as usize] {
+                    add(gene, value);
+                }
+            }
+        }
+    }
+
+    sums.into_iter()
+        .map(|(sum, sum_sq)| log2_stats_from_sums(sum, sum_sq, n_cells))
+        .unzip()
 }
 
 /////////

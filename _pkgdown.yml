@@ -76,7 +76,7 @@ navbar:
         - text: "'Bag of genes' methods for single cell in bixverse"
           href: articles/bag_of_genes_single_cells.html
         - text: "Ligand receptor analysis"
-          href: articles/nichenet.html
+          href: articles/ligand_receptor.html
         - text: "Meta cells - generation and analysis"
           href: articles/meta_cells.html
         - text: "Multicellular programmes with DIALOGUE"
@@ -151,7 +151,7 @@ articles:
       - multi_modal_single_cells
       - single_cell_visualisation
       - symphony
-      - nichenet
+      - ligand_receptor
 
 reference:
   # General getters shared across classes
@@ -481,6 +481,7 @@ reference:
       - read_h5ad_metadata
       - read_h5ad_x_summary
       - save_sc_exp_to_disk
+      - archive_sc_exp
       - merge_sc_experiments
       - params_sc_min_quality
       - params_sc_mtx_io
@@ -528,6 +529,7 @@ reference:
       - params_sc_neighbours
       - params_scdblfinder
       - params_hvg_defaults
+      - params_hvg_scran_defaults
       - params_pca_defaults
       - params_knn_defaults
       - params_sc_knn
@@ -690,11 +692,14 @@ reference:
       Classes, functions and generics/methods for ligand receptor analysis for
       single cell.
     contents:
+      - cellphonedb_sc
       - compute_expression_info_sc
       - generate_ligand_target_influence
+      - get_cellphonedb_db
       - get_influence
       - ligand_activity_scores
       - params_ligand_target
+      - params_sc_cellphonedb
       - prioritise_interactions
 
   # Single cell plotting helpers

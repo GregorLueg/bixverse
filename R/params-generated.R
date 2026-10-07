@@ -190,8 +190,8 @@ params_blitzgsea <- function(
 #' `min_gene_var_pctl`, `hvg_method`, `loess_span`, `clip_max`. See
 #' [params_hvg_defaults()] for the available elements. Defaults to `list()`.
 #' @param pca List. Optional overrides for PCA parameters. See
-#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs`,
-#' `random_svd`. See [params_pca_defaults()] for the available elements.
+#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs` and
+#' `svd_solver`. See [params_pca_defaults()] for the available elements.
 #' Defaults to `list()`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
@@ -1277,16 +1277,18 @@ params_gsva <- function(
 #' \itemize{
 #'  \item min_gene_var_pctl - Numeric. Which percentile of the highly variable
 #'  genes to include. Defaults to `0.7`.
-#'  \item hvg_method - String. Which method to use to identify HVG. One of
-#'  `c("vst", "mvb", "dispersion")`. Defaults to `"vst"`.
+#'  \item hvg_method - String. Which method to use to identify HVG. `"scran"`
+#'  runs with the default trend parameters, see [params_hvg_scran_defaults()].
+#'  One of `c("vst", "meanvarbin", "dispersion", "scran")`. Defaults to `"vst"`.
 #'  \item loess_span - Numeric. In case of `"vst"` the span of the loess
 #'  function. Defaults to `0.3`.
 #'  \item clip_max - Numeric or `NULL`. The maximum clipping value (optional).
 #'  Defaults to `NULL`.
-#'  \item n_bins - Integer. The number of bins to use for the `"mvb"` HVG
-#'  detection. Defaults to `20L`.
-#'  \item binning_strategy - String. Which binning strategy to use for `"mvb"`.
-#'  One of `c("equal_width", "equal_frequency")`. Defaults to `"equal_width"`.
+#'  \item n_bins - Integer. The number of bins to use for the `"meanvarbin"` and
+#'  `"dispersion"` HVG detection. Defaults to `20L`.
+#'  \item binning_strategy - String. Which binning strategy to use for
+#'  `"meanvarbin"` and `"dispersion"`. One of `c("equal_width",
+#'  "equal_frequency")`. Defaults to `"equal_width"`.
 #' }
 #'
 #' @export
@@ -1298,6 +1300,40 @@ params_hvg_defaults <- function() {
     clip_max = NULL,
     n_bins = 20L,
     binning_strategy = "equal_width"
+  )
+}
+
+#' Helper function to generate the scran HVG trend defaults
+#'
+#' @description Trend parameters for `method = "scran"` in [params_sc_hvg()].
+#' They mirror scrapper's `fitVarianceTrend()` defaults. The lowess span comes
+#' from `loess_span` in [params_sc_hvg()].
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item mean_filter - Boolean. Shall genes below `min_mean` be left out of the
+#'  trend fit. Defaults to `TRUE`.
+#'  \item min_mean - Numeric. Minimum mean log-expression for a gene to enter
+#'  the trend fit. Defaults to `0.1`.
+#'  \item transform - Boolean. Shall the variances be fourth-root transformed
+#'  before the fit. Defaults to `TRUE`.
+#'  \item use_min_width - Boolean. Shall the lowess window be defined by
+#'  `min_width` and `min_window_count` instead of the span. Defaults to `FALSE`.
+#'  \item min_width - Numeric. Minimum window width, only used with
+#'  `use_min_width = TRUE`. Defaults to `1.0`.
+#'  \item min_window_count - Integer. Minimum number of genes per window, only
+#'  used with `use_min_width = TRUE`. Defaults to `200L`.
+#' }
+#'
+#' @export
+params_hvg_scran_defaults <- function() {
+  list(
+    mean_filter = TRUE,
+    min_mean = 0.1,
+    transform = TRUE,
+    use_min_width = FALSE,
+    min_width = 1.0,
+    min_window_count = 200L
   )
 }
 
@@ -2086,6 +2122,11 @@ params_module_membership <- function(
 #' Defaults to `0.005`.
 #' @param mincp Integer. Drop a gene expressed in fewer than this many cells.
 #' Defaults to `5L`.
+#' @param min_subjects Integer. Drop a gene that fewer than this many subjects
+#' express, a subject expressing it when its own mean count per cell is above
+#' `cpc`. `cpc` and `mincp` pool every cell, so one subject can carry a gene
+#' through on its own. `0` switches the check off, as in the `nebula` package.
+#' Defaults to `0L`.
 #' @param reml Boolean. Estimate the overdispersions by restricted maximum
 #' likelihood. The R package only honours this for `NBLMM`, which the Rust port
 #' does not implement, so this arm has not been validated against an R
@@ -2121,6 +2162,11 @@ params_module_membership <- function(
 #'  Defaults to `0.005`.
 #'  \item mincp - Integer. Drop a gene expressed in fewer than this many cells.
 #'  Defaults to `5L`.
+#'  \item min_subjects - Integer. Drop a gene that fewer than this many subjects
+#'  express, a subject expressing it when its own mean count per cell is above
+#'  `cpc`. `cpc` and `mincp` pool every cell, so one subject can carry a gene
+#'  through on its own. `0` switches the check off, as in the `nebula` package.
+#'  Defaults to `0L`.
 #'  \item reml - Boolean. Estimate the overdispersions by restricted maximum
 #'  likelihood. The R package only honours this for `NBLMM`, which the Rust port
 #'  does not implement, so this arm has not been validated against an R
@@ -2148,6 +2194,7 @@ params_nebula <- function(
   kappa = 800.0,
   cpc = 0.005,
   mincp = 5L,
+  min_subjects = 0L,
   reml = FALSE,
   eps = 1e-06,
   gene_batch_size = 1000L,
@@ -2165,6 +2212,7 @@ params_nebula <- function(
   checkmate::qassert(kappa, "N1[0,)")
   checkmate::qassert(cpc, "N1[0,)")
   checkmate::qassert(mincp, "I1[0,)")
+  checkmate::qassert(min_subjects, "I1[0,)")
   checkmate::qassert(reml, "B1")
   checkmate::qassert(eps, "N1(0,)")
   checkmate::qassert(gene_batch_size, "I1[1,)")
@@ -2188,6 +2236,7 @@ params_nebula <- function(
     kappa = kappa,
     cpc = cpc,
     mincp = mincp,
+    min_subjects = min_subjects,
     reml = reml,
     eps = eps,
     gene_batch_size = gene_batch_size,
@@ -2351,22 +2400,19 @@ params_norm_doublets_defaults <- function() {
 #' @returns A named list with the following elements:
 #' \itemize{
 #'  \item no_pcs - Integer. Number of PCs to consider. Defaults to `30L`.
-#'  \item random_svd - Boolean. Shall randomised SVD be used. Defaults to
-#'  `TRUE`.
-#'  \item sparse - Boolean. Shall sparse solvers be used that do not do scaling.
-#'  If set to yes, in the case of `random_svd = FALSE`, Lanczos iterations are
-#'  used to solve the sparse SVD. With `random_svd = TRUE`, the sparse initial
-#'  matrix is multiplied with the random matrix, yielding a much smaller dense
-#'  matrix that does not increase the memory pressure massively. Defaults to
-#'  `FALSE`.
+#'  \item svd_solver - String. Which solver to use. `"randomised"` (default) is
+#'  a randomised SVD, approximate in the trailing components. `"covariance"`
+#'  builds the gene x gene cross-product and eigendecomposes it. `"exact"` is
+#'  Lanczos on the sparse path and a full SVD on the dense one. See
+#'  [params_sc_pca()] for the trade-offs. One of `c("randomised", "covariance",
+#'  "exact")`. Defaults to `"randomised"`.
 #' }
 #'
 #' @export
 params_pca_defaults <- function() {
   list(
     no_pcs = 30L,
-    random_svd = TRUE,
-    sparse = FALSE
+    svd_solver = "randomised"
   )
 }
 
@@ -2901,6 +2947,52 @@ params_sc_bt_metacells <- function(
       max_iter = max_iter
     ),
     knn
+  )
+}
+
+#' Parameters for the CellPhoneDB analysis
+#'
+#' @description Defaults match CellPhoneDB v5: 1000 permutations and a 10%
+#' expression threshold.
+#'
+#' @param n_perm Integer. Number of cluster label permutations for the p-values.
+#' Defaults to `1000L`.
+#' @param threshold Numeric. Both partners need a fraction of expressing cells
+#' strictly above this value in their cluster. Defaults to `0.1`.
+#' @param seed Integer. Seed for the permutations. Defaults to `42L`.
+#' @param perm_batch Integer or `NULL`. Permutations that share one pass over
+#' the gene data. `NULL` uses the Rust default (16). Defaults to `NULL`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_perm - Integer. Number of cluster label permutations for the
+#'  p-values. Defaults to `1000L`.
+#'  \item threshold - Numeric. Both partners need a fraction of expressing cells
+#'  strictly above this value in their cluster. Defaults to `0.1`.
+#'  \item seed - Integer. Seed for the permutations. Defaults to `42L`.
+#'  \item perm_batch - Integer or `NULL`. Permutations that share one pass over
+#'  the gene data. `NULL` uses the Rust default (16). Defaults to `NULL`.
+#' }
+#'
+#' @export
+params_sc_cellphonedb <- function(
+  n_perm = 1000L,
+  threshold = 0.1,
+  seed = 42L,
+  perm_batch = NULL
+) {
+  # Checks
+  checkmate::qassert(n_perm, "I1[1,)")
+  checkmate::qassert(threshold, "N1[0,1]")
+  checkmate::qassert(seed, "I1[0,)")
+  checkmate::qassert(perm_batch, c("I1[1,)", "0"))
+
+  # Return
+  list(
+    n_perm = n_perm,
+    threshold = threshold,
+    seed = seed,
+    perm_batch = perm_batch
   )
 }
 
@@ -3525,8 +3617,8 @@ params_sc_gene_trends <- function(
 #' single value (broadcast to all variables) or a vector of length equal to the
 #' number of batch variables. Defaults to `2.0`.
 #' @param lambda Numeric vector. Ridge regression penalty for the linear model.
-#' Typically a single value that is broadcast to all design matrix columns.
-#' Defaults to `1.0`.
+#' Typically a single value that is broadcast to every batch column of the
+#' design matrix; the intercept is not penalised. Defaults to `1.0`.
 #' @param block_size Numeric. Fraction of cells to update per block during
 #' optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #' computation time. Defaults to `0.2`.
@@ -3536,16 +3628,17 @@ params_sc_gene_trends <- function(
 #' Defaults to `10L`.
 #' @param epsilon_kmeans Numeric. Convergence threshold for k-means clustering.
 #' Stops when the relative change in cluster assignments falls below this value.
-#' Defaults to `1e-05`.
+#' Defaults to `0.001`.
 #' @param epsilon_harmony Numeric. Convergence threshold for Harmony. Stops when
 #' the relative change in the objective function falls below this value.
-#' Defaults to `1e-04`.
+#' Defaults to `0.01`.
 #' @param window_size Integer. Number of previous iterations to consider when
-#' checking convergence. Defaults to `2L`.
+#' checking convergence. Defaults to `3L`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
-#' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
-#' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
-#' for the available elements. Defaults to `list()`.
+#' Possible parameters are `"k_means_iter"` (10 here, as in R harmony),
+#' `"k_means_init"`, `"gemm"` and `"hamerly"`, see [params_kmeans_defaults()].
+#' See [params_kmeans_defaults()] for the available elements. Defaults to
+#' `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3559,8 +3652,8 @@ params_sc_gene_trends <- function(
 #'  single value (broadcast to all variables) or a vector of length equal to the
 #'  number of batch variables. Defaults to `2.0`.
 #'  \item lambda - Numeric vector. Ridge regression penalty for the linear
-#'  model. Typically a single value that is broadcast to all design matrix
-#'  columns. Defaults to `1.0`.
+#'  model. Typically a single value that is broadcast to every batch column of
+#'  the design matrix; the intercept is not penalised. Defaults to `1.0`.
 #'  \item block_size - Numeric. Fraction of cells to update per block during
 #'  optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #'  computation time. Defaults to `0.2`.
@@ -3570,12 +3663,12 @@ params_sc_gene_trends <- function(
 #'  iterations. Defaults to `10L`.
 #'  \item epsilon_kmeans - Numeric. Convergence threshold for k-means
 #'  clustering. Stops when the relative change in cluster assignments falls
-#'  below this value. Defaults to `1e-05`.
+#'  below this value. Defaults to `0.001`.
 #'  \item epsilon_harmony - Numeric. Convergence threshold for Harmony. Stops
 #'  when the relative change in the objective function falls below this value.
-#'  Defaults to `1e-04`.
+#'  Defaults to `0.01`.
 #'  \item window_size - Integer. Number of previous iterations to consider when
-#'  checking convergence. Defaults to `2L`.
+#'  checking convergence. Defaults to `3L`.
 #'  \item The elements of [params_kmeans_defaults()], overridden by `kmeans`,
 #'  spliced in at this position.
 #' }
@@ -3589,9 +3682,9 @@ params_sc_harmony <- function(
   block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
-  epsilon_kmeans = 1e-05,
-  epsilon_harmony = 1e-04,
-  window_size = 2L,
+  epsilon_kmeans = 0.001,
+  epsilon_harmony = 0.01,
+  window_size = 3L,
   kmeans = list()
 ) {
   # Checks
@@ -3609,7 +3702,7 @@ params_sc_harmony <- function(
   # Merge
   kmeans <- utils::modifyList(
     params_kmeans_defaults(),
-    kmeans,
+    utils::modifyList(list(k_means_iter = 10L), kmeans, keep.null = TRUE),
     keep.null = TRUE
   )
 
@@ -3644,8 +3737,9 @@ params_sc_harmony <- function(
 #' single value (broadcast to all variables) or a vector of length equal to the
 #' number of batch variables. Defaults to `2.0`.
 #' @param lambda Numeric vector. Ridge regression penalty for the linear model.
-#' Typically a single value that is broadcast to all design matrix columns.
-#' Ignored when `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
+#' Typically a single value that is broadcast to every batch column of the
+#' design matrix; the intercept is not penalised. Ignored when
+#' `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 #' @param block_size Numeric. Fraction of cells to update per block during
 #' optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #' computation time. Defaults to `0.2`.
@@ -3667,12 +3761,14 @@ params_sc_harmony <- function(
 #' 0 disables batch-size scaling of theta. Defaults to `0.0`.
 #' @param batch_proportion_cutoff Numeric. Cutoff for pruning batches with small
 #' proportions during ridge regression. Defaults to `1e-05`.
-#' @param use_dynamic_lambda Boolean. If `TRUE`, lambda is estimated dynamically
-#' per cluster instead of using the fixed `lambda` value. Defaults to `FALSE`.
+#' @param use_dynamic_lambda Boolean. If `TRUE`, lambda is estimated per cluster
+#' as `alpha` times the expected counts, as in R harmony v2, instead of using
+#' the fixed `lambda` value. Defaults to `TRUE`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
-#' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
-#' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
-#' for the available elements. Defaults to `list()`.
+#' Possible parameters are `"k_means_iter"` (10 here, as in R harmony),
+#' `"k_means_init"`, `"gemm"` and `"hamerly"`, see [params_kmeans_defaults()].
+#' See [params_kmeans_defaults()] for the available elements. Defaults to
+#' `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3686,8 +3782,9 @@ params_sc_harmony <- function(
 #'  single value (broadcast to all variables) or a vector of length equal to the
 #'  number of batch variables. Defaults to `2.0`.
 #'  \item lambda - Numeric vector. Ridge regression penalty for the linear
-#'  model. Typically a single value that is broadcast to all design matrix
-#'  columns. Ignored when `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
+#'  model. Typically a single value that is broadcast to every batch column of
+#'  the design matrix; the intercept is not penalised. Ignored when
+#'  `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 #'  \item block_size - Numeric. Fraction of cells to update per block during
 #'  optimisation (0.0-1.0). Lower values reduce memory usage but increase
 #'  computation time. Defaults to `0.2`.
@@ -3710,9 +3807,9 @@ params_sc_harmony <- function(
 #'  of 0 disables batch-size scaling of theta. Defaults to `0.0`.
 #'  \item batch_proportion_cutoff - Numeric. Cutoff for pruning batches with
 #'  small proportions during ridge regression. Defaults to `1e-05`.
-#'  \item use_dynamic_lambda - Boolean. If `TRUE`, lambda is estimated
-#'  dynamically per cluster instead of using the fixed `lambda` value. Defaults
-#'  to `FALSE`.
+#'  \item use_dynamic_lambda - Boolean. If `TRUE`, lambda is estimated per
+#'  cluster as `alpha` times the expected counts, as in R harmony v2, instead of
+#'  using the fixed `lambda` value. Defaults to `TRUE`.
 #'  \item The elements of [params_kmeans_defaults()], overridden by `kmeans`,
 #'  spliced in at this position.
 #' }
@@ -3732,7 +3829,7 @@ params_sc_harmony_v2 <- function(
   alpha = 0.2,
   tau = 0.0,
   batch_proportion_cutoff = 1e-05,
-  use_dynamic_lambda = FALSE,
+  use_dynamic_lambda = TRUE,
   kmeans = list()
 ) {
   # Checks
@@ -3754,7 +3851,7 @@ params_sc_harmony_v2 <- function(
   # Merge
   kmeans <- utils::modifyList(
     params_kmeans_defaults(),
-    kmeans,
+    utils::modifyList(list(k_means_iter = 10L), kmeans, keep.null = TRUE),
     keep.null = TRUE
   )
 
@@ -3854,39 +3951,53 @@ params_sc_hotspot <- function(
 
 #' Wrapper function for HVG detection parameters.
 #'
-#' @param method String. `"residual"` ranks genes by the residual variance of a
-#' model fitted with [bixverse::fit_residuals_sc()], and needs that fit on the
-#' object first. It also treats `hvg_no` as a per-group count and returns the
-#' union across groups, so a grouped fit can select more than `hvg_no` genes.
-#' One of `c("vst", "meanvarbin", "dispersion", "residual")`. Defaults to
-#' `"vst"`.
+#' @param method String. `"scran"` fits a weighted lowess trend to the variance
+#' of the log-expression against its mean and ranks genes by the residual, as in
+#' scran's `modelGeneVar()`. `"residual"` ranks genes by the residual variance
+#' of a model fitted with [bixverse::fit_residuals_sc()], and needs that fit on
+#' the object first. It also treats `hvg_no` as a per-group count and returns
+#' the union across groups, so a grouped fit can select more than `hvg_no`
+#' genes. One of `c("vst", "meanvarbin", "dispersion", "scran", "residual")`.
+#' Defaults to `"vst"`.
 #' @param loess_span Numeric. The span parameter for the loess function that is
-#' used to standardise the variance for `method = "vst"`. Defaults to `0.3`.
+#' used to standardise the variance for `method = "vst"`, and the lowess span of
+#' the trend for `method = "scran"`. Defaults to `0.3`.
 #' @param num_bin Integer. Not yet implemented. Defaults to `20L`.
 #' @param bin_method String. The binning method. One of `c("equal_width",
 #' "equal_freq")`. Defaults to `"equal_width"`.
+#' @param scran List. Optional overrides for the `method = "scran"` trend. See
+#' [bixverse::params_hvg_scran_defaults()] for available parameters:
+#' `mean_filter`, `min_mean`, `transform`, `use_min_width`, `min_width` and
+#' `min_window_count`. See [params_hvg_scran_defaults()] for the available
+#' elements. Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item method - String. `"residual"` ranks genes by the residual variance of
-#'  a model fitted with [bixverse::fit_residuals_sc()], and needs that fit on
-#'  the object first. It also treats `hvg_no` as a per-group count and returns
-#'  the union across groups, so a grouped fit can select more than `hvg_no`
-#'  genes. One of `c("vst", "meanvarbin", "dispersion", "residual")`. Defaults
-#'  to `"vst"`.
+#'  \item method - String. `"scran"` fits a weighted lowess trend to the
+#'  variance of the log-expression against its mean and ranks genes by the
+#'  residual, as in scran's `modelGeneVar()`. `"residual"` ranks genes by the
+#'  residual variance of a model fitted with [bixverse::fit_residuals_sc()], and
+#'  needs that fit on the object first. It also treats `hvg_no` as a per-group
+#'  count and returns the union across groups, so a grouped fit can select more
+#'  than `hvg_no` genes. One of `c("vst", "meanvarbin", "dispersion", "scran",
+#'  "residual")`. Defaults to `"vst"`.
 #'  \item loess_span - Numeric. The span parameter for the loess function that
-#'  is used to standardise the variance for `method = "vst"`. Defaults to `0.3`.
+#'  is used to standardise the variance for `method = "vst"`, and the lowess
+#'  span of the trend for `method = "scran"`. Defaults to `0.3`.
 #'  \item num_bin - Integer. Not yet implemented. Defaults to `20L`.
 #'  \item bin_method - String. The binning method. One of `c("equal_width",
 #'  "equal_freq")`. Defaults to `"equal_width"`.
+#'  \item The elements of [params_hvg_scran_defaults()], overridden by `scran`,
+#'  spliced in at this position.
 #' }
 #'
 #' @export
 params_sc_hvg <- function(
-  method = c("vst", "meanvarbin", "dispersion", "residual"),
+  method = c("vst", "meanvarbin", "dispersion", "scran", "residual"),
   loess_span = 0.3,
   num_bin = 20L,
-  bin_method = c("equal_width", "equal_freq")
+  bin_method = c("equal_width", "equal_freq"),
+  scran = list()
 ) {
   method <- match.arg(method)
   bin_method <- match.arg(bin_method)
@@ -3894,18 +4005,28 @@ params_sc_hvg <- function(
   # Checks
   checkmate::assertChoice(
     method,
-    c("vst", "meanvarbin", "dispersion", "residual")
+    c("vst", "meanvarbin", "dispersion", "scran", "residual")
   )
   checkmate::qassert(loess_span, "N1[0.1, 1]")
   checkmate::qassert(num_bin, "I1")
   checkmate::assertChoice(bin_method, c("equal_width", "equal_freq"))
 
+  # Merge
+  scran <- utils::modifyList(
+    params_hvg_scran_defaults(),
+    scran,
+    keep.null = TRUE
+  )
+
   # Return
-  list(
-    method = method,
-    loess_span = loess_span,
-    num_bin = num_bin,
-    bin_method = bin_method
+  c(
+    list(
+      method = method,
+      loess_span = loess_span,
+      num_bin = num_bin,
+      bin_method = bin_method
+    ),
+    scran
   )
 }
 
@@ -5952,9 +6073,9 @@ params_scenic_random_forest_defaults <- function() {
 #' `min_gene_var_pctl`, `hvg_method`, `loess_span`, `clip_max`. See
 #' [params_hvg_defaults()] for the available elements. Defaults to `list()`.
 #' @param pca List. Optional overrides for PCA parameters. See
-#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs`,
-#' `random_svd`, `sparse` and `skip_first_pc`. See [params_pca_defaults()] for
-#' the available elements. Defaults to `list()`.
+#' [bixverse::params_pca_defaults()] for available parameters: `no_pcs` and
+#' `svd_solver`. See [params_pca_defaults()] for the available elements.
+#' Defaults to `list()`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,

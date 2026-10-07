@@ -25,7 +25,8 @@ Defaults to \code{TRUE}.}
 This function can be used after having run \code{\link[=ica_evaluate_comp]{ica_evaluate_comp()}}.
 It will calculate the inflection point, based on the first derivative of a
 loess function fitted \code{ncomp ~ combined_score} with the combined score being
-a product of the median stability, orthogonality and proportion of convergence
+a product of the median stability, \code{1 - max_abs_loading_cor} and proportion
+of convergence
 and add these info to the object. Should the loess function raise a warning
 (e.g., singularity), the class will be returned as is and manual
 determination of optimal ncomp is warranted. Additionally, you have the

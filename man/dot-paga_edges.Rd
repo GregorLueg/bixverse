@@ -19,7 +19,7 @@ A data.table with \code{from}, \code{to} and \code{weight}.
 }
 \description{
 Used for the PAGA abstracted graphs and the miloR neighbourhood overlap. Both
-are symmetric, so the lower triangle and the diagonal are dropped here. Keeping it would draw every edge twice, at
-twice the apparent width.
+are symmetric, so the lower triangle and the diagonal are dropped here.
+Keeping it would draw every edge twice, at twice the apparent width.
 }
 \keyword{internal}

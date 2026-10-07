@@ -4,8 +4,8 @@ use std::time::Instant;
 
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::{
-    bin_merge_io::*, gene_file_io::*, h5_10x_io::*, h5_10x_multifile_io::*, h5ad_io::*,
-    h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
+    archive_io::*, bin_merge_io::*, gene_file_io::*, h5_10x_io::*, h5_10x_multifile_io::*,
+    h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
 };
 use bixverse_rs::single_cell::sc_processing::cellsweep::{
     run_cellsweep, CellSweepParams, CellSweepSample,
@@ -1091,6 +1091,77 @@ impl SingleCellCountData {
         let max_nnz = max_mem_gb.map(|gb| ((gb * 1e9) as usize / GENE_FILE_BYTES_PER_NNZ).max(1));
 
         write_gene_file(&self.f_path_cells, &self.f_path_genes, max_nnz, verbose).to_extendr()
+    }
+
+    /////////////
+    // Archive //
+    /////////////
+
+    /// Archive the cell-based binary for cold storage
+    ///
+    /// @description
+    /// Writes a zstd-compressed archive of `f_path_cells`. The gene-based
+    /// file is not archived; `restore_archive()` rebuilds it. Normalised
+    /// values are only stored for cells where they cannot be recomputed from
+    /// the raw counts.
+    ///
+    /// @param f_path_archive (`character`)\cr
+    /// Path of the archive to write.
+    /// @param level (`integer`)\cr
+    /// zstd compression level, 1 to 22.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @returns A list with `n_cells`, `nnz`, `n_norm_stored` and
+    /// `archive_bytes`.
+    pub fn archive(
+        &self,
+        f_path_archive: &str,
+        level: i32,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let stats =
+            archive_cell_file(&self.f_path_cells, f_path_archive, level, verbose).to_extendr()?;
+
+        Ok(list!(
+            n_cells = stats.n_cells,
+            nnz = stats.nnz as f64,
+            n_norm_stored = stats.n_norm_stored,
+            archive_bytes = stats.archive_bytes as f64
+        ))
+    }
+
+    /// Restore both binaries from an archive
+    ///
+    /// @description
+    /// Rebuilds `f_path_cells` from the archive, then generates
+    /// `f_path_genes` from it.
+    ///
+    /// @param f_path_archive (`character`)\cr
+    /// Path to the archive.
+    /// @param max_mem_gb (`numeric` or `NULL`)\cr
+    /// Memory for the gene file conversion buffers in GB. `NULL` converts in
+    /// a single phase.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @returns Invisible `NULL`.
+    pub fn restore_archive(
+        &mut self,
+        f_path_archive: &str,
+        max_mem_gb: Option<f64>,
+        verbose: bool,
+    ) -> Result<(), extendr_api::Error> {
+        let max_nnz = max_mem_gb.map(|gb| ((gb * 1e9) as usize / GENE_FILE_BYTES_PER_NNZ).max(1));
+
+        restore_archive(
+            f_path_archive,
+            &self.f_path_cells,
+            &self.f_path_genes,
+            max_nnz,
+            verbose,
+        )
+        .to_extendr()
     }
 
     //////////////////////////////

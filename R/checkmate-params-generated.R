@@ -161,8 +161,7 @@ checkScBoostParams <- function(x) {
       "n_bins",
       "binning_strategy",
       "no_pcs",
-      "random_svd",
-      "sparse",
+      "svd_solver",
       "k",
       "knn_method",
       "ann_dist",
@@ -206,8 +205,6 @@ checkScBoostParams <- function(x) {
       clip_max = c("N1(0,)", "0"),
       n_bins = "I1[1,)",
       no_pcs = "I1[1,)",
-      random_svd = "B1",
-      sparse = "B1",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -236,9 +233,10 @@ checkScBoostParams <- function(x) {
       "no_pcs, n_bins and n_iters must be >= 1; min_gene_var_pctl,",
       "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
       "resolution and p_thresh must be > 0; target_size must be > 0;",
-      "log_transform, mean_center, normalise_variance, replace,",
-      "random_svd and fast_cluster must be booleans; clip_max must be",
-      "NULL or a positive numeric."
+      "log_transform, mean_center, normalise_variance, replace and",
+      "fast_cluster must be booleans; svd_solver must be one of",
+      "covariance, randomised or exact; clip_max must be NULL or a",
+      "positive numeric."
     )
   )
   if (!isTRUE(res)) {
@@ -248,8 +246,9 @@ checkScBoostParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      hvg_method = c("vst", "mvb", "dispersion"),
+      hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
+      svd_solver = c("randomised", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -266,9 +265,10 @@ checkScBoostParams <- function(x) {
       "no_pcs, n_bins and n_iters must be >= 1; min_gene_var_pctl,",
       "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
       "resolution and p_thresh must be > 0; target_size must be > 0;",
-      "log_transform, mean_center, normalise_variance, replace,",
-      "random_svd and fast_cluster must be booleans; clip_max must be",
-      "NULL or a positive numeric."
+      "log_transform, mean_center, normalise_variance, replace and",
+      "fast_cluster must be booleans; svd_solver must be one of",
+      "covariance, randomised or exact; clip_max must be NULL or a",
+      "positive numeric."
     )
   )
   if (!isTRUE(res)) {
@@ -2137,6 +2137,7 @@ checkNebulaParams <- function(x) {
       "kappa",
       "cpc",
       "mincp",
+      "min_subjects",
       "reml",
       "eps",
       "gene_batch_size",
@@ -2158,6 +2159,7 @@ checkNebulaParams <- function(x) {
       kappa = "N1[0,)",
       cpc = "N1[0,)",
       mincp = "I1[0,)",
+      min_subjects = "I1[0,)",
       reml = "B1",
       eps = "N1(0,)",
       gene_batch_size = "I1[1,)",
@@ -2905,6 +2907,59 @@ assertScBootstrappedMetacellsParams <- checkmate::makeAssertionFunction(
   checkScBootstrappedMetacellsParams
 )
 
+#' Check CellPhoneDB params
+#'
+#' @description Checkmate extension for the output of [params_sc_cellphonedb()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkScCellPhoneDbParams <- function(x) {
+  res <- check_list_shape(x, c("n_perm", "threshold", "seed", "perm_batch"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_perm = "I1[1,)",
+      threshold = "N1[0,1]",
+      seed = "I1[0,)",
+      perm_batch = c("I1[1,)", "0")
+    ),
+    label = "CellPhoneDB params",
+    hint = paste(
+      "n_perm and perm_batch must be integers >= 1 (perm_batch may be",
+      "NULL); seed must be an integer >= 0; threshold must be in [0,",
+      "1]."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert CellPhoneDB params
+#'
+#' @inheritParams checkScCellPhoneDbParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertScCellPhoneDbParams <- checkmate::makeAssertionFunction(
+  checkScCellPhoneDbParams
+)
+
 #' Check CellSweep params
 #'
 #' @description Checkmate extension for the output of [params_sc_cellsweep()].
@@ -3339,9 +3394,9 @@ checkScFastmnnParams <- function(x) {
     label = "fastMNN params",
     hint = paste(
       "no_pcs must be an integer >= 1; ndist must be a positive",
-      "numeric; size_factor must be numeric; cos_norm, randomised,",
-      "sparse_svd, mean_center, normalise_variance and clr must be",
-      "booleans."
+      "numeric; size_factor must be numeric; svd_solver must be one of",
+      "covariance, randomised or exact; cos_norm, sparse_svd,",
+      "mean_center, normalise_variance and clr must be booleans."
     )
   )
   if (!isTRUE(res)) {
@@ -3365,9 +3420,9 @@ checkScFastmnnParams <- function(x) {
     label = "fastMNN params",
     hint = paste(
       "no_pcs must be an integer >= 1; ndist must be a positive",
-      "numeric; size_factor must be numeric; cos_norm, randomised,",
-      "sparse_svd, mean_center, normalise_variance and clr must be",
-      "booleans."
+      "numeric; size_factor must be numeric; svd_solver must be one of",
+      "covariance, randomised or exact; cos_norm, sparse_svd,",
+      "mean_center, normalise_variance and clr must be booleans."
     )
   )
   if (!isTRUE(res)) {
@@ -3792,7 +3847,21 @@ assertScHotspotParams <- checkmate::makeAssertionFunction(checkScHotspotParams)
 #'
 #' @keywords internal
 checkScHvgParams <- function(x) {
-  res <- check_list_shape(x, c("method", "loess_span", "num_bin", "bin_method"))
+  res <- check_list_shape(
+    x,
+    c(
+      "method",
+      "loess_span",
+      "num_bin",
+      "bin_method",
+      "mean_filter",
+      "min_mean",
+      "transform",
+      "use_min_width",
+      "min_width",
+      "min_window_count"
+    )
+  )
   if (!isTRUE(res)) {
     return(res)
   }
@@ -3801,10 +3870,21 @@ checkScHvgParams <- function(x) {
     x,
     list(
       loess_span = "N1[0.1, 1]",
-      num_bin = "I1"
+      num_bin = "I1",
+      mean_filter = "B1",
+      min_mean = "N1[0,)",
+      transform = "B1",
+      use_min_width = "B1",
+      min_width = "N1(0,)",
+      min_window_count = "I1[1,)"
     ),
     label = "HVG params",
-    hint = "loess_span must be in [0.1, 1]; num_bin must be an integer."
+    hint = paste(
+      "loess_span must be in [0.1, 1]; num_bin must be an integer;",
+      "min_mean must be >= 0; min_width must be > 0; min_window_count",
+      "must be an integer >= 1; mean_filter, transform and",
+      "use_min_width must be booleans."
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -3813,11 +3893,16 @@ checkScHvgParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      method = c("vst", "meanvarbin", "dispersion", "residual"),
+      method = c("vst", "meanvarbin", "dispersion", "scran", "residual"),
       bin_method = c("equal_width", "equal_freq")
     ),
     label = "HVG params",
-    hint = "loess_span must be in [0.1, 1]; num_bin must be an integer."
+    hint = paste(
+      "loess_span must be in [0.1, 1]; num_bin must be an integer;",
+      "min_mean must be >= 0; min_width must be > 0; min_window_count",
+      "must be an integer >= 1; mean_filter, transform and",
+      "use_min_width must be booleans."
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -5564,8 +5649,7 @@ checkScDblFinderParams <- function(x) {
       "normalise_variance",
       "target_size",
       "no_pcs",
-      "random_svd",
-      "sparse",
+      "svd_solver",
       "k",
       "knn_method",
       "ann_dist",
@@ -5617,8 +5701,6 @@ checkScDblFinderParams <- function(x) {
       normalise_variance = "B1",
       target_size = "N1[0,)",
       no_pcs = "I1[1,)",
-      random_svd = "B1",
-      sparse = "B1",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -5662,6 +5744,7 @@ checkScDblFinderParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      svd_solver = c("randomised", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -5932,8 +6015,7 @@ checkScScrubletParams <- function(x) {
       "n_bins",
       "binning_strategy",
       "no_pcs",
-      "random_svd",
-      "sparse",
+      "svd_solver",
       "k",
       "knn_method",
       "ann_dist",
@@ -5971,8 +6053,6 @@ checkScScrubletParams <- function(x) {
       clip_max = c("N1(0,)", "0"),
       n_bins = "I1[1,)",
       no_pcs = "I1[1,)",
-      random_svd = "B1",
-      sparse = "B1",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -5997,9 +6077,10 @@ checkScScrubletParams <- function(x) {
       "be >= 1; min_gene_var_pctl, expected_doublet_rate and",
       "stdev_doublet_rate must be in [0, 1]; loess_span and",
       "sim_doublet_ratio must be > 0; target_size must be >= 0;",
-      "log_transform, mean_center, normalise_variance and random_svd",
-      "must be booleans; clip_max and manual_threshold must be NULL or",
-      "positive numerics."
+      "log_transform, mean_center and normalise_variance must be",
+      "booleans; svd_solver must be one of covariance, randomised or",
+      "exact; clip_max and manual_threshold must be NULL or positive",
+      "numerics."
     )
   )
   if (!isTRUE(res)) {
@@ -6009,8 +6090,9 @@ checkScScrubletParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      hvg_method = c("vst", "mvb", "dispersion"),
+      hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
+      svd_solver = c("randomised", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -6027,9 +6109,10 @@ checkScScrubletParams <- function(x) {
       "be >= 1; min_gene_var_pctl, expected_doublet_rate and",
       "stdev_doublet_rate must be in [0, 1]; loess_span and",
       "sim_doublet_ratio must be > 0; target_size must be >= 0;",
-      "log_transform, mean_center, normalise_variance and random_svd",
-      "must be booleans; clip_max and manual_threshold must be NULL or",
-      "positive numerics."
+      "log_transform, mean_center and normalise_variance must be",
+      "booleans; svd_solver must be one of covariance, randomised or",
+      "exact; clip_max and manual_threshold must be NULL or positive",
+      "numerics."
     )
   )
   if (!isTRUE(res)) {

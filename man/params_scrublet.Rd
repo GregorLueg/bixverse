@@ -47,9 +47,9 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for the available elements. Defaults to \code{list()}.}
 
 \item{pca}{List. Optional overrides for PCA parameters. See
-\code{\link[=params_pca_defaults]{params_pca_defaults()}} for available parameters: \code{no_pcs},
-\code{random_svd}, \code{sparse} and \code{skip_first_pc}. See \code{\link[=params_pca_defaults]{params_pca_defaults()}} for
-the available elements. Defaults to \code{list()}.}
+\code{\link[=params_pca_defaults]{params_pca_defaults()}} for available parameters: \code{no_pcs} and
+\code{svd_solver}. See \code{\link[=params_pca_defaults]{params_pca_defaults()}} for the available elements.
+Defaults to \code{list()}.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},

@@ -105,8 +105,9 @@ S7::method(ica_processing, BulkCoExp) <- function(
 #' This function allows to iterate over a vector of ncomp to identify which
 #' ncomp parameter to choose for your data set. The idea is to generate stability
 #' profiles over the different ncomps and identify a 'sweet spot' of good
-#' stability, low mutual information and good convergence of the identified
-#' independent components
+#' stability, low redundancy (maximum absolute correlation between the
+#' component loadings) and good convergence of the identified independent
+#' components
 #'
 #' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_processing()] before running this function.
@@ -259,7 +260,10 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
     if (.verbose) {
       message(
         sprintf(
-          "Using a CV-like approach with %i folds and %i random initialisations for a total of %i ICA runs",
+          paste(
+            "Using a CV-like approach with %i folds and %i",
+            "random initialisations for a total of %i ICA runs"
+          ),
           iter_params$folds,
           iter_params$random_init,
           no_ica_runs
@@ -282,7 +286,7 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
 
   all_scores <- c()
   all_convergence <- c()
-  all_mutual_information <- c()
+  all_max_cor <- c()
 
   if (.verbose) {
     cli::cli_progress_bar(
@@ -332,11 +336,14 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
         return_centrotype = TRUE
       )
 
-    mutual_information <- component_mutual_information(centrotype)
+    # worst pair, not the mean: one near-duplicate pair is enough to make the
+    # sample activity unstable and a mean over all pairs washes it out
+    loading_cor <- abs(cor(centrotype))
+    diag(loading_cor) <- 0
 
     all_scores <- append(all_scores, sort(stability_scores, decreasing = TRUE))
     all_convergence <- append(all_convergence, converged)
-    all_mutual_information <- append(all_mutual_information, mutual_information)
+    all_max_cor <- append(all_max_cor, max(loading_cor))
   }
 
   if (.verbose) {
@@ -382,11 +389,11 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
     .(no_components)
   ] %>%
     merge(., prop_converged, by = "no_components") %>%
-    .[, norm_mutual_information := all_mutual_information] %>%
+    .[, max_abs_loading_cor := all_max_cor] %>%
     .[,
       combined_score := median_stability *
         converged *
-        (1 - norm_mutual_information)
+        (1 - max_abs_loading_cor)
     ]
 
   stability_params <- list(
@@ -413,7 +420,8 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
 #' This function can be used after having run [bixverse::ica_evaluate_comp()].
 #' It will calculate the inflection point, based on the first derivative of a
 #' loess function fitted `ncomp ~ combined_score` with the combined score being
-#' a product of the median stability, orthogonality and proportion of convergence
+#' a product of the median stability, `1 - max_abs_loading_cor` and proportion
+#' of convergence
 #' and add these info to the object. Should the loess function raise a warning
 #' (e.g., singularity), the class will be returned as is and manual
 #' determination of optimal ncomp is warranted. Additionally, you have the
@@ -589,7 +597,8 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
 #'  used. To note, you will run per ncomp random_init * fold ICA runs which
 #'  can quickly increase.
 #' }
-#' @param ica_params List. The ICA parameters, see [bixverse::params_ica_general()]
+#' @param ica_params List. The ICA parameters, see
+#' [bixverse::params_ica_general()]
 #' wrapper function. This function generates a list containing:
 #' \itemize{
 #'  \item maxit - Integer. Maximum number of iterations for ICA.
@@ -609,7 +618,11 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
 #' @param .verbose Boolean. Controls verbosity.
 #'
 #' @returns `BulkCoExp` with the the source matrix S, mixing matrix A and other
-#' parameters added to the slots.
+#' parameters added to the slots. The diagnostics carry
+#' `loading_condition_number` (condition number of S S') and
+#' `max_abs_loading_cor` (largest absolute correlation between two component
+#' loadings). High values mean near-duplicate components and an unstable
+#' sample activity A; reduce `no_comp`.
 #'
 #' @export
 #'
@@ -696,8 +709,8 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
   if (is.null(no_comp)) {
     warning(
       paste(
-        "No optimal number of no of components was identified and none were provided",
-        "Returning class as is."
+        "No optimal number of no of components was identified and",
+        "none were provided. Returning class as is."
       )
     )
     return(object)
@@ -751,7 +764,13 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
   }
 
   S <- t(centrotype)
-  A <- t(X1) %*% MASS::ginv(S)
+  # least squares A = X1' S' (S S')^-1. The centrotypes are not orthogonal, at
+  # high no_comp near-duplicates make S S' ill-conditioned and a handful of
+  # samples blow up in A, hence the conditioning in the diagnostics
+  gram_s <- tcrossprod(S)
+  A <- t(solve(gram_s, S %*% X1))
+  loading_cor <- abs(cor(centrotype))
+  diag(loading_cor) <- 0
   rownames(A) <- rownames(X)
   colnames(A) <- rownames(S)
 
@@ -791,7 +810,9 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
       ica_meta = ica_meta,
       stability_scores = stability_scores,
       converged = converged,
-      no_comp = no_comp
+      no_comp = no_comp,
+      loading_condition_number = kappa(gram_s, exact = TRUE),
+      max_abs_loading_cor = max(loading_cor)
     )
   )
 
@@ -812,8 +833,8 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
 #'  no of components given random initialisations.
 #'  \item % Converged - The percentage of ICA runs that converged at this
 #'  no of components.
-#'  \item IC Orthogonality - The orthogonality (measured as `1 - abs(cos)`)
-#'  indicating how orthogonal the signals detected at this level are.
+#'  \item IC redundancy - `1 - max_abs_loading_cor`, one minus the largest
+#'  absolute correlation between two component loadings at this level.
 #'  \item Combined score - The product of the three other scores.
 #' }
 #' If found, the function will also add the optimal number of components based
@@ -868,13 +889,13 @@ S7::method(plot_ica_ncomp_params, BulkCoExp) <- function(object) {
     c(
       "Median stability",
       "% Converged",
-      "IC (1 - nMI)",
+      "IC (1 - max |cor|)",
       "Combined score"
     ),
     c(
       "median_stability",
       "converged",
-      "norm_mutual_information",
+      "max_abs_loading_cor",
       "combined_score"
     )
   )
@@ -884,12 +905,12 @@ S7::method(plot_ica_ncomp_params, BulkCoExp) <- function(object) {
       "no_components",
       "median_stability",
       "converged",
-      "norm_mutual_information",
+      "max_abs_loading_cor",
       "combined_score"
     ),
     with = FALSE
   ] %>%
-    .[, norm_mutual_information := 1 - norm_mutual_information] %>%
+    .[, max_abs_loading_cor := 1 - max_abs_loading_cor] %>%
     melt(., id = "no_components") %>%
     .[, variable := renaming[variable]]
 
@@ -1086,40 +1107,6 @@ community_stability <- function(no_comp, s, return_centrotype) {
   res
 }
 
-## component mutual information ------------------------------------------------
-
-#' Assess the NMI of the ICA components
-#'
-#' @description
-#' Assesses the normalised mutual information of the components.
-#'
-#' @param centrotype Numeric matrix. The calculated centrotypes for a given
-#' number of component.
-#'
-#' @returns Returns the average normalised mutual information across all
-#' components
-#'
-#' @keywords internal
-component_mutual_information <- function(centrotype) {
-  # checks
-  checkmate::assertMatrix(centrotype, mode = "numeric")
-
-  # function
-  mi_data <- rs_dense_to_upper_triangle(
-    rs_mutual_info(
-      centrotype,
-      n_bins = NULL,
-      strategy = "equal_width",
-      normalise = TRUE
-    ),
-    TRUE
-  )
-  total_mi <- sum(mi_data) / length(mi_data)
-
-  return(total_mi)
-}
-
-
 ## sign flipping ---------------------------------------------------------------
 
 #' Flips the ICA source sign
@@ -1142,11 +1129,12 @@ flip_ica_loading_signs <- function(x) {
 
 ## getters ---------------------------------------------------------------------
 
-#' Get the ICA component data (stability, convergence, nMI)
+#' Get the ICA component data (stability, convergence, redundancy)
 #'
 #' @description
 #' Getter function to extract the ICA component data in terms of stability,
-#' convergence and normalised mutual information between the components. If not
+#' convergence and maximum absolute correlation between the component loadings
+#' (`max_abs_loading_cor`). If not
 #' found will return `NULL`.
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].

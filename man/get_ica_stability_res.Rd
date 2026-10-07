@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_coexp_ica.R
 \name{get_ica_stability_res}
 \alias{get_ica_stability_res}
-\title{Get the ICA component data (stability, convergence, nMI)}
+\title{Get the ICA component data (stability, convergence, redundancy)}
 \usage{
 get_ica_stability_res(object)
 }
@@ -14,7 +14,8 @@ data.table with the ICA parameter data (if found. Otherwise \code{NULL}.)
 }
 \description{
 Getter function to extract the ICA component data in terms of stability,
-convergence and normalised mutual information between the components. If not
+convergence and maximum absolute correlation between the component loadings
+(\code{max_abs_loading_cor}). If not
 found will return \code{NULL}.
 }
 \examples{

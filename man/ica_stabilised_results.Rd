@@ -41,7 +41,8 @@ used. To note, you will run per ncomp random_init * fold ICA runs which
 can quickly increase.
 }}
 
-\item{ica_params}{List. The ICA parameters, see \code{\link[=params_ica_general]{params_ica_general()}}
+\item{ica_params}{List. The ICA parameters, see
+\code{\link[=params_ica_general]{params_ica_general()}}
 wrapper function. This function generates a list containing:
 \itemize{
 \item maxit - Integer. Maximum number of iterations for ICA.
@@ -66,7 +67,11 @@ absolute bigger tail is set to positive floats.}
 }
 \value{
 \code{BulkCoExp} with the the source matrix S, mixing matrix A and other
-parameters added to the slots.
+parameters added to the slots. The diagnostics carry
+\code{loading_condition_number} (condition number of S S') and
+\code{max_abs_loading_cor} (largest absolute correlation between two component
+loadings). High values mean near-duplicate components and an unstable
+sample activity A; reduce \code{no_comp}.
 }
 \description{
 This function runs stabilised ICA with the defined number of components.

@@ -322,6 +322,47 @@ Invisible \code{NULL}.
 }
 }
 
+\subsection{Method \code{archive}}{
+Archive the cell-based binary for cold storage
+
+\subsection{Arguments}{
+\describe{
+\item{\code{f_path_archive}}{(\code{character})\cr Path of the archive to write.}
+\item{\code{level}}{(\code{integer})\cr zstd compression level, 1 to 22.}
+\item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
+}}
+\subsection{description}{
+Writes a zstd-compressed archive of \code{f_path_cells}. The gene-based
+file is not archived; \code{restore_archive()} rebuilds it. Normalised
+values are only stored for cells where they cannot be recomputed from
+the raw counts.
+
+}
+\subsection{returns}{
+A list with \code{n_cells}, \code{nnz}, \code{n_norm_stored} and
+\code{archive_bytes}.
+}
+}
+
+\subsection{Method \code{restore_archive}}{
+Restore both binaries from an archive
+
+\subsection{Arguments}{
+\describe{
+\item{\code{f_path_archive}}{(\code{character})\cr Path to the archive.}
+\item{\code{max_mem_gb}}{(\code{numeric} or \code{NULL})\cr Memory for the gene file conversion buffers in GB. \code{NULL} converts in a single phase.}
+\item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
+}}
+\subsection{description}{
+Rebuilds \code{f_path_cells} from the archive, then generates
+\code{f_path_genes} from it.
+
+}
+\subsection{returns}{
+Invisible \code{NULL}.
+}
+}
+
 \subsection{Method \code{get_genes_by_indices}}{
 Return genes by index positions
 

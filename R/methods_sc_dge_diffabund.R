@@ -866,6 +866,9 @@ S7::method(meld_sc, SingleCells) <- function(
 #' Mutually exclusive with `coef`.
 #' @param genes_to_use Optional character vector. The genes to fit. Defaults to
 #' every gene in the object, which is usually too many.
+#' @param cells_to_use Optional character vector. Names of the cells to fit,
+#' e.g. one cell type or one condition. Defaults to every cell that passed
+#' quality control. Cells that cannot be matched are dropped with a warning.
 #' @param offset Optional numeric vector. Strictly positive scaling factor per
 #' cell, aligned to the cells that survive the design. Defaults to `NULL`,
 #' which uses the library sizes.
@@ -880,6 +883,8 @@ S7::method(meld_sc, SingleCells) <- function(
 #'   \item kappa - Numeric. When to trust the stage-one subject overdispersion.
 #'   \item cpc - Numeric. Minimum mean count per cell for a gene to be tested.
 #'   \item mincp - Integer. Minimum number of cells expressing a gene.
+#'   \item min_subjects - Integer. Minimum number of subjects whose own mean
+#'   count per cell clears `cpc`. `0` switches the check off.
 #'   \item reml - Boolean. Restricted maximum likelihood.
 #'   \item eps - Numeric. Optimiser stopping tolerance.
 #'   \item gene_batch_size - Integer. Genes read and fitted per batch.
@@ -936,6 +941,7 @@ nebula_sc <- S7::new_generic(
     coef = NULL,
     contrast = NULL,
     genes_to_use = NULL,
+    cells_to_use = NULL,
     offset = NULL,
     nebula_params = params_nebula(),
     .verbose = TRUE
@@ -952,6 +958,7 @@ S7::method(nebula_sc, ScOrScSubset) <- function(
   coef = NULL,
   contrast = NULL,
   genes_to_use = NULL,
+  cells_to_use = NULL,
   offset = NULL,
   nebula_params = params_nebula(),
   .verbose = TRUE
@@ -964,15 +971,20 @@ S7::method(nebula_sc, ScOrScSubset) <- function(
   checkmate::qassert(subject_col, "S1")
   checkmate::assertFormula(design)
   checkmate::qassert(genes_to_use, c("0", "S+"))
+  checkmate::qassert(cells_to_use, c("0", "S+"))
   checkmate::qassert(offset, c("0", "N+"))
   assertNebulaParams(nebula_params)
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   obs <- get_sc_obs(
     object,
-    cols = unique(c("cell_idx", subject_col, all.vars(design))),
+    cols = unique(c("cell_idx", "cell_id", subject_col, all.vars(design))),
     filtered = TRUE
   )
+
+  if (!is.null(cells_to_use)) {
+    obs <- .nebula_select_rows(obs, id_col = "cell_id", ids = cells_to_use)
+  }
 
   inputs <- .nebula_design(
     obs = obs,

@@ -11,19 +11,20 @@ rs_mc_hvg(
   binning,
   n_bins,
   clip_max,
+  scran_params,
   verbose
 )
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
 \code{indices}, \code{nrow}, \code{ncol} and \code{cs_type}. Shape is (metacells, genes). Pass
-raw counts for \code{"vst"} and normalised counts otherwise.}
+raw counts for \code{"vst"} and log1p-normalised counts otherwise.}
 
 \item{hvg_method}{String. Which HVG detection method to use. Options
-are \code{c("vst", "meanvarbin", "dispersion")}.}
+are \code{c("vst", "meanvarbin", "dispersion", "scran")}.}
 
 \item{loess_span}{Numeric. The span parameter for the loess function
-(only used for \code{"vst"}).}
+(\code{"vst"}) or the lowess trend (\code{"scran"}).}
 
 \item{binning}{String. The binning strategy for the \code{meanvarbin} and
 \code{dispersion} methods. One of \code{c("equal_width", "equal_freq")}.}
@@ -33,6 +34,10 @@ are \code{c("vst", "meanvarbin", "dispersion")}.}
 
 \item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} if
 not provided (only used for \code{"vst"}).}
+
+\item{scran_params}{List. Trend parameters for \code{"scran"}, see
+\code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}}. Missing elements fall back to
+the scrapper defaults. The span is taken from \code{loess_span}.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
@@ -44,6 +49,14 @@ A list with the HVG statistics. If \code{hvg_method == "vst"}:
 \item var - The variance of the gene.
 \item var_exp - The expected variance of the gene.
 \item var_std - The standardised variance of the gene.
+}
+If \code{hvg_method == "scran"}, all on the log2 scale:
+\itemize{
+\item scran_mean - The mean log-expression of the gene.
+\item scran_var - The variance of the log-expression of the gene.
+\item scran_fitted - The variance the trend expects at the gene's mean.
+\item scran_residual - \code{scran_var - scran_fitted}. Genes are ranked on
+this.
 }
 For \code{"meanvarbin"} and \code{"dispersion"}:
 \itemize{

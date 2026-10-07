@@ -407,6 +407,42 @@ pseudobulk_dge_sc <- function(
   list(obs = obs, design_mat = design_mat, subject_fct = subject_fct)
 }
 
+#' Restrict a NEBULA obs table to selected cells
+#'
+#' @description
+#' Shared by [nebula_sc()], [nebula_mc()] and the GPU counterpart. Ids that are
+#' not in the table, e.g. cells that failed quality control, are reported and
+#' ignored.
+#'
+#' @param obs data.table. The obs table of the object.
+#' @param id_col String. The identifier column to match on, `"cell_id"` or
+#' `"meta_cell_id"`.
+#' @param ids Character vector. The identifiers to keep.
+#'
+#' @returns `obs` restricted to the rows in `ids`, in its original order.
+#'
+#' @keywords internal
+.nebula_select_rows <- function(obs, id_col, ids) {
+  # checks
+  checkmate::assertDataTable(obs)
+  checkmate::assertChoice(id_col, names(obs))
+  checkmate::qassert(ids, "S+")
+
+  keep <- obs[[id_col]] %in% ids
+  if (!any(keep)) {
+    stop("None of the provided ids could be matched.")
+  }
+  n_missing <- length(unique(ids)) - sum(keep)
+  if (n_missing > 0L) {
+    warning(sprintf(
+      "%i of the provided ids could not be matched and are ignored.",
+      n_missing
+    ))
+  }
+
+  obs[keep]
+}
+
 #' Wrap the NEBULA fits into a result class
 #'
 #' @description

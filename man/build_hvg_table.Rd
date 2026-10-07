@@ -13,14 +13,14 @@ table is not mutated.}
 
 \item{res}{Named list. Per-gene statistics returned by \code{rs_sc_hvg} or
 \code{rs_mc_hvg}. The names of \code{res} become new columns on the returned
-data.table. Must contain the ranking column implied by \code{hvg_method}
-(\code{var_std} for \code{"vst"}, \code{dispersion} for \code{"dispersion"},
-\code{dispersion_scaled} for \code{"meanvarbin"}).}
+data.table. Must contain the ranking column implied by \code{hvg_method}, see
+\code{\link[=hvg_rank_col]{hvg_rank_col()}}.}
 
 \item{hvg_no}{Integer. Number of top genes to flag as HVGs.}
 
-\item{hvg_method}{String. One of \code{c("vst", "dispersion", "meanvarbin")}.
-Selects which column in \code{res} is used to rank genes.}
+\item{hvg_method}{String. One of
+\code{c("vst", "dispersion", "meanvarbin", "scran")}. Selects which column in
+\code{res} is used to rank genes.}
 }
 \value{
 A data.table with the original \code{var_table} columns, all columns

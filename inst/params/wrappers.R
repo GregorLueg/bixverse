@@ -1562,12 +1562,20 @@ spec_sc_hvg <- param_spec(
   title = "Wrapper function for HVG detection parameters.",
   checker = "ScHvg",
   label = "HVG params",
-  hint = "loess_span must be in [0.1, 1]; num_bin must be an integer.",
+  hint = paste(
+    "loess_span must be in [0.1, 1]; num_bin must be an integer;",
+    "min_mean must be >= 0; min_width must be > 0; min_window_count",
+    "must be an integer >= 1; mean_filter, transform and use_min_width",
+    "must be booleans."
+  ),
   fields = list(
     method = p_choice(
       "vst",
-      c("vst", "meanvarbin", "dispersion", "residual"),
+      c("vst", "meanvarbin", "dispersion", "scran", "residual"),
       doc = paste(
+        "`\"scran\"` fits a weighted lowess trend to the variance of the",
+        "log-expression against its mean and ranks genes by the residual,",
+        "as in scran's `modelGeneVar()`.",
         "`\"residual\"` ranks genes by the residual variance of a",
         "model fitted with [bixverse::fit_residuals_sc()], and needs",
         "that fit on the object first. It also treats `hvg_no` as a",
@@ -1580,7 +1588,8 @@ spec_sc_hvg <- param_spec(
       range = "[0.1, 1]",
       doc = paste(
         "The span parameter for the loess function that is used to",
-        "standardise the variance for `method = \"vst\"`."
+        "standardise the variance for `method = \"vst\"`, and the lowess",
+        "span of the trend for `method = \"scran\"`."
       )
     ),
     num_bin = p_int(20L, doc = "Not yet implemented."),
@@ -1588,6 +1597,15 @@ spec_sc_hvg <- param_spec(
       "equal_width",
       c("equal_width", "equal_freq"),
       doc = "The binning method."
+    ),
+    scran = p_merge(
+      "hvg_scran_defaults",
+      doc = paste(
+        "Optional overrides for the `method = \"scran\"` trend. See",
+        "[bixverse::params_hvg_scran_defaults()] for available parameters:",
+        "`mean_filter`, `min_mean`, `transform`, `use_min_width`,",
+        "`min_width` and `min_window_count`."
+      )
     )
   )
 )
@@ -2150,6 +2168,46 @@ spec_ligand_target <- param_spec(
     secondary_targets = p_lgl(
       FALSE,
       doc = "Run a second round through targets."
+    )
+  )
+)
+
+spec_sc_cellphonedb <- param_spec(
+  name = "sc_cellphonedb",
+  title = "Parameters for the CellPhoneDB analysis",
+  description = paste(
+    "Defaults match CellPhoneDB v5: 1000 permutations and a 10% expression",
+    "threshold."
+  ),
+  checker = "ScCellPhoneDb",
+  label = "CellPhoneDB params",
+  hint = paste(
+    "n_perm and perm_batch must be integers >= 1 (perm_batch may be",
+    "NULL); seed must be an integer >= 0; threshold must be in [0, 1]."
+  ),
+  fields = list(
+    n_perm = p_int(
+      1000L,
+      range = "[1,)",
+      doc = "Number of cluster label permutations for the p-values."
+    ),
+    threshold = p_dbl(
+      0.1,
+      range = "[0,1]",
+      doc = paste(
+        "Both partners need a fraction of expressing cells strictly above",
+        "this value in their cluster."
+      )
+    ),
+    seed = p_int(42L, range = "[0,)", doc = "Seed for the permutations."),
+    perm_batch = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Permutations that share one pass over the gene data. `NULL` uses",
+        "the Rust default (16)."
+      )
     )
   )
 )

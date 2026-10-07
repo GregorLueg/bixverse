@@ -1120,12 +1120,15 @@ get_knn_dist <- function(x, ...) {
 #' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
 #' \itemize{
 #'   \item method - Which method to use. One of
-#'   `c("vst", "meanvarbin", "dispersion")`
+#'   `c("vst", "meanvarbin", "dispersion", "scran", "residual")`
 #'   \item loess_span - The span for the loess function to standardise the
-#'   variance
+#'   variance (`"vst"`), or of the lowess trend (`"scran"`)
 #'   \item num_bin - Integer. Not yet implemented.
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
+#'   \item mean_filter, min_mean, transform, use_min_width, min_width,
+#'   min_window_count - The `"scran"` trend parameters, see
+#'   [bixverse::params_hvg_scran_defaults()]
 #' }
 #' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
 #' larger data sets where you wish to avoid loading in the whole data. If
@@ -1134,8 +1137,11 @@ get_knn_dist <- function(x, ...) {
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @returns It will add the mean, var, var_exp, var_std of each gene to the
-#' the var table.
+#' @returns It will add the per-gene HVG statistics to the var table: `mean`,
+#' `var`, `var_exp` and `var_std` for `"vst"`; `mean`, `dispersion`,
+#' `dispersion_scaled` and `bin` for `"meanvarbin"` and `"dispersion"`;
+#' `scran_mean`, `scran_var`, `scran_fitted` and `scran_residual` (log2 scale)
+#' for `"scran"`.
 #'
 #' @export
 #'
@@ -2030,6 +2036,48 @@ load_existing <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Archive the on-disk counts for cold storage
+#'
+#' @description
+#' Compresses `counts_cells.bin` into `counts.bxa` with zstd. The gene-based
+#' file is not archived, as it is a transpose of the cell-based one. Normalised
+#' values are only kept where they cannot be recomputed from the raw counts.
+#' [load_existing()] restores both binaries automatically when it finds only
+#' the archive. Save the in-memory data first with [save_sc_exp_to_disk()].
+#'
+#' @param object `SingleCells` class.
+#' @param level Integer. zstd compression level, between 1 and 22. Higher
+#' levels compress more and take longer; decompression speed barely changes.
+#' @param remove_bins Boolean. Delete `counts_cells.bin` and
+#' `counts_genes.bin` once the archive is written.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with `n_cells`, `nnz`, `n_norm_stored` and `archive_bytes`,
+#' invisibly.
+#'
+#' @export
+#'
+#' @examples
+#' sc <- demo_single_cells()
+#' dir <- sc@dir_data
+#' save_sc_exp_to_disk(sc, type = "rds")
+#' archive_sc_exp(sc, .verbose = FALSE)
+#' sc <- load_existing(SingleCells(dir_data = dir), .verbose = FALSE)
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
+archive_sc_exp <- S7::new_generic(
+  name = "archive_sc_exp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    level = 3L,
+    remove_bins = TRUE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()

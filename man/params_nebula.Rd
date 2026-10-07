@@ -14,6 +14,7 @@ params_nebula(
   kappa = 800,
   cpc = 0.005,
   mincp = 5L,
+  min_subjects = 0L,
   reml = FALSE,
   eps = 1e-06,
   gene_batch_size = 1000L,
@@ -49,6 +50,12 @@ Defaults to \code{0.005}.}
 
 \item{mincp}{Integer. Drop a gene expressed in fewer than this many cells.
 Defaults to \code{5L}.}
+
+\item{min_subjects}{Integer. Drop a gene that fewer than this many subjects
+express, a subject expressing it when its own mean count per cell is above
+\code{cpc}. \code{cpc} and \code{mincp} pool every cell, so one subject can carry a gene
+through on its own. \code{0} switches the check off, as in the \code{nebula} package.
+Defaults to \code{0L}.}
 
 \item{reml}{Boolean. Estimate the overdispersions by restricted maximum
 likelihood. The R package only honours this for \code{NBLMM}, which the Rust port
@@ -88,6 +95,11 @@ subject-level overdispersion from stage one is trusted as is. Defaults to
 Defaults to \code{0.005}.
 \item mincp - Integer. Drop a gene expressed in fewer than this many cells.
 Defaults to \code{5L}.
+\item min_subjects - Integer. Drop a gene that fewer than this many subjects
+express, a subject expressing it when its own mean count per cell is above
+\code{cpc}. \code{cpc} and \code{mincp} pool every cell, so one subject can carry a gene
+through on its own. \code{0} switches the check off, as in the \code{nebula} package.
+Defaults to \code{0L}.
 \item reml - Boolean. Estimate the overdispersions by restricted maximum
 likelihood. The R package only honours this for \code{NBLMM}, which the Rust port
 does not implement, so this arm has not been validated against an R

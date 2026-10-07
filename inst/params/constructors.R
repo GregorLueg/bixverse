@@ -25,9 +25,10 @@ spec_scrublet <- param_spec(
     "must be >= 1; min_gene_var_pctl, expected_doublet_rate and",
     "stdev_doublet_rate must be in [0, 1]; loess_span and",
     "sim_doublet_ratio must be > 0; target_size must be >= 0;",
-    "log_transform, mean_center, normalise_variance and",
-    "random_svd must be booleans; clip_max and manual_threshold",
-    "must be NULL or positive numerics."
+    "log_transform, mean_center and normalise_variance must be",
+    "booleans; svd_solver must be one of covariance, randomised or",
+    "exact; clip_max and manual_threshold must be NULL or positive",
+    "numerics."
   ),
   fields = list(
     sim_doublet_ratio = p_dbl(
@@ -94,7 +95,7 @@ spec_scrublet <- param_spec(
       doc = paste(
         "Optional overrides for PCA parameters. See",
         "[bixverse::params_pca_defaults()] for available parameters:",
-        "`no_pcs`, `random_svd`, `sparse` and `skip_first_pc`."
+        "`no_pcs` and `svd_solver`."
       )
     ),
     knn = p_merge(
@@ -136,9 +137,10 @@ spec_boost <- param_spec(
     "no_pcs, n_bins and n_iters must be >= 1; min_gene_var_pctl,",
     "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
     "resolution and p_thresh must be > 0; target_size must be >",
-    "0; log_transform, mean_center, normalise_variance, replace,",
-    "random_svd and fast_cluster must be booleans; clip_max must",
-    "be NULL or a positive numeric."
+    "0; log_transform, mean_center, normalise_variance, replace",
+    "and fast_cluster must be booleans; svd_solver must be one of",
+    "covariance, randomised or exact; clip_max must be NULL or a",
+    "positive numeric."
   ),
   fields = list(
     boost_rate = p_dbl(
@@ -206,7 +208,7 @@ spec_boost <- param_spec(
       doc = paste(
         "Optional overrides for PCA parameters. See",
         "[bixverse::params_pca_defaults()] for available parameters:",
-        "`no_pcs`, `random_svd`."
+        "`no_pcs` and `svd_solver`."
       )
     ),
     knn = p_merge(
@@ -1347,9 +1349,9 @@ spec_sc_fastmnn <- param_spec(
   label = "fastMNN params",
   hint = paste(
     "no_pcs must be an integer >= 1; ndist must be a positive",
-    "numeric; size_factor must be numeric; cos_norm, randomised,",
-    "sparse_svd, mean_center, normalise_variance and clr must be",
-    "booleans."
+    "numeric; size_factor must be numeric; svd_solver must be one of",
+    "covariance, randomised or exact; cos_norm, sparse_svd,",
+    "mean_center, normalise_variance and clr must be booleans."
   ),
   fields = list(
     ndist = p_dbl(
@@ -1439,7 +1441,8 @@ spec_sc_harmony <- param_spec(
       len = "+",
       doc = paste(
         "Ridge regression penalty for the linear model. Typically a",
-        "single value that is broadcast to all design matrix columns."
+        "single value that is broadcast to every batch column of the",
+        "design matrix; the intercept is not penalised."
       )
     ),
     block_size = p_dbl(
@@ -1462,7 +1465,7 @@ spec_sc_harmony <- param_spec(
       doc = "Maximum number of Harmony outer iterations."
     ),
     epsilon_kmeans = p_dbl(
-      1e-05,
+      1e-03,
       range = "(0,)",
       doc = paste(
         "Convergence threshold for k-means clustering. Stops when the",
@@ -1471,7 +1474,7 @@ spec_sc_harmony <- param_spec(
       )
     ),
     epsilon_harmony = p_dbl(
-      1e-04,
+      1e-02,
       range = "(0,)",
       doc = paste(
         "Convergence threshold for Harmony. Stops when the relative",
@@ -1479,7 +1482,7 @@ spec_sc_harmony <- param_spec(
       )
     ),
     window_size = p_int(
-      2L,
+      3L,
       range = "[1,)",
       doc = paste(
         "Number of previous iterations to consider when checking",
@@ -1488,11 +1491,12 @@ spec_sc_harmony <- param_spec(
     ),
     kmeans = p_merge(
       "kmeans_defaults",
+      overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"`,",
-        "`\"k_means_init\"`, `\"gemm\"` and `\"hamerly\"`, see",
-        "[params_kmeans_defaults()]."
+        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
+        "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )
     )
   )
@@ -1549,8 +1553,9 @@ spec_sc_harmony_v2 <- param_spec(
       len = "+",
       doc = paste(
         "Ridge regression penalty for the linear model. Typically a",
-        "single value that is broadcast to all design matrix columns.",
-        "Ignored when `use_dynamic_lambda = TRUE`."
+        "single value that is broadcast to every batch column of the",
+        "design matrix; the intercept is not penalised. Ignored when",
+        "`use_dynamic_lambda = TRUE`."
       )
     ),
     block_size = p_dbl(
@@ -1622,19 +1627,21 @@ spec_sc_harmony_v2 <- param_spec(
       )
     ),
     use_dynamic_lambda = p_lgl(
-      FALSE,
+      TRUE,
       doc = paste(
-        "If `TRUE`, lambda is estimated dynamically per cluster",
-        "instead of using the fixed `lambda` value."
+        "If `TRUE`, lambda is estimated per cluster as `alpha` times",
+        "the expected counts, as in R harmony v2, instead of using the",
+        "fixed `lambda` value."
       )
     ),
     kmeans = p_merge(
       "kmeans_defaults",
+      overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"`,",
-        "`\"k_means_init\"`, `\"gemm\"` and `\"hamerly\"`, see",
-        "[params_kmeans_defaults()]."
+        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
+        "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )
     )
   )
@@ -2924,6 +2931,17 @@ spec_nebula <- param_spec(
       5L,
       range = "[0,)",
       doc = "Drop a gene expressed in fewer than this many cells."
+    ),
+    min_subjects = p_int(
+      0L,
+      range = "[0,)",
+      doc = paste(
+        "Drop a gene that fewer than this many subjects express, a subject",
+        "expressing it when its own mean count per cell is above `cpc`.",
+        "`cpc` and `mincp` pool every cell, so one subject can carry a gene",
+        "through on its own. `0` switches the check off, as in the `nebula`",
+        "package."
+      )
     ),
     reml = p_lgl(
       FALSE,

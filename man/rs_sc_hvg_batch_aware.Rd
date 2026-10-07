@@ -13,6 +13,7 @@ rs_sc_hvg_batch_aware(
   binning,
   n_bins,
   clip_max,
+  scran_params,
   streaming,
   verbose
 )
@@ -21,7 +22,7 @@ rs_sc_hvg_batch_aware(
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
 
 \item{hvg_method}{String. Which HVG detection method to use. One of
-\code{c("vst", "meanvarbin", "dispersion")}.}
+\code{c("vst", "meanvarbin", "dispersion", "scran")}.}
 
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep. Must be unique and within the store; duplicates or out-of-range
@@ -33,7 +34,7 @@ for each cell. Must be the same length as \code{cell_indices} and densely cover
 \code{as.integer(factor(x)) - 1L} always satisfies this.}
 
 \item{loess_span}{Numeric. The span parameter for the loess function
-(\code{"vst"} only). Must be within \verb{(0, 1]}.}
+(\code{"vst"}) or the lowess trend (\code{"scran"}). Must be within \verb{(0, 1]}.}
 
 \item{binning}{String. The binning strategy for the \code{meanvarbin} and
 \code{dispersion} methods. One of \code{c("equal_width", "equal_frequency")}.}
@@ -43,6 +44,10 @@ for each cell. Must be the same length as \code{cell_indices} and densely cover
 
 \item{clip_max}{Optional clipping number (\code{"vst"} only). Defaults to
 \code{sqrt(no_cells)} per batch if not provided.}
+
+\item{scran_params}{List. Trend parameters for \code{"scran"}, see
+\code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}}. Missing elements fall back to
+the scrapper defaults. The span is taken from \code{loess_span}.}
 
 \item{streaming}{Boolean. Shall the genes be streamed in to reduce memory
 pressure.}
@@ -63,7 +68,9 @@ n_batches).
 \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 n_batches).
 }
-For the other methods
+For \code{hvg_method == "scran"}, \code{scran_mean}, \code{scran_var}, \code{scran_fitted} and
+\code{scran_residual} (all on the log2 scale) plus \code{batch} and \code{gene_idx} as
+above. For the other methods
 \itemize{
 \item mean - The average expression of each gene in each batch.
 \item dispersion - The dispersion of the gene in each batch.
