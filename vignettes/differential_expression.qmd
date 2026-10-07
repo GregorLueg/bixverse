@@ -210,6 +210,27 @@ a rank test with a expression-proportion filter, and it is simply less powerful
 for a large shift in mean. On a real, strong effect all three agree the effect
 is there. The difference shows up somewhere else.
 
+### Selecting cells without a subset
+
+You do not need a `SingleCellsSubset` to restrict the fit. `cells_to_use` takes
+cell names and runs NEBULA on those cells of the full object. Handy when the
+selection is a one-off, say one cell type in one condition, and building a
+subset for it is overkill. Same cells, same fit:
+
+```{r}
+#| label: real-nebula-cells-to-use
+nebula_res_cells <- nebula_sc(
+  object = sc_object,
+  subject_col = "ind",
+  design = ~stim,
+  genes_to_use = hvgs,
+  cells_to_use = mono_obs$cell_id,
+  .verbose = FALSE
+)
+
+all.equal(nebula_res$results, nebula_res_cells$results)
+```
+
 ## No contrast at all
 
 Here is the test that matters. Take the control cells only, so there is no

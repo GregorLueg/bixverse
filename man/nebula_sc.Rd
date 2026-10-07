@@ -11,6 +11,7 @@ nebula_sc(
   coef = NULL,
   contrast = NULL,
   genes_to_use = NULL,
+  cells_to_use = NULL,
   offset = NULL,
   nebula_params = params_nebula(),
   .verbose = TRUE
@@ -35,6 +36,10 @@ Mutually exclusive with \code{coef}.}
 
 \item{genes_to_use}{Optional character vector. The genes to fit. Defaults to
 every gene in the object, which is usually too many.}
+
+\item{cells_to_use}{Optional character vector. Names of the cells to fit,
+e.g. one cell type or one condition. Defaults to every cell that passed
+quality control. Cells that cannot be matched are dropped with a warning.}
 
 \item{offset}{Optional numeric vector. Strictly positive scaling factor per
 cell, aligned to the cells that survive the design. Defaults to \code{NULL},
