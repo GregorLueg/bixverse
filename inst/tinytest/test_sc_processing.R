@@ -677,7 +677,8 @@ expect_true(
 if (requireNamespace("scrapper", quietly = TRUE)) {
   scrapper_res <- scrapper::fitVarianceTrend(
     means = scran_mean_r,
-    variances = scran_var_r
+    variances = scran_var_r,
+    use.min.width = FALSE
   )
 
   expect_equivalent(
@@ -724,7 +725,8 @@ if (requireNamespace("scrapper", quietly = TRUE)) {
   scrapper_wide <- scrapper::fitVarianceTrend(
     means = scran_mean_r,
     variances = scran_var_r,
-    span = 0.8
+    span = 0.8,
+    use.min.width = FALSE
   )
 
   expect_equivalent(
@@ -732,6 +734,31 @@ if (requireNamespace("scrapper", quietly = TRUE)) {
     target = scrapper_wide$fitted,
     tolerance = 1e-3,
     info = "sc hvg scran - span = 0.8 matches scrapper"
+  )
+}
+
+var_data_scran_min_width <- get_hvg_data_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(
+    method = "scran",
+    scran = list(use_min_width = TRUE)
+  ),
+  .verbose = FALSE
+)
+
+if (requireNamespace("scrapper", quietly = TRUE)) {
+  scrapper_min_width <- scrapper::fitVarianceTrend(
+    means = scran_mean_r,
+    variances = scran_var_r,
+    use.min.width = TRUE
+  )
+
+  expect_equivalent(
+    current = var_data_scran_min_width$scran_fitted,
+    target = scrapper_min_width$fitted,
+    tolerance = 1e-3,
+    info = "sc hvg scran - use_min_width = TRUE matches scrapper"
   )
 }
 

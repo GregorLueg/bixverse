@@ -211,7 +211,8 @@ expect_true(
 if (requireNamespace("scrapper", quietly = TRUE)) {
   mc_scrapper <- scrapper::fitVarianceTrend(
     means = colMeans(mc_log2_norm),
-    variances = matrixStats::colVars(mc_log2_norm)
+    variances = matrixStats::colVars(mc_log2_norm),
+    use.min.width = FALSE
   )
 
   expect_equivalent(

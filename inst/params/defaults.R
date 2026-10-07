@@ -180,8 +180,9 @@ spec_hvg_scran_defaults <- param_defaults(
   title = "Helper function to generate the scran HVG trend defaults",
   description = paste(
     "Trend parameters for `method = \"scran\"` in [params_sc_hvg()]. They",
-    "mirror scrapper's `fitVarianceTrend()` defaults. The lowess span comes",
-    "from `loess_span` in [params_sc_hvg()]."
+    "mirror scrapper's `fitVarianceTrend()` defaults before scrapper 1.8,",
+    "which switched `use.min.width` to `TRUE`. The lowess span comes from",
+    "`loess_span` in [params_sc_hvg()]."
   ),
   checker = NULL,
   label = "scran HVG trend params",
