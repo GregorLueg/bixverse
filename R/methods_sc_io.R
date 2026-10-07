@@ -1710,8 +1710,10 @@ S7::method(save_h5ad, SingleCells) <- function(
   # checks
   checkmate::assertDataTable(dt)
 
-  # TODO: the NA widening and the all-NA fallback go once rs_save_h5ad passes
-  # NA masks to scx (nullable-integer/-boolean/-string-array)
+  # TODO: write NAs as pandas nullable columns (nullable-integer/-boolean/
+  # -string-array, via scx NA masks) and drop the NA widening and the all-NA
+  # fallback. On hold until load_h5ad() reads those encodings: it drops them
+  # today (#252), so bixverse could no longer read back what it writes.
   purrr::map(as.list(dt), function(x) {
     if (is.character(x) && data.table::uniqueN(x) < length(x)) {
       x <- factor(x)
