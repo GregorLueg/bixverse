@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -451,7 +451,7 @@
           <code><a href="get_ica_stability_res.html">get_ica_stability_res()</a></code>
 
         </dt>
-        <dd>Get the ICA component data (stability, convergence, nMI)</dd>
+        <dd>Get the ICA component data (stability, convergence, redundancy)</dd>
 
         <dt>
 
@@ -1955,6 +1955,13 @@
 
         <dt>
 
+          <code><a href="archive_sc_exp.html">archive_sc_exp()</a></code>
+
+        </dt>
+        <dd>Archive the on-disk counts for cold storage</dd>
+
+        <dt>
+
           <code><a href="merge_sc_experiments.html">merge_sc_experiments()</a></code>
 
         </dt>
@@ -2248,6 +2255,13 @@
 
         </dt>
         <dd>Helper function to generate HVG defaults</dd>
+
+        <dt>
+
+          <code><a href="params_hvg_scran_defaults.html">params_hvg_scran_defaults()</a></code>
+
+        </dt>
+        <dd>Helper function to generate the scran HVG trend defaults</dd>
 
         <dt>
 
@@ -3194,6 +3208,13 @@
 
       <dl><dt>
 
+          <code><a href="cellphonedb_sc.html">cellphonedb_sc()</a></code>
+
+        </dt>
+        <dd>CellPhoneDB ligand-receptor analysis</dd>
+
+        <dt>
+
           <code><a href="compute_expression_info_sc.html">compute_expression_info_sc()</a></code>
 
         </dt>
@@ -3205,6 +3226,13 @@
 
         </dt>
         <dd>Generate the ligand to target influence matrix</dd>
+
+        <dt>
+
+          <code><a href="get_cellphonedb_db.html">get_cellphonedb_db()</a></code>
+
+        </dt>
+        <dd>Download the CellPhoneDB ligand-receptor database</dd>
 
         <dt>
 
@@ -3226,6 +3254,13 @@
 
         </dt>
         <dd>Parameters for ligand to target influence computation</dd>
+
+        <dt>
+
+          <code><a href="params_sc_cellphonedb.html">params_sc_cellphonedb()</a></code>
+
+        </dt>
+        <dd>Parameters for the CellPhoneDB analysis</dd>
 
         <dt>
 

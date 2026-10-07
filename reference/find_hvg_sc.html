@@ -9,7 +9,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -127,12 +127,15 @@ to <code>2000L</code>.</p></dd>
 
 <dt id="arg-hvg-params">hvg_params<a class="anchor" aria-label="anchor" href="#arg-hvg-params"></a></dt>
 <dd><p>List, see <code><a href="params_sc_hvg.html">params_sc_hvg()</a></code>. This list contains</p><ul><li><p>method - Which method to use. One of
-<code>c("vst", "meanvarbin", "dispersion")</code></p></li>
+<code>c("vst", "meanvarbin", "dispersion", "scran", "residual")</code></p></li>
 <li><p>loess_span - The span for the loess function to standardise the
-variance</p></li>
+variance (<code>"vst"</code>), or of the lowess trend (<code>"scran"</code>)</p></li>
 <li><p>num_bin - Integer. Not yet implemented.</p></li>
 <li><p>bin_method - String. One of <code>c("equal_width", "equal_freq")</code>. Not
 implemented yet.</p></li>
+<li><p>mean_filter, min_mean, transform, use_min_width, min_width,
+min_window_count - The <code>"scran"</code> trend parameters, see
+<code><a href="params_hvg_scran_defaults.html">params_hvg_scran_defaults()</a></code></p></li>
 </ul></dd>
 
 
@@ -150,8 +153,11 @@ verbosity.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>It will add the mean, var, var_exp, var_std of each gene to the
-the var table.</p>
+    <p>It will add the per-gene HVG statistics to the var table: <code>mean</code>,
+<code>var</code>, <code>var_exp</code> and <code>var_std</code> for <code>"vst"</code>; <code>mean</code>, <code>dispersion</code>,
+<code>dispersion_scaled</code> and <code>bin</code> for <code>"meanvarbin"</code> and <code>"dispersion"</code>;
+<code>scran_mean</code>, <code>scran_var</code>, <code>scran_fitted</code> and <code>scran_residual</code> (log2 scale)
+for <code>"scran"</code>.</p>
     </div>
 
     <div class="section level2">

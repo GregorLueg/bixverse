@@ -13,7 +13,7 @@ to the ranking column appropriate for the chosen HVG method."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@ to the ranking column appropriate for the chosen HVG method."><meta property="og
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -125,9 +125,8 @@ table is not mutated.</p></dd>
 <dt id="arg-res">res<a class="anchor" aria-label="anchor" href="#arg-res"></a></dt>
 <dd><p>Named list. Per-gene statistics returned by <code>rs_sc_hvg</code> or
 <code>rs_mc_hvg</code>. The names of <code>res</code> become new columns on the returned
-data.table. Must contain the ranking column implied by <code>hvg_method</code>
-(<code>var_std</code> for <code>"vst"</code>, <code>dispersion</code> for <code>"dispersion"</code>,
-<code>dispersion_scaled</code> for <code>"meanvarbin"</code>).</p></dd>
+data.table. Must contain the ranking column implied by <code>hvg_method</code>, see
+<code><a href="hvg_rank_col.html">hvg_rank_col()</a></code>.</p></dd>
 
 
 <dt id="arg-hvg-no">hvg_no<a class="anchor" aria-label="anchor" href="#arg-hvg-no"></a></dt>
@@ -135,8 +134,9 @@ data.table. Must contain the ranking column implied by <code>hvg_method</code>
 
 
 <dt id="arg-hvg-method">hvg_method<a class="anchor" aria-label="anchor" href="#arg-hvg-method"></a></dt>
-<dd><p>String. One of <code>c("vst", "dispersion", "meanvarbin")</code>.
-Selects which column in <code>res</code> is used to rank genes.</p></dd>
+<dd><p>String. One of
+<code>c("vst", "dispersion", "meanvarbin", "scran")</code>. Selects which column in
+<code>res</code> is used to rank genes.</p></dd>
 
 </dl></div>
     <div class="section level2">

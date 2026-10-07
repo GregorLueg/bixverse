@@ -13,7 +13,7 @@ write_cellranger_output() can emit."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@ write_cellranger_output() can emit."><meta property="og:image" content="https://
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -157,9 +157,9 @@ Cell Ranger writes none, so this defaults to <code>FALSE</code>.
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu">get_cell_ranger_params</span><span class="op">(</span><span class="va">dir</span>, has_hdr <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ path_mtx     : chr "/tmp/Rtmp7X3jcD/cellranger48de79d46ca2/matrix.mtx"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ path_obs     : chr "/tmp/Rtmp7X3jcD/cellranger48de79d46ca2/barcodes.tsv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ path_var     : chr "/tmp/Rtmp7X3jcD/cellranger48de79d46ca2/features.tsv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ path_mtx     : chr "/tmp/RtmpfIify6/cellrangerfc9892664d/matrix.mtx"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ path_obs     : chr "/tmp/RtmpfIify6/cellrangerfc9892664d/barcodes.tsv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ path_var     : chr "/tmp/RtmpfIify6/cellrangerfc9892664d/features.tsv"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ cells_as_rows: logi FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ has_hdr      : logi TRUE</span>
 <span class="r-in"><span></span></span>

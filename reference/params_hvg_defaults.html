@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -107,16 +107,17 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list with the following elements:</p><ul><li><p>min_gene_var_pctl - Numeric. Which percentile of the highly variable
 genes to include. Defaults to <code>0.7</code>.</p></li>
-<li><p>hvg_method - String. Which method to use to identify HVG. One of
-<code>c("vst", "mvb", "dispersion")</code>. Defaults to <code>"vst"</code>.</p></li>
+<li><p>hvg_method - String. Which method to use to identify HVG. <code>"scran"</code>
+runs with the default trend parameters, see <code><a href="params_hvg_scran_defaults.html">params_hvg_scran_defaults()</a></code>.
+One of <code>c("vst", "meanvarbin", "dispersion", "scran")</code>. Defaults to <code>"vst"</code>.</p></li>
 <li><p>loess_span - Numeric. In case of <code>"vst"</code> the span of the loess
 function. Defaults to <code>0.3</code>.</p></li>
 <li><p>clip_max - Numeric or <code>NULL</code>. The maximum clipping value (optional).
 Defaults to <code>NULL</code>.</p></li>
-<li><p>n_bins - Integer. The number of bins to use for the <code>"mvb"</code> HVG
-detection. Defaults to <code>20L</code>.</p></li>
-<li><p>binning_strategy - String. Which binning strategy to use for <code>"mvb"</code>.
-One of <code>c("equal_width", "equal_frequency")</code>. Defaults to <code>"equal_width"</code>.</p></li>
+<li><p>n_bins - Integer. The number of bins to use for the <code>"meanvarbin"</code> and
+<code>"dispersion"</code> HVG detection. Defaults to <code>20L</code>.</p></li>
+<li><p>binning_strategy - String. Which binning strategy to use for
+<code>"meanvarbin"</code> and <code>"dispersion"</code>. One of <code>c("equal_width", "equal_frequency")</code>. Defaults to <code>"equal_width"</code>.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -19,7 +19,7 @@ to &quot;euclidean&quot; unless you have a reason to use cosine."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@ to &quot;euclidean&quot; unless you have a reason to use cosine."><meta property
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -194,11 +194,11 @@ labels.</p></dd>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">labels</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    predicted_cell_grp confidence_cell_grp</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                &lt;char&gt;               &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:        cell_type_1           0.8666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:        cell_type_2           0.9333333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:        cell_type_1           1.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:        cell_type_2           0.8000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3:        cell_type_3           0.8000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:        cell_type_1           0.8000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:        cell_type_2           0.8666667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:        cell_type_1           0.8666667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:        cell_type_2           0.7333333</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6:        cell_type_3           0.8666667</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">ref</span><span class="op">@</span><span class="va">dir_data</span>, <span class="va">query</span><span class="op">@</span><span class="va">dir_data</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>

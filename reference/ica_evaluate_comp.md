@@ -3,8 +3,9 @@
 This function allows to iterate over a vector of ncomp to identify which
 ncomp parameter to choose for your data set. The idea is to generate
 stability profiles over the different ncomps and identify a 'sweet spot'
-of good stability, low mutual information and good convergence of the
-identified independent components
+of good stability, low redundancy (maximum absolute correlation between
+the component loadings) and good convergence of the identified
+independent components
 
 ## Usage
 
@@ -119,12 +120,12 @@ head(get_ica_stability_res(obj))
 #> 4:             8        0.4903164    0.5704741    0.4185860      0.00
 #> 5:            10        0.6038098    0.7605020    0.4277218      0.58
 #> 6:            12        0.4654485    0.5977709    0.3903346      0.30
-#>    norm_mutual_information combined_score
-#>                      <num>          <num>
-#> 1:              0.28908019      0.2375267
-#> 2:              0.15172833      0.5001424
-#> 3:              0.10588218      0.1911259
-#> 4:              0.09540071      0.0000000
-#> 5:              0.09111733      0.3182995
-#> 6:              0.09419421      0.1264818
+#>    max_abs_loading_cor combined_score
+#>                  <num>          <num>
+#> 1:          0.01698197     0.32843795
+#> 2:          0.62200673     0.22286546
+#> 3:          0.75415655     0.05255131
+#> 4:          0.70843868     0.00000000
+#> 5:          0.84741429     0.05343699
+#> 6:          0.84625583     0.02146800
 ```

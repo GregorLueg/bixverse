@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -93,6 +93,28 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.0" id="bixverse-060">bixverse 0.6.0<a class="anchor" aria-label="anchor" href="#bixverse-060"></a></h2>
+<p><strong>Larger release with performance improvements across the board and new methods.</strong> The Rust backend got a sweep and parts that could be parallelised, but were not are now parallel, SIMD/GEMM integrated everywhere applicable and better memory access patterns across the board. Some of the rounding might be slightly different, hence, major release.</p>
+<div class="section level3">
+<h3 id="features-0-6-0">Features<a class="anchor" aria-label="anchor" href="#features-0-6-0"></a></h3>
+<ul><li>CellPhoneDB wired in, see <code><a href="../reference/cellphonedb_sc.html">cellphonedb_sc()</a></code> and <code><a href="../reference/get_cellphonedb_db.html">get_cellphonedb_db()</a></code>. The NicheNet vignette is now a general ligand-receptor vignette.</li>
+<li>scran/scrapper-style HVG detection via <code>params_sc_hvg(method = "scran")</code>.</li>
+<li>
+<code>svd_solver</code> for the PCA in the doublet detection methods.</li>
+<li>The solver for Harmony version 1 was updated and is substantially faster.</li>
+<li>Option to archive the binary files now via <code><a href="../reference/archive_sc_exp.html">archive_sc_exp()</a></code>. The gene-centric view gets deleted and the cell-centric view gets massively compressed. Ideal for archiving after large analysis are done.</li>
+<li>The sNN graph re-attaches small isolated islands after pruning in single cell again.</li>
+<li>Changes to the ICA QC metrics. Instead of mean mutual information, it returns now <code>1 - max(abs(cor))</code> to identify the point where two ICs are strongly correlated with each other.</li>
+<li>The randomised SVD paths for single cell are now using N_OVERSAMPLING from 100 to 20 and increase the iterations from 2 to 4. Across various benchmarks and synthetic data sets, the quality of the trailing PCs has improved with the new thresholds while being faster.</li>
+<li>NEBULA has now a parameter that enables that a minimum of samples need to have the minimum amount of cells expressing a gene in terms of proportion and min expression.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-6-0">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-6-0"></a></h3>
+<ul><li>
+<code>hvg_method = "mvb"</code> in the doublet params silently fell back to VST. The choice is now <code>"meanvarbin"</code>, plus the new <code>"scran"</code>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.7" id="bixverse-057">bixverse 0.5.7<a class="anchor" aria-label="anchor" href="#bixverse-057"></a></h2>
 <div class="section level3">

@@ -1,5 +1,49 @@
 # Changelog
 
+## bixverse 0.6.0
+
+**Larger release with performance improvements across the board and new
+methods.** The Rust backend got a sweep and parts that could be
+parallelised, but were not are now parallel, SIMD/GEMM integrated
+everywhere applicable and better memory access patterns across the
+board. Some of the rounding might be slightly different, hence, major
+release.
+
+### Features
+
+- CellPhoneDB wired in, see
+  [`cellphonedb_sc()`](https://gregorlueg.github.io/bixverse/reference/cellphonedb_sc.md)
+  and
+  [`get_cellphonedb_db()`](https://gregorlueg.github.io/bixverse/reference/get_cellphonedb_db.md).
+  The NicheNet vignette is now a general ligand-receptor vignette.
+- scran/scrapper-style HVG detection via
+  `params_sc_hvg(method = "scran")`.
+- `svd_solver` for the PCA in the doublet detection methods.
+- The solver for Harmony version 1 was updated and is substantially
+  faster.
+- Option to archive the binary files now via
+  [`archive_sc_exp()`](https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.md).
+  The gene-centric view gets deleted and the cell-centric view gets
+  massively compressed. Ideal for archiving after large analysis are
+  done.
+- The sNN graph re-attaches small isolated islands after pruning in
+  single cell again.
+- Changes to the ICA QC metrics. Instead of mean mutual information, it
+  returns now `1 - max(abs(cor))` to identify the point where two ICs
+  are strongly correlated with each other.
+- The randomised SVD paths for single cell are now using N_OVERSAMPLING
+  from 100 to 20 and increase the iterations from 2 to 4. Across various
+  benchmarks and synthetic data sets, the quality of the trailing PCs
+  has improved with the new thresholds while being faster.
+- NEBULA has now a parameter that enables that a minimum of samples need
+  to have the minimum amount of cells expressing a gene in terms of
+  proportion and min expression.
+
+### Fixes
+
+- `hvg_method = "mvb"` in the doublet params silently fell back to VST.
+  The choice is now `"meanvarbin"`, plus the new `"scran"`.
+
 ## bixverse 0.5.7
 
 ### Features

@@ -23,6 +23,7 @@ nebula_mc(
   coef = NULL,
   contrast = NULL,
   genes_to_use = NULL,
+  cells_to_use = NULL,
   offset = NULL,
   nebula_params = params_nebula(),
   .verbose = TRUE
@@ -60,6 +61,12 @@ nebula_mc(
 
   Optional character vector. The genes to fit. Defaults to every gene in
   the object.
+
+- cells_to_use:
+
+  Optional character vector. Meta cell identifiers (`meta_cell_id`) to
+  fit. Defaults to every meta cell. Identifiers that cannot be matched
+  are dropped with a warning.
 
 - offset:
 

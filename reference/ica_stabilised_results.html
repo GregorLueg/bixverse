@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -148,7 +148,8 @@ can quickly increase.</p></li>
 
 
 <dt id="arg-ica-params">ica_params<a class="anchor" aria-label="anchor" href="#arg-ica-params"></a></dt>
-<dd><p>List. The ICA parameters, see <code><a href="params_ica_general.html">params_ica_general()</a></code>
+<dd><p>List. The ICA parameters, see
+<code><a href="params_ica_general.html">params_ica_general()</a></code>
 wrapper function. This function generates a list containing:</p><ul><li><p>maxit - Integer. Maximum number of iterations for ICA.</p></li>
 <li><p>alpha - Float. The alpha parameter for the logcosh version of ICA.
 Should be between 1 to 2.</p></li>
@@ -181,7 +182,11 @@ absolute bigger tail is set to positive floats.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>BulkCoExp</code> with the the source matrix S, mixing matrix A and other
-parameters added to the slots.</p>
+parameters added to the slots. The diagnostics carry
+<code>loading_condition_number</code> (condition number of S S') and
+<code>max_abs_loading_cor</code> (largest absolute correlation between two component
+loadings). High values mean near-duplicate components and an unstable
+sample activity A; reduce <code>no_comp</code>.</p>
     </div>
 
     <div class="section level2">

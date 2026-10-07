@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Bulk co-expression modules</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-03</p>
+      <p class="date">2026-10-07</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -231,7 +231,12 @@
 <p>For the correlation-based methods we work in log-CPM space (negative values are fine); NMF needs non-negative input so we’ll build a separate object from the raw counts for it.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">norm_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cpm.html">rs_cpm</a></span><span class="op">(</span><span class="va">synth</span><span class="op">$</span><span class="va">counts</span>, lib_size <span class="op">=</span> <span class="cn">NULL</span>, log <span class="op">=</span> <span class="cn">TRUE</span>, prior_count <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">norm_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cpm.html">rs_cpm</a></span><span class="op">(</span></span>
+<span>  <span class="va">synth</span><span class="op">$</span><span class="va">counts</span>,</span>
+<span>  lib_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  log <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prior_count <span class="op">=</span> <span class="fl">2</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">raw_cpm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cpm.html">rs_cpm</a></span><span class="op">(</span><span class="va">synth</span><span class="op">$</span><span class="va">counts</span>, lib_size <span class="op">=</span> <span class="cn">NULL</span>, log <span class="op">=</span> <span class="cn">FALSE</span>, prior_count <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">data_log</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">norm_counts</span><span class="op">)</span></span>
@@ -241,6 +246,7 @@
 <span></span>
 <span><span class="va">coexp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span>raw_data <span class="op">=</span> <span class="va">data_log</span>, meta_data <span class="op">=</span> <span class="va">meta_data</span><span class="op">)</span></span>
 <span><span class="va">coexp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">coexp</span>, hvg <span class="op">=</span> <span class="fl">0.5</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">coexp</span></span>
 <span><span class="co">#&gt; Bulk co-expression module class (BulkCoExp).</span></span>
 <span><span class="co">#&gt;  Pre-processing done: TRUE.</span></span>
@@ -433,7 +439,7 @@
 </div>
 </section><section class="level2"><h2 id="method-3-ica">Method 3: ICA<a class="anchor" aria-label="anchor" href="#method-3-ica"></a>
 </h2>
-<p>ICA whitens the data, then finds independent components across many random initialisations. The stability across restarts, the fraction of converged runs, and the mutual information between components combine into a <code>combined_score</code>: the loess inflection point of this score against the number of components gives you an “optimal” <code>ncomp</code>. (Please explore your data and see how it looks…)</p>
+<p>ICA whitens the data, then finds independent components across many random initialisations. The stability across restarts, the fraction of converged runs, and the redundancy between components (the largest absolute correlation between two component loadings) combine into a <code>combined_score</code>: the loess inflection point of this score against the number of components gives you an “optimal” <code>ncomp</code>. (Please explore your data and see how it looks…)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">coexp_ica</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ica_processing.html">ica_processing</a></span><span class="op">(</span><span class="va">coexp</span>, fast_svd <span class="op">=</span> <span class="cn">TRUE</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -981,10 +987,10 @@
 <span><span class="co">#&gt; 2:         hub_modular factor_cor  0.985 0.523 0.988</span></span>
 <span><span class="co">#&gt; 3:             modular    jaccard  0.790 0.200 0.690</span></span>
 <span><span class="co">#&gt; 4:             modular factor_cor  0.983 0.635 0.986</span></span>
-<span><span class="co">#&gt; 5: non_negative_factor    jaccard  0.563 0.495 0.486</span></span>
-<span><span class="co">#&gt; 6: non_negative_factor factor_cor  0.959 0.440 0.966</span></span>
-<span><span class="co">#&gt; 7: non_gaussian_factor    jaccard  0.617 0.526 0.596</span></span>
-<span><span class="co">#&gt; 8: non_gaussian_factor factor_cor  0.978 0.567 0.979</span></span></code></pre></div>
+<span><span class="co">#&gt; 5: non_negative_factor    jaccard  0.563 0.705 0.486</span></span>
+<span><span class="co">#&gt; 6: non_negative_factor factor_cor  0.959 0.722 0.966</span></span>
+<span><span class="co">#&gt; 7: non_gaussian_factor    jaccard  0.617 0.487 0.596</span></span>
+<span><span class="co">#&gt; 8: non_gaussian_factor factor_cor  0.978 0.667 0.979</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">

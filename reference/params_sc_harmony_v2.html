@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -114,7 +114,7 @@
 <span>  alpha <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  tau <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  batch_proportion_cutoff <span class="op">=</span> <span class="fl">1e-05</span>,</span>
-<span>  use_dynamic_lambda <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  use_dynamic_lambda <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  kmeans <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -142,8 +142,9 @@ number of batch variables. Defaults to <code>2.0</code>.</p></dd>
 
 <dt id="arg-lambda">lambda<a class="anchor" aria-label="anchor" href="#arg-lambda"></a></dt>
 <dd><p>Numeric vector. Ridge regression penalty for the linear model.
-Typically a single value that is broadcast to all design matrix columns.
-Ignored when <code>use_dynamic_lambda = TRUE</code>. Defaults to <code>1.0</code>.</p></dd>
+Typically a single value that is broadcast to every batch column of the
+design matrix; the intercept is not penalised. Ignored when
+<code>use_dynamic_lambda = TRUE</code>. Defaults to <code>1.0</code>.</p></dd>
 
 
 <dt id="arg-block-size">block_size<a class="anchor" aria-label="anchor" href="#arg-block-size"></a></dt>
@@ -195,15 +196,17 @@ proportions during ridge regression. Defaults to <code>1e-05</code>.</p></dd>
 
 
 <dt id="arg-use-dynamic-lambda">use_dynamic_lambda<a class="anchor" aria-label="anchor" href="#arg-use-dynamic-lambda"></a></dt>
-<dd><p>Boolean. If <code>TRUE</code>, lambda is estimated dynamically
-per cluster instead of using the fixed <code>lambda</code> value. Defaults to <code>FALSE</code>.</p></dd>
+<dd><p>Boolean. If <code>TRUE</code>, lambda is estimated per cluster
+as <code>alpha</code> times the expected counts, as in R harmony v2, instead of using
+the fixed <code>lambda</code> value. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-kmeans">kmeans<a class="anchor" aria-label="anchor" href="#arg-kmeans"></a></dt>
 <dd><p>List. Optional overrides for the k-means clustering algorithm
-Possible parameters are <code>"k_means_iter"</code>, <code>"k_means_init"</code>, <code>"gemm"</code> and
-<code>"hamerly"</code>, see <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>. See <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>
-for the available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
+Possible parameters are <code>"k_means_iter"</code> (10 here, as in R harmony),
+<code>"k_means_init"</code>, <code>"gemm"</code> and <code>"hamerly"</code>, see <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>.
+See <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code> for the available elements. Defaults to
+<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -217,8 +220,9 @@ value (broadcast to all clusters) or a vector of length k. Defaults to
 single value (broadcast to all variables) or a vector of length equal to the
 number of batch variables. Defaults to <code>2.0</code>.</p></li>
 <li><p>lambda - Numeric vector. Ridge regression penalty for the linear
-model. Typically a single value that is broadcast to all design matrix
-columns. Ignored when <code>use_dynamic_lambda = TRUE</code>. Defaults to <code>1.0</code>.</p></li>
+model. Typically a single value that is broadcast to every batch column of
+the design matrix; the intercept is not penalised. Ignored when
+<code>use_dynamic_lambda = TRUE</code>. Defaults to <code>1.0</code>.</p></li>
 <li><p>block_size - Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
 computation time. Defaults to <code>0.2</code>.</p></li>
@@ -241,9 +245,9 @@ in (0, 1). Only relevant when <code>use_dynamic_lambda = TRUE</code>. Defaults t
 of 0 disables batch-size scaling of theta. Defaults to <code>0.0</code>.</p></li>
 <li><p>batch_proportion_cutoff - Numeric. Cutoff for pruning batches with
 small proportions during ridge regression. Defaults to <code>1e-05</code>.</p></li>
-<li><p>use_dynamic_lambda - Boolean. If <code>TRUE</code>, lambda is estimated
-dynamically per cluster instead of using the fixed <code>lambda</code> value. Defaults
-to <code>FALSE</code>.</p></li>
+<li><p>use_dynamic_lambda - Boolean. If <code>TRUE</code>, lambda is estimated per
+cluster as <code>alpha</code> times the expected counts, as in R harmony v2, instead of
+using the fixed <code>lambda</code> value. Defaults to <code>TRUE</code>.</p></li>
 <li><p>The elements of <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>, overridden by <code>kmeans</code>,
 spliced in at this position.</p></li>
 </ul></div>

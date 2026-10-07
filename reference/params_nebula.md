@@ -22,6 +22,7 @@ params_nebula(
   kappa = 800,
   cpc = 0.005,
   mincp = 5L,
+  min_subjects = 0L,
   reml = FALSE,
   eps = 1e-06,
   gene_batch_size = 1000L,
@@ -77,6 +78,14 @@ params_nebula(
 
   Integer. Drop a gene expressed in fewer than this many cells. Defaults
   to `5L`.
+
+- min_subjects:
+
+  Integer. Drop a gene that fewer than this many subjects express, a
+  subject expressing it when its own mean count per cell is above `cpc`.
+  `cpc` and `mincp` pool every cell, so one subject can carry a gene
+  through on its own. `0` switches the check off, as in the `nebula`
+  package. Defaults to `0L`.
 
 - reml:
 
@@ -135,6 +144,12 @@ A named list with the following elements:
 
 - mincp - Integer. Drop a gene expressed in fewer than this many cells.
   Defaults to `5L`.
+
+- min_subjects - Integer. Drop a gene that fewer than this many subjects
+  express, a subject expressing it when its own mean count per cell is
+  above `cpc`. `cpc` and `mincp` pool every cell, so one subject can
+  carry a gene through on its own. `0` switches the check off, as in the
+  `nebula` package. Defaults to `0L`.
 
 - reml - Boolean. Estimate the overdispersions by restricted maximum
   likelihood. The R package only honours this for `NBLMM`, which the

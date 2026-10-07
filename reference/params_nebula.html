@@ -21,7 +21,7 @@ its meaning either way."><meta property="og:image" content="https://gregorlueg.g
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,7 +74,7 @@ its meaning either way."><meta property="og:image" content="https://gregorlueg.g
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -131,6 +131,7 @@ its meaning either way.</p>
 <span>  kappa <span class="op">=</span> <span class="fl">800</span>,</span>
 <span>  cpc <span class="op">=</span> <span class="fl">0.005</span>,</span>
 <span>  mincp <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  min_subjects <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  reml <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  eps <span class="op">=</span> <span class="fl">1e-06</span>,</span>
 <span>  gene_batch_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
@@ -189,6 +190,14 @@ Defaults to <code>0.005</code>.</p></dd>
 Defaults to <code>5L</code>.</p></dd>
 
 
+<dt id="arg-min-subjects">min_subjects<a class="anchor" aria-label="anchor" href="#arg-min-subjects"></a></dt>
+<dd><p>Integer. Drop a gene that fewer than this many subjects
+express, a subject expressing it when its own mean count per cell is above
+<code>cpc</code>. <code>cpc</code> and <code>mincp</code> pool every cell, so one subject can carry a gene
+through on its own. <code>0</code> switches the check off, as in the <code>nebula</code> package.
+Defaults to <code>0L</code>.</p></dd>
+
+
 <dt id="arg-reml">reml<a class="anchor" aria-label="anchor" href="#arg-reml"></a></dt>
 <dd><p>Boolean. Estimate the overdispersions by restricted maximum
 likelihood. The R package only honours this for <code>NBLMM</code>, which the Rust port
@@ -234,6 +243,11 @@ subject-level overdispersion from stage one is trusted as is. Defaults to
 Defaults to <code>0.005</code>.</p></li>
 <li><p>mincp - Integer. Drop a gene expressed in fewer than this many cells.
 Defaults to <code>5L</code>.</p></li>
+<li><p>min_subjects - Integer. Drop a gene that fewer than this many subjects
+express, a subject expressing it when its own mean count per cell is above
+<code>cpc</code>. <code>cpc</code> and <code>mincp</code> pool every cell, so one subject can carry a gene
+through on its own. <code>0</code> switches the check off, as in the <code>nebula</code> package.
+Defaults to <code>0L</code>.</p></li>
 <li><p>reml - Boolean. Estimate the overdispersions by restricted maximum
 likelihood. The R package only honours this for <code>NBLMM</code>, which the Rust port
 does not implement, so this arm has not been validated against an R

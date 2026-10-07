@@ -41,7 +41,7 @@ print(res)
 #> ScrubletRes: 500 cells, 36 doublets (7.2%)
 #>   Threshold:              0.1215
 #>   Detected doublet rate:  7.2%
-#>   Detectable fraction:    97.7%
+#>   Detectable fraction:    97.9%
 #>   Overall doublet rate:   7.4%
 #>   Simulated doublets:     750
 

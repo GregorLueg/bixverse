@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-03</p>
+      <p class="date">2026-10-07</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -284,7 +284,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.69 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.1 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -381,7 +381,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.813 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.414 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -572,8 +572,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.850409 2.994864 3.231845 3.301401 3.342842 3.669707     5</span></span>
-<span><span class="co">#&gt;   rust 2.117280 2.134501 2.154772 2.165079 2.178431 2.178569     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.087583 2.179231 2.357496 2.406901 2.458022 2.655740     5</span></span>
+<span><span class="co">#&gt;   rust 1.335013 1.354083 1.372882 1.361728 1.362554 1.451032     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -679,14 +679,14 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr        min         lq       mean     median         uq        max</span></span>
-<span><span class="co">#&gt;       fgsea 2155.34404 2155.98122 2162.81664 2156.02397 2170.75576 2175.97822</span></span>
-<span><span class="co">#&gt;  blitz_cold  878.04708  881.91657  886.07064  885.39028  890.18913  894.81015</span></span>
-<span><span class="co">#&gt;  blitz_warm   12.70895   12.98146   13.33175   13.22873   13.46638   14.27322</span></span>
-<span><span class="co">#&gt;  neval</span></span>
-<span><span class="co">#&gt;      5</span></span>
-<span><span class="co">#&gt;      5</span></span>
-<span><span class="co">#&gt;      5</span></span></code></pre></div>
+<span><span class="co">#&gt;        expr         min          lq        mean      median          uq</span></span>
+<span><span class="co">#&gt;       fgsea 1331.148413 1334.214481 1349.608797 1335.138477 1360.366045</span></span>
+<span><span class="co">#&gt;  blitz_cold  308.104977  309.310165  316.192512  320.360327  321.308830</span></span>
+<span><span class="co">#&gt;  blitz_warm    9.051314    9.401679    9.496441    9.417533    9.518915</span></span>
+<span><span class="co">#&gt;         max neval</span></span>
+<span><span class="co">#&gt;  1387.17657     5</span></span>
+<span><span class="co">#&gt;   321.87826     5</span></span>
+<span><span class="co">#&gt;    10.09277     5</span></span></code></pre></div>
 </div>
 <p>On this data (586 pathways, ~12k genes) the cold run lands around 3x faster than the fgsea multilevel method and the warm one around 90x. Score five libraries against one ranking and you pay the calibration once.</p>
 <p>The catch: the null is specific to the signature it was drawn from, both its length and its values. <code><a href="../reference/calc_blitzgsea.html">calc_blitzgsea()</a></code> refuses a null whose gene count does not match rather than returning plausible-looking rubbish, but it cannot catch two different signatures of the same length. Recalibrate when the ranking changes.</p>

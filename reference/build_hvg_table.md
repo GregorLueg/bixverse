@@ -23,9 +23,9 @@ build_hvg_table(var_table, res, hvg_no, hvg_method)
 
   Named list. Per-gene statistics returned by `rs_sc_hvg` or
   `rs_mc_hvg`. The names of `res` become new columns on the returned
-  data.table. Must contain the ranking column implied by `hvg_method`
-  (`var_std` for `"vst"`, `dispersion` for `"dispersion"`,
-  `dispersion_scaled` for `"meanvarbin"`).
+  data.table. Must contain the ranking column implied by `hvg_method`,
+  see
+  [`hvg_rank_col()`](https://gregorlueg.github.io/bixverse/reference/hvg_rank_col.md).
 
 - hvg_no:
 
@@ -33,8 +33,8 @@ build_hvg_table(var_table, res, hvg_no, hvg_method)
 
 - hvg_method:
 
-  String. One of `c("vst", "dispersion", "meanvarbin")`. Selects which
-  column in `res` is used to rank genes.
+  String. One of `c("vst", "dispersion", "meanvarbin", "scran")`.
+  Selects which column in `res` is used to rank genes.
 
 ## Value
 

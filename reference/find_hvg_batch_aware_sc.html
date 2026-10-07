@@ -21,7 +21,7 @@ amongst the Top X HVG in all batches. Important. The function returns
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,7 +74,7 @@ amongst the Top X HVG in all batches. Important. The function returns
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -158,12 +158,15 @@ the different batches. Defaults to <code>"union"</code>.</p></dd>
 
 <dt id="arg-hvg-params">hvg_params<a class="anchor" aria-label="anchor" href="#arg-hvg-params"></a></dt>
 <dd><p>List, see <code><a href="params_sc_hvg.html">params_sc_hvg()</a></code>. This list contains</p><ul><li><p>method - Which method to use. One of
-<code>c("vst", "meanvarbin", "dispersion")</code></p></li>
+<code>c("vst", "meanvarbin", "dispersion", "scran")</code></p></li>
 <li><p>loess_span - The span for the loess function to standardise the
-variance</p></li>
+variance (<code>"vst"</code>), or of the lowess trend (<code>"scran"</code>)</p></li>
 <li><p>num_bin - Integer. Not yet implemented.</p></li>
 <li><p>bin_method - String. One of <code>c("equal_width", "equal_freq")</code>. Not
 implemented yet.</p></li>
+<li><p>mean_filter, min_mean, transform, use_min_width, min_width,
+min_window_count - The <code>"scran"</code> trend parameters, see
+<code><a href="params_hvg_scran_defaults.html">params_hvg_scran_defaults()</a></code></p></li>
 </ul></dd>
 
 

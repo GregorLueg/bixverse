@@ -19,7 +19,7 @@ params_sc_harmony_v2(
   alpha = 0.2,
   tau = 0,
   batch_proportion_cutoff = 1e-05,
-  use_dynamic_lambda = FALSE,
+  use_dynamic_lambda = TRUE,
   kmeans = list()
 )
 ```
@@ -47,8 +47,9 @@ params_sc_harmony_v2(
 - lambda:
 
   Numeric vector. Ridge regression penalty for the linear model.
-  Typically a single value that is broadcast to all design matrix
-  columns. Ignored when `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
+  Typically a single value that is broadcast to every batch column of
+  the design matrix; the intercept is not penalised. Ignored when
+  `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 
 - block_size:
 
@@ -100,14 +101,15 @@ params_sc_harmony_v2(
 
 - use_dynamic_lambda:
 
-  Boolean. If `TRUE`, lambda is estimated dynamically per cluster
-  instead of using the fixed `lambda` value. Defaults to `FALSE`.
+  Boolean. If `TRUE`, lambda is estimated per cluster as `alpha` times
+  the expected counts, as in R harmony v2, instead of using the fixed
+  `lambda` value. Defaults to `TRUE`.
 
 - kmeans:
 
   List. Optional overrides for the k-means clustering algorithm Possible
-  parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
-  `"hamerly"`, see
+  parameters are `"k_means_iter"` (10 here, as in R harmony),
+  `"k_means_init"`, `"gemm"` and `"hamerly"`, see
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md).
   See
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md)
@@ -131,8 +133,9 @@ A named list with the following elements:
   to the number of batch variables. Defaults to `2.0`.
 
 - lambda - Numeric vector. Ridge regression penalty for the linear
-  model. Typically a single value that is broadcast to all design matrix
-  columns. Ignored when `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
+  model. Typically a single value that is broadcast to every batch
+  column of the design matrix; the intercept is not penalised. Ignored
+  when `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 
 - block_size - Numeric. Fraction of cells to update per block during
   optimisation (0.0-1.0). Lower values reduce memory usage but increase
@@ -165,9 +168,9 @@ A named list with the following elements:
 - batch_proportion_cutoff - Numeric. Cutoff for pruning batches with
   small proportions during ridge regression. Defaults to `1e-05`.
 
-- use_dynamic_lambda - Boolean. If `TRUE`, lambda is estimated
-  dynamically per cluster instead of using the fixed `lambda` value.
-  Defaults to `FALSE`.
+- use_dynamic_lambda - Boolean. If `TRUE`, lambda is estimated per
+  cluster as `alpha` times the expected counts, as in R harmony v2,
+  instead of using the fixed `lambda` value. Defaults to `TRUE`.
 
 - The elements of
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md),

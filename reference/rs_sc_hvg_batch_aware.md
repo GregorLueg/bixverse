@@ -16,6 +16,7 @@ rs_sc_hvg_batch_aware(
   binning,
   n_bins,
   clip_max,
+  scran_params,
   streaming,
   verbose
 )
@@ -30,7 +31,7 @@ rs_sc_hvg_batch_aware(
 - hvg_method:
 
   String. Which HVG detection method to use. One of
-  `c("vst", "meanvarbin", "dispersion")`.
+  `c("vst", "meanvarbin", "dispersion", "scran")`.
 
 - cell_indices:
 
@@ -47,8 +48,8 @@ rs_sc_hvg_batch_aware(
 
 - loess_span:
 
-  Numeric. The span parameter for the loess function (`"vst"` only).
-  Must be within `(0, 1]`.
+  Numeric. The span parameter for the loess function (`"vst"`) or the
+  lowess trend (`"scran"`). Must be within `(0, 1]`.
 
 - binning:
 
@@ -63,6 +64,13 @@ rs_sc_hvg_batch_aware(
 
   Optional clipping number (`"vst"` only). Defaults to `sqrt(no_cells)`
   per batch if not provided.
+
+- scran_params:
+
+  List. Trend parameters for `"scran"`, see
+  [`params_hvg_scran_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_scran_defaults.md).
+  Missing elements fall back to the scrapper defaults. The span is taken
+  from `loess_span`.
 
 - streaming:
 
@@ -92,7 +100,9 @@ A list with HVG statistics concatenated across all batches. For
 - gene_idx - Gene index for each entry (0-indexed, length = n_genes \*
   n_batches).
 
-For the other methods
+For `hvg_method == "scran"`, `scran_mean`, `scran_var`, `scran_fitted`
+and `scran_residual` (all on the log2 scale) plus `batch` and `gene_idx`
+as above. For the other methods
 
 - mean - The average expression of each gene in each batch.
 

@@ -13,7 +13,7 @@ such as union of top genes per batch."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@ such as union of top genes per batch."><meta property="og:image" content="https:
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -118,6 +118,7 @@ such as union of top genes per batch.</p>
 <span>  <span class="va">binning</span>,</span>
 <span>  <span class="va">n_bins</span>,</span>
 <span>  <span class="va">clip_max</span>,</span>
+<span>  <span class="va">scran_params</span>,</span>
 <span>  <span class="va">streaming</span>,</span>
 <span>  <span class="va">verbose</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -133,7 +134,7 @@ such as union of top genes per batch.</p>
 
 <dt id="arg-hvg-method">hvg_method<a class="anchor" aria-label="anchor" href="#arg-hvg-method"></a></dt>
 <dd><p>String. Which HVG detection method to use. One of
-<code>c("vst", "meanvarbin", "dispersion")</code>.</p></dd>
+<code>c("vst", "meanvarbin", "dispersion", "scran")</code>.</p></dd>
 
 
 <dt id="arg-cell-indices">cell_indices<a class="anchor" aria-label="anchor" href="#arg-cell-indices"></a></dt>
@@ -151,7 +152,7 @@ for each cell. Must be the same length as <code>cell_indices</code> and densely 
 
 <dt id="arg-loess-span">loess_span<a class="anchor" aria-label="anchor" href="#arg-loess-span"></a></dt>
 <dd><p>Numeric. The span parameter for the loess function
-(<code>"vst"</code> only). Must be within <code>(0, 1]</code>.</p></dd>
+(<code>"vst"</code>) or the lowess trend (<code>"scran"</code>). Must be within <code>(0, 1]</code>.</p></dd>
 
 
 <dt id="arg-binning">binning<a class="anchor" aria-label="anchor" href="#arg-binning"></a></dt>
@@ -167,6 +168,12 @@ for each cell. Must be the same length as <code>cell_indices</code> and densely 
 <dt id="arg-clip-max">clip_max<a class="anchor" aria-label="anchor" href="#arg-clip-max"></a></dt>
 <dd><p>Optional clipping number (<code>"vst"</code> only). Defaults to
 <code>sqrt(no_cells)</code> per batch if not provided.</p></dd>
+
+
+<dt id="arg-scran-params">scran_params<a class="anchor" aria-label="anchor" href="#arg-scran-params"></a></dt>
+<dd><p>List. Trend parameters for <code>"scran"</code>, see
+<code><a href="params_hvg_scran_defaults.html">params_hvg_scran_defaults()</a></code>. Missing elements fall back to
+the scrapper defaults. The span is taken from <code>loess_span</code>.</p></dd>
 
 
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
@@ -190,7 +197,9 @@ detailed verbosity.</p></dd>
 n_batches).</p></li>
 <li><p>gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 n_batches).</p></li>
-</ul><p>For the other methods</p><ul><li><p>mean - The average expression of each gene in each batch.</p></li>
+</ul><p>For <code>hvg_method == "scran"</code>, <code>scran_mean</code>, <code>scran_var</code>, <code>scran_fitted</code> and
+<code>scran_residual</code> (all on the log2 scale) plus <code>batch</code> and <code>gene_idx</code> as
+above. For the other methods</p><ul><li><p>mean - The average expression of each gene in each batch.</p></li>
 <li><p>dispersion - The dispersion of the gene in each batch.</p></li>
 <li><p>dispersion_scaled - The scaled dispersion per bin per gene in each
 batch.</p></li>

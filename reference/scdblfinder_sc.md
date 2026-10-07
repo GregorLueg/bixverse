@@ -109,9 +109,9 @@ scdblfinder_sc(
   ),
   .verbose = FALSE
 )
-#> ScDblFinderRes: 500 cells, 16 doublets (3.2%)
-#>   Threshold:        0.4517
-#>   Score range:      [0.0361, 0.9481]
+#> ScDblFinderRes: 500 cells, 15 doublets (3.0%)
+#>   Threshold:        0.5159
+#>   Score range:      [0.0342, 0.9461]
 #>   Final clusters:   3
 #>   Features available: FALSE
 

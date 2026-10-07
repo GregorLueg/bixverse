@@ -85,7 +85,7 @@ params_boost(
 
   List. Optional overrides for PCA parameters. See
   [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
-  for available parameters: `no_pcs`, `random_svd`. See
+  for available parameters: `no_pcs` and `svd_solver`. See
   [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
   for the available elements. Defaults to
   [`list()`](https://rdrr.io/r/base/list.html).

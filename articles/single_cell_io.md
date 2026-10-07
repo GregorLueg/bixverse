@@ -21,6 +21,7 @@ so it runs end-to-end without any downloads. It covers:
   `load_multi_tenx_h5`)
 - checkpointing to and from disk (`save_sc_exp_to_disk`,
   `load_existing`)
+- archiving the counts for cold storage (`archive_sc_exp`)
 
 If you have not seen the `SingleCells` class before, read the [design
 choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
@@ -540,6 +541,53 @@ sc_restored
 #>   Stale artefacts: none
 ```
 
+### Archiving for cold storage
+
+Project done, but you want to keep the data around? The two count
+binaries are uncompressed, so they eat disk.
+[`archive_sc_exp()`](https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.md)
+compresses `counts_cells.bin` into a single zstd `counts.bxa` and, by
+default, deletes both binaries. The gene-based file is not archived at
+all, it’s just a transpose of the cell-based one. Normalised values only
+go into the archive where they can’t be recomputed from the raw counts.
+`level` (1 to 22) trades write time for size; decompression speed barely
+changes. Run
+[`save_sc_exp_to_disk()`](https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.md)
+first, the archive only covers the counts.
+
+``` r
+
+dir_h5 <- file.path(base, "store_h5")
+bin_bytes <- sum(file.size(
+  file.path(dir_h5, c("counts_cells.bin", "counts_genes.bin"))
+))
+
+archive_stats <- archive_sc_exp(sc_restored, .verbose = TRUE)
+
+c(
+  binaries_mb = bin_bytes / 1e6,
+  archive_mb = archive_stats$archive_bytes / 1e6
+)
+#> binaries_mb  archive_mb 
+#>    0.477821    0.028114
+list.files(dir_h5)
+#> [1] "counts.bxa"   "memory.rds"   "sc_duckdb.db"
+```
+
+Nothing changes on the way back in.
+[`load_existing()`](https://gregorlueg.github.io/bixverse/reference/load_existing.md)
+spots that only the archive is there and rebuilds both binaries before
+loading.
+
+``` r
+
+sc_archived <- load_existing(SingleCells(dir_data = dir_h5))
+#> Found only counts.bxa. Restoring the binaries from the archive.
+#> Found stored data from save_sc_exp_to_disk(). Loading that one into the object.
+all.equal(sc_archived[], sc_h5[])
+#> [1] TRUE
+```
+
 ## Summary
 
 | Format | Single sample | Multiple samples |
@@ -549,6 +597,13 @@ sc_restored
 | AnnData h5ad | [`load_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad.md) | [`prescan_h5ad_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_h5ad_files.md) + [`load_multi_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_multi_h5ad.md) |
 | 10x HDF5 | [`load_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/load_tenx_h5.md) | [`prescan_tenx_h5_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_tenx_h5_files.md) + [`load_multi_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/load_multi_tenx_h5.md) |
 | Seurat | [`load_seurat()`](https://gregorlueg.github.io/bixverse/reference/load_seurat.md) | – |
+
+Checkpoint with
+[`save_sc_exp_to_disk()`](https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.md)
+and
+[`load_existing()`](https://gregorlueg.github.io/bixverse/reference/load_existing.md);
+archive with
+[`archive_sc_exp()`](https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.md).
 
 All readers share the same `sc_qc_param` QC interface and write into the
 same on-disk `SingleCells` layout, so everything downstream

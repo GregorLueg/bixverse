@@ -99,7 +99,11 @@ ica_stabilised_results(
 ## Value
 
 `BulkCoExp` with the the source matrix S, mixing matrix A and other
-parameters added to the slots.
+parameters added to the slots. The diagnostics carry
+`loading_condition_number` (condition number of S S') and
+`max_abs_loading_cor` (largest absolute correlation between two
+component loadings). High values mean near-duplicate components and an
+unstable sample activity A; reduce `no_comp`.
 
 ## Examples
 

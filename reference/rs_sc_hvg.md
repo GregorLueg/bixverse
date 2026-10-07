@@ -1,7 +1,7 @@
 # Calculate the highly variable genes
 
 **\[experimental\]** This function identifies highly variable genes with
-the three methods known in Seurat.
+the three methods known in Seurat, plus the scran mean-variance trend.
 
 ## Usage
 
@@ -14,6 +14,7 @@ rs_sc_hvg(
   binning,
   n_bins,
   clip_max,
+  scran_params,
   streaming,
   verbose
 )
@@ -28,7 +29,7 @@ rs_sc_hvg(
 - hvg_method:
 
   String. Which HVG detection method to use. One of
-  `c("vst", "meanvarbin", "dispersion")`.
+  `c("vst", "meanvarbin", "dispersion", "scran")`.
 
 - cell_indices:
 
@@ -38,8 +39,8 @@ rs_sc_hvg(
 
 - loess_span:
 
-  Numeric. The span parameter for the loess function (`"vst"` only).
-  Must be within `(0, 1]`.
+  Numeric. The span parameter for the loess function (`"vst"`) or the
+  lowess trend (`"scran"`). Must be within `(0, 1]`.
 
 - binning:
 
@@ -54,6 +55,13 @@ rs_sc_hvg(
 
   Optional clipping number (`"vst"` only). Defaults to `sqrt(no_cells)`
   if not provided.
+
+- scran_params:
+
+  List. Trend parameters for `"scran"`, see
+  [`params_hvg_scran_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_scran_defaults.md).
+  Missing elements fall back to the scrapper defaults. The span is taken
+  from `loess_span`.
 
 - streaming:
 
@@ -77,7 +85,17 @@ following elements can be found:
 
 - var_std - The standardised variance of the gene.
 
-For the other two methods, these elements can be found:
+If `hvg_method == "scran"`, all on the log2 scale:
+
+- scran_mean - The mean log-expression of the gene.
+
+- scran_var - The variance of the log-expression of the gene.
+
+- scran_fitted - The variance the trend expects at the gene's mean.
+
+- scran_residual - `scran_var - scran_fitted`. Genes are ranked on this.
+
+For `"meanvarbin"` and `"dispersion"`, these elements can be found:
 
 - mean - The average expression of the gene.
 

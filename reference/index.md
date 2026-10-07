@@ -129,7 +129,7 @@ factorisations.
 - [`get_c_pca_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_loadings.md)
   : Get the contrastive PCA loadings
 - [`get_ica_stability_res()`](https://gregorlueg.github.io/bixverse/reference/get_ica_stability_res.md)
-  : Get the ICA component data (stability, convergence, nMI)
+  : Get the ICA component data (stability, convergence, redundancy)
 - [`get_grid_search_res()`](https://gregorlueg.github.io/bixverse/reference/get_grid_search_res.md)
   : Get the grid search results
 - [`get_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/get_cor_graph.md)
@@ -685,6 +685,9 @@ Rust and the DuckDB supporting the metadata.
 - [`save_sc_exp_to_disk()`](https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.md)
   : Save memory-bound data to disk
 
+- [`archive_sc_exp()`](https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.md)
+  : Archive the on-disk counts for cold storage
+
 - [`merge_sc_experiments()`](https://gregorlueg.github.io/bixverse/reference/merge_sc_experiments.md)
   :
 
@@ -779,6 +782,8 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Wrapper function for scDblFinder doublet detection parameters
 - [`params_hvg_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_defaults.md)
   : Helper function to generate HVG defaults
+- [`params_hvg_scran_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_scran_defaults.md)
+  : Helper function to generate the scran HVG trend defaults
 - [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
   : Helper function to generate default parameters for PCA
 - [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
@@ -1147,17 +1152,23 @@ cell
 Classes, functions and generics/methods for ligand receptor analysis for
 single cell.
 
+- [`cellphonedb_sc()`](https://gregorlueg.github.io/bixverse/reference/cellphonedb_sc.md)
+  : CellPhoneDB ligand-receptor analysis
 - [`compute_expression_info_sc()`](https://gregorlueg.github.io/bixverse/reference/compute_expression_info_sc.md)
   : Compute per-cluster mean expression and expressing fraction for a
   gene set
 - [`generate_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/generate_ligand_target_influence.md)
   : Generate the ligand to target influence matrix
+- [`get_cellphonedb_db()`](https://gregorlueg.github.io/bixverse/reference/get_cellphonedb_db.md)
+  : Download the CellPhoneDB ligand-receptor database
 - [`get_influence()`](https://gregorlueg.github.io/bixverse/reference/get_influence.md)
   : Get the ligand-target influence matrix
 - [`ligand_activity_scores()`](https://gregorlueg.github.io/bixverse/reference/ligand_activity_scores.md)
   : Compute ligand activity scores against gene sets
 - [`params_ligand_target()`](https://gregorlueg.github.io/bixverse/reference/params_ligand_target.md)
   : Parameters for ligand to target influence computation
+- [`params_sc_cellphonedb()`](https://gregorlueg.github.io/bixverse/reference/params_sc_cellphonedb.md)
+  : Parameters for the CellPhoneDB analysis
 - [`prioritise_interactions()`](https://gregorlueg.github.io/bixverse/reference/prioritise_interactions.md)
   : Prioritise sender-ligand-receiver-receptor interactions
 

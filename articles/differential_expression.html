@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Differential expression with donor structure</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-03</p>
+      <p class="date">2026-10-07</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -322,11 +322,46 @@
 </div>
 <p>CXCL10, CCL8 and APOBEC3B at the top, IL8 down. That is the interferon response, and it is reassuring rather than surprising.</p>
 <p>Note that the Wilcoxon test finds <em>fewer</em> genes here than the other two, not more. Pseudoreplication inflates significance, but the Wilcoxon test is also a rank test with a expression-proportion filter, and it is simply less powerful for a large shift in mean. On a real, strong effect all three agree the effect is there. The difference shows up somewhere else.</p>
-</section><section class="level2"><h2 id="no-contrast-at-all">No contrast at all<a class="anchor" aria-label="anchor" href="#no-contrast-at-all"></a>
+<section class="level3"><h3 id="selecting-cells-without-a-subset">Selecting cells without a subset<a class="anchor" aria-label="anchor" href="#selecting-cells-without-a-subset"></a>
+</h3>
+<p>You do not need a <code>SingleCellsSubset</code> to restrict the fit. <code>cells_to_use</code> takes cell names and runs NEBULA on those cells of the full object. Handy when the selection is a one-off, say one cell type in one condition, and building a subset for it is overkill. Same cells, same fit:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nebula_res_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nebula_sc.html">nebula_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  subject_col <span class="op">=</span> <span class="st">"ind"</span>,</span>
+<span>  design <span class="op">=</span> <span class="op">~</span><span class="va">stim</span>,</span>
+<span>  genes_to_use <span class="op">=</span> <span class="va">hvgs</span>,</span>
+<span>  cells_to_use <span class="op">=</span> <span class="va">mono_obs</span><span class="op">$</span><span class="va">cell_id</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">nebula_res</span><span class="op">$</span><span class="va">results</span>, <span class="va">nebula_res_cells</span><span class="op">$</span><span class="va">results</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+</div>
+</section><section class="level3"><h3 id="genes-carried-by-one-donor">Genes carried by one donor<a class="anchor" aria-label="anchor" href="#genes-carried-by-one-donor"></a>
+</h3>
+<p>NEBULA’s expression filter, <code>cpc</code> and <code>mincp</code>, pools every cell, so a single donor expressing a gene is enough to get it fitted. <code>min_subjects</code> adds a per-donor check: the gene has to clear <code>cpc</code> within at least that many donors. It defaults to <code>0</code>, which is off and matches the <code>nebula</code> package.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nebula_res_min</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nebula_sc.html">nebula_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">mono</span>,</span>
+<span>  subject_col <span class="op">=</span> <span class="st">"ind"</span>,</span>
+<span>  design <span class="op">=</span> <span class="op">~</span><span class="va">stim</span>,</span>
+<span>  genes_to_use <span class="op">=</span> <span class="va">hvgs</span>,</span>
+<span>  nebula_params <span class="op">=</span> <span class="fu"><a href="../reference/params_nebula.html">params_nebula</a></span><span class="op">(</span>min_subjects <span class="op">=</span> <span class="fl">6L</span><span class="op">)</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>default <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">nebula_res</span><span class="op">$</span><span class="va">results</span><span class="op">)</span>, min_subjects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">nebula_res_min</span><span class="op">$</span><span class="va">results</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      default min_subjects </span></span>
+<span><span class="co">#&gt;          429          364</span></span></code></pre></div>
+</div>
+</section></section><section class="level2"><h2 id="no-contrast-at-all">No contrast at all<a class="anchor" aria-label="anchor" href="#no-contrast-at-all"></a>
 </h2>
 <p>Here is the test that matters. Take the control cells only, so there is no treatment anywhere in the data, and split the eight donors into two arbitrary groups of four. Any gene called differential is a false positive by construction.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctrl</span> <span class="op">&lt;-</span> <span class="va">mono_obs</span><span class="op">[</span><span class="va">stim</span> <span class="op">==</span> <span class="st">"ctrl"</span><span class="op">]</span></span>
 <span><span class="va">donors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">ctrl</span><span class="op">$</span><span class="va">ind</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">group_a</span> <span class="op">&lt;-</span> <span class="va">donors</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">7</span><span class="op">)</span><span class="op">]</span></span>
@@ -346,7 +381,7 @@
 <span><span class="co">#&gt;   1488   0 294</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">wilcox_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_markers_sc.html">find_markers_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">mono</span>,</span>
 <span>  cells_1 <span class="op">=</span> <span class="va">ctrl</span><span class="op">[</span><span class="va">fake</span> <span class="op">==</span> <span class="st">"a"</span>, <span class="va">cell_id</span><span class="op">]</span>,</span>
@@ -358,7 +393,7 @@
 <span><span class="co">#&gt; [1] 45</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_list_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">ctrl</span><span class="op">$</span><span class="va">cell_id</span>, <span class="va">ctrl</span><span class="op">$</span><span class="va">ind</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">samples_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>ind <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_list_null</span><span class="op">)</span><span class="op">)</span></span>
@@ -378,7 +413,7 @@
 </div>
 <p><code><a href="../reference/SingleCellsSubset.html">SingleCellsSubset()</a></code> subsets a <code>SingleCells</code>, not another subset, so fold both restrictions into one grouping column on the parent.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">parent_obs</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"cell_stim"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">parent_obs</span><span class="op">$</span><span class="va">cell</span>, <span class="va">parent_obs</span><span class="op">$</span><span class="va">stim</span>, sep <span class="op">=</span> <span class="st">"__"</span><span class="op">)</span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"fake"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">parent_obs</span><span class="op">$</span><span class="va">ind</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">group_a</span>, <span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span></span>
@@ -406,7 +441,7 @@
 </h2>
 <p>The Wald test is the headline, but the fit carries the variance decomposition that motivated the model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span></span>
 <span>  <span class="va">nebula_res</span><span class="op">$</span><span class="va">results</span><span class="op">[</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">subject_overdispersion</span><span class="op">)</span>,</span>
@@ -440,7 +475,7 @@
 <p><code>subject_overdispersion</code> is how much the gene’s expression moves between donors, and it is exactly the term a cell-level test pretends is zero. Genes with a large value are the ones a Wilcoxon test would most confidently get wrong.</p>
 <p>Two columns are diagnostics rather than results. <code>convergence</code> at or below <code>-20</code> marks a fit that likely failed, and <code>sigma_at_bound</code> marks a gene where the subject-level variance finished pinned on its lower bound, meaning the mixed model collapsed to a plain negative binomial. Neither is fatal, but a sweep where most genes show either is telling you something about the design.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nebula_res</span><span class="op">$</span><span class="va">results</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span></span>
 <span>  n <span class="op">=</span> <span class="va">.N</span>,</span>
 <span>  failed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">convergence</span> <span class="op">&lt;=</span> <span class="op">-</span><span class="fl">20L</span><span class="op">)</span>,</span>
@@ -452,7 +487,7 @@
 </div>
 <p>The fixed effects and their standard errors are on the object as matrices of genes by coefficients, so the full model is available without refitting.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">nebula_res</span><span class="op">$</span><span class="va">coefficients</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          (Intercept)  stimstim</span></span>
 <span><span class="co">#&gt; HBB        -7.310408 0.5106342</span></span>

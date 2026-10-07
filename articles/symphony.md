@@ -638,7 +638,7 @@ ggplot(conf_dt, aes(x = predicted_sc_type, y = sc_type_confidence)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
   ylim(0, 1.025)
-#> Warning: Removed 153 rows containing missing values or values outside the scale range
+#> Warning: Removed 164 rows containing missing values or values outside the scale range
 #> (`geom_point()`).
 ```
 

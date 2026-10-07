@@ -88,11 +88,11 @@ labels <- transfer_labels_symphony(
 head(labels)
 #>    predicted_cell_grp confidence_cell_grp
 #>                <char>               <num>
-#> 1:        cell_type_1           0.8666667
-#> 2:        cell_type_2           0.9333333
+#> 1:        cell_type_1           1.0000000
+#> 2:        cell_type_2           0.8000000
 #> 3:        cell_type_3           0.8000000
-#> 4:        cell_type_1           0.8000000
-#> 5:        cell_type_2           0.8666667
+#> 4:        cell_type_1           0.8666667
+#> 5:        cell_type_2           0.7333333
 #> 6:        cell_type_3           0.8666667
 
 unlink(c(ref@dir_data, query@dir_data), recursive = TRUE, force = TRUE)

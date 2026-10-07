@@ -16,6 +16,7 @@ rs_mc_hvg(
   binning,
   n_bins,
   clip_max,
+  scran_params,
   verbose
 )
 ```
@@ -26,17 +27,17 @@ rs_mc_hvg(
 
   A named list that needs to have `data`, `indptr`, `indices`, `nrow`,
   `ncol` and `cs_type`. Shape is (metacells, genes). Pass raw counts for
-  `"vst"` and normalised counts otherwise.
+  `"vst"` and log1p-normalised counts otherwise.
 
 - hvg_method:
 
   String. Which HVG detection method to use. Options are
-  `c("vst", "meanvarbin", "dispersion")`.
+  `c("vst", "meanvarbin", "dispersion", "scran")`.
 
 - loess_span:
 
-  Numeric. The span parameter for the loess function (only used for
-  `"vst"`).
+  Numeric. The span parameter for the loess function (`"vst"`) or the
+  lowess trend (`"scran"`).
 
 - binning:
 
@@ -51,6 +52,13 @@ rs_mc_hvg(
 
   Optional clipping number. Defaults to `sqrt(no_cells)` if not provided
   (only used for `"vst"`).
+
+- scran_params:
+
+  List. Trend parameters for `"scran"`, see
+  [`params_hvg_scran_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_scran_defaults.md).
+  Missing elements fall back to the scrapper defaults. The span is taken
+  from `loess_span`.
 
 - verbose:
 
@@ -68,6 +76,16 @@ A list with the HVG statistics. If `hvg_method == "vst"`:
 - var_exp - The expected variance of the gene.
 
 - var_std - The standardised variance of the gene.
+
+If `hvg_method == "scran"`, all on the log2 scale:
+
+- scran_mean - The mean log-expression of the gene.
+
+- scran_var - The variance of the log-expression of the gene.
+
+- scran_fitted - The variance the trend expects at the gene's mean.
+
+- scran_residual - `scran_var - scran_fitted`. Genes are ranked on this.
 
 For `"meanvarbin"` and `"dispersion"`:
 

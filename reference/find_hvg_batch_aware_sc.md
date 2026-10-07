@@ -50,15 +50,19 @@ find_hvg_batch_aware_sc(
   This list contains
 
   - method - Which method to use. One of
-    `c("vst", "meanvarbin", "dispersion")`
+    `c("vst", "meanvarbin", "dispersion", "scran")`
 
   - loess_span - The span for the loess function to standardise the
-    variance
+    variance (`"vst"`), or of the lowess trend (`"scran"`)
 
   - num_bin - Integer. Not yet implemented.
 
   - bin_method - String. One of `c("equal_width", "equal_freq")`. Not
     implemented yet.
+
+  - mean_filter, min_mean, transform, use_min_width, min_width,
+    min_window_count - The `"scran"` trend parameters, see
+    [`params_hvg_scran_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_scran_defaults.md)
 
 - streaming:
 

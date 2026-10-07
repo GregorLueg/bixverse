@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -106,14 +106,11 @@
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list with the following elements:</p><ul><li><p>no_pcs - Integer. Number of PCs to consider. Defaults to <code>30L</code>.</p></li>
-<li><p>random_svd - Boolean. Shall randomised SVD be used. Defaults to
-<code>TRUE</code>.</p></li>
-<li><p>sparse - Boolean. Shall sparse solvers be used that do not do scaling.
-If set to yes, in the case of <code>random_svd = FALSE</code>, Lanczos iterations are
-used to solve the sparse SVD. With <code>random_svd = TRUE</code>, the sparse initial
-matrix is multiplied with the random matrix, yielding a much smaller dense
-matrix that does not increase the memory pressure massively. Defaults to
-<code>FALSE</code>.</p></li>
+<li><p>svd_solver - String. Which solver to use. <code>"randomised"</code> (default) is
+a randomised SVD, approximate in the trailing components. <code>"covariance"</code>
+builds the gene x gene cross-product and eigendecomposes it. <code>"exact"</code> is
+Lanczos on the sparse path and a full SVD on the dense one. See
+<code><a href="params_sc_pca.html">params_sc_pca()</a></code> for the trade-offs. One of <code>c("randomised", "covariance", "exact")</code>. Defaults to <code>"randomised"</code>.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

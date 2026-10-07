@@ -65,5 +65,5 @@
   functions](https://gregorlueg.github.io/bixverse/articles/single_cell_visualisation.md):
 - [Reference mapping with
   Symphony](https://gregorlueg.github.io/bixverse/articles/symphony.md):
-- [NicheNet ligand-receptor analysis with
-  bixverse](https://gregorlueg.github.io/bixverse/articles/nichenet.md):
+- [Ligand-receptor analysis with
+  bixverse](https://gregorlueg.github.io/bixverse/articles/ligand_receptor.md):

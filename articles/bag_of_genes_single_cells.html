@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-03</p>
+      <p class="date">2026-10-07</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -468,22 +468,22 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hotspot_autocor</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">fdr</span><span class="op">)</span><span class="op">]</span>, <span class="fl">25L</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             gene_id  gaerys_c   z_score  pval   fdr gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt;  1: ENSG00000188290 0.3293836  39.08509     0     0        HES4</span></span>
+<span><span class="co">#&gt;  1: ENSG00000188290 0.3293835  39.08508     0     0        HES4</span></span>
 <span><span class="co">#&gt;  2: ENSG00000119535 0.2949539  46.16233     0     0       CSF3R</span></span>
-<span><span class="co">#&gt;  3: ENSG00000163131 0.5237190  62.76030     0     0        CTSS</span></span>
+<span><span class="co">#&gt;  3: ENSG00000163131 0.5237189  62.76030     0     0        CTSS</span></span>
 <span><span class="co">#&gt;  4: ENSG00000163191 0.4090217  58.81076     0     0     S100A11</span></span>
-<span><span class="co">#&gt;  5: ENSG00000163220 0.7015914 115.38558     0     0      S100A9</span></span>
+<span><span class="co">#&gt;  5: ENSG00000163220 0.7015916 115.38558     0     0      S100A9</span></span>
 <span><span class="co">#&gt;  6: ENSG00000143546 0.6843269 119.58680     0     0      S100A8</span></span>
-<span><span class="co">#&gt;  7: ENSG00000197956 0.6383640 100.55820     0     0      S100A6</span></span>
+<span><span class="co">#&gt;  7: ENSG00000197956 0.6383641 100.55820     0     0      S100A6</span></span>
 <span><span class="co">#&gt;  8: ENSG00000196154 0.6470327  95.01012     0     0      S100A4</span></span>
 <span><span class="co">#&gt;  9: ENSG00000177954 0.6009150  93.19000     0     0       RPS27</span></span>
-<span><span class="co">#&gt; 10: ENSG00000158869 0.7041770  81.33603     0     0      FCER1G</span></span>
+<span><span class="co">#&gt; 10: ENSG00000158869 0.7041768  81.33603     0     0      FCER1G</span></span>
 <span><span class="co">#&gt; 11: ENSG00000203747 0.6096835  68.59921     0     0      FCGR3A</span></span>
 <span><span class="co">#&gt; 12: ENSG00000198574 0.2173397  41.63903     0     0      SH2D1B</span></span>
 <span><span class="co">#&gt; 13: ENSG00000198821 0.2205831  58.11088     0     0       CD247</span></span>
 <span><span class="co">#&gt; 14: ENSG00000143185 0.4016601  57.71783     0     0        XCL2</span></span>
-<span><span class="co">#&gt; 15: ENSG00000143184 0.4101798  65.14880     0     0        XCL1</span></span>
-<span><span class="co">#&gt; 16: ENSG00000116667 0.2122082  43.07857     0     0     C1orf21</span></span>
+<span><span class="co">#&gt; 15: ENSG00000143184 0.4101798  65.14879     0     0        XCL1</span></span>
+<span><span class="co">#&gt; 16: ENSG00000116667 0.2122082  43.07858     0     0     C1orf21</span></span>
 <span><span class="co">#&gt; 17: ENSG00000143947 0.3783041  57.85538     0     0      RPS27A</span></span>
 <span><span class="co">#&gt; 18: ENSG00000115523 0.6151299 139.40926     0     0        GNLY</span></span>
 <span><span class="co">#&gt; 19: ENSG00000153563 0.2358263  41.70274     0     0        CD8A</span></span>
@@ -491,8 +491,8 @@
 <span><span class="co">#&gt; 21: ENSG00000071082 0.4004451  62.26276     0     0       RPL31</span></span>
 <span><span class="co">#&gt; 22: ENSG00000144713 0.3662196  63.85917     0     0       RPL32</span></span>
 <span><span class="co">#&gt; 23: ENSG00000168028 0.2797459  44.57675     0     0        RPSA</span></span>
-<span><span class="co">#&gt; 24: ENSG00000233276 0.4994096  66.23556     0     0        GPX1</span></span>
-<span><span class="co">#&gt; 25: ENSG00000163931 0.2591802  39.67630     0     0         TKT</span></span>
+<span><span class="co">#&gt; 24: ENSG00000233276 0.4994095  66.23555     0     0        GPX1</span></span>
+<span><span class="co">#&gt; 25: ENSG00000163931 0.2591802  39.67629     0     0         TKT</span></span>
 <span><span class="co">#&gt;             gene_id  gaerys_c   z_score  pval   fdr gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;char&gt;</span></span></code></pre></div>
 </div>
@@ -722,18 +722,18 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">tf_gene_dt</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">importance</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5L</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                 tf            gene importance pairwise_cor cor_sign tf_symbol</span></span>
 <span><span class="co">#&gt;             &lt;char&gt;          &lt;char&gt;      &lt;num&gt;        &lt;num&gt;    &lt;int&gt;    &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3103159        1      JUNB</span></span>
-<span><span class="co">#&gt; 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1931844        1      SPI1</span></span>
-<span><span class="co">#&gt; 3: ENSG00000170345 ENSG00000120129  0.2573821    0.3420300        1       FOS</span></span>
-<span><span class="co">#&gt; 4: ENSG00000066336 ENSG00000165025  0.2460342    0.2060750        1      SPI1</span></span>
-<span><span class="co">#&gt; 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2005614        1     KLRG1</span></span>
+<span><span class="co">#&gt; 1: ENSG00000170345 ENSG00000120129  0.2712962    0.3420300        1       FOS</span></span>
+<span><span class="co">#&gt; 2: ENSG00000139187 ENSG00000113088  0.2473926    0.2404412        1     KLRG1</span></span>
+<span><span class="co">#&gt; 3: ENSG00000171223 ENSG00000184557  0.2363709    0.1981401        1      JUNB</span></span>
+<span><span class="co">#&gt; 4: ENSG00000140968 ENSG00000226777  0.2301251    0.2174118        1      IRF8</span></span>
+<span><span class="co">#&gt; 5: ENSG00000066336 ENSG00000106565  0.2300905    0.3727083        1      SPI1</span></span>
 <span><span class="co">#&gt;    gene_symbol</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:       DUSP1</span></span>
-<span><span class="co">#&gt; 2:      UBE2R2</span></span>
-<span><span class="co">#&gt; 3:       DUSP1</span></span>
-<span><span class="co">#&gt; 4:         SYK</span></span>
-<span><span class="co">#&gt; 5:        CD8A</span></span></code></pre></div>
+<span><span class="co">#&gt; 2:        GZMK</span></span>
+<span><span class="co">#&gt; 3:       SOCS3</span></span>
+<span><span class="co">#&gt; 4:    KIAA0125</span></span>
+<span><span class="co">#&gt; 5:    TMEM176B</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="cistarget-motif-enrichment">CisTarget motif enrichment<a class="anchor" aria-label="anchor" href="#cistarget-motif-enrichment"></a>
 </h3>
@@ -774,13 +774,13 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_regulons.html">build_regulons</a></span><span class="op">(</span><span class="va">scenic_res</span>, use_leading_edge <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Built 227 regulons (154 dropped below 10 genes). Median size: 21</span></span>
+<span><span class="co">#&gt; Built 243 regulons (149 dropped below 10 genes). Median size: 21</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">regulons</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 227</span></span>
+<span><span class="co">#&gt; [1] 243</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lengths.html" class="external-link">lengths</a></span><span class="op">(</span><span class="va">regulons</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span><span class="co">#&gt;    10.0    14.0    21.0   139.8   104.0  1583.0</span></span></code></pre></div>
+<span><span class="co">#&gt;    10.0    14.0    21.0   130.6    81.0  1573.0</span></span></code></pre></div>
 </div>
 <p>That is what you hand to <code><a href="../reference/aucell_sc.html">aucell_sc()</a></code>, which scores every regulon in every cell.</p>
 <div class="cell">
@@ -795,20 +795,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">binarised_regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/binarise_regulon_activity.html">binarise_regulon_activity</a></span><span class="op">(</span><span class="va">auc_regulons</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Binarised 227 regulons, 72 of which were bimodal.</span></span>
+<span><span class="co">#&gt; Binarised 243 regulons, 91 of which were bimodal.</span></span>
 <span></span>
 <span><span class="va">binary_matrix</span> <span class="op">&lt;-</span> <span class="va">binarised_regulons</span><span class="op">$</span><span class="va">binary</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">binarised_regulons</span><span class="op">$</span><span class="va">thresholds</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">n_cells_on</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            regulon   threshold bimodal n_cells_on</span></span>
-<span><span class="co">#&gt;             &lt;char&gt;       &lt;num&gt;  &lt;lgcl&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: ENSG00000177606 0.028034928    TRUE       1629</span></span>
-<span><span class="co">#&gt; 2: ENSG00000198034 0.099866757    TRUE       1539</span></span>
-<span><span class="co">#&gt; 3: ENSG00000124614 0.097379875    TRUE       1535</span></span>
-<span><span class="co">#&gt; 4: ENSG00000171223 0.069938338    TRUE       1500</span></span>
-<span><span class="co">#&gt; 5: ENSG00000136942 0.129315786    TRUE       1498</span></span>
-<span><span class="co">#&gt; 6: ENSG00000100823 0.009789546    TRUE       1458</span></span></code></pre></div>
+<span><span class="co">#&gt;            regulon  threshold bimodal n_cells_on</span></span>
+<span><span class="co">#&gt;             &lt;char&gt;      &lt;num&gt;  &lt;lgcl&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: ENSG00000177606 0.03368328    TRUE       1585</span></span>
+<span><span class="co">#&gt; 2: ENSG00000198034 0.09885609    TRUE       1547</span></span>
+<span><span class="co">#&gt; 3: ENSG00000124614 0.09911509    TRUE       1529</span></span>
+<span><span class="co">#&gt; 4: ENSG00000171223 0.06908425    TRUE       1517</span></span>
+<span><span class="co">#&gt; 5: ENSG00000136942 0.13022025    TRUE       1487</span></span>
+<span><span class="co">#&gt; 6: ENSG00000134758 0.01940404    TRUE       1306</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
@@ -867,29 +867,29 @@
 <span><span class="va">sweep_res</span></span>
 <span><span class="co">#&gt; LdaKSweepResult (LDA topic count sweep)</span></span>
 <span><span class="co">#&gt;   k range:          5 to 12</span></span>
-<span><span class="co">#&gt;   Best k:           7</span></span>
+<span><span class="co">#&gt;   Best k:           8</span></span>
 <span><span class="co">#&gt;   Metrics:          arun_2010 and cao_juan_2009 lower is better, mimno_2011 higher</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;        k  arun_2010 cao_juan_2009 mimno_2011     bound perplexity</span></span>
 <span><span class="co">#&gt;    &lt;int&gt;      &lt;num&gt;         &lt;num&gt;      &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     5 0.16981332     0.3002322 -0.8547891 -339021.7   134.5479</span></span>
-<span><span class="co">#&gt; 2:     6 0.15225958     0.2160656 -0.8800924 -338921.9   134.3539</span></span>
-<span><span class="co">#&gt; 3:     7 0.13542282     0.1724176 -1.0198741 -338820.0   134.1560</span></span>
-<span><span class="co">#&gt; 4:     8 0.11508164     0.1654747 -1.1853645 -339039.1   134.5817</span></span>
-<span><span class="co">#&gt; 5:     9 0.10976724     0.1641425 -1.2842002 -339296.9   135.0844</span></span>
-<span><span class="co">#&gt; 6:    10 0.12072008     0.1731616 -1.3134488 -339586.9   135.6520</span></span>
-<span><span class="co">#&gt; 7:    11 0.12276630     0.1669807 -1.3461572 -339823.9   136.1175</span></span>
-<span><span class="co">#&gt; 8:    12 0.09433794     0.1303569 -1.3338648 -339872.5   136.2134</span></span>
+<span><span class="co">#&gt; 1:     5 0.13910158     0.3243849 -0.8840592 -412652.1   150.6154</span></span>
+<span><span class="co">#&gt; 2:     6 0.18364963     0.3348969 -0.8376400 -413054.7   151.3542</span></span>
+<span><span class="co">#&gt; 3:     7 0.15560557     0.2797954 -0.8209530 -413144.9   151.5202</span></span>
+<span><span class="co">#&gt; 4:     8 0.14915375     0.2550923 -0.7564126 -413438.5   152.0617</span></span>
+<span><span class="co">#&gt; 5:     9 0.16275168     0.2564859 -0.7996290 -413884.4   152.8880</span></span>
+<span><span class="co">#&gt; 6:    10 0.12433622     0.1986855 -0.9575309 -413920.3   152.9548</span></span>
+<span><span class="co">#&gt; 7:    11 0.10765251     0.1500671 -1.0269466 -413889.9   152.8981</span></span>
+<span><span class="co">#&gt; 8:    12 0.09485038     0.1313137 -1.0997737 -413996.5   153.0965</span></span>
 <span><span class="co">#&gt;    combined_score converged</span></span>
 <span><span class="co">#&gt;             &lt;num&gt;    &lt;lgcl&gt;</span></span>
-<span><span class="co">#&gt; 1:       1.808360      TRUE</span></span>
-<span><span class="co">#&gt; 2:       2.579716      TRUE</span></span>
-<span><span class="co">#&gt; 3:       2.872085      TRUE</span></span>
-<span><span class="co">#&gt; 4:       2.637487      TRUE</span></span>
-<span><span class="co">#&gt; 5:       2.269648      TRUE</span></span>
-<span><span class="co">#&gt; 6:       1.736410      TRUE</span></span>
-<span><span class="co">#&gt; 7:       1.453985      TRUE</span></span>
-<span><span class="co">#&gt; 8:       2.025017      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:       2.181550      TRUE</span></span>
+<span><span class="co">#&gt; 2:       1.463966      TRUE</span></span>
+<span><span class="co">#&gt; 3:       2.031940      TRUE</span></span>
+<span><span class="co">#&gt; 4:       2.195546      TRUE</span></span>
+<span><span class="co">#&gt; 5:       1.578048      TRUE</span></span>
+<span><span class="co">#&gt; 6:       1.807971      TRUE</span></span>
+<span><span class="co">#&gt; 7:       2.055164      TRUE</span></span>
+<span><span class="co">#&gt; 8:       2.000000      TRUE</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
@@ -912,11 +912,11 @@
 <span><span class="va">lda_res</span></span>
 <span><span class="co">#&gt; LdaResult (latent Dirichlet allocation)</span></span>
 <span><span class="co">#&gt;   Documents:        2163</span></span>
-<span><span class="co">#&gt;   Terms:            227</span></span>
-<span><span class="co">#&gt;   Topics:           7</span></span>
-<span><span class="co">#&gt;   Bound (ELBO):     -338820</span></span>
-<span><span class="co">#&gt;   Perplexity:       134.156</span></span>
-<span><span class="co">#&gt;   Iterations:       90</span></span></code></pre></div>
+<span><span class="co">#&gt;   Terms:            243</span></span>
+<span><span class="co">#&gt;   Topics:           8</span></span>
+<span><span class="co">#&gt;   Bound (ELBO):     -413438</span></span>
+<span><span class="co">#&gt;   Perplexity:       152.062</span></span>
+<span><span class="co">#&gt;   Iterations:       80</span></span></code></pre></div>
 </div>
 <p><code><a href="../reference/get_top_terms.html">get_top_terms()</a></code> is where the interpretation happens: per topic, the regulons carrying the most probability mass.</p>
 <div class="cell">
@@ -924,15 +924,16 @@
 <code class="sourceCode R"><span><span class="va">top_tfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_top_terms.html">get_top_terms</a></span><span class="op">(</span><span class="va">lda_res</span>, n <span class="op">=</span> <span class="fl">8L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">top_tfs</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>tfs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">term</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span><span class="op">)</span>, by <span class="op">=</span> <span class="va">topic</span><span class="op">]</span></span>
-<span><span class="co">#&gt;       topic                                                       tfs</span></span>
-<span><span class="co">#&gt;      &lt;char&gt;                                                    &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: topic_01        RPS4X, RPS10, JUNB, RPL35, TCF7, JUN, LEF1, ANXA11</span></span>
-<span><span class="co">#&gt; 2: topic_02       PARP1, MAZ, BCLAF1, RAB2A, HSF1, DNMT1, APEX1, ATF4</span></span>
-<span><span class="co">#&gt; 3: topic_03     NUCB1, ELF1, ZMAT2, ILF2, UGP2, STUB1, SCAND1, SUCLG1</span></span>
-<span><span class="co">#&gt; 4: topic_04 CBFB, DUSP22, RNASEH2C, CXXC5, KLF12, RELA, SSRP1, ZNF581</span></span>
-<span><span class="co">#&gt; 5: topic_05         NR4A1, LYL1, RXRA, CEBPD, SPI1, KLF4, CEBPB, MAFB</span></span>
-<span><span class="co">#&gt; 6: topic_06    STAT4, TSC22D4, SF3B1, ETS1, MAGOH, RUNX3, KLRG1, XBP1</span></span>
-<span><span class="co">#&gt; 7: topic_07 HTATIP2, HNRNPH3, NFATC3, KIF22, UGP2, APEX1, ANXA11, BBX</span></span></code></pre></div>
+<span><span class="co">#&gt;       topic                                                          tfs</span></span>
+<span><span class="co">#&gt;      &lt;char&gt;                                                       &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1: topic_01   MAPK1, HNRNPH3, SNRNP70, RUNX3, ILF2, HSPA5, KLRG1, RUVBL1</span></span>
+<span><span class="co">#&gt; 2: topic_02 ZNF131, ZNF511, RNASEH2C, SF3B1, GTF2A2, SND1, PSMC2, ARID5A</span></span>
+<span><span class="co">#&gt; 3: topic_03          RXRA, LYL1, NR4A1, CEBPB, POU2F2, SPI1, H2AFY, KLF4</span></span>
+<span><span class="co">#&gt; 4: topic_04            SCAND1, NFYC, IRF8, SPIB, CXXC5, ILF3, ZEB2, HHEX</span></span>
+<span><span class="co">#&gt; 5: topic_05           JUNB, RPS4X, RPL35, JUN, RPS10, TCF7, SATB1, ZMAT2</span></span>
+<span><span class="co">#&gt; 6: topic_06            JUN, RPS10, TCF7, RPL35, GATA3, RPS4X, ETS1, JUNB</span></span>
+<span><span class="co">#&gt; 7: topic_07      HBP1, RNF138, STUB1, TBPL1, ETS1, NR4A2, SMAP2, SMARCA5</span></span>
+<span><span class="co">#&gt; 8: topic_08      SUCLG1, ZNF32, HMGA1, SMARCA5, CLK1, ZNF622, ELF1, ETS1</span></span></code></pre></div>
 </div>
 <p>On PBMC3k the myeloid topic is usually unmistakable: <code>SPI1</code>, <code>CEBPD</code>, <code>KLF4</code> and friends land together, because those regulons switch on in the same cells. The T cell topics split along the naive/cytotoxic axis, with <code>TCF7</code> and <code>LEF1</code> on one side and <code>STAT4</code>, <code>RUNX3</code>, <code>ETS1</code> on the other. Which topic index gets which programme is arbitrary and changes with the seed, so always read the loadings rather than trusting the numbering.</p>
 <p>The other half of the model is the cell-topic matrix, which is a soft assignment: every cell gets a distribution over topics summing to one. Drop a column into the object and it plots like any other cell-level covariate.</p>
@@ -1040,13 +1041,13 @@
 <div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                      comp_01      comp_02      comp_03      comp_04</span></span>
-<span><span class="co">#&gt; ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01</span></span>
-<span><span class="co">#&gt; ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02</span></span>
-<span><span class="co">#&gt; ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11</span></span>
-<span><span class="co">#&gt; ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11</span></span>
-<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000188976 2.756057e+00 1.516397e-01 9.978818e-11 3.985491e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 9.983771e-11 1.001252e-10 9.978818e-11 7.743262e-02</span></span>
+<span><span class="co">#&gt; ENSG00000187608 9.983771e-11 2.746886e+00 1.624592e-01 9.984961e-11</span></span>
+<span><span class="co">#&gt; ENSG00000186827 9.983771e-11 1.001252e-10 7.541643e+00 9.984961e-11</span></span>
+<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.618927e-03 1.844488e-01 9.984961e-11</span></span>
 <span><span class="co">#&gt;                      comp_05</span></span>
-<span><span class="co">#&gt; ENSG00000188976 3.031700e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188976 3.031699e-01</span></span>
 <span><span class="co">#&gt; ENSG00000188290 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000187608 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000186827 1.000227e-10</span></span>
@@ -1056,17 +1057,17 @@
 <div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1</span></span>
-<span><span class="co">#&gt; comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02</span></span>
-<span><span class="co">#&gt; comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02</span></span>
-<span><span class="co">#&gt; comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10</span></span>
-<span><span class="co">#&gt; comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02</span></span>
-<span><span class="co">#&gt; comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02</span></span>
+<span><span class="co">#&gt; comp_01      0.029081339      0.028247045     2.750897e-02     2.642105e-02</span></span>
+<span><span class="co">#&gt; comp_02      0.032824829      0.004165604     5.788922e-03     4.683001e-02</span></span>
+<span><span class="co">#&gt; comp_03      0.009732792      0.053272992     5.238255e-02     1.002123e-10</span></span>
+<span><span class="co">#&gt; comp_04      0.064907387      0.017417077     1.001506e-10     3.876416e-02</span></span>
+<span><span class="co">#&gt; comp_05      0.004365175      0.047877818     9.997733e-11     1.034977e-02</span></span>
 <span><span class="co">#&gt;         AAACTTGATCCAGA-1</span></span>
-<span><span class="co">#&gt; comp_01      0.032608423</span></span>
-<span><span class="co">#&gt; comp_02      0.002322522</span></span>
-<span><span class="co">#&gt; comp_03      0.007309146</span></span>
-<span><span class="co">#&gt; comp_04      0.018659594</span></span>
-<span><span class="co">#&gt; comp_05      0.049327504</span></span></code></pre></div>
+<span><span class="co">#&gt; comp_01      0.032608394</span></span>
+<span><span class="co">#&gt; comp_02      0.002322546</span></span>
+<span><span class="co">#&gt; comp_03      0.007309148</span></span>
+<span><span class="co">#&gt; comp_04      0.018659715</span></span>
+<span><span class="co">#&gt; comp_05      0.049327463</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="running-multiple-nmf-runs">Running multiple NMF runs<a class="anchor" aria-label="anchor" href="#running-multiple-nmf-runs"></a>
 </h3>
@@ -1260,11 +1261,11 @@
 <span><span class="co">#&gt;      component_id   run component pooled_idx cluster local_density silhouette</span></span>
 <span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;     &lt;int&gt;      &lt;int&gt;   &lt;int&gt;         &lt;num&gt;      &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       5   0.013249557  0.7841961</span></span>
-<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458861  0.8275782</span></span>
-<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821</span></span>
-<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017579218  0.8770334</span></span>
-<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095884  0.6891547</span></span>
-<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731663  0.8714657</span></span>
+<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458980  0.8275782</span></span>
+<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470190  0.9566821</span></span>
+<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017579237  0.8770334</span></span>
+<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095864  0.6891547</span></span>
+<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731703  0.8714657</span></span>
 <span><span class="co">#&gt;      kept</span></span>
 <span><span class="co">#&gt;    &lt;lgcl&gt;</span></span>
 <span><span class="co">#&gt; 1:   TRUE</span></span>

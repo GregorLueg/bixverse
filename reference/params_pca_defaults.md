@@ -14,12 +14,11 @@ A named list with the following elements:
 
 - no_pcs - Integer. Number of PCs to consider. Defaults to `30L`.
 
-- random_svd - Boolean. Shall randomised SVD be used. Defaults to
-  `TRUE`.
-
-- sparse - Boolean. Shall sparse solvers be used that do not do scaling.
-  If set to yes, in the case of `random_svd = FALSE`, Lanczos iterations
-  are used to solve the sparse SVD. With `random_svd = TRUE`, the sparse
-  initial matrix is multiplied with the random matrix, yielding a much
-  smaller dense matrix that does not increase the memory pressure
-  massively. Defaults to `FALSE`.
+- svd_solver - String. Which solver to use. `"randomised"` (default) is
+  a randomised SVD, approximate in the trailing components.
+  `"covariance"` builds the gene x gene cross-product and
+  eigendecomposes it. `"exact"` is Lanczos on the sparse path and a full
+  SVD on the dense one. See
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  for the trade-offs. One of `c("randomised", "covariance", "exact")`.
+  Defaults to `"randomised"`.

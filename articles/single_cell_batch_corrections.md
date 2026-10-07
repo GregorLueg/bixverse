@@ -357,7 +357,7 @@ metrics_dt <- calculate_integration_metrics_sc(
 metrics_dt[]
 #>    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num> <num>          <num> <num>         <num>
-#> 1:       pca  0.01318267 0.8897316     0             NA     1      0.678216
+#> 1:       pca  0.01318267 0.8897316     0             NA     1     0.6782159
 #>    graph_connectivity      method
 #>                 <num>      <char>
 #> 1:                  1 Uncorrected
@@ -417,7 +417,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "fastMNN"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6573843
+#> 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1     0.6573855
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:          0.9408038 fastMNN
@@ -454,12 +454,12 @@ Also, visually the batches get mixed now.
 
 ### Harmony
 
-Harmony operates on the PCA embedding directly. The number of clusters
-is auto-determined from the dataset size (capped at 100) when left as
-`NULL`.
-
-The two versions of Harmony are supported. Let’s start with the
-original:
+Harmony operates on the PCA embedding directly. Leave `k` as `NULL` and
+the number of clusters is set to one per 30 cells, capped at 100. Both
+versions are supported and share one numerical core in Rust. They differ
+in the diversity penalty, the ridge regression and how the ridge penalty
+gets set. The intercept is never penalised in either. Let’s start with
+the original:
 
 #### Version 1
 
@@ -501,10 +501,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8508817 0.9283035 0.6423357      0.9213813     1       0.65091
+#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6992417
 #>    graph_connectivity  method
 #>                 <num>  <char>
-#> 1:          0.9953539 Harmony
+#> 1:                  1 Harmony
 ```
 
 Also here, we observe improvements across the board.
@@ -539,19 +539,27 @@ embedding_plot_sc(
 
 #### Version 2
 
-Compared to v1 of Harmony, several modifications/improvements were
-implemented by [Patikas, et al.,
-2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1),
-namely:
+[Patikas, et al.,
+2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1)
+changed four things compared to v1. The last three have knobs in
+[`params_sc_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony_v2.md):
 
-- Stabilised diversity penalty
-- Batch pruning in ridge regression
-- Arrowhead matrix inversion for single-covariate case (making it
-  faster!)
-- Dynamic lambda estimation and theta scaling by batch size.
+- Stabilised diversity penalty, which makes the objective
+  scale-invariant.
+- Batch pruning in the ridge regression. A batch that puts less than
+  `batch_proportion_cutoff` of its cells into a cluster is dropped from
+  that cluster’s regression. A cluster left with a single batch isn’t
+  corrected, so a cell type unique to one batch doesn’t get pulled
+  towards the others.
+- Dynamic lambda. With `use_dynamic_lambda = TRUE` (the default) the
+  ridge penalty is set per cluster as `alpha` times the expected counts
+  and the fixed `lambda` is ignored.
+- Theta scaling by batch size via `tau`. Off by default (`tau = 0`).
 
-Overall, this makes v2 more amenable and faster on big data sets than v1
-(if you wish to use Harmony, maybe use the version 2 over the v2?).
+The paper’s arrowhead matrix inversion for a single batch covariate is
+used by both versions here, so v1 gets that speed-up too. v2 also runs
+only 4 k-means iterations per Harmony round versus 20 in v1. Unless you
+need to reproduce an old v1 result, go with v2.
 
 ``` r
 
@@ -591,10 +599,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v2"]
 #>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v2   0.8597843 0.9198092 0.6423357      0.8935813     1
+#> 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
-#> 1:      0.699386                  1 Harmony v2
+#> 1:     0.6978205                  1 Harmony v2
 ```
 
 ``` r
@@ -624,6 +632,11 @@ embedding_plot_sc(
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/harmony%20(v2)%20plot-1.png)
+
+Got a GPU? `harmony_v2_gpu_sc()` in
+[bixverse.gpu](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html)
+runs the same v2 algorithm and stores the result as `"harmony_gpu"`. It
+takes a single batch column only.
 
 ### Seurat CCA
 
@@ -902,18 +915,18 @@ metrics_dt[, .(
 #>         method kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1
-#> 2:     fastMNN  0.69251840 0.9413065 0.4705881      0.8861530     1
-#> 3:     Harmony  0.85088170 0.9283035 0.6423357      0.9213813     1
-#> 4:  Harmony v2  0.85978428 0.9198092 0.6423357      0.8935813     1
+#> 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1
+#> 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1
+#> 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1
 #> 5:  Seurat CCA  0.71785653 0.8929735 0.4705881      0.8688793     1
 #> 6: Seurat rPCA  0.78462592 0.9078943 0.6423357      0.8138718     1
 #> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
-#> 1:     0.6782160          1.0000000
-#> 2:     0.6573843          0.9408038
-#> 3:     0.6509100          0.9953539
-#> 4:     0.6993860          1.0000000
+#> 1:     0.6782159          1.0000000
+#> 2:     0.6573855          0.9408038
+#> 3:     0.6992417          1.0000000
+#> 4:     0.6978205          1.0000000
 #> 5:     0.7043481          1.0000000
 #> 6:     0.6966735          1.0000000
 #> 7:            NA          1.0000000

@@ -60,7 +60,7 @@ call_doublets_manual(res, threshold = 0.3, .verbose = FALSE)
 #> ScrubletRes: 500 cells, 5 doublets (1.0%)
 #>   Threshold:              0.3000
 #>   Detected doublet rate:  1.0%
-#>   Detectable fraction:    85.3%
+#>   Detectable fraction:    85.6%
 #>   Overall doublet rate:   1.2%
 #>   Simulated doublets:     750
 

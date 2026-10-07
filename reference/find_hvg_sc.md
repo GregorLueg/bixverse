@@ -33,15 +33,19 @@ find_hvg_sc(
   This list contains
 
   - method - Which method to use. One of
-    `c("vst", "meanvarbin", "dispersion")`
+    `c("vst", "meanvarbin", "dispersion", "scran", "residual")`
 
   - loess_span - The span for the loess function to standardise the
-    variance
+    variance (`"vst"`), or of the lowess trend (`"scran"`)
 
   - num_bin - Integer. Not yet implemented.
 
   - bin_method - String. One of `c("equal_width", "equal_freq")`. Not
     implemented yet.
+
+  - mean_filter, min_mean, transform, use_min_width, min_width,
+    min_window_count - The `"scran"` trend parameters, see
+    [`params_hvg_scran_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_scran_defaults.md)
 
 - streaming:
 
@@ -57,8 +61,11 @@ find_hvg_sc(
 
 ## Value
 
-It will add the mean, var, var_exp, var_std of each gene to the the var
-table.
+It will add the per-gene HVG statistics to the var table: `mean`, `var`,
+`var_exp` and `var_std` for `"vst"`; `mean`, `dispersion`,
+`dispersion_scaled` and `bin` for `"meanvarbin"` and `"dispersion"`;
+`scran_mean`, `scran_var`, `scran_fitted` and `scran_residual` (log2
+scale) for `"scran"`.
 
 ## Examples
 

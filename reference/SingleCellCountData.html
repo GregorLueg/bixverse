@@ -23,7 +23,7 @@ existing binary objects and writing CellSweep-denoised counts."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@ existing binary objects and writing CellSweep-denoised counts."><meta property="
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -627,10 +627,71 @@ cell file, so a tighter budget trades time for memory.</p>
 </div>
 
 <div class="section">
+<h3 id="method-archive">Method <code>archive</code><a class="anchor" aria-label="anchor" href="#method-archive"></a></h3>
+<p>Archive the cell-based binary for cold storage</p>
+<div class="section">
+<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
+
+<dl><dt><code>f_path_archive</code></dt>
+<dd><p>(<code>character</code>)<br> Path of the archive to write.</p></dd>
+
+<dt><code>level</code></dt>
+<dd><p>(<code>integer</code>)<br> zstd compression level, 1 to 22.</p></dd>
+
+<dt><code>verbose</code></dt>
+<dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>
+
+
+</dl></div>
+<div class="section">
+<h4 id="description-7">description<a class="anchor" aria-label="anchor" href="#description-7"></a></h4>
+<p>Writes a zstd-compressed archive of <code>f_path_cells</code>. The gene-based
+file is not archived; <code>restore_archive()</code> rebuilds it. Normalised
+values are only stored for cells where they cannot be recomputed from
+the raw counts.</p>
+</div>
+<div class="section">
+<h4 id="returns-16">returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
+<p>A list with <code>n_cells</code>, <code>nnz</code>, <code>n_norm_stored</code> and
+<code>archive_bytes</code>.</p>
+</div>
+
+</div>
+
+<div class="section">
+<h3 id="method-restore-archive">Method <code>restore_archive</code><a class="anchor" aria-label="anchor" href="#method-restore-archive"></a></h3>
+<p>Restore both binaries from an archive</p>
+<div class="section">
+<h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
+
+<dl><dt><code>f_path_archive</code></dt>
+<dd><p>(<code>character</code>)<br> Path to the archive.</p></dd>
+
+<dt><code>max_mem_gb</code></dt>
+<dd><p>(<code>numeric</code> or <code>NULL</code>)<br> Memory for the gene file conversion buffers in GB. <code>NULL</code> converts in a single phase.</p></dd>
+
+<dt><code>verbose</code></dt>
+<dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>
+
+
+</dl></div>
+<div class="section">
+<h4 id="description-8">description<a class="anchor" aria-label="anchor" href="#description-8"></a></h4>
+<p>Rebuilds <code>f_path_cells</code> from the archive, then generates
+<code>f_path_genes</code> from it.</p>
+</div>
+<div class="section">
+<h4 id="returns-17">returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
+<p>Invisible <code>NULL</code>.</p>
+</div>
+
+</div>
+
+<div class="section">
 <h3 id="method-get-genes-by-indices">Method <code>get_genes_by_indices</code><a class="anchor" aria-label="anchor" href="#method-get-genes-by-indices"></a></h3>
 <p>Return genes by index positions</p>
 <div class="section">
-<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
+<h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
 
 <dl><dt><code>indices</code></dt>
 <dd><p>(<code>integer</code>)<br> The gene indices to return (1-indexed).</p></dd>
@@ -641,11 +702,11 @@ cell file, so a tighter budget trades time for memory.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="description-7">description<a class="anchor" aria-label="anchor" href="#description-7"></a></h4>
+<h4 id="description-9">description<a class="anchor" aria-label="anchor" href="#description-9"></a></h4>
 <p>Leverages the CSC-stored data for fast gene retrieval.</p>
 </div>
 <div class="section">
-<h4 id="returns-16">returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
+<h4 id="returns-18">returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
 <p>A list with <code>indptr</code>, <code>indices</code> (0-indexed cell positions),
 <code>data</code>, <code>no_cells</code> and <code>no_genes</code> (number of returned genes),
 parseable into a CSC matrix in R.</p>
@@ -657,7 +718,7 @@ parseable into a CSC matrix in R.</p>
 <h3 id="method-get-nnz-genes">Method <code>get_nnz_genes</code><a class="anchor" aria-label="anchor" href="#method-get-nnz-genes"></a></h3>
 <p>Get the number of cells expressing each gene</p>
 <div class="section">
-<h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
+<h4 id="arguments-18">Arguments<a class="anchor" aria-label="anchor" href="#arguments-18"></a></h4>
 
 <dl><dt><code>gene_indices</code></dt>
 <dd><p>(<code>integer</code> or <code>NULL</code>)<br> Optional 1-indexed gene indices. If <code>NULL</code>, results are returned for all genes.</p></dd>
@@ -665,7 +726,7 @@ parseable into a CSC matrix in R.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="returns-17">returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
+<h4 id="returns-19">returns<a class="anchor" aria-label="anchor" href="#returns-19"></a></h4>
 <p>An integer vector of NNZ counts for the requested genes.</p>
 </div>
 
@@ -675,7 +736,7 @@ parseable into a CSC matrix in R.</p>
 <h3 id="method-merge-sc-files">Method <code>merge_sc_files</code><a class="anchor" aria-label="anchor" href="#method-merge-sc-files"></a></h3>
 <p>Merge multiple existing bin files into the cells binary file</p>
 <div class="section">
-<h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
+<h4 id="arguments-19">Arguments<a class="anchor" aria-label="anchor" href="#arguments-19"></a></h4>
 
 <dl><dt><code>merge_tasks</code></dt>
 <dd><p>(<code>list</code>)<br> A list of lists. Each inner list must contain <code>exp_id</code>, <code>bin_cells_path</code>, <code>cells_to_keep</code> (0-indexed integer vector) and <code>gene_local_to_universe</code> (0-indexed integer vector, <code>NA</code> for genes absent from the universe).</p></dd>
@@ -695,7 +756,7 @@ parseable into a CSC matrix in R.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="returns-18">returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
+<h4 id="returns-20">returns<a class="anchor" aria-label="anchor" href="#returns-20"></a></h4>
 <p>A list with <code>total_cells</code>, <code>total_genes</code> and <code>per_file</code> (a
 list of lists with <code>exp_id</code>, <code>lib_size</code>, <code>nnz</code>).</p>
 </div>
@@ -712,7 +773,7 @@ are neither empty nor annotated are not part of the model.</p>
 <p>Writes the cell-based file only; regenerate the gene-based companion
 afterwards, as for a merge.</p>
 <div class="section">
-<h4 id="arguments-18">Arguments<a class="anchor" aria-label="anchor" href="#arguments-18"></a></h4>
+<h4 id="arguments-20">Arguments<a class="anchor" aria-label="anchor" href="#arguments-20"></a></h4>
 
 <dl><dt><code>f_path_source</code></dt>
 <dd><p>(<code>character</code>)<br> Path to the raw <code>counts_cells.bin</code>, which must still contain the empty droplets.</p></dd>
@@ -732,7 +793,7 @@ afterwards, as for a merge.</p>
 
 </dl></div>
 <div class="section">
-<h4 id="returns-19">returns<a class="anchor" aria-label="anchor" href="#returns-19"></a></h4>
+<h4 id="returns-21">returns<a class="anchor" aria-label="anchor" href="#returns-21"></a></h4>
 <p>A list with <code>cell_order</code> (0-indexed source indices in output
 order), <code>lib_size</code>, <code>nnz</code> and <code>fits</code> (one list per sample with
 <code>sample_id</code>, <code>alpha</code>, <code>z_hat</code> (1-indexed), <code>beta</code>, <code>ambient</code>,

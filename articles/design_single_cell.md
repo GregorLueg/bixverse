@@ -107,16 +107,18 @@ copy-on-modify semantics and suddenly everything becomes unbearably
 slow, memory hungry, and you end up with bloated objects storing data
 you rarely actually need in memory. The question is: should we be doing
 any of this? Why do we keep raw and normalised counts in memory at all?
-[BPCells](https://github.com/bnprks/BPCells) is going in the right
-direction here, but can we do even better?
+[BPCells](https://github.com/bnprks/BPCells) or the [Dask-based
+approaches](https://scanpy.readthedocs.io/en/1.11.x/tutorials/experimental/dask.html)
+are going in the right direction here, but can we do even better?
 
 ### Chapter 3: Python and R are slow…
 
 ![](../reference/figures/python_r_slow.png)
 
 There. It has been said. They are slow and let us stop pretending
-otherwise. Yes, you can drop into NumPy or Rcpp for the heavy lifting,
-but that argument rather proves the point! The real problem is not any
+otherwise. There is a reason why “Rust rewrite by LLM” is becoming a
+meme. Yes, you can drop into NumPy or Rcpp for the heavy lifting, but
+that argument rather proves the point! The real problem is not any
 single kernel; it is what happens between them.
 
 A lot of algorithms in practice end up looking like this:
@@ -131,6 +133,8 @@ Collectively, they are death by a thousand cuts: repeated allocations,
 data copies you did not ask for, and the interpreter’s garbage collector
 doing God knows what in between. You also lose any hope of the compiler
 reasoning across those boundaries and optimising the full pipeline.
+Writing kernel fusions is maybe possible, but admittedly just easier in
+the low level part directly.
 
 The solution is not to make the interpreted bits faster. It is to keep
 the data in low-level code for as long as possible and only surface
@@ -170,11 +174,16 @@ much easier. From there we can make some design decisions.
     99.99% of cases, we know we do not want low quality cells with tiny
     library sizes and few unique features. We also almost always do the
     usual library-size-to-target-size normalisation with log
-    transformation. (Anyone who has tried fancy Pearson residual
-    modelling on large data sets knows what I am talking about.) That
-    means when reading h5ad or mtx files, we can pre-scan them, take
-    only what we want, and normalise in a single pass, avoiding the
-    load-everything, then-filter, then-normalise pattern.
+    transformation. (Anyone who has tried a fancy modelling appraoch
+    with Pearson residual modelling on large data sets knows what I am
+    talking about. But `bixverse` does also offer memory-frugal versions
+    of [scTransform
+    v2](https://pmc.ncbi.nlm.nih.gov/articles/PMC8764781/) if you want
+    them.) That means when reading h5ad or mtx files, we can pre-scan
+    them, take only what we want, and normalise in a single pass,
+    avoiding the load-everything, then-filter, then-normalise pattern.
+    Additionally, data gets streamed into the binary files avoid sudden
+    memory spikes and OOM errors.
 
 3.  ***We accept that single cell is noisy*** and do not bother with
     `f32` or even `f64` precision for storage. For raw counts, `u16` is
@@ -251,7 +260,11 @@ compression to reduce the on-disk footprint, but the core philosophy is:
 This approach allows fast loading of raw or normalised counts depending
 on what is needed, and the two-layer approach (heavily inspired by
 TileDB) means we avoid duplicating indices and indptr. This assumes
-decent SSD speeds, but most modern hardware has that covered.
+decent SSD speeds, but most modern hardware has that covered. Once done,
+the package also offers versions to archive the binary files,
+drastically reducing disk space. The idea is to leverage temporarily
+your disk space, stream data into the analysis methods in the right
+shape and when done, compress everything down.
 
 ### Let’s not round trip into interpreted languages
 
@@ -277,6 +290,8 @@ implement a highly specialised version for single cell. Some examples:
   - [Randomised SVD](https://arxiv.org/abs/0909.4061) to approximate PCA
     much faster. Instead of decomposing a matrix of millions of cells ×
     HVGs, we reduce the problem to a few hundred cells × HVGs.
+    Alternatively, Eigendecompostion on a dense `n HVG x n HVG` matrix
+    that can be easily streamed in.
   - Smart scaling without ever densifying the matrix. As shown in the
     numbers above, densifying with 2k HVGs means holding a 16 GB matrix
     in memory for a million cells, 80 GB for five million. With smart
@@ -289,8 +304,10 @@ implement a highly specialised version for single cell. Some examples:
   philosophy: parallelise what can be parallelised, use CPU-friendly
   memory layouts, avoid round trips to the interpreter. Million-cell
   UMAP? Done in minutes on a laptop. Even good old tSNE, infamous for
-  being slow has an FFT-accelerated version (see [Linderman, et
-  al.](https://www.nature.com/articles/s41592-018-0308-4))
+  being slow has two different FFT-accelerated versions (see [Linderman,
+  et al.](https://www.nature.com/articles/s41592-018-0308-4) for the OG
+  variant). Also the “quick and dirty” Barnes-Hut approximation is
+  provided.
 
 - [SCENIC](https://pubmed.ncbi.nlm.nih.gov/32561888/) infers gene
   regulatory networks by asking, for each target gene: which
@@ -324,7 +341,8 @@ churned through 3 million cell data sets on my loyal M1 Max MacBook Pro
 with 64 GB with doing reading from h5ad, mt percentage detection, some
 cell filtering, HVG detection, PCA, kNN/sNN graph generation +
 clustering in \<30 minutes. Something that would be completely
-impossible with several of the other libraries.
+impossible with several of the other data-held-in-memory libraries,
+approaches.
 
 ## There is no free lunch
 
@@ -387,10 +405,11 @@ NOT in memory, we need to carefully synchronise state between:
   vignette.
 
 - The “ecosystem” (quotation marks because at the moment it is just this
-  R package and several Rust crates) is in its infancy. Stuff will
-  break; breaking changes will likely have to be introduced at some
-  point. If you want to contribute at the methods level, you will need
-  to go low-level and learn Rust. The Rust code powering all of this is
+  R package and several Rust crates) is in its ~~infacy~~puberty. Stuff
+  will bug, break – breaking changes have been and will likely continue
+  to be introduced. If you want to contribute at the methods level, you
+  will need to go low-level and learn Rust (or ask your favourite LLM.
+  But please no obvious AI slop.) The Rust code powering all of this is
   [here](https://crates.io/crates/bixverse-rs).
 
 This is a side/hobby project, mostly a labour of love. I do hope other
@@ -430,7 +449,8 @@ What is still ahead:
   leverage the spatial grid information directly, which I find genuinely
   exciting. None of it exists yet though, and to be clear about what
   does: the graph autocorrelation in VISION and Hotspot runs over the
-  kNN graph, not over tissue coordinates.
+  kNN graph, not over tissue coordinates. There are some prototype
+  branches the keen observer might have seen already. Watch the space.
 
 - **GPU acceleration:** GPUs are becoming increasingly accessible, and
   if you have the budget for data-centre-scale GPUs, please do use them.
@@ -447,25 +467,11 @@ What is still ahead:
   with the arrowhead inversion, kNN across exhaustive, IVF and
   NNDescent-into-CAGRA, k-means coarsened fast clustering, the UMAP Adam
   optimiser, SEACells (both Frank-Wolfe solves), Scrublet, the NMF HALS
-  family, SCENIC’s ExtraTrees and RandomForest learners, and
-  Pearson/Spearman correlation.
+  family, BBKNN and fastMNN with GPU-accelerated kNN searches, SCENIC’s
+  ExtraTrees and RandomForest learners, and Pearson/Spearman
+  correlation.
 
-  On measured numbers, all on an M1 Max: SCENIC end to end is 2.0x for
-  ExtraTrees and 1.8x for RandomForest, consensus NMF 3.3x, Scrublet
-  2.4x, correlation 1.5x against faer on CPU and 132x against base R’s
-  [`cor()`](https://rdrr.io/r/stats/cor.html). Look at a single SCENIC
-  batch against one CPU core and the GPU side is over 20x. The
-  end-to-end figure is lower because the CPU version already uses every
-  core you have, so you are really comparing 32 GPU cores against 10 CPU
-  ones.
-
-  The honest half: on Apple Silicon the GPU rarely blows the CPU out of
-  the water, because wgpu gets you no tensor cores. Small data loses
-  outright. SEACells measures 0.95x on a small fit and only pays off at
-  scale, roughly 2.6x at 50k cells and 666 archetypes. UMAP needs
-  something like 10k points before the GPU is ahead at all. The t-SNE
-  optimiser is still CPU, GRNBoost2 stays on CPU on purpose (the
-  tree-based learners are where the GPU helps), GPU NMF caps the rank at
-  128, and GPU Harmony takes a single batch covariate. BBKNN is the one
-  thing left unticked on that package’s own roadmap, so for now that one
-  stays on CPU.
+- **Deep learning integration:** I like R as a bit of a quirky underdog
+  stats language, but it cannot compete with the Deep Learning support
+  in Python. An interface into the binary files to quickly load in
+  counts into your favourite neural net architectures is on the roadmap.

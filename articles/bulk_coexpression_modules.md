@@ -150,7 +150,12 @@ object from the raw counts for it.
 
 ``` r
 
-norm_counts <- rs_cpm(synth$counts, lib_size = NULL, log = TRUE, prior_count = 2)
+norm_counts <- rs_cpm(
+  synth$counts,
+  lib_size = NULL,
+  log = TRUE,
+  prior_count = 2
+)
 raw_cpm <- rs_cpm(synth$counts, lib_size = NULL, log = FALSE, prior_count = 2)
 
 data_log <- t(norm_counts)
@@ -160,6 +165,7 @@ meta_data <- data.table(sample_id = rownames(data_log))
 
 coexp <- BulkCoExp(raw_data = data_log, meta_data = meta_data)
 coexp <- preprocess_bulk_coexp(coexp, hvg = 0.5, .verbose = FALSE)
+
 coexp
 #> Bulk co-expression module class (BulkCoExp).
 #>  Pre-processing done: TRUE.
@@ -384,10 +390,11 @@ leiden_modules[, .N, by = module_id]
 
 ICA whitens the data, then finds independent components across many
 random initialisations. The stability across restarts, the fraction of
-converged runs, and the mutual information between components combine
-into a `combined_score`: the loess inflection point of this score
-against the number of components gives you an “optimal” `ncomp`. (Please
-explore your data and see how it looks…)
+converged runs, and the redundancy between components (the largest
+absolute correlation between two component loadings) combine into a
+`combined_score`: the loess inflection point of this score against the
+number of components gives you an “optimal” `ncomp`. (Please explore
+your data and see how it looks…)
 
 ``` r
 
@@ -1036,10 +1043,10 @@ grid_res
 #> 2:         hub_modular factor_cor  0.985 0.523 0.988
 #> 3:             modular    jaccard  0.790 0.200 0.690
 #> 4:             modular factor_cor  0.983 0.635 0.986
-#> 5: non_negative_factor    jaccard  0.563 0.495 0.486
-#> 6: non_negative_factor factor_cor  0.959 0.440 0.966
-#> 7: non_gaussian_factor    jaccard  0.617 0.526 0.596
-#> 8: non_gaussian_factor factor_cor  0.978 0.567 0.979
+#> 5: non_negative_factor    jaccard  0.563 0.705 0.486
+#> 6: non_negative_factor factor_cor  0.959 0.722 0.966
+#> 7: non_gaussian_factor    jaccard  0.617 0.487 0.596
+#> 8: non_gaussian_factor factor_cor  0.978 0.667 0.979
 ```
 
 ``` r

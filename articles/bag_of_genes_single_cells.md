@@ -407,22 +407,22 @@ hotspot_autocor[, gene_symbol := ensembl_to_symbol[gene_id]]
 head(hotspot_autocor[order(fdr)], 25L)
 #>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
 #>              <char>     <num>     <num> <num> <num>      <char>
-#>  1: ENSG00000188290 0.3293836  39.08509     0     0        HES4
+#>  1: ENSG00000188290 0.3293835  39.08508     0     0        HES4
 #>  2: ENSG00000119535 0.2949539  46.16233     0     0       CSF3R
-#>  3: ENSG00000163131 0.5237190  62.76030     0     0        CTSS
+#>  3: ENSG00000163131 0.5237189  62.76030     0     0        CTSS
 #>  4: ENSG00000163191 0.4090217  58.81076     0     0     S100A11
-#>  5: ENSG00000163220 0.7015914 115.38558     0     0      S100A9
+#>  5: ENSG00000163220 0.7015916 115.38558     0     0      S100A9
 #>  6: ENSG00000143546 0.6843269 119.58680     0     0      S100A8
-#>  7: ENSG00000197956 0.6383640 100.55820     0     0      S100A6
+#>  7: ENSG00000197956 0.6383641 100.55820     0     0      S100A6
 #>  8: ENSG00000196154 0.6470327  95.01012     0     0      S100A4
 #>  9: ENSG00000177954 0.6009150  93.19000     0     0       RPS27
-#> 10: ENSG00000158869 0.7041770  81.33603     0     0      FCER1G
+#> 10: ENSG00000158869 0.7041768  81.33603     0     0      FCER1G
 #> 11: ENSG00000203747 0.6096835  68.59921     0     0      FCGR3A
 #> 12: ENSG00000198574 0.2173397  41.63903     0     0      SH2D1B
 #> 13: ENSG00000198821 0.2205831  58.11088     0     0       CD247
 #> 14: ENSG00000143185 0.4016601  57.71783     0     0        XCL2
-#> 15: ENSG00000143184 0.4101798  65.14880     0     0        XCL1
-#> 16: ENSG00000116667 0.2122082  43.07857     0     0     C1orf21
+#> 15: ENSG00000143184 0.4101798  65.14879     0     0        XCL1
+#> 16: ENSG00000116667 0.2122082  43.07858     0     0     C1orf21
 #> 17: ENSG00000143947 0.3783041  57.85538     0     0      RPS27A
 #> 18: ENSG00000115523 0.6151299 139.40926     0     0        GNLY
 #> 19: ENSG00000153563 0.2358263  41.70274     0     0        CD8A
@@ -430,8 +430,8 @@ head(hotspot_autocor[order(fdr)], 25L)
 #> 21: ENSG00000071082 0.4004451  62.26276     0     0       RPL31
 #> 22: ENSG00000144713 0.3662196  63.85917     0     0       RPL32
 #> 23: ENSG00000168028 0.2797459  44.57675     0     0        RPSA
-#> 24: ENSG00000233276 0.4994096  66.23556     0     0        GPX1
-#> 25: ENSG00000163931 0.2591802  39.67630     0     0         TKT
+#> 24: ENSG00000233276 0.4994095  66.23555     0     0        GPX1
+#> 25: ENSG00000163931 0.2591802  39.67629     0     0         TKT
 #>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
 #>              <char>     <num>     <num> <num> <num>      <char>
 ```
@@ -721,18 +721,18 @@ tf_gene_dt[, gene_symbol := ensembl_to_symbol[gene]]
 head(tf_gene_dt[order(-importance)], 5L)
 #>                 tf            gene importance pairwise_cor cor_sign tf_symbol
 #>             <char>          <char>      <num>        <num>    <int>    <char>
-#> 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3103159        1      JUNB
-#> 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1931844        1      SPI1
-#> 3: ENSG00000170345 ENSG00000120129  0.2573821    0.3420300        1       FOS
-#> 4: ENSG00000066336 ENSG00000165025  0.2460342    0.2060750        1      SPI1
-#> 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2005614        1     KLRG1
+#> 1: ENSG00000170345 ENSG00000120129  0.2712962    0.3420300        1       FOS
+#> 2: ENSG00000139187 ENSG00000113088  0.2473926    0.2404412        1     KLRG1
+#> 3: ENSG00000171223 ENSG00000184557  0.2363709    0.1981401        1      JUNB
+#> 4: ENSG00000140968 ENSG00000226777  0.2301251    0.2174118        1      IRF8
+#> 5: ENSG00000066336 ENSG00000106565  0.2300905    0.3727083        1      SPI1
 #>    gene_symbol
 #>         <char>
 #> 1:       DUSP1
-#> 2:      UBE2R2
-#> 3:       DUSP1
-#> 4:         SYK
-#> 5:        CD8A
+#> 2:        GZMK
+#> 3:       SOCS3
+#> 4:    KIAA0125
+#> 5:    TMEM176B
 ```
 
 ### CisTarget motif enrichment
@@ -795,13 +795,13 @@ mind. The API is identical either way.
 ``` r
 
 regulons <- build_regulons(scenic_res, use_leading_edge = FALSE)
-#> Built 227 regulons (154 dropped below 10 genes). Median size: 21
+#> Built 243 regulons (149 dropped below 10 genes). Median size: 21
 
 length(regulons)
-#> [1] 227
+#> [1] 243
 summary(lengths(regulons))
 #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#>    10.0    14.0    21.0   139.8   104.0  1583.0
+#>    10.0    14.0    21.0   130.6    81.0  1573.0
 ```
 
 That is what you hand to
@@ -828,20 +828,20 @@ two component means. Regulons that are not bimodal fall back to
 ``` r
 
 binarised_regulons <- binarise_regulon_activity(auc_regulons)
-#> Binarised 227 regulons, 72 of which were bimodal.
+#> Binarised 243 regulons, 91 of which were bimodal.
 
 binary_matrix <- binarised_regulons$binary
 colnames(binary_matrix) <- ensembl_to_symbol[colnames(binary_matrix)]
 
 head(binarised_regulons$thresholds[order(-n_cells_on)])
-#>            regulon   threshold bimodal n_cells_on
-#>             <char>       <num>  <lgcl>      <num>
-#> 1: ENSG00000177606 0.028034928    TRUE       1629
-#> 2: ENSG00000198034 0.099866757    TRUE       1539
-#> 3: ENSG00000124614 0.097379875    TRUE       1535
-#> 4: ENSG00000171223 0.069938338    TRUE       1500
-#> 5: ENSG00000136942 0.129315786    TRUE       1498
-#> 6: ENSG00000100823 0.009789546    TRUE       1458
+#>            regulon  threshold bimodal n_cells_on
+#>             <char>      <num>  <lgcl>      <num>
+#> 1: ENSG00000177606 0.03368328    TRUE       1585
+#> 2: ENSG00000198034 0.09885609    TRUE       1547
+#> 3: ENSG00000124614 0.09911509    TRUE       1529
+#> 4: ENSG00000171223 0.06908425    TRUE       1517
+#> 5: ENSG00000136942 0.13022025    TRUE       1487
+#> 6: ENSG00000134758 0.01940404    TRUE       1306
 ```
 
 ``` r
@@ -942,29 +942,29 @@ sweep_res <- lda_k_sweep(binary_matrix, k_range = 5:12)
 sweep_res
 #> LdaKSweepResult (LDA topic count sweep)
 #>   k range:          5 to 12
-#>   Best k:           7
+#>   Best k:           8
 #>   Metrics:          arun_2010 and cao_juan_2009 lower is better, mimno_2011 higher
 #> 
 #>        k  arun_2010 cao_juan_2009 mimno_2011     bound perplexity
 #>    <int>      <num>         <num>      <num>     <num>      <num>
-#> 1:     5 0.16981332     0.3002322 -0.8547891 -339021.7   134.5479
-#> 2:     6 0.15225958     0.2160656 -0.8800924 -338921.9   134.3539
-#> 3:     7 0.13542282     0.1724176 -1.0198741 -338820.0   134.1560
-#> 4:     8 0.11508164     0.1654747 -1.1853645 -339039.1   134.5817
-#> 5:     9 0.10976724     0.1641425 -1.2842002 -339296.9   135.0844
-#> 6:    10 0.12072008     0.1731616 -1.3134488 -339586.9   135.6520
-#> 7:    11 0.12276630     0.1669807 -1.3461572 -339823.9   136.1175
-#> 8:    12 0.09433794     0.1303569 -1.3338648 -339872.5   136.2134
+#> 1:     5 0.13910158     0.3243849 -0.8840592 -412652.1   150.6154
+#> 2:     6 0.18364963     0.3348969 -0.8376400 -413054.7   151.3542
+#> 3:     7 0.15560557     0.2797954 -0.8209530 -413144.9   151.5202
+#> 4:     8 0.14915375     0.2550923 -0.7564126 -413438.5   152.0617
+#> 5:     9 0.16275168     0.2564859 -0.7996290 -413884.4   152.8880
+#> 6:    10 0.12433622     0.1986855 -0.9575309 -413920.3   152.9548
+#> 7:    11 0.10765251     0.1500671 -1.0269466 -413889.9   152.8981
+#> 8:    12 0.09485038     0.1313137 -1.0997737 -413996.5   153.0965
 #>    combined_score converged
 #>             <num>    <lgcl>
-#> 1:       1.808360      TRUE
-#> 2:       2.579716      TRUE
-#> 3:       2.872085      TRUE
-#> 4:       2.637487      TRUE
-#> 5:       2.269648      TRUE
-#> 6:       1.736410      TRUE
-#> 7:       1.453985      TRUE
-#> 8:       2.025017      TRUE
+#> 1:       2.181550      TRUE
+#> 2:       1.463966      TRUE
+#> 3:       2.031940      TRUE
+#> 4:       2.195546      TRUE
+#> 5:       1.578048      TRUE
+#> 6:       1.807971      TRUE
+#> 7:       2.055164      TRUE
+#> 8:       2.000000      TRUE
 ```
 
 ``` r
@@ -998,11 +998,11 @@ lda_res <- get_best_model(sweep_res)
 lda_res
 #> LdaResult (latent Dirichlet allocation)
 #>   Documents:        2163
-#>   Terms:            227
-#>   Topics:           7
-#>   Bound (ELBO):     -338820
-#>   Perplexity:       134.156
-#>   Iterations:       90
+#>   Terms:            243
+#>   Topics:           8
+#>   Bound (ELBO):     -413438
+#>   Perplexity:       152.062
+#>   Iterations:       80
 ```
 
 [`get_top_terms()`](https://gregorlueg.github.io/bixverse/reference/get_top_terms.md)
@@ -1014,15 +1014,16 @@ the most probability mass.
 top_tfs <- get_top_terms(lda_res, n = 8L)
 
 top_tfs[, .(tfs = paste(term, collapse = ", ")), by = topic]
-#>       topic                                                       tfs
-#>      <char>                                                    <char>
-#> 1: topic_01        RPS4X, RPS10, JUNB, RPL35, TCF7, JUN, LEF1, ANXA11
-#> 2: topic_02       PARP1, MAZ, BCLAF1, RAB2A, HSF1, DNMT1, APEX1, ATF4
-#> 3: topic_03     NUCB1, ELF1, ZMAT2, ILF2, UGP2, STUB1, SCAND1, SUCLG1
-#> 4: topic_04 CBFB, DUSP22, RNASEH2C, CXXC5, KLF12, RELA, SSRP1, ZNF581
-#> 5: topic_05         NR4A1, LYL1, RXRA, CEBPD, SPI1, KLF4, CEBPB, MAFB
-#> 6: topic_06    STAT4, TSC22D4, SF3B1, ETS1, MAGOH, RUNX3, KLRG1, XBP1
-#> 7: topic_07 HTATIP2, HNRNPH3, NFATC3, KIF22, UGP2, APEX1, ANXA11, BBX
+#>       topic                                                          tfs
+#>      <char>                                                       <char>
+#> 1: topic_01   MAPK1, HNRNPH3, SNRNP70, RUNX3, ILF2, HSPA5, KLRG1, RUVBL1
+#> 2: topic_02 ZNF131, ZNF511, RNASEH2C, SF3B1, GTF2A2, SND1, PSMC2, ARID5A
+#> 3: topic_03          RXRA, LYL1, NR4A1, CEBPB, POU2F2, SPI1, H2AFY, KLF4
+#> 4: topic_04            SCAND1, NFYC, IRF8, SPIB, CXXC5, ILF3, ZEB2, HHEX
+#> 5: topic_05           JUNB, RPS4X, RPL35, JUN, RPS10, TCF7, SATB1, ZMAT2
+#> 6: topic_06            JUN, RPS10, TCF7, RPL35, GATA3, RPS4X, ETS1, JUNB
+#> 7: topic_07      HBP1, RNF138, STUB1, TBPL1, ETS1, NR4A2, SMAP2, SMARCA5
+#> 8: topic_08      SUCLG1, ZNF32, HMGA1, SMARCA5, CLK1, ZNF622, ELF1, ETS1
 ```
 
 On PBMC3k the myeloid topic is usually unmistakable: `SPI1`, `CEBPD`,
@@ -1201,13 +1202,13 @@ plus the parameters and convergence info.
 
 get_w(t_cell_nmf_results)[1:5, 1:5]
 #>                      comp_01      comp_02      comp_03      comp_04
-#> ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01
-#> ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02
-#> ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11
-#> ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11
-#> ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11
+#> ENSG00000188976 2.756057e+00 1.516397e-01 9.978818e-11 3.985491e-01
+#> ENSG00000188290 9.983771e-11 1.001252e-10 9.978818e-11 7.743262e-02
+#> ENSG00000187608 9.983771e-11 2.746886e+00 1.624592e-01 9.984961e-11
+#> ENSG00000186827 9.983771e-11 1.001252e-10 7.541643e+00 9.984961e-11
+#> ENSG00000176022 9.073032e-01 7.618927e-03 1.844488e-01 9.984961e-11
 #>                      comp_05
-#> ENSG00000188976 3.031700e-01
+#> ENSG00000188976 3.031699e-01
 #> ENSG00000188290 1.000227e-10
 #> ENSG00000187608 1.000227e-10
 #> ENSG00000186827 1.000227e-10
@@ -1218,17 +1219,17 @@ get_w(t_cell_nmf_results)[1:5, 1:5]
 
 get_h(t_cell_nmf_results)[1:5, 1:5]
 #>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1
-#> comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02
-#> comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02
-#> comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10
-#> comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02
-#> comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02
+#> comp_01      0.029081339      0.028247045     2.750897e-02     2.642105e-02
+#> comp_02      0.032824829      0.004165604     5.788922e-03     4.683001e-02
+#> comp_03      0.009732792      0.053272992     5.238255e-02     1.002123e-10
+#> comp_04      0.064907387      0.017417077     1.001506e-10     3.876416e-02
+#> comp_05      0.004365175      0.047877818     9.997733e-11     1.034977e-02
 #>         AAACTTGATCCAGA-1
-#> comp_01      0.032608423
-#> comp_02      0.002322522
-#> comp_03      0.007309146
-#> comp_04      0.018659594
-#> comp_05      0.049327504
+#> comp_01      0.032608394
+#> comp_02      0.002322546
+#> comp_03      0.007309148
+#> comp_04      0.018659715
+#> comp_05      0.049327463
 ```
 
 ### Running multiple NMF runs
@@ -1479,11 +1480,11 @@ head(consensus_diag$clusters)
 #>      component_id   run component pooled_idx cluster local_density silhouette
 #>            <char> <int>     <int>      <int>   <int>         <num>      <num>
 #> 1: run_01.comp_01     1         1          1       5   0.013249557  0.7841961
-#> 2: run_01.comp_02     1         2          2       5   0.012458861  0.8275782
-#> 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821
-#> 4: run_01.comp_04     1         4          4       3   0.017579218  0.8770334
-#> 5: run_01.comp_05     1         5          5       4   0.017095884  0.6891547
-#> 6: run_02.comp_01     2         1          6       5   0.008731663  0.8714657
+#> 2: run_01.comp_02     1         2          2       5   0.012458980  0.8275782
+#> 3: run_01.comp_03     1         3          3       1   0.004470190  0.9566821
+#> 4: run_01.comp_04     1         4          4       3   0.017579237  0.8770334
+#> 5: run_01.comp_05     1         5          5       4   0.017095864  0.6891547
+#> 6: run_02.comp_01     2         1          6       5   0.008731703  0.8714657
 #>      kept
 #>    <lgcl>
 #> 1:   TRUE

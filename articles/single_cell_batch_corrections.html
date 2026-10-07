@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Batch correction with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-10-03</p>
+      <p class="date">2026-10-07</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -416,7 +416,7 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt; &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       pca  0.01318267 0.8897316     0             NA     1      0.678216</span></span>
+<span><span class="co">#&gt; 1:       pca  0.01318267 0.8897316     0             NA     1     0.6782159</span></span>
 <span><span class="co">#&gt;    graph_connectivity      method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:                  1 Uncorrected</span></span></code></pre></div>
@@ -464,7 +464,7 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"fastMNN"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6573843</span></span>
+<span><span class="co">#&gt; 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1     0.6573855</span></span>
 <span><span class="co">#&gt;    graph_connectivity  method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:          0.9408038 fastMNN</span></span></code></pre></div>
@@ -499,8 +499,7 @@
 <p>Also, visually the batches get mixed now.</p>
 </section><section class="level3"><h3 id="harmony">Harmony<a class="anchor" aria-label="anchor" href="#harmony"></a>
 </h3>
-<p>Harmony operates on the PCA embedding directly. The number of clusters is auto-determined from the dataset size (capped at 100) when left as <code>NULL</code>.</p>
-<p>The two versions of Harmony are supported. Let’s start with the original:</p>
+<p>Harmony operates on the PCA embedding directly. Leave <code>k</code> as <code>NULL</code> and the number of clusters is set to one per 30 cells, capped at 100. Both versions are supported and share one numerical core in Rust. They differ in the diversity penalty, the ridge regression and how the ridge penalty gets set. The intercept is never penalised in either. Let’s start with the original:</p>
 <section class="level4"><h4 id="version-1">Version 1<a class="anchor" aria-label="anchor" href="#version-1"></a>
 </h4>
 <div class="cell">
@@ -539,10 +538,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:   harmony   0.8508817 0.9283035 0.6423357      0.9213813     1       0.65091</span></span>
+<span><span class="co">#&gt; 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6992417</span></span>
 <span><span class="co">#&gt;    graph_connectivity  method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9953539 Harmony</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:                  1 Harmony</span></span></code></pre></div>
 </div>
 <p>Also here, we observe improvements across the board.</p>
 <div class="cell">
@@ -577,14 +576,14 @@
 </div>
 </section><section class="level4"><h4 id="version-2">Version 2<a class="anchor" aria-label="anchor" href="#version-2"></a>
 </h4>
-<p>Compared to v1 of Harmony, several modifications/improvements were implemented by <a href="https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1" class="external-link">Patikas, et al., 2026</a>, namely:</p>
+<p><a href="https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1" class="external-link">Patikas, et al., 2026</a> changed four things compared to v1. The last three have knobs in <code><a href="../reference/params_sc_harmony_v2.html">params_sc_harmony_v2()</a></code>:</p>
 <ul>
-<li>Stabilised diversity penalty</li>
-<li>Batch pruning in ridge regression</li>
-<li>Arrowhead matrix inversion for single-covariate case (making it faster!)</li>
-<li>Dynamic lambda estimation and theta scaling by batch size.</li>
+<li>Stabilised diversity penalty, which makes the objective scale-invariant.</li>
+<li>Batch pruning in the ridge regression. A batch that puts less than <code>batch_proportion_cutoff</code> of its cells into a cluster is dropped from that cluster’s regression. A cluster left with a single batch isn’t corrected, so a cell type unique to one batch doesn’t get pulled towards the others.</li>
+<li>Dynamic lambda. With <code>use_dynamic_lambda = TRUE</code> (the default) the ridge penalty is set per cluster as <code>alpha</code> times the expected counts and the fixed <code>lambda</code> is ignored.</li>
+<li>Theta scaling by batch size via <code>tau</code>. Off by default (<code>tau = 0</code>).</li>
 </ul>
-<p>Overall, this makes v2 more amenable and faster on big data sets than v1 (if you wish to use Harmony, maybe use the version 2 over the v2?).</p>
+<p>The paper’s arrowhead matrix inversion for a single batch covariate is used by both versions here, so v1 gets that speed-up too. v2 also runs only 4 k-means iterations per Harmony round versus 20 in v1. Unless you need to reproduce an old v1 result, go with v2.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span></span>
@@ -621,10 +620,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony v2"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: harmony_v2   0.8597843 0.9198092 0.6423357      0.8935813     1</span></span>
+<span><span class="co">#&gt; 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity     method</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;     &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      0.699386                  1 Harmony v2</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:     0.6978205                  1 Harmony v2</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
@@ -656,6 +655,7 @@
 </div>
 </div>
 </div>
+<p>Got a GPU? <code>harmony_v2_gpu_sc()</code> in <a href="https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html">bixverse.gpu</a> runs the same v2 algorithm and stores the result as <code>"harmony_gpu"</code>. It takes a single batch column only.</p>
 </section></section><section class="level3"><h3 id="seurat-cca">Seurat CCA<a class="anchor" aria-label="anchor" href="#seurat-cca"></a>
 </h3>
 <p>Seurat’s anchor methods take a different route. For each pair of batches they find cells that are mutual nearest neighbours in a shared space, treat those pairs as anchors, score them by how much of their neighbourhood they share, and then apply a kernel-weighted correction that pulls the query batch onto the reference. Batches get merged in the order of their pairwise anchor counts.</p>
@@ -891,18 +891,18 @@
 <span><span class="co">#&gt;         method kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1</span></span>
-<span><span class="co">#&gt; 2:     fastMNN  0.69251840 0.9413065 0.4705881      0.8861530     1</span></span>
-<span><span class="co">#&gt; 3:     Harmony  0.85088170 0.9283035 0.6423357      0.9213813     1</span></span>
-<span><span class="co">#&gt; 4:  Harmony v2  0.85978428 0.9198092 0.6423357      0.8935813     1</span></span>
+<span><span class="co">#&gt; 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1</span></span>
+<span><span class="co">#&gt; 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1</span></span>
+<span><span class="co">#&gt; 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1</span></span>
 <span><span class="co">#&gt; 5:  Seurat CCA  0.71785653 0.8929735 0.4705881      0.8688793     1</span></span>
 <span><span class="co">#&gt; 6: Seurat rPCA  0.78462592 0.9078943 0.6423357      0.8138718     1</span></span>
 <span><span class="co">#&gt; 7:       BBKNN  1.00000000        NA 0.8000000             NA     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     0.6782160          1.0000000</span></span>
-<span><span class="co">#&gt; 2:     0.6573843          0.9408038</span></span>
-<span><span class="co">#&gt; 3:     0.6509100          0.9953539</span></span>
-<span><span class="co">#&gt; 4:     0.6993860          1.0000000</span></span>
+<span><span class="co">#&gt; 1:     0.6782159          1.0000000</span></span>
+<span><span class="co">#&gt; 2:     0.6573855          0.9408038</span></span>
+<span><span class="co">#&gt; 3:     0.6992417          1.0000000</span></span>
+<span><span class="co">#&gt; 4:     0.6978205          1.0000000</span></span>
 <span><span class="co">#&gt; 5:     0.7043481          1.0000000</span></span>
 <span><span class="co">#&gt; 6:     0.6966735          1.0000000</span></span>
 <span><span class="co">#&gt; 7:            NA          1.0000000</span></span></code></pre></div>

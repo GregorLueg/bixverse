@@ -123,7 +123,7 @@ sc_object <- umap_sc(sc_object, .verbose = FALSE)
 sc_object
 #> Single cell experiment (Single Cells).
 #>   No cells (original): 2700
-#>    To keep n: 2092
+#>    To keep n: 2103
 #>   No genes: 11139
 #>   HVG calculated: TRUE
 #>   PCA calculated: TRUE
@@ -191,14 +191,14 @@ candidates.
 ``` r
 
 tree <- bonsai_sc(sc_object, .verbose = TRUE)
-#> Running Sanity and Bonsai over 2_092 cells and 11_139 candidate genes.
+#> Running Sanity and Bonsai over 2_103 cells and 11_139 candidate genes.
 
 tree
-#> BonsaiTree: 2092 leaves, 1962 inferred ancestors
-#>   Genes: 351 used, 10788 dropped
-#>   Loglikelihood: -456821.5
+#> BonsaiTree: 2103 leaves, 1981 inferred ancestors
+#>   Genes: 347 used, 10792 dropped
+#>   Loglikelihood: -450291.6
 #>   Layout: equal_angle
-#>   Seconds: sanity 43.5 | ingest 0.0 | bonsai 38.8 | layout 0.0 | total 82.3
+#>   Seconds: sanity 28.6 | ingest 0.0 | bonsai 25.6 | layout 0.0 | total 54.2
 ```
 
 Where did the time go? Every stage is timed, and `total` is the whole
@@ -212,11 +212,11 @@ few hundred that survive.
 tree$timings
 #>     stage      seconds
 #>    <char>        <num>
-#> 1: sanity 43.477073464
-#> 2: ingest  0.010013113
-#> 3: bonsai 38.798357311
-#> 4: layout  0.000159457
-#> 5:  total 82.296294689
+#> 1: sanity 28.601340462
+#> 2: ingest  0.006877420
+#> 3: bonsai 25.605513527
+#> 4: layout  0.000078609
+#> 5:  total 54.222437143
 ```
 
 The search reports its steps too: the loglikelihood after each and what
@@ -230,13 +230,13 @@ behind.
 tree$steps
 #>           step    loglik      seconds
 #>         <char>     <num>        <num>
-#> 1: 1-2 linkage -675160.8  0.192240162
-#> 2:  3 polytomy -675160.8  0.007378173
-#> 3:    4 branch -467982.0  0.840661629
-#> 4:       5 spr -457101.7 34.897715892
-#> 5:       6 nni -457088.5  1.108852867
-#> 6:    7 branch -456821.6  0.996716005
-#> 7:  8 collapse -456821.5  0.746525745
+#> 1: 1-2 linkage -668287.8  0.125467303
+#> 2:  3 polytomy -668287.8  0.004730454
+#> 3:    4 branch -461620.0  0.544639025
+#> 4:       5 spr -450590.6 22.903377457
+#> 5:       6 nni -450581.4  0.974632777
+#> 6:    7 branch -450292.6  0.548619279
+#> 7:  8 collapse -450291.6  0.498934522
 ```
 
 ### Which genes made it?
@@ -255,7 +255,7 @@ data.table(
 )
 #>    genes_used genes_dropped also_hvg
 #>         <int>         <int>    <int>
-#> 1:        351         10788      241
+#> 1:        347         10792      236
 ```
 
 Want the tree on your own gene set instead? Pass `hvg` (1-indexed), e.g.
@@ -370,14 +370,14 @@ supercells <- calc_meta_cell_purity(
 )
 
 tree_mc <- bonsai_sc(supercells, .verbose = TRUE)
-#> Running Sanity and Bonsai over 105 metacells and 11139 candidate genes.
+#> Running Sanity and Bonsai over 106 metacells and 11139 candidate genes.
 
 tree_mc
-#> BonsaiTree: 105 leaves (2092 cells), 89 inferred ancestors
-#>   Genes: 2098 used, 9041 dropped
-#>   Loglikelihood: -116872.1
+#> BonsaiTree: 106 leaves (2103 cells), 91 inferred ancestors
+#>   Genes: 2138 used, 9001 dropped
+#>   Loglikelihood: -119805.9
 #>   Layout: equal_angle
-#>   Seconds: sanity 13.4 | ingest 0.0 | bonsai 5.0 | layout 0.0 | total 18.6
+#>   Seconds: sanity 9.0 | ingest 0.0 | bonsai 3.2 | layout 0.0 | total 12.2
 ```
 
 The same PBMCs as 100 metacells: a few seconds instead of the minutes

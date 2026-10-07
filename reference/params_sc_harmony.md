@@ -13,9 +13,9 @@ params_sc_harmony(
   block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
-  epsilon_kmeans = 1e-05,
-  epsilon_harmony = 1e-04,
-  window_size = 2L,
+  epsilon_kmeans = 0.001,
+  epsilon_harmony = 0.01,
+  window_size = 3L,
   kmeans = list()
 )
 ```
@@ -43,8 +43,8 @@ params_sc_harmony(
 - lambda:
 
   Numeric vector. Ridge regression penalty for the linear model.
-  Typically a single value that is broadcast to all design matrix
-  columns. Defaults to `1.0`.
+  Typically a single value that is broadcast to every batch column of
+  the design matrix; the intercept is not penalised. Defaults to `1.0`.
 
 - block_size:
 
@@ -66,24 +66,24 @@ params_sc_harmony(
 
   Numeric. Convergence threshold for k-means clustering. Stops when the
   relative change in cluster assignments falls below this value.
-  Defaults to `1e-05`.
+  Defaults to `0.001`.
 
 - epsilon_harmony:
 
   Numeric. Convergence threshold for Harmony. Stops when the relative
   change in the objective function falls below this value. Defaults to
-  `1e-04`.
+  `0.01`.
 
 - window_size:
 
   Integer. Number of previous iterations to consider when checking
-  convergence. Defaults to `2L`.
+  convergence. Defaults to `3L`.
 
 - kmeans:
 
   List. Optional overrides for the k-means clustering algorithm Possible
-  parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
-  `"hamerly"`, see
+  parameters are `"k_means_iter"` (10 here, as in R harmony),
+  `"k_means_init"`, `"gemm"` and `"hamerly"`, see
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md).
   See
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md)
@@ -107,8 +107,9 @@ A named list with the following elements:
   to the number of batch variables. Defaults to `2.0`.
 
 - lambda - Numeric vector. Ridge regression penalty for the linear
-  model. Typically a single value that is broadcast to all design matrix
-  columns. Defaults to `1.0`.
+  model. Typically a single value that is broadcast to every batch
+  column of the design matrix; the intercept is not penalised. Defaults
+  to `1.0`.
 
 - block_size - Numeric. Fraction of cells to update per block during
   optimisation (0.0-1.0). Lower values reduce memory usage but increase
@@ -122,14 +123,14 @@ A named list with the following elements:
 
 - epsilon_kmeans - Numeric. Convergence threshold for k-means
   clustering. Stops when the relative change in cluster assignments
-  falls below this value. Defaults to `1e-05`.
+  falls below this value. Defaults to `0.001`.
 
 - epsilon_harmony - Numeric. Convergence threshold for Harmony. Stops
   when the relative change in the objective function falls below this
-  value. Defaults to `1e-04`.
+  value. Defaults to `0.01`.
 
 - window_size - Integer. Number of previous iterations to consider when
-  checking convergence. Defaults to `2L`.
+  checking convergence. Defaults to `3L`.
 
 - The elements of
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md),

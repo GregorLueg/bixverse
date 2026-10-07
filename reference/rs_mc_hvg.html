@@ -17,7 +17,7 @@ side selects from them.'><meta property="og:image" content="https://gregorlueg.g
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,7 @@ side selects from them.'><meta property="og:image" content="https://gregorlueg.g
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
-    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/ligand_receptor.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
@@ -122,6 +122,7 @@ side selects from them.</p>
 <span>  <span class="va">binning</span>,</span>
 <span>  <span class="va">n_bins</span>,</span>
 <span>  <span class="va">clip_max</span>,</span>
+<span>  <span class="va">scran_params</span>,</span>
 <span>  <span class="va">verbose</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -133,17 +134,17 @@ side selects from them.</p>
 <dl><dt id="arg-sparse-data">sparse_data<a class="anchor" aria-label="anchor" href="#arg-sparse-data"></a></dt>
 <dd><p>A named list that needs to have <code>data</code>, <code>indptr</code>,
 <code>indices</code>, <code>nrow</code>, <code>ncol</code> and <code>cs_type</code>. Shape is (metacells, genes). Pass
-raw counts for <code>"vst"</code> and normalised counts otherwise.</p></dd>
+raw counts for <code>"vst"</code> and log1p-normalised counts otherwise.</p></dd>
 
 
 <dt id="arg-hvg-method">hvg_method<a class="anchor" aria-label="anchor" href="#arg-hvg-method"></a></dt>
 <dd><p>String. Which HVG detection method to use. Options
-are <code>c("vst", "meanvarbin", "dispersion")</code>.</p></dd>
+are <code>c("vst", "meanvarbin", "dispersion", "scran")</code>.</p></dd>
 
 
 <dt id="arg-loess-span">loess_span<a class="anchor" aria-label="anchor" href="#arg-loess-span"></a></dt>
 <dd><p>Numeric. The span parameter for the loess function
-(only used for <code>"vst"</code>).</p></dd>
+(<code>"vst"</code>) or the lowess trend (<code>"scran"</code>).</p></dd>
 
 
 <dt id="arg-binning">binning<a class="anchor" aria-label="anchor" href="#arg-binning"></a></dt>
@@ -161,6 +162,12 @@ are <code>c("vst", "meanvarbin", "dispersion")</code>.</p></dd>
 not provided (only used for <code>"vst"</code>).</p></dd>
 
 
+<dt id="arg-scran-params">scran_params<a class="anchor" aria-label="anchor" href="#arg-scran-params"></a></dt>
+<dd><p>List. Trend parameters for <code>"scran"</code>, see
+<code><a href="params_hvg_scran_defaults.html">params_hvg_scran_defaults()</a></code>. Missing elements fall back to
+the scrapper defaults. The span is taken from <code>loess_span</code>.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Integer. <code>0L</code> - quiet; <code>1L</code> - normal verbosity; <code>2L</code> -
 detailed verbosity.</p></dd>
@@ -172,6 +179,11 @@ detailed verbosity.</p></dd>
 <li><p>var - The variance of the gene.</p></li>
 <li><p>var_exp - The expected variance of the gene.</p></li>
 <li><p>var_std - The standardised variance of the gene.</p></li>
+</ul><p>If <code>hvg_method == "scran"</code>, all on the log2 scale:</p><ul><li><p>scran_mean - The mean log-expression of the gene.</p></li>
+<li><p>scran_var - The variance of the log-expression of the gene.</p></li>
+<li><p>scran_fitted - The variance the trend expects at the gene's mean.</p></li>
+<li><p>scran_residual - <code>scran_var - scran_fitted</code>. Genes are ranked on
+this.</p></li>
 </ul><p>For <code>"meanvarbin"</code> and <code>"dispersion"</code>:</p><ul><li><p>mean - The average expression of the gene.</p></li>
 <li><p>dispersion - The dispersion of the gene.</p></li>
 <li><p>dispersion_scaled - The scaled dispersion per bin per gene.</p></li>

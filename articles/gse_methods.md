@@ -208,7 +208,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.69 sec elapsed
+#> 1.1 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -333,7 +333,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.813 sec elapsed
+#> 1.414 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -553,8 +553,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.850409 2.994864 3.231845 3.301401 3.342842 3.669707     5
-#>   rust 2.117280 2.134501 2.154772 2.165079 2.178431 2.178569     5
+#>  fgsea 2.087583 2.179231 2.357496 2.406901 2.458022 2.655740     5
+#>   rust 1.335013 1.354083 1.372882 1.361728 1.362554 1.451032     5
 ```
 
 ## blitzGSEA
@@ -681,14 +681,14 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: milliseconds
-#>        expr        min         lq       mean     median         uq        max
-#>       fgsea 2155.34404 2155.98122 2162.81664 2156.02397 2170.75576 2175.97822
-#>  blitz_cold  878.04708  881.91657  886.07064  885.39028  890.18913  894.81015
-#>  blitz_warm   12.70895   12.98146   13.33175   13.22873   13.46638   14.27322
-#>  neval
-#>      5
-#>      5
-#>      5
+#>        expr         min          lq        mean      median          uq
+#>       fgsea 1331.148413 1334.214481 1349.608797 1335.138477 1360.366045
+#>  blitz_cold  308.104977  309.310165  316.192512  320.360327  321.308830
+#>  blitz_warm    9.051314    9.401679    9.496441    9.417533    9.518915
+#>         max neval
+#>  1387.17657     5
+#>   321.87826     5
+#>    10.09277     5
 ```
 
 On this data (586 pathways, ~12k genes) the cold run lands around 3x

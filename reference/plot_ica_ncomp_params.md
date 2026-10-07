@@ -9,8 +9,8 @@ You have:
 - % Converged - The percentage of ICA runs that converged at this no of
   components.
 
-- IC Orthogonality - The orthogonality (measured as `1 - abs(cos)`)
-  indicating how orthogonal the signals detected at this level are.
+- IC redundancy - `1 - max_abs_loading_cor`, one minus the largest
+  absolute correlation between two component loadings at this level.
 
 - Combined score - The product of the three other scores.
 

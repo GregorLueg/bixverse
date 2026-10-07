@@ -581,6 +581,69 @@ tighter budget trades time for memory.
 
 Invisible `NULL`.
 
+### Method `archive`
+
+Archive the cell-based binary for cold storage
+
+#### Arguments
+
+- `f_path_archive`:
+
+  (`character`)  
+  Path of the archive to write.
+
+- `level`:
+
+  (`integer`)  
+  zstd compression level, 1 to 22.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### description
+
+Writes a zstd-compressed archive of `f_path_cells`. The gene-based file
+is not archived; `restore_archive()` rebuilds it. Normalised values are
+only stored for cells where they cannot be recomputed from the raw
+counts.
+
+#### returns
+
+A list with `n_cells`, `nnz`, `n_norm_stored` and `archive_bytes`.
+
+### Method `restore_archive`
+
+Restore both binaries from an archive
+
+#### Arguments
+
+- `f_path_archive`:
+
+  (`character`)  
+  Path to the archive.
+
+- `max_mem_gb`:
+
+  (`numeric` or `NULL`)  
+  Memory for the gene file conversion buffers in GB. `NULL` converts in
+  a single phase.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### description
+
+Rebuilds `f_path_cells` from the archive, then generates `f_path_genes`
+from it.
+
+#### returns
+
+Invisible `NULL`.
+
 ### Method `get_genes_by_indices`
 
 Return genes by index positions

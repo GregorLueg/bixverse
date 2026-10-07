@@ -149,10 +149,10 @@ scrublet <- scrublet_sc(
 )
 
 scrublet
-#> ScrubletRes: 14528 cells, 1779 doublets (12.2%)
-#>   Threshold:              0.2141
+#> ScrubletRes: 14528 cells, 1774 doublets (12.2%)
+#>   Threshold:              0.2102
 #>   Detected doublet rate:  12.2%
-#>   Detectable fraction:    88.2%
+#>   Detectable fraction:    88.1%
 #>   Overall doublet rate:   13.9%
 #>   Simulated doublets:     21792
 ```
@@ -179,13 +179,13 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 #> $precision
-#> [1] 0.6649803
+#> [1] 0.6640361
 #> 
 #> $recall
-#> [1] 0.7588198
+#> [1] 0.7556126
 #> 
 #> $f1
-#> [1] 0.7088077
+#> [1] 0.7068707
 ```
 
 If you want to add the information to the DuckDB within the object, you
@@ -202,11 +202,11 @@ head(sc_object)
 #>    cell_idx          cell_id   nnz lib_size to_keep doublet doublet_score
 #>       <num>           <char> <num>    <num>  <lgcl>  <lgcl>         <num>
 #> 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.4036143720
-#> 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0477031805
-#> 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0236686375
-#> 4:        4 AAACATACCAGCTA-1   948     1588    TRUE   FALSE  0.1923076808
+#> 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0503597111
+#> 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0175808705
+#> 4:        4 AAACATACCAGCTA-1   948     1588    TRUE   FALSE  0.1975089163
 #> 5:        5 AAACATACCATGCA-1   337      499    TRUE   FALSE  0.0006016847
-#> 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0335463248
+#> 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0391015001
 ```
 
 As we can see with added now the Scrublet data
@@ -220,10 +220,10 @@ lets you override it.
 ``` r
 
 scrublet_adj <- call_doublets_manual(scrublet, threshold = 0.25)
-#> Detected doublet rate = 11.2%
-#> Estimated detectable doublet fraction = 84.9%
+#> Detected doublet rate = 11.3%
+#> Estimated detectable doublet fraction = 84.7%
 #> Overall doublet rate:
-#>   Estimated = 13.2%
+#>   Estimated = 13.3%
 
 plot(scrublet_adj)
 ```
@@ -241,13 +241,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.6820418
+#> [1] 0.6819572
 #> 
 #> $recall
-#> [1] 0.7113534
+#> [1] 0.7152021
 #> 
 #> $f1
-#> [1] 0.6963893
+#> [1] 0.6981841
 ```
 
 We have made it worse here, but maybe there are cases where the scores
@@ -291,13 +291,13 @@ boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 #> $precision
-#> [1] 0.68523
+#> [1] 0.6904348
 #> 
 #> $recall
-#> [1] 0.5445799
+#> [1] 0.5093008
 #> 
 #> $f1
-#> [1] 0.606862
+#> [1] 0.5861942
 ```
 
 Overall, it takes longer and has worse performance (in this data set).
@@ -337,13 +337,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7141536
+#> [1] 0.7154673
 #> 
 #> $recall
-#> [1] 0.4951892
+#> [1] 0.5548428
 #> 
 #> $f1
-#> [1] 0.5848485
+#> [1] 0.625
 ```
 
 ### scDblFinder
@@ -382,13 +382,13 @@ doublet_metrics(
   actual = scdblfinder_dt$Call
 )
 #> $precision
-#> [1] 0.5769029
+#> [1] 0.5895865
 #> 
 #> $recall
-#> [1] 0.7049391
+#> [1] 0.7408595
 #> 
 #> $f1
-#> [1] 0.6345266
+#> [1] 0.6566231
 ```
 
 We can also extract the other scores from scDblFinder. We can for
@@ -409,8 +409,8 @@ table(
 )
 #>         weighted
 #> lightgbm FALSE  TRUE
-#>    FALSE 11986   637
-#>    TRUE     74  1831
+#>    FALSE 12039   530
+#>    TRUE     83  1876
 ```
 
 Or alternatively, the cxds scores can also be extracted and used. These
@@ -432,8 +432,8 @@ table(
 )
 #>         cxds
 #> lightgbm FALSE  TRUE
-#>    FALSE 12391   232
-#>    TRUE    820  1085
+#>    FALSE 12351   218
+#>    TRUE    860  1099
 ```
 
 Should you observe that this is very flat or you only have a few data
@@ -442,6 +442,29 @@ highest expressing genes are VERY similar across all the cells for
 example in cell culture experiments), you can bump `cxds_genes` up. The
 default here is 500L, but you might want to increase this pending your
 experiment.
+
+### PCA solver and HVG method
+
+All three methods run their own PCA on the observed and simulated cells.
+You pick the solver via `svd_solver` in the `pca` list. The default here
+is `"randomised"`, a randomised SVD that is approximate in the trailing
+components. `"covariance"` builds the gene x gene cross-product over the
+HVGs and eigendecomposes it, which is exact. It’s the default in
+[`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md),
+but the doublet methods run on more genes and that matrix grows with the
+square of the gene count, so it gets painfully slow here. `"exact"` runs
+Lanczos on the sparse path and a full SVD on the dense one. Scrublet and
+the boosted method also take the HVG method via the `hvg` list,
+including the scran trend:
+
+``` r
+
+params_scrublet(
+  expected_doublet_rate = 0.12,
+  hvg = list(hvg_method = "scran"),
+  pca = list(svd_solver = "covariance")
+)
+```
 
 ### Conclusion
 
