@@ -231,6 +231,27 @@ nebula_res_cells <- nebula_sc(
 all.equal(nebula_res$results, nebula_res_cells$results)
 ```
 
+### Genes carried by one donor
+
+NEBULA's expression filter, `cpc` and `mincp`, pools every cell, so a single
+donor expressing a gene is enough to get it fitted. `min_subjects` adds a
+per-donor check: the gene has to clear `cpc` within at least that many donors.
+It defaults to `0`, which is off and matches the `nebula` package.
+
+```{r}
+#| label: real-nebula-min-subjects
+nebula_res_min <- nebula_sc(
+  object = mono,
+  subject_col = "ind",
+  design = ~stim,
+  genes_to_use = hvgs,
+  nebula_params = params_nebula(min_subjects = 6L),
+  .verbose = FALSE
+)
+
+c(default = nrow(nebula_res$results), min_subjects = nrow(nebula_res_min$results))
+```
+
 ## No contrast at all
 
 Here is the test that matters. Take the control cells only, so there is no
