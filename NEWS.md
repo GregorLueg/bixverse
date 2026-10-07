@@ -21,6 +21,10 @@ different, hence, major release.
 * Changes to the ICA QC metrics. Instead of mean mutual information, it returns
   now `1 - max(abs(cor))` to identify the point where two ICs are strongly 
   correlated with each other.
+* The randomised SVD paths for single cell are now using N_OVERSAMPLING from
+  100 to 20 and increase the iterations from 2 to 4. Across various benchmarks
+  and synthetic data sets, the quality of the trailing PCs has improved with
+  the new thresholds while being faster.
 
 ## Fixes
 
