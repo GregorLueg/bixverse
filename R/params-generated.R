@@ -2122,6 +2122,11 @@ params_module_membership <- function(
 #' Defaults to `0.005`.
 #' @param mincp Integer. Drop a gene expressed in fewer than this many cells.
 #' Defaults to `5L`.
+#' @param min_subjects Integer. Drop a gene that fewer than this many subjects
+#' express, a subject expressing it when its own mean count per cell is above
+#' `cpc`. `cpc` and `mincp` pool every cell, so one subject can carry a gene
+#' through on its own. `0` switches the check off, as in the `nebula` package.
+#' Defaults to `0L`.
 #' @param reml Boolean. Estimate the overdispersions by restricted maximum
 #' likelihood. The R package only honours this for `NBLMM`, which the Rust port
 #' does not implement, so this arm has not been validated against an R
@@ -2157,6 +2162,11 @@ params_module_membership <- function(
 #'  Defaults to `0.005`.
 #'  \item mincp - Integer. Drop a gene expressed in fewer than this many cells.
 #'  Defaults to `5L`.
+#'  \item min_subjects - Integer. Drop a gene that fewer than this many subjects
+#'  express, a subject expressing it when its own mean count per cell is above
+#'  `cpc`. `cpc` and `mincp` pool every cell, so one subject can carry a gene
+#'  through on its own. `0` switches the check off, as in the `nebula` package.
+#'  Defaults to `0L`.
 #'  \item reml - Boolean. Estimate the overdispersions by restricted maximum
 #'  likelihood. The R package only honours this for `NBLMM`, which the Rust port
 #'  does not implement, so this arm has not been validated against an R
@@ -2184,6 +2194,7 @@ params_nebula <- function(
   kappa = 800.0,
   cpc = 0.005,
   mincp = 5L,
+  min_subjects = 0L,
   reml = FALSE,
   eps = 1e-06,
   gene_batch_size = 1000L,
@@ -2201,6 +2212,7 @@ params_nebula <- function(
   checkmate::qassert(kappa, "N1[0,)")
   checkmate::qassert(cpc, "N1[0,)")
   checkmate::qassert(mincp, "I1[0,)")
+  checkmate::qassert(min_subjects, "I1[0,)")
   checkmate::qassert(reml, "B1")
   checkmate::qassert(eps, "N1(0,)")
   checkmate::qassert(gene_batch_size, "I1[1,)")
@@ -2224,6 +2236,7 @@ params_nebula <- function(
     kappa = kappa,
     cpc = cpc,
     mincp = mincp,
+    min_subjects = min_subjects,
     reml = reml,
     eps = eps,
     gene_batch_size = gene_batch_size,

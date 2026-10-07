@@ -883,6 +883,8 @@ S7::method(meld_sc, SingleCells) <- function(
 #'   \item kappa - Numeric. When to trust the stage-one subject overdispersion.
 #'   \item cpc - Numeric. Minimum mean count per cell for a gene to be tested.
 #'   \item mincp - Integer. Minimum number of cells expressing a gene.
+#'   \item min_subjects - Integer. Minimum number of subjects whose own mean
+#'   count per cell clears `cpc`. `0` switches the check off.
 #'   \item reml - Boolean. Restricted maximum likelihood.
 #'   \item eps - Numeric. Optimiser stopping tolerance.
 #'   \item gene_batch_size - Integer. Genes read and fitted per batch.
