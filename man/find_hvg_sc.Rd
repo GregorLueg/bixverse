@@ -21,12 +21,15 @@ to \code{2000L}.}
 \item{hvg_params}{List, see \code{\link[=params_sc_hvg]{params_sc_hvg()}}. This list contains
 \itemize{
 \item method - Which method to use. One of
-\code{c("vst", "meanvarbin", "dispersion")}
+\code{c("vst", "meanvarbin", "dispersion", "scran", "residual")}
 \item loess_span - The span for the loess function to standardise the
-variance
+variance (\code{"vst"}), or of the lowess trend (\code{"scran"})
 \item num_bin - Integer. Not yet implemented.
 \item bin_method - String. One of \code{c("equal_width", "equal_freq")}. Not
 implemented yet.
+\item mean_filter, min_mean, transform, use_min_width, min_width,
+min_window_count - The \code{"scran"} trend parameters, see
+\code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}}
 }}
 
 \item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
@@ -38,8 +41,11 @@ larger data sets where you wish to avoid loading in the whole data. If
 verbosity.}
 }
 \value{
-It will add the mean, var, var_exp, var_std of each gene to the
-the var table.
+It will add the per-gene HVG statistics to the var table: \code{mean},
+\code{var}, \code{var_exp} and \code{var_std} for \code{"vst"}; \code{mean}, \code{dispersion},
+\code{dispersion_scaled} and \code{bin} for \code{"meanvarbin"} and \code{"dispersion"};
+\code{scran_mean}, \code{scran_var}, \code{scran_fitted} and \code{scran_residual} (log2 scale)
+for \code{"scran"}.
 }
 \description{
 This is a helper function to identify highly variable genes for \code{SingleCells}

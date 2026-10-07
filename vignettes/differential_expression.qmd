@@ -210,6 +210,48 @@ a rank test with a expression-proportion filter, and it is simply less powerful
 for a large shift in mean. On a real, strong effect all three agree the effect
 is there. The difference shows up somewhere else.
 
+### Selecting cells without a subset
+
+You do not need a `SingleCellsSubset` to restrict the fit. `cells_to_use` takes
+cell names and runs NEBULA on those cells of the full object. Handy when the
+selection is a one-off, say one cell type in one condition, and building a
+subset for it is overkill. Same cells, same fit:
+
+```{r}
+#| label: real-nebula-cells-to-use
+nebula_res_cells <- nebula_sc(
+  object = sc_object,
+  subject_col = "ind",
+  design = ~stim,
+  genes_to_use = hvgs,
+  cells_to_use = mono_obs$cell_id,
+  .verbose = FALSE
+)
+
+all.equal(nebula_res$results, nebula_res_cells$results)
+```
+
+### Genes carried by one donor
+
+NEBULA's expression filter, `cpc` and `mincp`, pools every cell, so a single
+donor expressing a gene is enough to get it fitted. `min_subjects` adds a
+per-donor check: the gene has to clear `cpc` within at least that many donors.
+It defaults to `0`, which is off and matches the `nebula` package.
+
+```{r}
+#| label: real-nebula-min-subjects
+nebula_res_min <- nebula_sc(
+  object = mono,
+  subject_col = "ind",
+  design = ~stim,
+  genes_to_use = hvgs,
+  nebula_params = params_nebula(min_subjects = 6L),
+  .verbose = FALSE
+)
+
+c(default = nrow(nebula_res$results), min_subjects = nrow(nebula_res_min$results))
+```
+
 ## No contrast at all
 
 Here is the test that matters. Take the control cells only, so there is no

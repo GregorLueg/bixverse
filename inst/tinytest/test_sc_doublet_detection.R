@@ -830,6 +830,113 @@ expect_true(
   info = "S7 scDblFinder grouped: get_data columns present"
 )
 
+# pca solvers ------------------------------------------------------------------
+
+solver_runs <- list(
+  scrublet = \(solver) {
+    rs_sc_scrublet(
+      f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+      f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
+      cells_to_keep = get_cells_to_keep(sc_object),
+      scrublet_params = modifyList(optimal_params, list(svd_solver = solver)),
+      seed = 42L,
+      verbose = 0L,
+      streaming = FALSE,
+      return_combined_pca = FALSE,
+      return_pairs = FALSE
+    )$predicted_doublets
+  },
+  boost = \(solver) {
+    rs_sc_doublet_detection(
+      f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+      f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
+      cells_to_keep = get_cells_to_keep(sc_object),
+      boost_params = modifyList(boost_params, list(svd_solver = solver)),
+      seed = 42L,
+      verbose = 0L,
+      streaming = FALSE
+    )$doublet
+  },
+  scdblfinder = \(solver) {
+    rs_sc_scdblfinder(
+      f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+      f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
+      cell_indices = get_cells_to_keep(sc_object),
+      params = modifyList(scdblfinder_params, list(svd_solver = solver)),
+      seed = 42L,
+      return_features = FALSE,
+      streaming = FALSE,
+      verbose = 0L
+    )$predicted_doublets
+  }
+)
+
+for (method in names(solver_runs)) {
+  for (solver in c("covariance", "randomised", "exact")) {
+    predicted <- solver_runs[[method]](solver)
+    metrics <- metrics_helper(cm = table(new_obs$doublet, predicted))
+    expect_true(
+      current = metrics["f1"] >= 0.7,
+      info = sprintf(
+        "%s with svd_solver = '%s': good f1 scores",
+        method,
+        solver
+      )
+    )
+  }
+
+  expect_error(
+    current = solver_runs[[method]]("lanczos"),
+    pattern = "Invalid PCA solver",
+    info = sprintf("%s: unknown svd_solver errors", method)
+  )
+}
+
+expect_error(
+  current = bixverse:::assertScScrubletParams(
+    params_scrublet(pca = list(svd_solver = "lanczos"))
+  ),
+  info = "params_scrublet: unknown svd_solver rejected in R"
+)
+
+# hvg methods ------------------------------------------------------------------
+
+for (hvg_method in c("vst", "meanvarbin", "dispersion", "scran")) {
+  hvg_params <- params_scrublet(
+    normalisation = list(target_size = 1e4),
+    pca = list(no_pcs = 15L),
+    hvg = list(min_gene_var_pctl = 0.5, hvg_method = hvg_method),
+    expected_doublet_rate = 0.2,
+    sim_doublet_ratio = 1.0
+  )
+  predicted <- rs_sc_scrublet(
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
+    cells_to_keep = get_cells_to_keep(sc_object),
+    scrublet_params = hvg_params,
+    seed = 42L,
+    verbose = 0L,
+    streaming = FALSE,
+    return_combined_pca = FALSE,
+    return_pairs = FALSE
+  )$predicted_doublets
+  metrics <- metrics_helper(cm = table(new_obs$doublet, predicted))
+  expect_true(
+    current = metrics["f1"] >= 0.7,
+    info = sprintf(
+      "scrublet with hvg_method = '%s': good f1 scores",
+      hvg_method
+    )
+  )
+}
+
+expect_error(
+  current = bixverse:::assertScScrubletParams(
+    params_scrublet(hvg = list(hvg_method = "mvb"))
+  ),
+  info = "params_scrublet: the old 'mvb' alias is rejected"
+)
+
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)

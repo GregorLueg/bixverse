@@ -163,6 +163,66 @@ expect_true(
   info = "mc hvg meanvarbin - signal genes dominate the HVGs"
 )
 
+### scran ----------------------------------------------------------------------
+
+mc_object <- find_hvg_sc(
+  object = mc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "scran"),
+  .verbose = FALSE
+)
+
+mc_var_scran <- get_sc_var(mc_object)
+
+expect_true(
+  current = all(
+    c("scran_mean", "scran_var", "scran_fitted", "scran_residual") %in%
+      names(mc_var_scran)
+  ),
+  info = "mc hvg scran - var table populated with the prefixed scran columns"
+)
+
+mc_log2_norm <- as.matrix(mc_object[NULL, NULL, assay = "norm"]) / log(2)
+
+expect_equivalent(
+  current = mc_var_scran$scran_mean,
+  target = colMeans(mc_log2_norm),
+  tolerance = 1e-5,
+  info = "mc hvg scran - log2 mean matches R"
+)
+
+expect_equivalent(
+  current = mc_var_scran$scran_var,
+  target = matrixStats::colVars(mc_log2_norm),
+  tolerance = 1e-5,
+  info = "mc hvg scran - log2 variance matches R"
+)
+
+mc_hvg_scran <- get_hvg(mc_object)
+
+expect_true(
+  current = setequal(
+    mc_hvg_scran,
+    order(mc_var_scran$scran_residual, decreasing = TRUE)[1:hvg_to_keep]
+  ),
+  info = "mc hvg scran - HVGs are the top residuals"
+)
+
+if (requireNamespace("scrapper", quietly = TRUE)) {
+  mc_scrapper <- scrapper::fitVarianceTrend(
+    means = colMeans(mc_log2_norm),
+    variances = matrixStats::colVars(mc_log2_norm),
+    use.min.width = FALSE
+  )
+
+  expect_equivalent(
+    current = mc_var_scran$scran_residual,
+    target = mc_scrapper$residuals,
+    tolerance = 1e-4,
+    info = "mc hvg scran - residuals match scrapper::fitVarianceTrend"
+  )
+}
+
 ### get_hvg_data_sc ------------------------------------------------------------
 
 # reset to vst for downstream tests

@@ -11,16 +11,17 @@ A named list with the following elements:
 \itemize{
 \item min_gene_var_pctl - Numeric. Which percentile of the highly variable
 genes to include. Defaults to \code{0.7}.
-\item hvg_method - String. Which method to use to identify HVG. One of
-\code{c("vst", "mvb", "dispersion")}. Defaults to \code{"vst"}.
+\item hvg_method - String. Which method to use to identify HVG. \code{"scran"}
+runs with the default trend parameters, see \code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}}.
+One of \code{c("vst", "meanvarbin", "dispersion", "scran")}. Defaults to \code{"vst"}.
 \item loess_span - Numeric. In case of \code{"vst"} the span of the loess
 function. Defaults to \code{0.3}.
 \item clip_max - Numeric or \code{NULL}. The maximum clipping value (optional).
 Defaults to \code{NULL}.
-\item n_bins - Integer. The number of bins to use for the \code{"mvb"} HVG
-detection. Defaults to \code{20L}.
-\item binning_strategy - String. Which binning strategy to use for \code{"mvb"}.
-One of \code{c("equal_width", "equal_frequency")}. Defaults to \code{"equal_width"}.
+\item n_bins - Integer. The number of bins to use for the \code{"meanvarbin"} and
+\code{"dispersion"} HVG detection. Defaults to \code{20L}.
+\item binning_strategy - String. Which binning strategy to use for
+\code{"meanvarbin"} and \code{"dispersion"}. One of \code{c("equal_width", "equal_frequency")}. Defaults to \code{"equal_width"}.
 }
 }
 \description{

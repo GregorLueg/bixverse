@@ -962,6 +962,9 @@ S7::method(dialogue_sc, MetaCells) <- function(
 #' Mutually exclusive with `coef`.
 #' @param genes_to_use Optional character vector. The genes to fit. Defaults to
 #' every gene in the object.
+#' @param cells_to_use Optional character vector. Meta cell identifiers
+#' (`meta_cell_id`) to fit. Defaults to every meta cell. Identifiers that cannot
+#' be matched are dropped with a warning.
 #' @param offset Optional numeric vector. Strictly positive scaling factor per
 #' meta cell, aligned to the meta cells that survive the design. Defaults to
 #' `NULL`, which uses the aggregated library sizes.
@@ -1023,6 +1026,7 @@ nebula_mc <- S7::new_generic(
     coef = NULL,
     contrast = NULL,
     genes_to_use = NULL,
+    cells_to_use = NULL,
     offset = NULL,
     nebula_params = params_nebula(),
     .verbose = TRUE
@@ -1041,6 +1045,7 @@ S7::method(nebula_mc, MetaCells) <- function(
   coef = NULL,
   contrast = NULL,
   genes_to_use = NULL,
+  cells_to_use = NULL,
   offset = NULL,
   nebula_params = params_nebula(),
   .verbose = TRUE
@@ -1050,14 +1055,22 @@ S7::method(nebula_mc, MetaCells) <- function(
   checkmate::qassert(subject_col, "S1")
   checkmate::assertFormula(design)
   checkmate::qassert(genes_to_use, c("0", "S+"))
+  checkmate::qassert(cells_to_use, c("0", "S+"))
   checkmate::qassert(offset, c("0", "N+"))
   assertNebulaParams(nebula_params)
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   obs <- get_sc_obs(object)
 
+  # subject_ids below is sized off the full table, so filter a copy
+  obs_fit <- if (is.null(cells_to_use)) {
+    obs
+  } else {
+    .nebula_select_rows(obs, id_col = "meta_cell_id", ids = cells_to_use)
+  }
+
   inputs <- .nebula_design(
-    obs = obs,
+    obs = obs_fit,
     design = design,
     subject_col = subject_col
   )

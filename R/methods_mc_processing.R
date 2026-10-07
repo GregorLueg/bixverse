@@ -494,6 +494,7 @@ S7::method(find_hvg_sc, MetaCells) <- function(
       binning = bin_method,
       n_bins = num_bin,
       clip_max = NULL,
+      scran_params = hvg_params,
       verbose = parse_verbosity(.verbose)
     )
   )
@@ -504,13 +505,10 @@ S7::method(find_hvg_sc, MetaCells) <- function(
   var_table[, names(res) := res]
   S7::prop(object, "var_table") <- var_table
 
-  hvg <- switch(
-    hvg_params$method,
-    "vst" = order(res$var_std, decreasing = TRUE)[1:hvg_no],
-    "dispersion" = order(res$dispersion, decreasing = TRUE)[1:hvg_no],
-    "meanvarbin" = order(res$dispersion_scaled, decreasing = TRUE)[1:hvg_no],
-    stop("Unknown HVG method: ", hvg_params$method)
-  )
+  hvg <- order(
+    res[[hvg_rank_col(hvg_params$method)]],
+    decreasing = TRUE
+  )[1:hvg_no]
 
   object <- set_hvg(object, hvg = hvg)
 
@@ -560,6 +558,7 @@ S7::method(get_hvg_data_sc, MetaCells) <- function(
       binning = bin_method,
       n_bins = num_bin,
       clip_max = NULL,
+      scran_params = hvg_params,
       verbose = parse_verbosity(.verbose)
     )
   )

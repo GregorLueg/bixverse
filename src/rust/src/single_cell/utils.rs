@@ -8,7 +8,7 @@ use bixverse_rs::single_cell::sc_analysis::fast_clusters::{
 };
 use bixverse_rs::single_cell::sc_analysis::nebula::NebulaScRes;
 use bixverse_rs::single_cell::sc_annotation::sc_type::CellTypeMarkers;
-use bixverse_rs::single_cell::sc_processing::hvg::HvgDispersionRes;
+use bixverse_rs::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgScranRes};
 use either::Either;
 use std::collections::HashMap;
 
@@ -28,9 +28,9 @@ use extendr_api::*;
 /// * `3` - Distance metric
 pub type NeighboursData = Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, usize, String)>;
 
-////////////////////
-// Dispersion res //
-////////////////////
+/////////////////////
+// Batch-aware HVG //
+/////////////////////
 
 /// Flatten per-batch dispersion results into one long R list.
 ///
@@ -72,6 +72,74 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
         batch = batch_idx,
         gene_idx = gene_idx
     )
+}
+
+/// Flatten per-batch scran trend results into one long R list.
+///
+/// Assumes every batch covers the same genes, in the same order.
+///
+/// ### Params
+///
+/// * `results` - One [HvgScranRes] per batch.
+///
+/// ### Returns
+///
+/// List of equal-length vectors, batch-major: `scran_mean`, `scran_var`,
+/// `scran_fitted`, `scran_residual`, `batch` (0-indexed) and `gene_idx`
+/// (0-indexed position within the batch). The prefix keeps the log2-scale
+/// statistics apart from the VST `mean`/`var` in the var table.
+pub fn flatten_scran_batches(results: Vec<HvgScranRes>) -> List {
+    let n_genes = results.first().map_or(0, |res| res.mean.len());
+    let total_len = n_genes * results.len();
+    let mut mean_flat = Vec::with_capacity(total_len);
+    let mut var_flat = Vec::with_capacity(total_len);
+    let mut fitted_flat = Vec::with_capacity(total_len);
+    let mut residual_flat = Vec::with_capacity(total_len);
+    let mut batch_idx = Vec::with_capacity(total_len);
+    let mut gene_idx = Vec::with_capacity(total_len);
+
+    for (batch, res) in results.into_iter().enumerate() {
+        mean_flat.extend(res.mean);
+        var_flat.extend(res.var);
+        fitted_flat.extend(res.fitted);
+        residual_flat.extend(res.residual);
+        batch_idx.extend(vec![batch as i32; n_genes]);
+        gene_idx.extend(0..n_genes as i32);
+    }
+
+    list!(
+        scran_mean = mean_flat,
+        scran_var = var_flat,
+        scran_fitted = fitted_flat,
+        scran_residual = residual_flat,
+        batch = batch_idx,
+        gene_idx = gene_idx
+    )
+}
+
+/////////////
+// Indices //
+/////////////
+
+/// Turn an R list of 0-indexed integer vectors into index vectors.
+///
+/// ### Params
+///
+/// * `r_list` - List of integer vectors, already 0-indexed on the R side.
+/// * `what` - Name of the argument, for the error message.
+///
+/// ### Returns
+///
+/// One `Vec<usize>` per list element, in list order.
+pub fn r_list_to_index_vecs(r_list: List, what: &str) -> Result<Vec<Vec<usize>>> {
+    r_list
+        .values()
+        .map(|elem| {
+            elem.as_integer_vector()
+                .map(|v| v.r_int_convert())
+                .ok_or_else(|| Error::Other(format!("`{what}` must be a list of integer vectors.")))
+        })
+        .collect()
 }
 
 /////////

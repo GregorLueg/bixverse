@@ -12,9 +12,9 @@ params_sc_harmony(
   block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
-  epsilon_kmeans = 1e-05,
-  epsilon_harmony = 1e-04,
-  window_size = 2L,
+  epsilon_kmeans = 0.001,
+  epsilon_harmony = 0.01,
+  window_size = 3L,
   kmeans = list()
 )
 }
@@ -31,8 +31,8 @@ single value (broadcast to all variables) or a vector of length equal to the
 number of batch variables. Defaults to \code{2.0}.}
 
 \item{lambda}{Numeric vector. Ridge regression penalty for the linear model.
-Typically a single value that is broadcast to all design matrix columns.
-Defaults to \code{1.0}.}
+Typically a single value that is broadcast to every batch column of the
+design matrix; the intercept is not penalised. Defaults to \code{1.0}.}
 
 \item{block_size}{Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
@@ -46,19 +46,20 @@ Defaults to \code{10L}.}
 
 \item{epsilon_kmeans}{Numeric. Convergence threshold for k-means clustering.
 Stops when the relative change in cluster assignments falls below this value.
-Defaults to \code{1e-05}.}
+Defaults to \code{0.001}.}
 
 \item{epsilon_harmony}{Numeric. Convergence threshold for Harmony. Stops when
 the relative change in the objective function falls below this value.
-Defaults to \code{1e-04}.}
+Defaults to \code{0.01}.}
 
 \item{window_size}{Integer. Number of previous iterations to consider when
-checking convergence. Defaults to \code{2L}.}
+checking convergence. Defaults to \code{3L}.}
 
 \item{kmeans}{List. Optional overrides for the k-means clustering algorithm
-Possible parameters are \code{"k_means_iter"}, \code{"k_means_init"}, \code{"gemm"} and
-\code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}. See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}
-for the available elements. Defaults to \code{list()}.}
+Possible parameters are \code{"k_means_iter"} (10 here, as in R harmony),
+\code{"k_means_init"}, \code{"gemm"} and \code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}.
+See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}} for the available elements. Defaults to
+\code{list()}.}
 }
 \value{
 A named list with the following elements:
@@ -72,8 +73,8 @@ value (broadcast to all clusters) or a vector of length k. Defaults to
 single value (broadcast to all variables) or a vector of length equal to the
 number of batch variables. Defaults to \code{2.0}.
 \item lambda - Numeric vector. Ridge regression penalty for the linear
-model. Typically a single value that is broadcast to all design matrix
-columns. Defaults to \code{1.0}.
+model. Typically a single value that is broadcast to every batch column of
+the design matrix; the intercept is not penalised. Defaults to \code{1.0}.
 \item block_size - Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
 computation time. Defaults to \code{0.2}.
@@ -83,12 +84,12 @@ Harmony round. Defaults to \code{20L}.
 iterations. Defaults to \code{10L}.
 \item epsilon_kmeans - Numeric. Convergence threshold for k-means
 clustering. Stops when the relative change in cluster assignments falls
-below this value. Defaults to \code{1e-05}.
+below this value. Defaults to \code{0.001}.
 \item epsilon_harmony - Numeric. Convergence threshold for Harmony. Stops
 when the relative change in the objective function falls below this value.
-Defaults to \code{1e-04}.
+Defaults to \code{0.01}.
 \item window_size - Integer. Number of previous iterations to consider when
-checking convergence. Defaults to \code{2L}.
+checking convergence. Defaults to \code{3L}.
 \item The elements of \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}, overridden by \code{kmeans},
 spliced in at this position.
 }

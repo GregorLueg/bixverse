@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.5.7
+Version: 0.6.0
 Authors@R: 
     c(
       person(
@@ -55,7 +55,6 @@ Imports:
     lifecycle,
     magrittr,
     manifoldsR (>= 0.3.5),
-    MASS,
     matrixStats,
     Matrix,
     mirai,
@@ -91,6 +90,7 @@ Suggests:
     qs2,
     quarto,
     singscore,
+    scrapper,
     SingleCellExperiment,
     SummarizedExperiment,
     StatMatch,

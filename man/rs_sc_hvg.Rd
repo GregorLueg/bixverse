@@ -12,6 +12,7 @@ rs_sc_hvg(
   binning,
   n_bins,
   clip_max,
+  scran_params,
   streaming,
   verbose
 )
@@ -20,14 +21,14 @@ rs_sc_hvg(
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
 
 \item{hvg_method}{String. Which HVG detection method to use. One of
-\code{c("vst", "meanvarbin", "dispersion")}.}
+\code{c("vst", "meanvarbin", "dispersion", "scran")}.}
 
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep. Must be unique and within the store; duplicates or out-of-range
 positions raise an error.}
 
 \item{loess_span}{Numeric. The span parameter for the loess function
-(\code{"vst"} only). Must be within \verb{(0, 1]}.}
+(\code{"vst"}) or the lowess trend (\code{"scran"}). Must be within \verb{(0, 1]}.}
 
 \item{binning}{String. The binning strategy for the \code{meanvarbin} and
 \code{dispersion} methods. One of \code{c("equal_width", "equal_frequency")}.}
@@ -37,6 +38,10 @@ positions raise an error.}
 
 \item{clip_max}{Optional clipping number (\code{"vst"} only). Defaults to
 \code{sqrt(no_cells)} if not provided.}
+
+\item{scran_params}{List. Trend parameters for \code{"scran"}, see
+\code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}}. Missing elements fall back to
+the scrapper defaults. The span is taken from \code{loess_span}.}
 
 \item{streaming}{Boolean. Shall the genes be streamed in to reduce memory
 pressure.}
@@ -53,7 +58,15 @@ following elements can be found:
 \item var_exp - The expected variance of the gene.
 \item var_std - The standardised variance of the gene.
 }
-For the other two methods, these elements can be found:
+If \code{hvg_method == "scran"}, all on the log2 scale:
+\itemize{
+\item scran_mean - The mean log-expression of the gene.
+\item scran_var - The variance of the log-expression of the gene.
+\item scran_fitted - The variance the trend expects at the gene's mean.
+\item scran_residual - \code{scran_var - scran_fitted}. Genes are ranked on
+this.
+}
+For \code{"meanvarbin"} and \code{"dispersion"}, these elements can be found:
 \itemize{
 \item mean - The average expression of the gene.
 \item dispersion - The dispersion of the gene
@@ -64,6 +77,6 @@ For the other two methods, these elements can be found:
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function identifies highly variable genes with the three methods known
-in Seurat.
+in Seurat, plus the scran mean-variance trend.
 }
 \keyword{internal}

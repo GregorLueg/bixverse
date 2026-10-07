@@ -297,3 +297,70 @@ checkCellMarkerList <- function(x) {
 #'
 #' @keywords internal
 assertCellMarkerList <- checkmate::makeAssertionFunction(checkCellMarkerList)
+
+#### ligand receptor -----------------------------------------------------------
+
+#' Check a ligand-receptor database
+#'
+#' @description Checkmate extension for checking a ligand-receptor database
+#' as returned by [get_cellphonedb_db()].
+#'
+#' @param x The data.table to check. Needs `interaction_id`, `partner_a` and
+#' `partner_b` as character columns and `genes_a` and `genes_b` as list
+#' columns of non-empty character vectors (the subunits).
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkLrDb <- function(x) {
+  res <- checkmate::checkDataTable(x, min.rows = 1L)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "interaction_id",
+      "partner_a",
+      "partner_b",
+      "genes_a",
+      "genes_b"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkCharacter(x$interaction_id, any.missing = FALSE)
+  if (!isTRUE(res)) {
+    return(paste("interaction_id:", res))
+  }
+  if (anyDuplicated(x$interaction_id)) {
+    return("interaction_id: must be unique.")
+  }
+  for (col in c("genes_a", "genes_b")) {
+    res <- checkmate::checkList(x[[col]], types = "character")
+    if (!isTRUE(res)) {
+      return(sprintf("%s: %s", col, res))
+    }
+    if (!all(lengths(x[[col]]) > 0L)) {
+      return(sprintf("%s: every partner needs at least one gene.", col))
+    }
+  }
+  TRUE
+}
+
+#' Assert a ligand-receptor database
+#'
+#' @description Checkmate extension for asserting a ligand-receptor database
+#' as returned by [get_cellphonedb_db()].
+#'
+#' @param x The data.table to assert.
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns `x` if the assertion is successful.
+#'
+#' @keywords internal
+assertLrDb <- checkmate::makeAssertionFunction(checkLrDb)

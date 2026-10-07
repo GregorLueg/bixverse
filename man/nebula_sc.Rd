@@ -11,6 +11,7 @@ nebula_sc(
   coef = NULL,
   contrast = NULL,
   genes_to_use = NULL,
+  cells_to_use = NULL,
   offset = NULL,
   nebula_params = params_nebula(),
   .verbose = TRUE
@@ -36,6 +37,10 @@ Mutually exclusive with \code{coef}.}
 \item{genes_to_use}{Optional character vector. The genes to fit. Defaults to
 every gene in the object, which is usually too many.}
 
+\item{cells_to_use}{Optional character vector. Names of the cells to fit,
+e.g. one cell type or one condition. Defaults to every cell that passed
+quality control. Cells that cannot be matched are dropped with a warning.}
+
 \item{offset}{Optional numeric vector. Strictly positive scaling factor per
 cell, aligned to the cells that survive the design. Defaults to \code{NULL},
 which uses the library sizes.}
@@ -51,6 +56,8 @@ overdispersion.
 \item kappa - Numeric. When to trust the stage-one subject overdispersion.
 \item cpc - Numeric. Minimum mean count per cell for a gene to be tested.
 \item mincp - Integer. Minimum number of cells expressing a gene.
+\item min_subjects - Integer. Minimum number of subjects whose own mean
+count per cell clears \code{cpc}. \code{0} switches the check off.
 \item reml - Boolean. Restricted maximum likelihood.
 \item eps - Numeric. Optimiser stopping tolerance.
 \item gene_batch_size - Integer. Genes read and fitted per batch.

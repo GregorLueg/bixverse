@@ -18,7 +18,7 @@ params_sc_harmony_v2(
   alpha = 0.2,
   tau = 0,
   batch_proportion_cutoff = 1e-05,
-  use_dynamic_lambda = FALSE,
+  use_dynamic_lambda = TRUE,
   kmeans = list()
 )
 }
@@ -35,8 +35,9 @@ single value (broadcast to all variables) or a vector of length equal to the
 number of batch variables. Defaults to \code{2.0}.}
 
 \item{lambda}{Numeric vector. Ridge regression penalty for the linear model.
-Typically a single value that is broadcast to all design matrix columns.
-Ignored when \code{use_dynamic_lambda = TRUE}. Defaults to \code{1.0}.}
+Typically a single value that is broadcast to every batch column of the
+design matrix; the intercept is not penalised. Ignored when
+\code{use_dynamic_lambda = TRUE}. Defaults to \code{1.0}.}
 
 \item{block_size}{Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
@@ -68,13 +69,15 @@ in (0, 1). Only relevant when \code{use_dynamic_lambda = TRUE}. Defaults to \cod
 \item{batch_proportion_cutoff}{Numeric. Cutoff for pruning batches with small
 proportions during ridge regression. Defaults to \code{1e-05}.}
 
-\item{use_dynamic_lambda}{Boolean. If \code{TRUE}, lambda is estimated dynamically
-per cluster instead of using the fixed \code{lambda} value. Defaults to \code{FALSE}.}
+\item{use_dynamic_lambda}{Boolean. If \code{TRUE}, lambda is estimated per cluster
+as \code{alpha} times the expected counts, as in R harmony v2, instead of using
+the fixed \code{lambda} value. Defaults to \code{TRUE}.}
 
 \item{kmeans}{List. Optional overrides for the k-means clustering algorithm
-Possible parameters are \code{"k_means_iter"}, \code{"k_means_init"}, \code{"gemm"} and
-\code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}. See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}
-for the available elements. Defaults to \code{list()}.}
+Possible parameters are \code{"k_means_iter"} (10 here, as in R harmony),
+\code{"k_means_init"}, \code{"gemm"} and \code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}.
+See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}} for the available elements. Defaults to
+\code{list()}.}
 }
 \value{
 A named list with the following elements:
@@ -88,8 +91,9 @@ value (broadcast to all clusters) or a vector of length k. Defaults to
 single value (broadcast to all variables) or a vector of length equal to the
 number of batch variables. Defaults to \code{2.0}.
 \item lambda - Numeric vector. Ridge regression penalty for the linear
-model. Typically a single value that is broadcast to all design matrix
-columns. Ignored when \code{use_dynamic_lambda = TRUE}. Defaults to \code{1.0}.
+model. Typically a single value that is broadcast to every batch column of
+the design matrix; the intercept is not penalised. Ignored when
+\code{use_dynamic_lambda = TRUE}. Defaults to \code{1.0}.
 \item block_size - Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
 computation time. Defaults to \code{0.2}.
@@ -112,9 +116,9 @@ in (0, 1). Only relevant when \code{use_dynamic_lambda = TRUE}. Defaults to
 of 0 disables batch-size scaling of theta. Defaults to \code{0.0}.
 \item batch_proportion_cutoff - Numeric. Cutoff for pruning batches with
 small proportions during ridge regression. Defaults to \code{1e-05}.
-\item use_dynamic_lambda - Boolean. If \code{TRUE}, lambda is estimated
-dynamically per cluster instead of using the fixed \code{lambda} value. Defaults
-to \code{FALSE}.
+\item use_dynamic_lambda - Boolean. If \code{TRUE}, lambda is estimated per
+cluster as \code{alpha} times the expected counts, as in R harmony v2, instead of
+using the fixed \code{lambda} value. Defaults to \code{TRUE}.
 \item The elements of \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}, overridden by \code{kmeans},
 spliced in at this position.
 }

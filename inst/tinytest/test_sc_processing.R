@@ -604,6 +604,188 @@ expect_true(
   info = "sc hvg meanvarbin - streaming returns the same HVGs"
 )
 
+### scran version --------------------------------------------------------------
+
+#### r version -----------------------------------------------------------------
+
+# bixverse's natural-log layer, moved to log2 the way the Rust side does it
+log2_norm <- log1p(
+  as.matrix(counts_more_filtered) / Matrix::rowSums(counts_more_filtered) * 1000
+) /
+  log(2)
+
+scran_mean_r <- colMeans(log2_norm)
+scran_var_r <- matrixStats::colVars(log2_norm)
+
+#### rust part -----------------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "scran"),
+  .verbose = FALSE
+)
+
+var_data_scran <- get_sc_var(sc_object)
+
+expect_true(
+  current = all(
+    c("scran_mean", "scran_var", "scran_fitted", "scran_residual") %in%
+      names(var_data_scran)
+  ),
+  info = "sc hvg scran - var table populated with the prefixed scran columns"
+)
+
+# the norm layer is stored at reduced precision, hence the loose tolerances
+expect_equivalent(
+  current = var_data_scran$scran_mean,
+  target = scran_mean_r,
+  tolerance = 1e-3,
+  info = "sc hvg scran - log2 mean matches R"
+)
+
+expect_equivalent(
+  current = var_data_scran$scran_var,
+  target = scran_var_r,
+  tolerance = 1e-3,
+  info = "sc hvg scran - log2 variance matches R"
+)
+
+expect_equivalent(
+  current = var_data_scran$scran_residual,
+  target = var_data_scran$scran_var - var_data_scran$scran_fitted,
+  tolerance = 1e-10,
+  info = "sc hvg scran - residual is var - fitted"
+)
+
+expect_equivalent(
+  current = var_data_scran$var_std,
+  target = var_data_mvb_stream$var_std,
+  info = "sc hvg scran - the vst columns are left alone"
+)
+
+hvg_scran <- get_hvg(sc_object)
+
+expect_true(
+  current = all(
+    hvg_scran + 1L ==
+      order(var_data_scran$scran_residual, decreasing = TRUE)[1:hvg_to_keep]
+  ),
+  info = "sc hvg scran - HVGs are the top residuals"
+)
+
+if (requireNamespace("scrapper", quietly = TRUE)) {
+  scrapper_res <- scrapper::fitVarianceTrend(
+    means = scran_mean_r,
+    variances = scran_var_r,
+    use.min.width = FALSE
+  )
+
+  expect_equivalent(
+    current = var_data_scran$scran_fitted,
+    target = scrapper_res$fitted,
+    tolerance = 1e-3,
+    info = "sc hvg scran - trend matches scrapper::fitVarianceTrend"
+  )
+
+  expect_equivalent(
+    current = var_data_scran$scran_residual,
+    target = scrapper_res$residuals,
+    tolerance = 1e-3,
+    info = "sc hvg scran - residuals match scrapper::fitVarianceTrend"
+  )
+
+  expect_true(
+    current = setequal(
+      hvg_scran + 1L,
+      order(scrapper_res$residuals, decreasing = TRUE)[1:hvg_to_keep]
+    ),
+    info = "sc hvg scran - same HVGs as scrapper"
+  )
+}
+
+#### trend parameters ----------------------------------------------------------
+
+var_data_scran_wide <- get_hvg_data_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "scran", loess_span = 0.8),
+  .verbose = FALSE
+)
+
+expect_false(
+  current = isTRUE(all.equal(
+    var_data_scran_wide$scran_fitted,
+    var_data_scran$scran_fitted
+  )),
+  info = "sc hvg scran - loess_span reaches the trend"
+)
+
+if (requireNamespace("scrapper", quietly = TRUE)) {
+  scrapper_wide <- scrapper::fitVarianceTrend(
+    means = scran_mean_r,
+    variances = scran_var_r,
+    span = 0.8,
+    use.min.width = FALSE
+  )
+
+  expect_equivalent(
+    current = var_data_scran_wide$scran_fitted,
+    target = scrapper_wide$fitted,
+    tolerance = 1e-3,
+    info = "sc hvg scran - span = 0.8 matches scrapper"
+  )
+}
+
+var_data_scran_min_width <- get_hvg_data_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(
+    method = "scran",
+    scran = list(use_min_width = TRUE)
+  ),
+  .verbose = FALSE
+)
+
+if (requireNamespace("scrapper", quietly = TRUE)) {
+  scrapper_min_width <- scrapper::fitVarianceTrend(
+    means = scran_mean_r,
+    variances = scran_var_r,
+    use.min.width = TRUE
+  )
+
+  expect_equivalent(
+    current = var_data_scran_min_width$scran_fitted,
+    target = scrapper_min_width$fitted,
+    tolerance = 1e-3,
+    info = "sc hvg scran - use_min_width = TRUE matches scrapper"
+  )
+}
+
+#### streaming version ---------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "scran"),
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+var_data_scran_stream <- get_sc_var(sc_object)
+
+expect_equivalent(
+  current = var_data_scran_stream$scran_residual,
+  target = var_data_scran$scran_residual,
+  tolerance = 1e-8,
+  info = "sc hvg scran - streaming matches non-streaming (residual)"
+)
+
+expect_true(
+  current = length(intersect(get_hvg(sc_object), hvg_scran)) == hvg_to_keep,
+  info = "sc hvg scran - streaming returns the same HVGs"
+)
+
 ### get_hvg_data_sc -----------------------------------------------------------
 
 # reset to vst so downstream PCA tests remain unchanged

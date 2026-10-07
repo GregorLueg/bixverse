@@ -742,6 +742,59 @@ expect_true(
   info = "average returns right number of genes"
 )
 
+### scran ----------------------------------------------------------------------
+
+hvg_batch_scran <- find_hvg_batch_aware_sc(
+  sc_object.strong_batch_effect,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  hvg_params = params_sc_hvg(method = "scran"),
+  gene_comb_method = "average",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(
+    c("scran_mean", "scran_var", "scran_fitted", "scran_residual", "batch") %in%
+      names(hvg_batch_scran$hvg_data)
+  ),
+  info = "batch aware scran - per-batch scran statistics returned"
+)
+
+expect_true(
+  current = length(hvg_batch_scran$hvg_genes) == 30L,
+  info = "batch aware scran - average returns right number of genes"
+)
+
+# each batch gets its own trend, so one batch must equal a plain run on it
+scran_obs <- sc_object.strong_batch_effect[[c("cell_id", "batch_index")]]
+first_batch <- sort(unique(scran_obs$batch_index))[1]
+
+scran_single <- get_hvg_data_sc(
+  sc_object.strong_batch_effect,
+  cell_ids = scran_obs[batch_index == first_batch, cell_id],
+  hvg_no = 30L,
+  hvg_params = params_sc_hvg(method = "scran"),
+  .verbose = FALSE
+)
+
+scran_batch_1 <- hvg_batch_scran$hvg_data[
+  batch == as.character(first_batch)
+][order(gene_idx)]
+
+expect_true(
+  current = nrow(scran_batch_1) > 0L &&
+    nrow(scran_batch_1) == nrow(scran_single),
+  info = "batch aware scran - first batch covers every gene"
+)
+
+expect_equivalent(
+  current = scran_batch_1$scran_residual,
+  target = scran_single$scran_residual,
+  tolerance = 1e-8,
+  info = "batch aware scran - per-batch trend matches a single batch run"
+)
+
 ## fastmnn ---------------------------------------------------------------------
 
 ### helper function to assess fastMNN ------------------------------------------

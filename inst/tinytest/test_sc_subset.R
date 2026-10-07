@@ -242,6 +242,31 @@ expect_equal(
   info = "HVG stored in sc_map (0-indexed) and round-trips via get_hvg"
 )
 
+### scran on subset ------------------------------------------------------------
+
+subset_scran <- find_hvg_sc(
+  subset_obj,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "scran"),
+  .verbose = FALSE
+)
+
+parent_scran <- get_hvg_data_sc(
+  sc_object,
+  cell_ids = get_sc_obs(subset_obj)$cell_id,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "scran"),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = setequal(
+    get_hvg(subset_scran),
+    parent_scran[is_hvg == TRUE, gene_idx] - 1L
+  ),
+  info = "subset scran HVG matches the parent run on the same cells"
+)
+
 ### subset HVG diverges from full HVG ------------------------------------------
 
 # Full data HVG should be dominated by between-cell-type marker variance

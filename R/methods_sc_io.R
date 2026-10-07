@@ -2589,6 +2589,45 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
   }
 }
 
+### archive --------------------------------------------------------------------
+
+# generic in base_generics_sc.R
+
+#' @method archive_sc_exp SingleCells
+#'
+#' @export
+S7::method(archive_sc_exp, SingleCells) <- function(
+  object,
+  level = 3L,
+  remove_bins = TRUE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(level, "X1[1,22]")
+  checkmate::qassert(remove_bins, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  dir_data <- S7::prop(object, "dir_data")
+  f_path_cells <- file.path(dir_data, "counts_cells.bin")
+  f_path_genes <- file.path(dir_data, "counts_genes.bin")
+  checkmate::assertFileExists(f_path_cells)
+
+  # function body
+  rust_con <- get_sc_rust_ptr(object)
+  stats <- rust_con$archive(
+    f_path_archive = file.path(dir_data, "counts.bxa"),
+    level = as.integer(level),
+    verbose = .verbose
+  )
+
+  if (remove_bins) {
+    unlink(c(f_path_cells, f_path_genes))
+  }
+
+  invisible(stats)
+}
+
 ### from disk ------------------------------------------------------------------
 
 # generic in base_generics_sc.R
@@ -2605,13 +2644,27 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
   checkmate::qassert(.verbose, "B1")
 
   dir_data <- S7::prop(object, "dir_data")
+  f_path_archive <- file.path(dir_data, "counts.bxa")
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  bins <- file.path(dir_data, c("counts_cells.bin", "counts_genes.bin"))
+  if (!any(file.exists(bins)) && file.exists(f_path_archive)) {
+    if (.verbose) {
+      message("Found only counts.bxa. Restoring the binaries from the archive.")
+    }
+    rust_con$restore_archive(
+      f_path_archive = f_path_archive,
+      max_mem_gb = NULL,
+      verbose = .verbose
+    )
+  }
 
   checkmate::assertFileExists(file.path(dir_data, "counts_cells.bin"))
   checkmate::assertFileExists(file.path(dir_data, "counts_genes.bin"))
   checkmate::assertFileExists(file.path(dir_data, "sc_duckdb.db"))
 
   # function body
-  rust_con <- get_sc_rust_ptr(object)
   rust_con$set_from_file()
 
   duckdb_con <- get_sc_duckdb(object)

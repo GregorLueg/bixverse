@@ -57,6 +57,31 @@ auto_streaming <- function(n_cells, streaming = NULL, .verbose = TRUE) {
   return(res)
 }
 
+#' Column the HVG statistics are ranked on
+#'
+#' @description
+#' Maps an HVG method to the column of the `rs_sc_hvg` / `rs_mc_hvg` output
+#' that genes are ranked on, highest first.
+#'
+#' @param hvg_method String. One of
+#' `c("vst", "dispersion", "meanvarbin", "scran")`.
+#'
+#' @returns The name of the ranking column.
+#'
+#' @keywords internal
+hvg_rank_col <- function(hvg_method) {
+  checkmate::qassert(hvg_method, "S1")
+
+  switch(
+    hvg_method,
+    "vst" = "var_std",
+    "dispersion" = "dispersion",
+    "meanvarbin" = "dispersion_scaled",
+    "scran" = "scran_residual",
+    stop("Unknown HVG method: ", hvg_method)
+  )
+}
+
 #' Assemble the HVG data.table and flag the top N
 #'
 #' @description
@@ -70,12 +95,12 @@ auto_streaming <- function(n_cells, streaming = NULL, .verbose = TRUE) {
 #' table is not mutated.
 #' @param res Named list. Per-gene statistics returned by `rs_sc_hvg` or
 #' `rs_mc_hvg`. The names of `res` become new columns on the returned
-#' data.table. Must contain the ranking column implied by `hvg_method`
-#' (`var_std` for `"vst"`, `dispersion` for `"dispersion"`,
-#' `dispersion_scaled` for `"meanvarbin"`).
+#' data.table. Must contain the ranking column implied by `hvg_method`, see
+#' [hvg_rank_col()].
 #' @param hvg_no Integer. Number of top genes to flag as HVGs.
-#' @param hvg_method String. One of `c("vst", "dispersion", "meanvarbin")`.
-#' Selects which column in `res` is used to rank genes.
+#' @param hvg_method String. One of
+#' `c("vst", "dispersion", "meanvarbin", "scran")`. Selects which column in
+#' `res` is used to rank genes.
 #'
 #' @returns A data.table with the original `var_table` columns, all columns
 #' from `res`, plus:
@@ -87,16 +112,15 @@ auto_streaming <- function(n_cells, streaming = NULL, .verbose = TRUE) {
 #'
 #' @keywords internal
 build_hvg_table <- function(var_table, res, hvg_no, hvg_method) {
+  checkmate::assertDataTable(var_table)
+  checkmate::assertList(res, names = "named")
+  checkmate::qassert(hvg_no, "I1[1,)")
+  checkmate::qassert(hvg_method, "S1")
+
   dt <- data.table::copy(var_table)
   dt[, names(res) := res]
 
-  rank_col <- switch(
-    hvg_method,
-    "vst" = "var_std",
-    "dispersion" = "dispersion",
-    "meanvarbin" = "dispersion_scaled",
-    stop("Unknown HVG method: ", hvg_method)
-  )
+  rank_col <- hvg_rank_col(hvg_method)
 
   hvg_idx <- order(dt[[rank_col]], decreasing = TRUE)[seq_len(hvg_no)]
   dt[, c("is_hvg", "hvg_rank") := list(FALSE, NA_integer_)]
