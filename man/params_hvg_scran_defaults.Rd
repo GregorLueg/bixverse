@@ -25,6 +25,7 @@ used with \code{use_min_width = TRUE}. Defaults to \code{200L}.
 }
 \description{
 Trend parameters for \code{method = "scran"} in \code{\link[=params_sc_hvg]{params_sc_hvg()}}.
-They mirror scrapper's \code{fitVarianceTrend()} defaults. The lowess span comes
-from \code{loess_span} in \code{\link[=params_sc_hvg]{params_sc_hvg()}}.
+They mirror scrapper's \code{fitVarianceTrend()} defaults before scrapper 1.8,
+which switched \code{use.min.width} to \code{TRUE}. The lowess span comes from
+\code{loess_span} in \code{\link[=params_sc_hvg]{params_sc_hvg()}}.
 }

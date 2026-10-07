@@ -1306,8 +1306,9 @@ params_hvg_defaults <- function() {
 #' Helper function to generate the scran HVG trend defaults
 #'
 #' @description Trend parameters for `method = "scran"` in [params_sc_hvg()].
-#' They mirror scrapper's `fitVarianceTrend()` defaults. The lowess span comes
-#' from `loess_span` in [params_sc_hvg()].
+#' They mirror scrapper's `fitVarianceTrend()` defaults before scrapper 1.8,
+#' which switched `use.min.width` to `TRUE`. The lowess span comes from
+#' `loess_span` in [params_sc_hvg()].
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
