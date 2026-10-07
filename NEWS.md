@@ -25,6 +25,9 @@ different, hence, major release.
   100 to 20 and increase the iterations from 2 to 4. Across various benchmarks
   and synthetic data sets, the quality of the trailing PCs has improved with
   the new thresholds while being faster.
+* NEBULA has now a parameter that enables that a minimum of samples need to have
+  the minimum amount of cells expressing a gene in terms of proportion and min
+  expression.
 
 ## Fixes
 
