@@ -740,3 +740,19 @@ pub fn nebula_res_to_r_list(res: NebulaScRes) -> List {
         fdr = res.fdr
     )
 }
+
+/// Decode the stored `f16` normalised counts to `f32`
+///
+/// ### Params
+///
+/// * `data` - The normalised counts as stored in the binary files.
+///
+/// ### Returns
+///
+/// An iterator over the values as `f32`.
+pub fn norm_counts_to_f32(data: &[F16]) -> impl Iterator<Item = f32> + '_ {
+    data.iter().map(|&x| {
+        let v: half::f16 = x.into();
+        v.to_f32()
+    })
+}
