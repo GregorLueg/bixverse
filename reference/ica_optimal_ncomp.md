@@ -62,6 +62,7 @@ obj <- ica_evaluate_comp(
 obj <- ica_optimal_ncomp(
   obj, span = 0.4, show_plot = FALSE, .verbose = FALSE
 )
+#> Warning: The loess function could not be fitted with the given parameters. Returning object as is.
 obj@params$ica_stability_assessment$optimal_ncomp
-#> [1] 8
+#> [1] NA
 ```

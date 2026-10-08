@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Single-cell data I/O in bixverse</h1>
 
       <p class="author">Andrew Skelton and Gregor Lueg</p>
-      <p class="date">2026-10-07</p>
+      <p class="date">2026-10-08</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -454,13 +454,25 @@
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
 </div>
+</section><section class="level3"><h3 id="export">Export<a class="anchor" aria-label="anchor" href="#export"></a>
+</h3>
+<p><code><a href="../reference/save_h5ad.html">save_h5ad()</a></code> goes in the other direction: it writes a loaded object to <code>.h5ad</code> for reading with ScanPy. Only kept cells are written; <code>assay</code> picks raw or normalised counts for <code>X</code>, and any cached PCA, embeddings or sNN graph go to <code>obsm</code>/<code>varm</code>/<code>obsp</code>. The counts are streamed in cell batches, so the full matrix never sits in memory.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">h5_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">base</span>, <span class="st">"export.h5ad"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/save_h5ad.html">save_h5ad</a></span><span class="op">(</span><span class="va">sc_h5</span>, <span class="va">h5_out</span>, assay <span class="op">=</span> <span class="st">"raw"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/read_h5ad_metadata.html">read_h5ad_metadata</a></span><span class="op">(</span><span class="va">h5_out</span><span class="op">)</span><span class="op">$</span><span class="va">dims</span></span>
+<span><span class="co">#&gt; obs var </span></span>
+<span><span class="co">#&gt; 500 100</span></span></code></pre></div>
+</div>
 </section></section><section class="level2"><h2 id="x-cellranger-hdf5">10x CellRanger HDF5<a class="anchor" aria-label="anchor" href="#x-cellranger-hdf5"></a>
 </h2>
 <section class="level3"><h3 id="single-sample-1">Single sample<a class="anchor" aria-label="anchor" href="#single-sample-1"></a>
 </h3>
 <p><code><a href="../reference/write_tenx_h5_sc.html">write_tenx_h5_sc()</a></code> expects the counts plus a barcode vector and a <code>features</code> table (with at least <code>id</code> and <code>name</code>). <code><a href="../reference/load_tenx_h5.html">load_tenx_h5()</a></code> reads the gene-expression modality (V3 files may also carry e.g. Antibody Capture, which is filtered out via <code>feature_type</code>).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>id <span class="op">=</span> <span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>, name <span class="op">=</span> <span class="va">var</span><span class="op">$</span><span class="va">ensembl_id</span><span class="op">)</span></span>
 <span><span class="va">h5_tenx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">base</span>, <span class="st">"sample_a_10x.h5"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/write_tenx_h5_sc.html">write_tenx_h5_sc</a></span><span class="op">(</span></span>
@@ -505,7 +517,7 @@
 </ul>
 <p>Mixed v2 / v3 inputs in the same call are handled transparently, and non-gene modalities (e.g. Antibody Capture) are silently dropped when <code>feature_type = "Gene Expression"</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">features_b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>  id <span class="op">=</span> <span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>,</span>
 <span>  name <span class="op">=</span> <span class="va">var</span><span class="op">$</span><span class="va">ensembl_id</span>,</span>
@@ -560,7 +572,7 @@
 </h2>
 <p>Once an object is loaded, the in-memory mappings can be persisted so a fresh session can be restored without re-ingesting the counts. The on-disk binary and DuckDB already live in <code>dir_data</code>; <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code> adds the lightweight mapping cache.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk</a></span><span class="op">(</span><span class="va">sc_h5</span>, type <span class="op">=</span> <span class="st">"rds"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_restored</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">base</span>, <span class="st">"store_h5"</span><span class="op">)</span><span class="op">)</span></span>
@@ -584,7 +596,7 @@
 </h3>
 <p>Project done, but you want to keep the data around? The two count binaries are uncompressed, so they eat disk. <code><a href="../reference/archive_sc_exp.html">archive_sc_exp()</a></code> compresses <code>counts_cells.bin</code> into a single zstd <code>counts.bxa</code> and, by default, deletes both binaries. The gene-based file is not archived at all, it’s just a transpose of the cell-based one. Normalised values only go into the archive where they can’t be recomputed from the raw counts. <code>level</code> (1 to 22) trades write time for size; decompression speed barely changes. Run <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code> first, the archive only covers the counts.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dir_h5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">base</span>, <span class="st">"store_h5"</span><span class="op">)</span></span>
 <span><span class="va">bin_bytes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir_h5</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"counts_cells.bin"</span>, <span class="st">"counts_genes.bin"</span><span class="op">)</span><span class="op">)</span></span>
@@ -603,7 +615,7 @@
 </div>
 <p>Nothing changes on the way back in. <code><a href="../reference/load_existing.html">load_existing()</a></code> spots that only the archive is there and rebuilds both binaries before loading.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_archived</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_existing.html">load_existing</a></span><span class="op">(</span><span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="va">dir_h5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Found only counts.bxa. Restoring the binaries from the archive.</span></span>
 <span><span class="co">#&gt; Found stored data from save_sc_exp_to_disk(). Loading that one into the object.</span></span>

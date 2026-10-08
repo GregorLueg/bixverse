@@ -417,7 +417,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "fastMNN"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1     0.6573855
+#> 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6573844
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:          0.9408038 fastMNN
@@ -501,7 +501,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6992417
+#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6992418
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:                  1 Harmony
@@ -915,7 +915,7 @@ metrics_dt[, .(
 #>         method kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1
-#> 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1
+#> 2:     fastMNN  0.69251840 0.9413065 0.4705881      0.8861530     1
 #> 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1
 #> 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1
 #> 5:  Seurat CCA  0.71785653 0.8929735 0.4705881      0.8688793     1
@@ -924,8 +924,8 @@ metrics_dt[, .(
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
 #> 1:     0.6782159          1.0000000
-#> 2:     0.6573855          0.9408038
-#> 3:     0.6992417          1.0000000
+#> 2:     0.6573844          0.9408038
+#> 3:     0.6992418          1.0000000
 #> 4:     0.6978205          1.0000000
 #> 5:     0.7043481          1.0000000
 #> 6:     0.6966735          1.0000000

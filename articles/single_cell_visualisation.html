@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>A guide to single-cell plotting functions</h1>
 
       <p class="author">Liesbeth François</p>
-      <p class="date">2026-10-07</p>
+      <p class="date">2026-10-08</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -531,14 +531,14 @@
 <span>  obs_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sc_type"</span>, <span class="st">"leiden_clusters"</span>, <span class="st">"Ribo"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span></span>
-<span><span class="co">#&gt;             cell_id     dim_1        dim_2    sc_type leiden_clusters      Ribo</span></span>
-<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;        &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: AAACATACAACCAC-1 -2.904104 -3.216339111    T cells               0 0.4371381</span></span>
-<span><span class="co">#&gt; 2: AAACATTGATCAGC-1 -5.374538 -4.708022594    T cells               0 0.3171120</span></span>
-<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1  1.928853  3.916298628 CD14+ Mono               1 0.2431611</span></span>
-<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1 -2.509263  0.001145683         NK               2 0.1491318</span></span>
-<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1 -4.373352 -3.819267988    T cells               0 0.3635097</span></span>
-<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1 -3.359194 -3.010173559         NK               2 0.4165899</span></span></code></pre></div>
+<span><span class="co">#&gt;             cell_id     dim_1       dim_2    sc_type leiden_clusters      Ribo</span></span>
+<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;       &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: AAACATACAACCAC-1 -2.803706 -3.16962457    T cells               0 0.4371381</span></span>
+<span><span class="co">#&gt; 2: AAACATTGATCAGC-1 -5.272682 -4.65794992    T cells               0 0.3171120</span></span>
+<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1  2.010388  3.92012954 CD14+ Mono               1 0.2431611</span></span>
+<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1 -2.443664  0.06537197         NK               2 0.1491318</span></span>
+<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1 -4.273110 -3.77306724    T cells               0 0.3635097</span></span>
+<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1 -3.258008 -2.96359968         NK               2 0.4165899</span></span></code></pre></div>
 </div>
 </section><section class="section level2"><h2 id="other-2d-embeddings">Other 2D embeddings<a class="anchor" aria-label="anchor" href="#other-2d-embeddings"></a>
 </h2>
@@ -672,14 +672,14 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span></span>
-<span><span class="co">#&gt;             cell_id     dim_1        dim_2    sc_type leiden_clusters      Ribo</span></span>
-<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;        &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: AAACATACAACCAC-1 -2.904104 -3.216339111    T cells               0 0.4371381</span></span>
-<span><span class="co">#&gt; 2: AAACATTGATCAGC-1 -5.374538 -4.708022594    T cells               0 0.3171120</span></span>
-<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1  1.928853  3.916298628 CD14+ Mono               1 0.2431611</span></span>
-<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1 -2.509263  0.001145683         NK               2 0.1491318</span></span>
-<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1 -4.373352 -3.819267988    T cells               0 0.3635097</span></span>
-<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1 -3.359194 -3.010173559         NK               2 0.4165899</span></span>
+<span><span class="co">#&gt;             cell_id     dim_1       dim_2    sc_type leiden_clusters      Ribo</span></span>
+<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;       &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: AAACATACAACCAC-1 -2.803706 -3.16962457    T cells               0 0.4371381</span></span>
+<span><span class="co">#&gt; 2: AAACATTGATCAGC-1 -5.272682 -4.65794992    T cells               0 0.3171120</span></span>
+<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1  2.010388  3.92012954 CD14+ Mono               1 0.2431611</span></span>
+<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1 -2.443664  0.06537197         NK               2 0.1491318</span></span>
+<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1 -4.273110 -3.77306724    T cells               0 0.3635097</span></span>
+<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1 -3.258008 -2.96359968         NK               2 0.4165899</span></span>
 <span><span class="co">#&gt;               gene expression</span></span>
 <span><span class="co">#&gt;             &lt;fctr&gt;      &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: ENSG00000156738          0</span></span>

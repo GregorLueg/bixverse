@@ -198,7 +198,7 @@ about it too:
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id   from
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char> <list>
-#> 1:      rna residuals   <NA>    TRUE  FALSE   <NA> ef6b61e2bfadffc2
+#> 1:      rna residuals   <NA>    TRUE  FALSE   <NA> de19b49718504784
 ```
 
 ## Variable features
@@ -466,7 +466,7 @@ corrected <- sct_corrected_counts_sc(
   .verbose = TRUE
 )
 #> Building the cell-major companion store.
-#> Corrected store: 5841 cells by 13879 genes in /tmp/RtmpOjNhx1/pbmc_corrected.
+#> Corrected store: 5841 cells by 13879 genes in /tmp/RtmpC6N6Uu/pbmc_corrected.
 
 corrected
 #> Single cell experiment (Single Cells).

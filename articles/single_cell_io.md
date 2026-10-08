@@ -385,6 +385,25 @@ sc_multi_h5
 #>   Stale artefacts: none
 ```
 
+### Export
+
+[`save_h5ad()`](https://gregorlueg.github.io/bixverse/reference/save_h5ad.md)
+goes in the other direction: it writes a loaded object to `.h5ad` for
+reading with ScanPy. Only kept cells are written; `assay` picks raw or
+normalised counts for `X`, and any cached PCA, embeddings or sNN graph
+go to `obsm`/`varm`/`obsp`. The counts are streamed in cell batches, so
+the full matrix never sits in memory.
+
+``` r
+
+h5_out <- file.path(base, "export.h5ad")
+save_h5ad(sc_h5, h5_out, assay = "raw", .verbose = FALSE)
+
+read_h5ad_metadata(h5_out)$dims
+#> obs var 
+#> 500 100
+```
+
 ## 10x CellRanger HDF5
 
 ### Single sample

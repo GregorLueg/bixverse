@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,6 +93,14 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.1" id="bixverse-061">bixverse 0.6.1<a class="anchor" aria-label="anchor" href="#bixverse-061"></a></h2>
+<div class="section level3">
+<h3 id="features-0-6-1">Features<a class="anchor" aria-label="anchor" href="#features-0-6-1"></a></h3>
+<ul><li>
+<code><a href="../reference/save_h5ad.html">save_h5ad()</a></code> exports a <code>SingleCells</code> object to an AnnData <code>.h5ad</code> file for ScanPy: raw or normalised counts in <code>X</code>, obs/var, and cached PCA, embeddings and sNN graph (<code>obsm</code>/<code>varm</code>/<code>obsp</code>). Counts are streamed in cell batches and written via <a href="https://crates.io/crates/scx-core" class="external-link">scx-core</a>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="bixverse-060">bixverse 0.6.0<a class="anchor" aria-label="anchor" href="#bixverse-060"></a></h2>
 <p><strong>Larger release with performance improvements across the board and new methods.</strong> The Rust backend got a sweep and parts that could be parallelised, but were not are now parallel, SIMD/GEMM integrated everywhere applicable and better memory access patterns across the board. Some of the rounding might be slightly different, hence, major release.</p>

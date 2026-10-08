@@ -682,6 +682,11 @@ Rust and the DuckDB supporting the metadata.
 - [`read_h5ad_x_summary()`](https://gregorlueg.github.io/bixverse/reference/read_h5ad_x_summary.md)
   : Read summary statistics from the X slot of an h5ad file
 
+- [`save_h5ad()`](https://gregorlueg.github.io/bixverse/reference/save_h5ad.md)
+  :
+
+  Save a `SingleCells` object to h5ad
+
 - [`save_sc_exp_to_disk()`](https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.md)
   : Save memory-bound data to disk
 

@@ -394,6 +394,10 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-get_manifoldsr_knn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-get_manifoldsr_knn_from_wnn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-grouped_gene_stats_in_memory.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-h5ad_columns.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-h5ad_export_cache.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-h5ad_export_obs.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-h5ad_export_var.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-h5ad_frame_length.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-inject_consensus_seed.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-integration_slot.html</loc></url>
@@ -1051,6 +1055,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_regulon_thresholds.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_remove_batch_effect.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sample_ids_for_cell_types.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_save_h5ad.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_bonsai.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_cellphonedb.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_doublet_detection.html</loc></url>
@@ -1128,6 +1133,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_palantir_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_ppca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/run_snf.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/save_h5ad.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/sc_knn_to_nearest_neighbours.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/sc_pipeline.html</loc></url>
