@@ -1,5 +1,20 @@
 # Changelog
 
+## bixverse 0.6.2
+
+### Features
+
+- Wired in faster NEBULA via
+  [`edge-rs`](https://crates.io/crates/edge-rs).
+
+### Fix
+
+- Fixed the bug that h5ad ingest silently drops string and nullable obs
+  columns from the obs table.
+- Personalised PageRank stopped iterating too early; it now matches
+  igraph (default `tol = 1e-12`, `rs_page_rank*` gained `damping_factor`
+  and `tol`) (#254).
+
 ## bixverse 0.6.1
 
 ### Features
@@ -9,6 +24,10 @@
   raw or normalised counts in `X`, obs/var, and cached PCA, embeddings
   and sNN graph (`obsm`/`varm`/`obsp`). Counts are streamed in cell
   batches and written via [scx-core](https://crates.io/crates/scx-core).
+- [`as_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/as_ligand_target_influence.md)
+  wraps a ligand-target matrix built elsewhere (e.g. nichenetr) as a
+  `LigandTargetInfluence`, so it can be scored with
+  [`ligand_activity_scores()`](https://gregorlueg.github.io/bixverse/reference/ligand_activity_scores.md).
 
 ## bixverse 0.6.0
 

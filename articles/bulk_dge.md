@@ -443,7 +443,7 @@ comparison[, .(
 )]
 #>    max_abs_diff_logfc max_abs_diff_t max_abs_diff_log10p
 #>                 <num>          <num>               <num>
-#> 1:       1.421085e-14   1.540386e-10        7.670664e-11
+#> 1:       1.421085e-14   1.415472e-10        7.045209e-11
 ```
 
 Or as plots:
@@ -551,9 +551,9 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: milliseconds
-#>      expr      min        lq      mean    median        uq       max neval
-#>     limma 1589.893 1624.6739 1751.6301 1648.1452 1678.5127 2216.9258     5
-#>  bixverse  307.092  307.1621  327.7652  326.1167  348.5308  349.9243     5
+#>      expr       min        lq      mean    median        uq       max neval
+#>     limma 1121.6495 1143.6482 1297.0143 1189.9343 1234.4051 1795.4344     5
+#>  bixverse  193.5868  194.0955  206.8478  195.5435  216.2951  234.7182     5
 ```
 
 And the edgeR quasi-likelihood chain, same counts and design as
@@ -580,8 +580,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>      expr      min       lq     mean   median       uq      max neval
-#>     edgeR 871.1911 900.4853 905.5503 902.0489 923.1059 930.9204     5
-#>  bixverse 288.2620 288.5793 305.2882 300.1104 322.2070 327.2825     5
+#>     edgeR 554.9447 556.0248 566.6643 568.5347 574.5297 579.2877     5
+#>  bixverse 162.3664 179.7035 183.4982 180.4227 183.3730 211.6254     5
 ```
 
 Both land a few times faster on the Rust side, on eight samples. Mileage

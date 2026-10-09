@@ -68,6 +68,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/apply_pipeline_per_group.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/apply_qtest_rules.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/as_ligand_target_influence.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertBinaryHeatmapParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertBlitzGseaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertBpcaParams.html</loc></url>
@@ -428,6 +429,9 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-prep_mc_embd_knn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-print_stale_str.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-rank_scale.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_h5ad_column.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_h5ad_dataset.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_h5ad_frame.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_label_columns.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_slot_value_sample.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_stamp.html</loc></url>

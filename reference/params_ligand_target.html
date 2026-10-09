@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,7 +105,7 @@
 <span>  gr_hub <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  ltf_cutoff <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  damping_factor <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  tol <span class="op">=</span> <span class="fl">1e-06</span>,</span>
+<span>  tol <span class="op">=</span> <span class="fl">1e-12</span>,</span>
 <span>  max_iter <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  topology_correction <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  secondary_targets <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -138,8 +138,10 @@ factor. Defaults to <code>0.5</code>.</p></dd>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
-<dd><p>Numeric. Numeric &gt; 0. Convergence tolerance for the propagation
-step. Defaults to <code>1e-06</code>.</p></dd>
+<dd><p>Numeric. Numeric &gt; 0. Convergence tolerance (L1 change) for the
+propagation step. With <code>ltf_cutoff &gt; 0</code> the output is only stable once the
+propagation has converged well below the score gaps around the quantile, so
+keep this tight. Defaults to <code>1e-12</code>.</p></dd>
 
 
 <dt id="arg-max-iter">max_iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
@@ -168,8 +170,10 @@ gene regulatory layer. 0 disables correction. Defaults to <code>0.0</code>.</p><
 the intermediate ligand-to-TF matrix. Defaults to <code>0.99</code>.</p></li>
 <li><p>damping_factor - Numeric. Numeric in <code>[0, 1]</code>. PageRank-style damping
 factor. Defaults to <code>0.5</code>.</p></li>
-<li><p>tol - Numeric. Numeric &gt; 0. Convergence tolerance for the propagation
-step. Defaults to <code>1e-06</code>.</p></li>
+<li><p>tol - Numeric. Numeric &gt; 0. Convergence tolerance (L1 change) for the
+propagation step. With <code>ltf_cutoff &gt; 0</code> the output is only stable once the
+propagation has converged well below the score gaps around the quantile, so
+keep this tight. Defaults to <code>1e-12</code>.</p></li>
 <li><p>max_iter - Integer. Integer &gt;= 1. Maximum iterations for the
 propagation step. Defaults to <code>1000L</code>.</p></li>
 <li><p>topology_correction - Boolean. Apply topology correction. Defaults to

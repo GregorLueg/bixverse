@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Differential expression with donor structure</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-08</p>
+      <p class="date">2026-10-09</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -301,7 +301,7 @@
 <span><span class="co">#&gt;   Method:   ln | subject column: ind</span></span>
 <span><span class="co">#&gt;   Tested:   stimstim</span></span>
 <span><span class="co">#&gt;   Subjects: 8 | cells: 5355</span></span>
-<span><span class="co">#&gt;   Warnings: 0 did not converge, 89 collapsed to a plain NB</span></span></code></pre></div>
+<span><span class="co">#&gt;   Warnings: 0 did not converge, 90 collapsed to a plain NB</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
@@ -314,11 +314,11 @@
 <span><span class="co">#&gt; 1: APOBEC3B  4.666642  70.90766       0     0</span></span>
 <span><span class="co">#&gt; 2:     CCL8  5.968108  84.06402       0     0</span></span>
 <span><span class="co">#&gt; 3:   CXCL10  5.614680 108.35227       0     0</span></span>
-<span><span class="co">#&gt; 4:     CTSC  2.641458  46.26615       0     0</span></span>
+<span><span class="co">#&gt; 4:     CTSC  2.641458  46.26616       0     0</span></span>
 <span><span class="co">#&gt; 5:      IL8 -2.067606 -52.81027       0     0</span></span>
 <span><span class="co">#&gt; 6:   CXCL11  5.931948  44.58929       0     0</span></span>
 <span><span class="co">#&gt; 7:   FAM26F  3.230210  54.80266       0     0</span></span>
-<span><span class="co">#&gt; 8:    IL1RN  4.216905  56.46412       0     0</span></span></code></pre></div>
+<span><span class="co">#&gt; 8:    IL1RN  4.216905  56.46413       0     0</span></span></code></pre></div>
 </div>
 <p>CXCL10, CCL8 and APOBEC3B at the top, IL8 down. That is the interferon response, and it is reassuring rather than surprising.</p>
 <p>Note that the Wilcoxon test finds <em>fewer</em> genes here than the other two, not more. Pseudoreplication inflates significance, but the Wilcoxon test is also a rank test with a expression-proportion filter, and it is simply less powerful for a large shift in mean. On a real, strong effect all three agree the effect is there. The difference shows up somewhere else.</p>
@@ -461,8 +461,8 @@
 <span><span class="co">#&gt; 2:               HLA-DRB5              1.3323523           0.6969546</span></span>
 <span><span class="co">#&gt; 3:                   GJB2              0.9802969           9.5504329</span></span>
 <span><span class="co">#&gt; 4:               TMEM176B              0.9453621           1.0881471</span></span>
-<span><span class="co">#&gt; 5: AKR1C1_ENSG00000187134              0.9314292          64.4138787</span></span>
-<span><span class="co">#&gt; 6:               TMEM176A              0.9152085           2.6871323</span></span>
+<span><span class="co">#&gt; 5: AKR1C1_ENSG00000187134              0.9314293          64.4152489</span></span>
+<span><span class="co">#&gt; 6:               TMEM176A              0.9152085           2.6871328</span></span>
 <span><span class="co">#&gt;    sigma_at_bound convergence</span></span>
 <span><span class="co">#&gt;            &lt;lgcl&gt;       &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:          FALSE           1</span></span>
@@ -483,17 +483,17 @@
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;        n failed collapsed</span></span>
 <span><span class="co">#&gt;    &lt;int&gt;  &lt;int&gt;     &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   429      0        89</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:   429      0        90</span></span></code></pre></div>
 </div>
 <p>The fixed effects and their standard errors are on the object as matrices of genes by coefficients, so the full model is available without refitting.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">nebula_res</span><span class="op">$</span><span class="va">coefficients</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          (Intercept)  stimstim</span></span>
-<span><span class="co">#&gt; HBB        -7.310408 0.5106342</span></span>
-<span><span class="co">#&gt; APOBEC3B   -8.637498 4.6666425</span></span>
-<span><span class="co">#&gt; HBA2       -8.767250 0.2434404</span></span>
-<span><span class="co">#&gt; HBA1       -9.472912 0.3307963</span></span></code></pre></div>
+<span><span class="co">#&gt;          (Intercept)   stimstim</span></span>
+<span><span class="co">#&gt; HBB        -7.310407 0.51063384</span></span>
+<span><span class="co">#&gt; APOBEC3B   -8.637498 4.66664250</span></span>
+<span><span class="co">#&gt; HBA2       -8.767251 0.24343042</span></span>
+<span><span class="co">#&gt; HBA1       -9.041839 0.07146763</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="which-one-to-reach-for">Which one to reach for<a class="anchor" aria-label="anchor" href="#which-one-to-reach-for"></a>
 </h2>

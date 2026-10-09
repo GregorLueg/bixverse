@@ -1388,23 +1388,36 @@ cell
 Classes, functions and generics/methods for ligand receptor analysis for
 single cell.
 
+- [`as_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/as_ligand_target_influence.md)
+  :
+
+  Wrap an existing ligand-target matrix as a `LigandTargetInfluence`
+
 - [`cellphonedb_sc()`](https://gregorlueg.github.io/bixverse/reference/cellphonedb_sc.md)
   : CellPhoneDB ligand-receptor analysis
+
 - [`compute_expression_info_sc()`](https://gregorlueg.github.io/bixverse/reference/compute_expression_info_sc.md)
   : Compute per-cluster mean expression and expressing fraction for a
   gene set
+
 - [`generate_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/generate_ligand_target_influence.md)
   : Generate the ligand to target influence matrix
+
 - [`get_cellphonedb_db()`](https://gregorlueg.github.io/bixverse/reference/get_cellphonedb_db.md)
   : Download the CellPhoneDB ligand-receptor database
+
 - [`get_influence()`](https://gregorlueg.github.io/bixverse/reference/get_influence.md)
   : Get the ligand-target influence matrix
+
 - [`ligand_activity_scores()`](https://gregorlueg.github.io/bixverse/reference/ligand_activity_scores.md)
   : Compute ligand activity scores against gene sets
+
 - [`params_ligand_target()`](https://gregorlueg.github.io/bixverse/reference/params_ligand_target.md)
   : Parameters for ligand to target influence computation
+
 - [`params_sc_cellphonedb()`](https://gregorlueg.github.io/bixverse/reference/params_sc_cellphonedb.md)
   : Parameters for the CellPhoneDB analysis
+
 - [`prioritise_interactions()`](https://gregorlueg.github.io/bixverse/reference/prioritise_interactions.md)
   : Prioritise sender-ligand-receiver-receptor interactions
 

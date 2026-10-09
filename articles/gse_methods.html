@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-08</p>
+      <p class="date">2026-10-09</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -161,11 +161,12 @@
 <p>All methods are implemented in Rust and exposed via <code>extendr</code>. The performance gains relative to existing R implementations range from modest (~20% faster for GSEA relative to <code>fgsea</code>’s Rcpp implementation) to substantial: the parallelised hypergeometric test over large gene set libraries can be orders of magnitude faster than a naive R loop.</p>
 </section><section class="level2"><h2 id="hypergeometric-tests">Hypergeometric tests<a class="anchor" aria-label="anchor" href="#hypergeometric-tests"></a>
 </h2>
-<p><code>bixverse</code> implements the standard hypergeometric over-representation test. In this example we load the Hallmark gene sets from <code>msigdbr</code> and construct a named list, which is the expected input format throughout <code>bixverse</code> for gene set analyses.</p>
+<p><code>bixverse</code> implements the standard hypergeometric over-representation test. In this example we load the human Hallmark gene sets (MSigDB 2026.1.Hs, CC BY 4.0, exported via <code>msigdbr</code>) shipped with the package and construct a named list, which is the expected input format throughout <code>bixverse</code> for gene set analyses.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">h_gene_sets</span> <span class="op">&lt;-</span> <span class="fu">msigdbr</span><span class="fu">::</span><span class="fu"><a href="https://igordot.github.io/msigdbr/reference/msigdbr.html" class="external-link">msigdbr</a></span><span class="op">(</span>species <span class="op">=</span> <span class="st">"human"</span>, collection <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Downloading gene sets (first use only, may take a few minutes)...</span></span>
+<code class="sourceCode R"><span><span class="va">h_gene_sets</span> <span class="op">&lt;-</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/read_parquet.html" class="external-link">read_parquet</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"hallmark_gene_sets.parquet"</span>, package <span class="op">=</span> <span class="st">"bixverse"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">h_gene_sets_ls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">h_gene_sets</span><span class="op">$</span><span class="va">ensembl_gene</span>, <span class="va">h_gene_sets</span><span class="op">$</span><span class="va">gs_name</span><span class="op">)</span></span>
 <span></span>
@@ -284,7 +285,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.618 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.161 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -381,7 +382,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.807 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.668 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -572,8 +573,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.893305 3.040958 3.260912 3.334781 3.342103 3.693413     5</span></span>
-<span><span class="co">#&gt;   rust 2.141470 2.145848 2.156426 2.160163 2.165780 2.168873     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.101877 2.163095 2.328084 2.367059 2.414348 2.594042     5</span></span>
+<span><span class="co">#&gt;   rust 1.372325 1.380028 1.385861 1.385832 1.392266 1.398852     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -680,9 +681,9 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;        expr        min         lq       mean     median         uq        max</span></span>
-<span><span class="co">#&gt;       fgsea 2134.81989 2148.30250 2148.63669 2148.88411 2152.16418 2159.01278</span></span>
-<span><span class="co">#&gt;  blitz_cold  521.64597  522.88302  524.08651  523.03086  526.36761  526.50512</span></span>
-<span><span class="co">#&gt;  blitz_warm   13.26821   13.34138   13.64342   13.46053   13.73966   14.40731</span></span>
+<span><span class="co">#&gt;       fgsea 1382.57986 1382.61208 1388.62122 1388.33993 1393.59508 1395.97916</span></span>
+<span><span class="co">#&gt;  blitz_cold  331.78910  332.66400  336.59302  334.95653  335.82016  347.73531</span></span>
+<span><span class="co">#&gt;  blitz_warm   10.26371   10.81819   11.58263   11.13942   11.98625   13.70556</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span>

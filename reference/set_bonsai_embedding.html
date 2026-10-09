@@ -13,7 +13,7 @@ same order."><meta property="og:image" content="https://gregorlueg.github.io/bix
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,7 +136,10 @@ same order.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Bonsai leaf coordinates next to the other embeddings</span></span></span>
-<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span>prepped <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  prepped <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span>n_cells <span class="op">=</span> <span class="fl">200L</span>, n_genes <span class="op">=</span> <span class="fl">50L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="bonsai_sc.html">bonsai_sc</a></span><span class="op">(</span><span class="va">sc</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu">set_bonsai_embedding</span><span class="op">(</span><span class="va">sc</span>, <span class="va">tree</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="get_available_embeddings.html">get_available_embeddings</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></span>

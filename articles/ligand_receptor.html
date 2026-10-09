@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Ligand-receptor analysis with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-08</p>
+      <p class="date">2026-10-09</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -566,33 +566,33 @@
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_influence.html">get_influence</a></span><span class="op">(</span><span class="va">ligand_influence</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         CCL5     CXCL10 IL15   TNF TGFB1 ICAM1 CCR5 CXCR3 IL2RG TNFRSF1A TGFBR2</span></span>
-<span><span class="co">#&gt; CCL5   0.000 0.08349609    0 0.000     0 0.000    0     0     0        0      0</span></span>
-<span><span class="co">#&gt; CXCL10 0.000 0.08349609    0 0.000     0 0.000    0     0     0        0      0</span></span>
-<span><span class="co">#&gt; IL15   0.000 0.02099609    0 0.000     0 0.000    0     0     0        0      0</span></span>
-<span><span class="co">#&gt; TNF    0.125 0.04150391    0 0.125     0 0.125    0     0     0        0      0</span></span>
-<span><span class="co">#&gt; TGFB1  0.000 0.04150391    0 0.000     0 0.000    0     0     0        0      0</span></span>
-<span><span class="co">#&gt; ICAM1  0.125 0.04150391    0 0.125     0 0.125    0     0     0        0      0</span></span>
+<span><span class="co">#&gt; CCL5   0.000 0.08333333    0 0.000     0 0.000    0     0     0        0      0</span></span>
+<span><span class="co">#&gt; CXCL10 0.000 0.08333333    0 0.000     0 0.000    0     0     0        0      0</span></span>
+<span><span class="co">#&gt; IL15   0.000 0.02083333    0 0.000     0 0.000    0     0     0        0      0</span></span>
+<span><span class="co">#&gt; TNF    0.125 0.04166667    0 0.125     0 0.125    0     0     0        0      0</span></span>
+<span><span class="co">#&gt; TGFB1  0.000 0.04166667    0 0.000     0 0.000    0     0     0        0      0</span></span>
+<span><span class="co">#&gt; ICAM1  0.125 0.04166667    0 0.125     0 0.125    0     0     0        0      0</span></span>
 <span><span class="co">#&gt;        IL10RA ITGAL JAK1 JAK2 JAK3 STAT1 STAT3 STAT5A NFKB1 SMAD2       IRF1</span></span>
-<span><span class="co">#&gt; CCL5        0     0    0    0    0     0     0      0     0     0 0.08349609</span></span>
-<span><span class="co">#&gt; CXCL10      0     0    0    0    0     0     0      0     0     0 0.08349609</span></span>
-<span><span class="co">#&gt; IL15        0     0    0    0    0     0     0      0     0     0 0.02099609</span></span>
-<span><span class="co">#&gt; TNF         0     0    0    0    0     0     0      0     0     0 0.04150391</span></span>
-<span><span class="co">#&gt; TGFB1       0     0    0    0    0     0     0      0     0     0 0.04150391</span></span>
-<span><span class="co">#&gt; ICAM1       0     0    0    0    0     0     0      0     0     0 0.04150391</span></span>
+<span><span class="co">#&gt; CCL5        0     0    0    0    0     0     0      0     0     0 0.08333333</span></span>
+<span><span class="co">#&gt; CXCL10      0     0    0    0    0     0     0      0     0     0 0.08333333</span></span>
+<span><span class="co">#&gt; IL15        0     0    0    0    0     0     0      0     0     0 0.02083333</span></span>
+<span><span class="co">#&gt; TNF         0     0    0    0    0     0     0      0     0     0 0.04166667</span></span>
+<span><span class="co">#&gt; TGFB1       0     0    0    0    0     0     0      0     0     0 0.04166667</span></span>
+<span><span class="co">#&gt; ICAM1       0     0    0    0    0     0     0      0     0     0 0.04166667</span></span>
 <span><span class="co">#&gt;               MX1      ISG15       OAS1       GBP1      SOCS3        IL6</span></span>
-<span><span class="co">#&gt; CCL5   0.08349609 0.08349609 0.08349609 0.08349609 0.04150391 0.04150391</span></span>
-<span><span class="co">#&gt; CXCL10 0.08349609 0.08349609 0.08349609 0.08349609 0.04150391 0.04150391</span></span>
-<span><span class="co">#&gt; IL15   0.02099609 0.02099609 0.02099609 0.02099609 0.04150391 0.04150391</span></span>
-<span><span class="co">#&gt; TNF    0.04150391 0.04150391 0.04150391 0.04150391 0.08349609 0.20849609</span></span>
-<span><span class="co">#&gt; TGFB1  0.04150391 0.04150391 0.04150391 0.04150391 0.08349609 0.08349609</span></span>
-<span><span class="co">#&gt; ICAM1  0.04150391 0.04150391 0.04150391 0.04150391 0.08349609 0.20849609</span></span>
+<span><span class="co">#&gt; CCL5   0.08333333 0.08333333 0.08333333 0.08333333 0.04166667 0.04166667</span></span>
+<span><span class="co">#&gt; CXCL10 0.08333333 0.08333333 0.08333333 0.08333333 0.04166667 0.04166667</span></span>
+<span><span class="co">#&gt; IL15   0.02083333 0.02083333 0.02083333 0.02083333 0.04166667 0.04166667</span></span>
+<span><span class="co">#&gt; TNF    0.04166667 0.04166667 0.04166667 0.04166667 0.08333333 0.20833333</span></span>
+<span><span class="co">#&gt; TGFB1  0.04166667 0.04166667 0.04166667 0.04166667 0.08333333 0.08333333</span></span>
+<span><span class="co">#&gt; ICAM1  0.04166667 0.04166667 0.04166667 0.04166667 0.08333333 0.20833333</span></span>
 <span><span class="co">#&gt;              BCL2      VEGFA        MYC        FOS BCL2L1  IL2RA  FOXP3  IL1B</span></span>
-<span><span class="co">#&gt; CCL5   0.04150391 0.04150391 0.04150391 0.04150391 0.0000 0.0000 0.0000 0.000</span></span>
-<span><span class="co">#&gt; CXCL10 0.04150391 0.04150391 0.04150391 0.04150391 0.0000 0.0000 0.0000 0.000</span></span>
-<span><span class="co">#&gt; IL15   0.04150391 0.04150391 0.04150391 0.04150391 0.0625 0.0625 0.0625 0.000</span></span>
-<span><span class="co">#&gt; TNF    0.08349609 0.08349609 0.08349609 0.08349609 0.0000 0.0000 0.0000 0.125</span></span>
-<span><span class="co">#&gt; TGFB1  0.08349609 0.08349609 0.08349609 0.08349609 0.0000 0.0000 0.0000 0.000</span></span>
-<span><span class="co">#&gt; ICAM1  0.08349609 0.08349609 0.08349609 0.08349609 0.0000 0.0000 0.0000 0.125</span></span>
+<span><span class="co">#&gt; CCL5   0.04166667 0.04166667 0.04166667 0.04166667 0.0000 0.0000 0.0000 0.000</span></span>
+<span><span class="co">#&gt; CXCL10 0.04166667 0.04166667 0.04166667 0.04166667 0.0000 0.0000 0.0000 0.000</span></span>
+<span><span class="co">#&gt; IL15   0.04166667 0.04166667 0.04166667 0.04166667 0.0625 0.0625 0.0625 0.000</span></span>
+<span><span class="co">#&gt; TNF    0.08333333 0.08333333 0.08333333 0.08333333 0.0000 0.0000 0.0000 0.125</span></span>
+<span><span class="co">#&gt; TGFB1  0.08333333 0.08333333 0.08333333 0.08333333 0.0000 0.0000 0.0000 0.000</span></span>
+<span><span class="co">#&gt; ICAM1  0.08333333 0.08333333 0.08333333 0.08333333 0.0000 0.0000 0.0000 0.125</span></span>
 <span><span class="co">#&gt;        NFKBIA CDKN1A  JUNB   ID1</span></span>
 <span><span class="co">#&gt; CCL5    0.000  0.000 0.000 0.000</span></span>
 <span><span class="co">#&gt; CXCL10  0.000  0.000 0.000 0.000</span></span>
@@ -631,12 +631,12 @@
 <span><span class="va">activity</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">aupr_corrected</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         gene_set ligand     auroc      aupr aupr_corrected      pearson</span></span>
 <span><span class="co">#&gt;           &lt;char&gt; &lt;char&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: receiver_degs  TGFB1 0.6594982 0.3956790    0.170679012  0.300241353</span></span>
-<span><span class="co">#&gt; 2: receiver_degs   IL15 0.5663082 0.2353395    0.010339506  0.115291205</span></span>
-<span><span class="co">#&gt; 3: receiver_degs   CCL5 0.5501792 0.2291667    0.004166667 -0.005304068</span></span>
-<span><span class="co">#&gt; 4: receiver_degs CXCL10 0.5501792 0.2291667    0.004166667 -0.005304068</span></span>
-<span><span class="co">#&gt; 5: receiver_degs    TNF 0.5125448 0.2086676   -0.016332442 -0.004003802</span></span>
-<span><span class="co">#&gt; 6: receiver_degs  ICAM1 0.5125448 0.2086676   -0.016332442 -0.004003802</span></span>
+<span><span class="co">#&gt; 1: receiver_degs  TGFB1 0.6594982 0.3956790    0.170679012  0.299473381</span></span>
+<span><span class="co">#&gt; 2: receiver_degs   IL15 0.5663082 0.2353395    0.010339506  0.117053047</span></span>
+<span><span class="co">#&gt; 3: receiver_degs   CCL5 0.5501792 0.2291667    0.004166667 -0.004045534</span></span>
+<span><span class="co">#&gt; 4: receiver_degs CXCL10 0.5501792 0.2291667    0.004166667 -0.004045534</span></span>
+<span><span class="co">#&gt; 5: receiver_degs    TNF 0.5125448 0.2086676   -0.016332442 -0.004747876</span></span>
+<span><span class="co">#&gt; 6: receiver_degs  ICAM1 0.5125448 0.2086676   -0.016332442 -0.004747876</span></span>
 <span><span class="co">#&gt;      spearman</span></span>
 <span><span class="co">#&gt;         &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: 0.26664795</span></span>

@@ -112,14 +112,17 @@ Biotechnol., 2021.
 
 ``` r
 # a tree over the demo cells, genes selected by their signal-to-noise
-sc <- demo_single_cells(prepped = FALSE)
+sc <- demo_single_cells(
+  prepped = FALSE,
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 50L)
+)
 tree <- bonsai_sc(sc, .verbose = FALSE)
 tree
-#> BonsaiTree: 500 leaves, 496 inferred ancestors
-#>   Genes: 50 used, 0 dropped
-#>   Loglikelihood: -5619.8
+#> BonsaiTree: 200 leaves, 198 inferred ancestors
+#>   Genes: 48 used, 2 dropped
+#>   Loglikelihood: -2277.2
 #>   Layout: equal_angle
-#>   Seconds: sanity 0.2 | ingest 0.0 | bonsai 1.1 | layout 0.0 | total 1.3
+#>   Seconds: sanity 0.1 | ingest 0.0 | bonsai 0.2 | layout 0.0 | total 0.3
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

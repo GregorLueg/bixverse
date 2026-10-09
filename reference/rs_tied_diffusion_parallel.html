@@ -11,7 +11,7 @@ diffusions as fast as possible. Can be used for permutation."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,7 +114,9 @@ diffusions as fast as possible. Can be used for permutation.</p>
 <span>  <span class="va">diffusion_scores_1</span>,</span>
 <span>  <span class="va">diffusion_scores_2</span>,</span>
 <span>  <span class="va">summarisation_fun</span>,</span>
-<span>  <span class="va">undirected</span></span>
+<span>  <span class="va">undirected</span>,</span>
+<span>  <span class="va">damping_factor</span>,</span>
+<span>  <span class="va">tol</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -159,6 +161,16 @@ Other values cause a panic.</p></dd>
 
 <dt id="arg-undirected">undirected<a class="anchor" aria-label="anchor" href="#arg-undirected"></a></dt>
 <dd><p>Boolean. Is this an undirected graph.</p></dd>
+
+
+<dt id="arg-damping-factor">damping_factor<a class="anchor" aria-label="anchor" href="#arg-damping-factor"></a></dt>
+<dd><p>Numeric in <code>[0, 1]</code>. Probability of continuing the
+walk.</p></dd>
+
+
+<dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
+<dd><p>Numeric &gt; 0. Convergence threshold on the L1 change between
+iterations.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,11 +94,25 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.2" id="bixverse-062">bixverse 0.6.2<a class="anchor" aria-label="anchor" href="#bixverse-062"></a></h2>
+<div class="section level3">
+<h3 id="features-0-6-2">Features<a class="anchor" aria-label="anchor" href="#features-0-6-2"></a></h3>
+<ul><li>Wired in faster NEBULA via <a href="https://crates.io/crates/edge-rs" class="external-link"><code>edge-rs</code></a>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fix-0-6-2">Fix<a class="anchor" aria-label="anchor" href="#fix-0-6-2"></a></h3>
+<ul><li>Fixed the bug that h5ad ingest silently drops string and nullable obs columns from the obs table.</li>
+<li>Personalised PageRank stopped iterating too early; it now matches igraph (default <code>tol = 1e-12</code>, <code>rs_page_rank*</code> gained <code>damping_factor</code> and <code>tol</code>) (#254).</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.1" id="bixverse-061">bixverse 0.6.1<a class="anchor" aria-label="anchor" href="#bixverse-061"></a></h2>
 <div class="section level3">
 <h3 id="features-0-6-1">Features<a class="anchor" aria-label="anchor" href="#features-0-6-1"></a></h3>
 <ul><li>
 <code><a href="../reference/save_h5ad.html">save_h5ad()</a></code> exports a <code>SingleCells</code> object to an AnnData <code>.h5ad</code> file for ScanPy: raw or normalised counts in <code>X</code>, obs/var, and cached PCA, embeddings and sNN graph (<code>obsm</code>/<code>varm</code>/<code>obsp</code>). Counts are streamed in cell batches and written via <a href="https://crates.io/crates/scx-core" class="external-link">scx-core</a>.</li>
+<li>
+<code><a href="../reference/as_ligand_target_influence.html">as_ligand_target_influence()</a></code> wraps a ligand-target matrix built elsewhere (e.g. nichenetr) as a <code>LigandTargetInfluence</code>, so it can be scored with <code><a href="../reference/ligand_activity_scores.html">ligand_activity_scores()</a></code>.</li>
 </ul></div>
 </div>
     <div class="section level2">

@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Cell trees with Bonsai</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-08</p>
+      <p class="date">2026-10-09</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -301,7 +301,7 @@
 <span><span class="co">#&gt;   Genes: 347 used, 10792 dropped</span></span>
 <span><span class="co">#&gt;   Loglikelihood: -450291.6</span></span>
 <span><span class="co">#&gt;   Layout: equal_angle</span></span>
-<span><span class="co">#&gt;   Seconds: sanity 43.9 | ingest 0.0 | bonsai 42.5 | layout 0.0 | total 86.4</span></span></code></pre></div>
+<span><span class="co">#&gt;   Seconds: sanity 26.9 | ingest 0.0 | bonsai 23.7 | layout 0.0 | total 50.6</span></span></code></pre></div>
 </div>
 <p>Where did the time go? Every stage is timed, and <code>total</code> is the whole call as R saw it, so a gap between <code>total</code> and the stages would be time spent somewhere nobody measured. At this size Sanity is most of the run: it fits every one of the candidate genes, while the search only sees the few hundred that survive.</p>
 <div class="cell">
@@ -309,11 +309,11 @@
 <code class="sourceCode R"><span><span class="va">tree</span><span class="op">$</span><span class="va">timings</span></span>
 <span><span class="co">#&gt;     stage      seconds</span></span>
 <span><span class="co">#&gt;    &lt;char&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: sanity 43.879225276</span></span>
-<span><span class="co">#&gt; 2: ingest  0.010642150</span></span>
-<span><span class="co">#&gt; 3: bonsai 42.477775413</span></span>
-<span><span class="co">#&gt; 4: layout  0.000188053</span></span>
-<span><span class="co">#&gt; 5:  total 86.379468203</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: sanity 26.921980427</span></span>
+<span><span class="co">#&gt; 2: ingest  0.006011176</span></span>
+<span><span class="co">#&gt; 3: bonsai 23.654776270</span></span>
+<span><span class="co">#&gt; 4: layout  0.000101802</span></span>
+<span><span class="co">#&gt; 5:  total 50.591165304</span></span></code></pre></div>
 </div>
 <p>The search reports its steps too: the loglikelihood after each and what it took. Steps 4 and 7 re-fit the branch lengths, 5 and 6 rearrange the tree (subtree pruning and regrafting, then nearest-neighbour interchanges), and 8 collapses the zero-length edges the rest leave behind.</p>
 <div class="cell">
@@ -321,13 +321,13 @@
 <code class="sourceCode R"><span><span class="va">tree</span><span class="op">$</span><span class="va">steps</span></span>
 <span><span class="co">#&gt;           step    loglik      seconds</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;     &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 1-2 linkage -668287.8  0.184848656</span></span>
-<span><span class="co">#&gt; 2:  3 polytomy -668287.8  0.007904456</span></span>
-<span><span class="co">#&gt; 3:    4 branch -461620.0  0.866376660</span></span>
-<span><span class="co">#&gt; 4:       5 spr -450590.6 37.917255378</span></span>
-<span><span class="co">#&gt; 5:       6 nni -450581.4  1.712732721</span></span>
-<span><span class="co">#&gt; 6:    7 branch -450292.6  0.916308363</span></span>
-<span><span class="co">#&gt; 7:  8 collapse -450291.6  0.863058206</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: 1-2 linkage -668287.8  0.112320081</span></span>
+<span><span class="co">#&gt; 2:  3 polytomy -668287.8  0.004528324</span></span>
+<span><span class="co">#&gt; 3:    4 branch -461620.0  0.507316956</span></span>
+<span><span class="co">#&gt; 4:       5 spr -450590.6 21.042979043</span></span>
+<span><span class="co">#&gt; 5:       6 nni -450581.4  0.954490008</span></span>
+<span><span class="co">#&gt; 6:    7 branch -450292.6  0.530895797</span></span>
+<span><span class="co">#&gt; 7:  8 collapse -450291.6  0.497416068</span></span></code></pre></div>
 </div>
 <section class="level3"><h3 id="which-genes-made-it">Which genes made it?<a class="anchor" aria-label="anchor" href="#which-genes-made-it"></a>
 </h3>
@@ -442,7 +442,7 @@
 <span><span class="co">#&gt;   Genes: 2138 used, 9001 dropped</span></span>
 <span><span class="co">#&gt;   Loglikelihood: -119805.9</span></span>
 <span><span class="co">#&gt;   Layout: equal_angle</span></span>
-<span><span class="co">#&gt;   Seconds: sanity 13.6 | ingest 0.0 | bonsai 5.4 | layout 0.0 | total 19.0</span></span></code></pre></div>
+<span><span class="co">#&gt;   Seconds: sanity 9.0 | ingest 0.0 | bonsai 3.2 | layout 0.0 | total 12.2</span></span></code></pre></div>
 </div>
 <p>The same PBMCs as 100 metacells: a few seconds instead of the minutes the cell-level tree took, most of it Sanity. And the summed counts are deep enough that thousands of genes clear the signal-to-noise bar, against a few hundred for single cells, so the tree sees far more of the transcriptome.</p>
 <p><code>size_by_cells = TRUE</code> scales every leaf by the cells behind it.</p>

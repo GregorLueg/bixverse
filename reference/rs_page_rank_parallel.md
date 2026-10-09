@@ -13,7 +13,9 @@ rs_page_rank_parallel(
   to,
   weights,
   diffusion_scores,
-  undirected
+  undirected,
+  damping_factor,
+  tol
 )
 ```
 
@@ -44,6 +46,15 @@ rs_page_rank_parallel(
 - undirected:
 
   Boolean. Is this an undirected graph.
+
+- damping_factor:
+
+  Numeric in `[0, 1]`. Probability of continuing the walk.
+
+- tol:
+
+  Numeric \> 0. Convergence threshold on the L1 change between
+  iterations.
 
 ## Value
 

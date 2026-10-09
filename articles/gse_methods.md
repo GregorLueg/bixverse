@@ -65,14 +65,16 @@ libraries can be orders of magnitude faster than a naive R loop.
 ## Hypergeometric tests
 
 `bixverse` implements the standard hypergeometric over-representation
-test. In this example we load the Hallmark gene sets from `msigdbr` and
-construct a named list, which is the expected input format throughout
-`bixverse` for gene set analyses.
+test. In this example we load the human Hallmark gene sets (MSigDB
+2026.1.Hs, CC BY 4.0, exported via `msigdbr`) shipped with the package
+and construct a named list, which is the expected input format
+throughout `bixverse` for gene set analyses.
 
 ``` r
 
-h_gene_sets <- msigdbr::msigdbr(species = "human", collection = "H")
-#> Downloading gene sets (first use only, may take a few minutes)...
+h_gene_sets <- arrow::read_parquet(
+  system.file("extdata", "hallmark_gene_sets.parquet", package = "bixverse")
+)
 
 h_gene_sets_ls <- split(h_gene_sets$ensembl_gene, h_gene_sets$gs_name)
 
@@ -208,7 +210,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.618 sec elapsed
+#> 1.161 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -333,7 +335,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.807 sec elapsed
+#> 1.668 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -553,8 +555,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.893305 3.040958 3.260912 3.334781 3.342103 3.693413     5
-#>   rust 2.141470 2.145848 2.156426 2.160163 2.165780 2.168873     5
+#>  fgsea 2.101877 2.163095 2.328084 2.367059 2.414348 2.594042     5
+#>   rust 1.372325 1.380028 1.385861 1.385832 1.392266 1.398852     5
 ```
 
 ## blitzGSEA
@@ -682,9 +684,9 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>        expr        min         lq       mean     median         uq        max
-#>       fgsea 2134.81989 2148.30250 2148.63669 2148.88411 2152.16418 2159.01278
-#>  blitz_cold  521.64597  522.88302  524.08651  523.03086  526.36761  526.50512
-#>  blitz_warm   13.26821   13.34138   13.64342   13.46053   13.73966   14.40731
+#>       fgsea 1382.57986 1382.61208 1388.62122 1388.33993 1393.59508 1395.97916
+#>  blitz_cold  331.78910  332.66400  336.59302  334.95653  335.82016  347.73531
+#>  blitz_warm   10.26371   10.81819   11.58263   11.13942   11.98625   13.70556
 #>  neval
 #>      5
 #>      5

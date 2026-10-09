@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Doublet detection with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-08</p>
+      <p class="date">2026-10-09</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -351,13 +351,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6923744</span></span>
+<span><span class="co">#&gt; [1] 0.6904348</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.512508</span></span>
+<span><span class="co">#&gt; [1] 0.5093008</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.5890158</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.5861942</span></span></code></pre></div>
 </div>
 <p>Overall, it takes longer and has worse performance (in this data set). If you wish to have a partially orthogonal method, it can be worthwhile nonetheless. There is also an option to accelerate the algorithm via fast clustering. This will run k-means clustering with <code>sqrt(n_cells) * 4</code> centroids by default, run the kNN on these subset of centroids, Louvain on the smaller kNN and project back the Louvain membership for final scoring. However, this comes at cost of Recall, as you can see below. Generally speaking, you need to see how many centroids you need to represent your data properly. On smaller data sets, you can get away with <code>n_cells / 10</code> and compress 10 cells into one centroid… On larger data sets, you might want to compress further.</p>
 <div class="cell">
@@ -384,13 +384,13 @@
 <span>  actual <span class="op">=</span> <span class="va">boosted_fast_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.7152263</span></span>
+<span><span class="co">#&gt; [1] 0.7154673</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.5574086</span></span>
+<span><span class="co">#&gt; [1] 0.5548428</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6265321</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.625</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="scdblfinder">scDblFinder<a class="anchor" aria-label="anchor" href="#scdblfinder"></a>
 </h3>
@@ -419,13 +419,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scdblfinder_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.5916754</span></span>
+<span><span class="co">#&gt; [1] 0.5895865</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.7203335</span></span>
+<span><span class="co">#&gt; [1] 0.7408595</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6496963</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6566231</span></span></code></pre></div>
 </div>
 <p>We can also extract the other scores from scDblFinder. We can for example extract the weighted score, identify the threshold via Otsu’s method and check the doublets like this.</p>
 <div class="cell">
@@ -442,8 +442,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         weighted</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 11979   651</span></span>
-<span><span class="co">#&gt;    TRUE     72  1826</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 12039   530</span></span>
+<span><span class="co">#&gt;    TRUE     83  1876</span></span></code></pre></div>
 </div>
 <p>Or alternatively, the cxds scores can also be extracted and used. These scores were originally developed by <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7703774/" class="external-link">Bais and Kostka</a> and are used as an input into the classifier.</p>
 <div class="cell">
@@ -460,8 +460,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         cxds</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 12362   268</span></span>
-<span><span class="co">#&gt;    TRUE    849  1049</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 12351   218</span></span>
+<span><span class="co">#&gt;    TRUE    860  1099</span></span></code></pre></div>
 </div>
 <p>Should you observe that this is very flat or you only have a few data points (this can occur in low complexity experiments in which the highest expressing genes are VERY similar across all the cells for example in cell culture experiments), you can bump <code>cxds_genes</code> up. The default here is 500L, but you might want to increase this pending your experiment.</p>
 </section><section class="level3"><h3 id="pca-solver-and-hvg-method">PCA solver and HVG method<a class="anchor" aria-label="anchor" href="#pca-solver-and-hvg-method"></a>

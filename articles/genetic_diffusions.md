@@ -366,22 +366,22 @@ diffusion_obj <- community_detection(
 
 results_v2 <- get_results(diffusion_obj)
 head(results_v2)
-#>    cluster_id node_id     ks_pval cluster_size seed_nodes_1 seed_nodes_2
-#>        <char>  <char>       <num>        <int>        <int>        <int>
-#> 1:  cluster_1  genes2 0.005269523           19            1            2
-#> 2:  cluster_1  genes5 0.005269523           19            1            2
-#> 3:  cluster_1 genes17 0.005269523           19            1            2
-#> 4:  cluster_1 genes21 0.005269523           19            1            2
-#> 5:  cluster_1 genes59 0.005269523           19            1            2
-#> 6:  cluster_1 genes87 0.005269523           19            1            2
+#>    cluster_id node_id      ks_pval cluster_size seed_nodes_1 seed_nodes_2
+#>        <char>  <char>        <num>        <int>        <int>        <int>
+#> 1:  cluster_1  genes4 3.762745e-06           10            1            1
+#> 2:  cluster_1  genes9 3.762745e-06           10            1            1
+#> 3:  cluster_1 genes41 3.762745e-06           10            1            1
+#> 4:  cluster_1 genes32 3.762745e-06           10            1            1
+#> 5:  cluster_1 genes43 3.762745e-06           10            1            1
+#> 6:  cluster_1 genes52 3.762745e-06           10            1            1
 #>    diffusion_score seed_node_a seed_node_b
 #>              <num>      <lgcl>      <lgcl>
-#> 1:     0.008902783       FALSE       FALSE
-#> 2:     0.026642185       FALSE       FALSE
-#> 3:     0.004129531        TRUE       FALSE
-#> 4:     0.002532385       FALSE        TRUE
-#> 5:     0.002532385       FALSE       FALSE
-#> 6:     0.002532385       FALSE       FALSE
+#> 1:     0.018624934       FALSE        TRUE
+#> 2:     0.017553918       FALSE       FALSE
+#> 3:     0.004671884        TRUE       FALSE
+#> 4:     0.002261599       FALSE       FALSE
+#> 5:     0.002261599       FALSE       FALSE
+#> 6:     0.001985551       FALSE       FALSE
 ```
 
 As you can appreciate, the diffusions can be used to identify more

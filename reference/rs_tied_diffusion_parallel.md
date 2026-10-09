@@ -15,7 +15,9 @@ rs_tied_diffusion_parallel(
   diffusion_scores_1,
   diffusion_scores_2,
   summarisation_fun,
-  undirected
+  undirected,
+  damping_factor,
+  tol
 )
 ```
 
@@ -59,6 +61,15 @@ rs_tied_diffusion_parallel(
 - undirected:
 
   Boolean. Is this an undirected graph.
+
+- damping_factor:
+
+  Numeric in `[0, 1]`. Probability of continuing the walk.
+
+- tol:
+
+  Numeric \> 0. Convergence threshold on the L1 change between
+  iterations.
 
 ## Value
 

@@ -10,7 +10,7 @@ params_ligand_target(
   gr_hub = 0,
   ltf_cutoff = 0.99,
   damping_factor = 0.5,
-  tol = 1e-06,
+  tol = 1e-12,
   max_iter = 1000L,
   topology_correction = FALSE,
   secondary_targets = FALSE
@@ -42,8 +42,10 @@ params_ligand_target(
 
 - tol:
 
-  Numeric. Numeric \> 0. Convergence tolerance for the propagation step.
-  Defaults to `1e-06`.
+  Numeric. Numeric \> 0. Convergence tolerance (L1 change) for the
+  propagation step. With `ltf_cutoff > 0` the output is only stable once
+  the propagation has converged well below the score gaps around the
+  quantile, so keep this tight. Defaults to `1e-12`.
 
 - max_iter:
 
@@ -75,8 +77,10 @@ A named list with the following elements:
 - damping_factor - Numeric. Numeric in `[0, 1]`. PageRank-style damping
   factor. Defaults to `0.5`.
 
-- tol - Numeric. Numeric \> 0. Convergence tolerance for the propagation
-  step. Defaults to `1e-06`.
+- tol - Numeric. Numeric \> 0. Convergence tolerance (L1 change) for the
+  propagation step. With `ltf_cutoff > 0` the output is only stable once
+  the propagation has converged well below the score gaps around the
+  quantile, so keep this tight. Defaults to `1e-12`.
 
 - max_iter - Integer. Integer \>= 1. Maximum iterations for the
   propagation step. Defaults to `1000L`.

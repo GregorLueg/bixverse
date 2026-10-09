@@ -225,7 +225,7 @@ nebula_res
 #>   Method:   ln | subject column: ind
 #>   Tested:   stimstim
 #>   Subjects: 8 | cells: 5355
-#>   Warnings: 0 did not converge, 89 collapsed to a plain NB
+#>   Warnings: 0 did not converge, 90 collapsed to a plain NB
 ```
 
 ``` r
@@ -239,11 +239,11 @@ head(
 #> 1: APOBEC3B  4.666642  70.90766       0     0
 #> 2:     CCL8  5.968108  84.06402       0     0
 #> 3:   CXCL10  5.614680 108.35227       0     0
-#> 4:     CTSC  2.641458  46.26615       0     0
+#> 4:     CTSC  2.641458  46.26616       0     0
 #> 5:      IL8 -2.067606 -52.81027       0     0
 #> 6:   CXCL11  5.931948  44.58929       0     0
 #> 7:   FAM26F  3.230210  54.80266       0     0
-#> 8:    IL1RN  4.216905  56.46412       0     0
+#> 8:    IL1RN  4.216905  56.46413       0     0
 ```
 
 CXCL10, CCL8 and APOBEC3B at the top, IL8 down. That is the interferon
@@ -430,8 +430,8 @@ head(
 #> 2:               HLA-DRB5              1.3323523           0.6969546
 #> 3:                   GJB2              0.9802969           9.5504329
 #> 4:               TMEM176B              0.9453621           1.0881471
-#> 5: AKR1C1_ENSG00000187134              0.9314292          64.4138787
-#> 6:               TMEM176A              0.9152085           2.6871323
+#> 5: AKR1C1_ENSG00000187134              0.9314293          64.4152489
+#> 6:               TMEM176A              0.9152085           2.6871328
 #>    sigma_at_bound convergence
 #>            <lgcl>       <int>
 #> 1:          FALSE           1
@@ -463,7 +463,7 @@ nebula_res$results[, .(
 )]
 #>        n failed collapsed
 #>    <int>  <int>     <int>
-#> 1:   429      0        89
+#> 1:   429      0        90
 ```
 
 The fixed effects and their standard errors are on the object as
@@ -473,11 +473,11 @@ without refitting.
 ``` r
 
 head(nebula_res$coefficients, 4)
-#>          (Intercept)  stimstim
-#> HBB        -7.310408 0.5106342
-#> APOBEC3B   -8.637498 4.6666425
-#> HBA2       -8.767250 0.2434404
-#> HBA1       -9.472912 0.3307963
+#>          (Intercept)   stimstim
+#> HBB        -7.310407 0.51063384
+#> APOBEC3B   -8.637498 4.66664250
+#> HBA2       -8.767251 0.24343042
+#> HBA1       -9.041839 0.07146763
 ```
 
 ## Which one to reach for

@@ -1,12 +1,21 @@
 # Rust version of calculating the personalised page rank
 
-**\[experimental\]** Personalised page rank with a damping factor of
-0.85, at most 1000 iterations and a tolerance of 1e-7.
+**\[experimental\]** Personalised page rank with at most 1000
+iterations.
 
 ## Usage
 
 ``` r
-rs_page_rank(node_names, from, to, weights, personalised, undirected)
+rs_page_rank(
+  node_names,
+  from,
+  to,
+  weights,
+  personalised,
+  undirected,
+  damping_factor,
+  tol
+)
 ```
 
 ## Arguments
@@ -36,6 +45,15 @@ rs_page_rank(node_names, from, to, weights, personalised, undirected)
 - undirected:
 
   Boolean. Is this an undirected graph.
+
+- damping_factor:
+
+  Numeric in `[0, 1]`. Probability of continuing the walk.
+
+- tol:
+
+  Numeric \> 0. Convergence threshold on the L1 change between
+  iterations.
 
 ## Value
 

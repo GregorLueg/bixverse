@@ -55,5 +55,5 @@ object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
 object <- permute_seed_nodes(object, perm_iters = 100L, .verbose = FALSE)
 head(get_diffusion_perms(object))
 #>     node_1     node_2     node_3     node_4     node_6     node_7 
-#>  2.7710933  1.9146426  1.9256316 -0.3677003 -0.7718167 -0.6526446 
+#>  2.7709594  1.9167690  1.9251698 -0.3671934 -0.7722064 -0.6528732 
 ```
