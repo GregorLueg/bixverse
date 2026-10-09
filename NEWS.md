@@ -1,5 +1,11 @@
 # bixverse 0.6.2
 
+## Fix
+
+* Make the compile work on Windows arm64
+
+# bixverse 0.6.2
+
 ## Features
 
 * Wired in faster NEBULA via [`edge-rs`](https://crates.io/crates/edge-rs).
