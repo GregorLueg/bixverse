@@ -68,7 +68,6 @@ specific methods, and a missing one gives an error naming the package:
 | `fgsea` | benchmarking against the reference fgsea implementation |
 | `GSVA` | benchmarking against reference GSVA |
 | `singscore`, `mitch` | reference implementations for the pathway activity methods |
-| `msigdbr` | pulling MSigDB gene sets |
 | `biomaRt` | gene identifier conversion |
 | `ontologyIndex`, `ontologySimilarity` | ontology cross-checks |
 | `qs2` | `save_sc_exp_to_disk(type = "qs2")`, the faster serialisation path |

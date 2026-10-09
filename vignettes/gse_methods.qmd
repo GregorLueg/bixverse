@@ -70,14 +70,16 @@ magnitude faster than a naive R loop.
 ## Hypergeometric tests
 
 `bixverse` implements the standard hypergeometric over-representation test. In
-this example we load the Hallmark gene sets from `msigdbr` and construct a
-named list, which is the expected input format throughout `bixverse` for gene
-set analyses.
+this example we load the human Hallmark gene sets (MSigDB 2026.1.Hs, CC BY
+4.0, exported via `msigdbr`) shipped with the package and construct a named
+list, which is the expected input format throughout `bixverse` for gene set
+analyses.
 
 ```{r}
-#| label: loading data from msigdbr
-#| eval: !expr requireNamespace("msigdbr", quietly = TRUE)
-h_gene_sets <- msigdbr::msigdbr(species = "human", collection = "H")
+#| label: loading hallmark gene sets
+h_gene_sets <- arrow::read_parquet(
+  system.file("extdata", "hallmark_gene_sets.parquet", package = "bixverse")
+)
 
 h_gene_sets_ls <- split(h_gene_sets$ensembl_gene, h_gene_sets$gs_name)
 

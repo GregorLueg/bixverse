@@ -84,7 +84,6 @@ Suggests:
     microbenchmark,
     mitch,
     methods,
-    msigdbr,
     ontologyIndex,
     ontologySimilarity,
     qs2,

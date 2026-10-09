@@ -154,7 +154,7 @@ returned with `NA`.
 
 ## Getting gene sets
 
-`msigdbr` is the usual source, and it's in `Suggests`:
+`msigdbr` is the usual source (install it yourself, it is not a dependency):
 
 ```r
 h <- msigdbr::msigdbr(species = "human", collection = "H")
