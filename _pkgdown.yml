@@ -693,6 +693,7 @@ reference:
       Classes, functions and generics/methods for ligand receptor analysis for
       single cell.
     contents:
+      - as_ligand_target_influence
       - cellphonedb_sc
       - compute_expression_info_sc
       - generate_ligand_target_influence

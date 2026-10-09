@@ -12,7 +12,9 @@ rs_tied_diffusion_parallel(
   diffusion_scores_1,
   diffusion_scores_2,
   summarisation_fun,
-  undirected
+  undirected,
+  damping_factor,
+  tol
 )
 }
 \arguments{
@@ -38,6 +40,12 @@ type of summarisation function to use to calculate the tied diffusion.
 Other values cause a panic.}
 
 \item{undirected}{Boolean. Is this an undirected graph.}
+
+\item{damping_factor}{Numeric in \verb{[0, 1]}. Probability of continuing the
+walk.}
+
+\item{tol}{Numeric > 0. Convergence threshold on the L1 change between
+iterations.}
 }
 \value{
 A matrix of the scores with each row representing a tied diffusion

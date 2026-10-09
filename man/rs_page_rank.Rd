@@ -4,7 +4,16 @@
 \alias{rs_page_rank}
 \title{Rust version of calculating the personalised page rank}
 \usage{
-rs_page_rank(node_names, from, to, weights, personalised, undirected)
+rs_page_rank(
+  node_names,
+  from,
+  to,
+  weights,
+  personalised,
+  undirected,
+  damping_factor,
+  tol
+)
 }
 \arguments{
 \item{node_names}{String vector. Name of the graph nodes.}
@@ -20,12 +29,17 @@ for all edges.}
 and be of same length of \code{node_names}!}
 
 \item{undirected}{Boolean. Is this an undirected graph.}
+
+\item{damping_factor}{Numeric in \verb{[0, 1]}. Probability of continuing the
+walk.}
+
+\item{tol}{Numeric > 0. Convergence threshold on the L1 change between
+iterations.}
 }
 \value{
 The personalised page rank values.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Personalised page rank with a damping factor of 0.85, at most 1000
-iterations and a tolerance of 1e-7.
+Personalised page rank with at most 1000 iterations.
 }

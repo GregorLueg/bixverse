@@ -27,7 +27,10 @@ node numbers; the leaves, and so the cells, keep theirs.
 }
 \examples{
 # the same tree as a dendrogram
-sc <- demo_single_cells(prepped = FALSE)
+sc <- demo_single_cells(
+  prepped = FALSE,
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 50L)
+)
 tree <- bonsai_sc(sc, .verbose = FALSE)
 tree <- relayout_bonsai(tree, layout = "dendrogram")
 plot(tree)

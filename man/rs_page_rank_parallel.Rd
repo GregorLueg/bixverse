@@ -10,7 +10,9 @@ rs_page_rank_parallel(
   to,
   weights,
   diffusion_scores,
-  undirected
+  undirected,
+  damping_factor,
+  tol
 )
 }
 \arguments{
@@ -28,6 +30,12 @@ reset values. Each element must sum to 1 and be of same length of
 \code{node_names}!}
 
 \item{undirected}{Boolean. Is this an undirected graph.}
+
+\item{damping_factor}{Numeric in \verb{[0, 1]}. Probability of continuing the
+walk.}
+
+\item{tol}{Numeric > 0. Convergence threshold on the L1 change between
+iterations.}
 }
 \value{
 A matrix of the scores with each row representing an element in the

@@ -88,27 +88,27 @@ g <- igraph::graph_from_data_frame(
 ### expected results -----------------------------------------------------------
 
 expected_res_no_constraints_receptor_1 <- c(
-  0.30167290,
-  0.03881697,
-  0.12821904,
-  0.16136227,
-  0.10897813,
-  0.13700106,
-  0.04631570,
-  0.03881697,
-  0.03881697
+  0.3017034713,
+  0.0388292858,
+  0.1282239753,
+  0.1612288682,
+  0.1089903790,
+  0.1370445379,
+  0.0463209111,
+  0.0388292858,
+  0.0388292858
 )
 
 expected_res_no_constraints_receptor_2 <- c(
   0,
-  0.33536714,
+  0.3353547774,
   0,
-  0.28495089,
+  0.2850515608,
   0,
-  0.24220825,
+  0.2422938267,
   0,
-  0.06873686,
-  0.06873686
+  0.0686499176,
+  0.0686499176
 )
 
 names(expected_res_no_constraints_receptor_1) <- names(
@@ -508,7 +508,9 @@ rs_res_undir_v1 <- rs_page_rank(
   to = edge_dt$to,
   weights = NULL,
   personalised = personalised_v1,
-  undirected = TRUE
+  undirected = TRUE,
+  damping_factor = 0.85,
+  tol = 1e-12
 )
 
 rs_res_dir_v1 <- rs_page_rank(
@@ -517,7 +519,9 @@ rs_res_dir_v1 <- rs_page_rank(
   to = edge_dt$to,
   weights = NULL,
   personalised = personalised_v1,
-  undirected = FALSE
+  undirected = FALSE,
+  damping_factor = 0.85,
+  tol = 1e-12
 )
 
 rs_res_weighted_v1 <- rs_page_rank(
@@ -526,7 +530,9 @@ rs_res_weighted_v1 <- rs_page_rank(
   to = edge_dt_weighted$to,
   weights = edge_dt_weighted$weight,
   personalised = personalised_v1,
-  undirected = TRUE
+  undirected = TRUE,
+  damping_factor = 0.85,
+  tol = 1e-12
 )
 
 # version 2 - rust
@@ -536,7 +542,9 @@ rs_res_undir_v2 <- rs_page_rank(
   to = edge_dt$to,
   weights = NULL,
   personalised = personalised_v2,
-  undirected = TRUE
+  undirected = TRUE,
+  damping_factor = 0.85,
+  tol = 1e-12
 )
 
 rs_res_dir_v2 <- rs_page_rank(
@@ -545,7 +553,9 @@ rs_res_dir_v2 <- rs_page_rank(
   to = edge_dt$to,
   weights = NULL,
   personalised = personalised_v2,
-  undirected = FALSE
+  undirected = FALSE,
+  damping_factor = 0.85,
+  tol = 1e-12
 )
 
 rs_res_weighted_v2 <- rs_page_rank(
@@ -554,7 +564,9 @@ rs_res_weighted_v2 <- rs_page_rank(
   to = edge_dt_weighted$to,
   weights = edge_dt_weighted$weight,
   personalised = personalised_v2,
-  undirected = TRUE
+  undirected = TRUE,
+  damping_factor = 0.85,
+  tol = 1e-12
 )
 
 # version 1

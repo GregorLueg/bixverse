@@ -1619,8 +1619,7 @@ rs_singscore_permutation_test <- function(ranks, up_set, down_set, center_score,
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Personalised page rank with a damping factor of 0.85, at most 1000
-#' iterations and a tolerance of 1e-7.
+#' Personalised page rank with at most 1000 iterations.
 #'
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
@@ -1630,11 +1629,15 @@ rs_singscore_permutation_test <- function(ranks, up_set, down_set, center_score,
 #' @param personalised Numerical vector. The reset values. They must sum to 1
 #' and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
+#' @param damping_factor Numeric in `[0, 1]`. Probability of continuing the
+#' walk.
+#' @param tol Numeric > 0. Convergence threshold on the L1 change between
+#' iterations.
 #'
 #' @returns The personalised page rank values.
 #'
 #' @export
-rs_page_rank <- function(node_names, from, to, weights, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, weights, personalised, undirected)
+rs_page_rank <- function(node_names, from, to, weights, personalised, undirected, damping_factor, tol) .Call(wrap__rs_page_rank, node_names, from, to, weights, personalised, undirected, damping_factor, tol)
 
 #' Calculate massively parallelised personalised page rank scores
 #'
@@ -1653,13 +1656,17 @@ rs_page_rank <- function(node_names, from, to, weights, personalised, undirected
 #' reset values. Each element must sum to 1 and be of same length of
 #' `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
+#' @param damping_factor Numeric in `[0, 1]`. Probability of continuing the
+#' walk.
+#' @param tol Numeric > 0. Convergence threshold on the L1 change between
+#' iterations.
 #'
 #' @returns A matrix of the scores with each row representing an element in the
 #' `diffusion_scores` list (in order), and each column representing the value
 #' of the personalised page rank diffusion for this node.
 #'
 #' @export
-rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, weights, diffusion_scores, undirected)
+rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_scores, undirected, damping_factor, tol) .Call(wrap__rs_page_rank_parallel, node_names, from, to, weights, diffusion_scores, undirected, damping_factor, tol)
 
 #' Calculate massively parallelised tied diffusion scores
 #'
@@ -1683,13 +1690,17 @@ rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_score
 #' type of summarisation function to use to calculate the tied diffusion.
 #' Other values cause a panic.
 #' @param undirected Boolean. Is this an undirected graph.
+#' @param damping_factor Numeric in `[0, 1]`. Probability of continuing the
+#' walk.
+#' @param tol Numeric > 0. Convergence threshold on the L1 change between
+#' iterations.
 #'
 #' @returns A matrix of the scores with each row representing a tied diffusion
 #' of the `diffusion_scores_1` and `diffusion_scores_2` lists (in order), and
 #' each column representing the value of the tied diffusion for this node.
 #'
 #' @export
-rs_tied_diffusion_parallel <- function(node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+rs_tied_diffusion_parallel <- function(node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected, damping_factor, tol) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected, damping_factor, tol)
 
 #' Calculate a constrained page-rank score
 #'

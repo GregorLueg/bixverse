@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.6.1
+Version: 0.6.2
 Authors@R: 
     c(
       person(
@@ -84,7 +84,6 @@ Suggests:
     microbenchmark,
     mitch,
     methods,
-    msigdbr,
     ontologyIndex,
     ontologySimilarity,
     qs2,

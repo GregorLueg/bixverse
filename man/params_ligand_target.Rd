@@ -9,7 +9,7 @@ params_ligand_target(
   gr_hub = 0,
   ltf_cutoff = 0.99,
   damping_factor = 0.5,
-  tol = 1e-06,
+  tol = 1e-12,
   max_iter = 1000L,
   topology_correction = FALSE,
   secondary_targets = FALSE
@@ -29,8 +29,10 @@ the intermediate ligand-to-TF matrix. Defaults to \code{0.99}.}
 \item{damping_factor}{Numeric. Numeric in \verb{[0, 1]}. PageRank-style damping
 factor. Defaults to \code{0.5}.}
 
-\item{tol}{Numeric. Numeric > 0. Convergence tolerance for the propagation
-step. Defaults to \code{1e-06}.}
+\item{tol}{Numeric. Numeric > 0. Convergence tolerance (L1 change) for the
+propagation step. With \code{ltf_cutoff > 0} the output is only stable once the
+propagation has converged well below the score gaps around the quantile, so
+keep this tight. Defaults to \code{1e-12}.}
 
 \item{max_iter}{Integer. Integer >= 1. Maximum iterations for the propagation
 step. Defaults to \code{1000L}.}
@@ -53,8 +55,10 @@ gene regulatory layer. 0 disables correction. Defaults to \code{0.0}.
 the intermediate ligand-to-TF matrix. Defaults to \code{0.99}.
 \item damping_factor - Numeric. Numeric in \verb{[0, 1]}. PageRank-style damping
 factor. Defaults to \code{0.5}.
-\item tol - Numeric. Numeric > 0. Convergence tolerance for the propagation
-step. Defaults to \code{1e-06}.
+\item tol - Numeric. Numeric > 0. Convergence tolerance (L1 change) for the
+propagation step. With \code{ltf_cutoff > 0} the output is only stable once the
+propagation has converged well below the score gaps around the quantile, so
+keep this tight. Defaults to \code{1e-12}.
 \item max_iter - Integer. Integer >= 1. Maximum iterations for the
 propagation step. Defaults to \code{1000L}.
 \item topology_correction - Boolean. Apply topology correction. Defaults to
