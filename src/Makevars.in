@@ -53,7 +53,12 @@ $(STATLIB):
 	# Always clean up CARGOTMP
 	rm -Rf $(CARGOTMP);
 
-rust_clean: $(SHLIB)
+# cargo's `strip = true` only reaches the staticlib, R's link step pulls the
+# symbols back into the shared object.
+strip_shlib: $(SHLIB)
+	if [ "$$(uname)" = "Darwin" ]; then strip -x $(SHLIB); else strip --strip-unneeded $(SHLIB); fi
+
+rust_clean: strip_shlib
 	rm -Rf $(CARGOTMP) $(VENDOR_DIR) @CLEAN_TARGET@
 
 clean:

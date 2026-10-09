@@ -385,7 +385,9 @@ S7::method(permute_seed_nodes, NetworkDiffusions) <- function(
       to = edge_list[, 2],
       weights = weights,
       diffusion_scores = randomised_diffusions,
-      undirected = !igraph::is_directed(graph)
+      undirected = !igraph::is_directed(graph),
+      damping_factor = 0.85,
+      tol = 1e-12
     )
   } else {
     if (.verbose) {
@@ -417,7 +419,9 @@ S7::method(permute_seed_nodes, NetworkDiffusions) <- function(
       diffusion_scores_1 = permutations_1,
       diffusion_scores_2 = permutations_2,
       summarisation_fun = diffusion_params$score_aggregation,
-      undirected = !igraph::is_directed(graph)
+      undirected = !igraph::is_directed(graph),
+      damping_factor = 0.85,
+      tol = 1e-12
     )
   }
 

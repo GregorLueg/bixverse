@@ -1761,8 +1761,10 @@ params_lda <- function(
 #' the intermediate ligand-to-TF matrix. Defaults to `0.99`.
 #' @param damping_factor Numeric. Numeric in `[0, 1]`. PageRank-style damping
 #' factor. Defaults to `0.5`.
-#' @param tol Numeric. Numeric > 0. Convergence tolerance for the propagation
-#' step. Defaults to `1e-06`.
+#' @param tol Numeric. Numeric > 0. Convergence tolerance (L1 change) for the
+#' propagation step. With `ltf_cutoff > 0` the output is only stable once the
+#' propagation has converged well below the score gaps around the quantile, so
+#' keep this tight. Defaults to `1e-12`.
 #' @param max_iter Integer. Integer >= 1. Maximum iterations for the propagation
 #' step. Defaults to `1000L`.
 #' @param topology_correction Boolean. Apply topology correction. Defaults to
@@ -1781,8 +1783,10 @@ params_lda <- function(
 #'  the intermediate ligand-to-TF matrix. Defaults to `0.99`.
 #'  \item damping_factor - Numeric. Numeric in `[0, 1]`. PageRank-style damping
 #'  factor. Defaults to `0.5`.
-#'  \item tol - Numeric. Numeric > 0. Convergence tolerance for the propagation
-#'  step. Defaults to `1e-06`.
+#'  \item tol - Numeric. Numeric > 0. Convergence tolerance (L1 change) for the
+#'  propagation step. With `ltf_cutoff > 0` the output is only stable once the
+#'  propagation has converged well below the score gaps around the quantile, so
+#'  keep this tight. Defaults to `1e-12`.
 #'  \item max_iter - Integer. Integer >= 1. Maximum iterations for the
 #'  propagation step. Defaults to `1000L`.
 #'  \item topology_correction - Boolean. Apply topology correction. Defaults to
@@ -1797,7 +1801,7 @@ params_ligand_target <- function(
   gr_hub = 0.0,
   ltf_cutoff = 0.99,
   damping_factor = 0.5,
-  tol = 1e-06,
+  tol = 1e-12,
   max_iter = 1000L,
   topology_correction = FALSE,
   secondary_targets = FALSE

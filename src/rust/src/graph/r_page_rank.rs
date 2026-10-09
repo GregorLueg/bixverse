@@ -32,8 +32,7 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Personalised page rank with a damping factor of 0.85, at most 1000
-/// iterations and a tolerance of 1e-7.
+/// Personalised page rank with at most 1000 iterations.
 ///
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
@@ -43,6 +42,10 @@ extendr_module! {
 /// @param personalised Numerical vector. The reset values. They must sum to 1
 /// and be of same length of `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
+/// @param damping_factor Numeric in `[0, 1]`. Probability of continuing the
+/// walk.
+/// @param tol Numeric > 0. Convergence threshold on the L1 change between
+/// iterations.
 ///
 /// @returns The personalised page rank values.
 ///
@@ -55,11 +58,13 @@ fn rs_page_rank(
     weights: Option<&[f64]>,
     personalised: &[f64],
     undirected: bool,
+    damping_factor: f64,
+    tol: f64,
 ) -> Vec<f64> {
     let graph = graph_from_strings(&node_names, &from, &to, weights, undirected);
 
     // Arc version not needed here, as single run
-    personalised_page_rank(graph, 0.85, personalised, 1000, Some(1e-7))
+    personalised_page_rank(graph, damping_factor, personalised, 1000, Some(tol))
 }
 
 /// Calculate massively parallelised personalised page rank scores
@@ -79,6 +84,10 @@ fn rs_page_rank(
 /// reset values. Each element must sum to 1 and be of same length of
 /// `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
+/// @param damping_factor Numeric in `[0, 1]`. Probability of continuing the
+/// walk.
+/// @param tol Numeric > 0. Convergence threshold on the L1 change between
+/// iterations.
 ///
 /// @returns A matrix of the scores with each row representing an element in the
 /// `diffusion_scores` list (in order), and each column representing the value
@@ -93,6 +102,8 @@ fn rs_page_rank_parallel(
     weights: Option<&[f64]>,
     diffusion_scores: List,
     undirected: bool,
+    damping_factor: f64,
+    tol: f64,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     let graph = graph_from_strings(&node_names, &from, &to, weights, undirected);
 
@@ -112,10 +123,10 @@ fn rs_page_rank_parallel(
         .map_init(PageRankWorkingMemory::new, |working_memory, diff| {
             personalised_page_rank_optimised(
                 &pagerank_graph,
-                0.85,
+                damping_factor,
                 diff,
                 1000,
-                1e-7,
+                tol,
                 working_memory,
             )
         })
@@ -148,6 +159,10 @@ fn rs_page_rank_parallel(
 /// type of summarisation function to use to calculate the tied diffusion.
 /// Other values cause a panic.
 /// @param undirected Boolean. Is this an undirected graph.
+/// @param damping_factor Numeric in `[0, 1]`. Probability of continuing the
+/// walk.
+/// @param tol Numeric > 0. Convergence threshold on the L1 change between
+/// iterations.
 ///
 /// @returns A matrix of the scores with each row representing a tied diffusion
 /// of the `diffusion_scores_1` and `diffusion_scores_2` lists (in order), and
@@ -165,6 +180,8 @@ fn rs_tied_diffusion_parallel(
     diffusion_scores_2: List,
     summarisation_fun: String,
     undirected: bool,
+    damping_factor: f64,
+    tol: f64,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     assert!(
         diffusion_scores_1.len() == diffusion_scores_2.len(),
@@ -187,6 +204,9 @@ fn rs_tied_diffusion_parallel(
         &personalise_vecs_1,
         &personalise_vecs_2,
         undirected,
+        damping_factor,
+        1000,
+        tol,
     );
 
     let matrix_result = nested_vector_to_faer_mat(tied_res, false);
@@ -256,7 +276,7 @@ fn rs_constrained_page_rank(
         0.85,
         personalised,
         1000,
-        Some(1e-7),
+        None,
         sink_node_set.as_ref(),
         sink_edge_set.as_ref(),
     )
@@ -336,7 +356,7 @@ fn rs_constrained_page_rank_list(
                 0.85,
                 p_vec,
                 1000,
-                Some(1e-7),
+                None,
                 sink_node_set.as_ref(),
                 sink_edge_set.as_ref(),
             )

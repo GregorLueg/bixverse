@@ -5041,7 +5041,10 @@ print.BonsaiTree <- function(x, ...) {
 #'
 #' @examples
 #' # the same tree as a dendrogram
-#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- demo_single_cells(
+#'   prepped = FALSE,
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 50L)
+#' )
 #' tree <- bonsai_sc(sc, .verbose = FALSE)
 #' tree <- relayout_bonsai(tree, layout = "dendrogram")
 #' plot(tree)
@@ -5116,7 +5119,10 @@ relayout_bonsai <- function(
 #'
 #' @examples
 #' # the tree coloured by cell type
-#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- demo_single_cells(
+#'   prepped = FALSE,
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 50L)
+#' )
 #' tree <- bonsai_sc(sc, .verbose = FALSE)
 #' plot(tree, colour_by = get_sc_obs(sc, filtered = TRUE)$cell_grp)
 #'
@@ -5226,7 +5232,10 @@ plot.BonsaiTree <- function(
 #'
 #' @examples
 #' # Bonsai leaf coordinates next to the other embeddings
-#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- demo_single_cells(
+#'   prepped = FALSE,
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 50L)
+#' )
 #' tree <- bonsai_sc(sc, .verbose = FALSE)
 #' sc <- set_bonsai_embedding(sc, tree)
 #' get_available_embeddings(sc)

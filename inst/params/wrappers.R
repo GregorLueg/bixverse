@@ -2154,9 +2154,14 @@ spec_ligand_target <- param_spec(
       doc = "Numeric in `[0, 1]`. PageRank-style damping factor."
     ),
     tol = p_dbl(
-      1e-06,
+      1e-12,
       range = "(0,)",
-      doc = "Numeric > 0. Convergence tolerance for the propagation step."
+      doc = paste(
+        "Numeric > 0. Convergence tolerance (L1 change) for the propagation",
+        "step. With `ltf_cutoff > 0` the output is only stable once the",
+        "propagation has converged well below the score gaps around the",
+        "quantile, so keep this tight."
+      )
     ),
     max_iter = p_int(
       1000L,

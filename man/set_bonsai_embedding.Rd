@@ -24,7 +24,10 @@ same order.
 }
 \examples{
 # Bonsai leaf coordinates next to the other embeddings
-sc <- demo_single_cells(prepped = FALSE)
+sc <- demo_single_cells(
+  prepped = FALSE,
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 50L)
+)
 tree <- bonsai_sc(sc, .verbose = FALSE)
 sc <- set_bonsai_embedding(sc, tree)
 get_available_embeddings(sc)

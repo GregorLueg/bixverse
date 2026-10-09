@@ -1,3 +1,17 @@
+# bixverse 0.6.2
+
+## Features
+
+* Wired in faster NEBULA via [`edge-rs`](https://crates.io/crates/edge-rs).
+
+## Fix
+
+* Fixed the bug that h5ad ingest silently drops string and nullable obs columns
+  from the obs table.
+* Personalised PageRank stopped iterating too early; it now matches igraph
+  (default `tol = 1e-12`, `rs_page_rank*` gained `damping_factor` and `tol`)
+  (#254).
+
 # bixverse 0.6.1
 
 ## Features
