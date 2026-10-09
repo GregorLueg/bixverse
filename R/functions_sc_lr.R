@@ -50,6 +50,60 @@ new_ligand_target_influence <- function(
   res
 }
 
+#' Wrap an existing ligand-target matrix as a `LigandTargetInfluence`
+#'
+#' @description
+#' Turns a regulatory potential matrix built elsewhere, for example with
+#' nichenetr's `construct_ligand_target_matrix()`, into a
+#' `LigandTargetInfluence` object, so it can be scored with
+#' [ligand_activity_scores()].
+#'
+#' @param x Numeric matrix with unique row and column names.
+#' @param ligands_as_cols Boolean. Set to `TRUE` for a genes x ligands matrix,
+#' which is the nichenetr layout. Defaults to `FALSE` (ligands x genes).
+#' @param params Optional list. Parameters used to build `x`, kept for the
+#' record. Defaults to `NULL`.
+#'
+#' @returns A `LigandTargetInfluence` object. Each ligand is its own seed.
+#'
+#' @export
+#'
+#' @examples
+#' # genes x ligands, as nichenetr returns it
+#' ltm <- matrix(
+#'   c(0.5, 0.0, 0.1, 0.4, 0.3, 0.1),
+#'   nrow = 3,
+#'   dimnames = list(c("G1", "G2", "G3"), c("L1", "L2"))
+#' )
+#' inf <- as_ligand_target_influence(ltm, ligands_as_cols = TRUE)
+#' ligand_activity_scores(inf, gene_sets = list(set_A = "G1"))
+as_ligand_target_influence <- function(
+  x,
+  ligands_as_cols = FALSE,
+  params = NULL
+) {
+  checkmate::assertMatrix(
+    x,
+    mode = "numeric",
+    row.names = "unique",
+    col.names = "unique"
+  )
+  checkmate::assertFlag(ligands_as_cols)
+  checkmate::assertList(params, null.ok = TRUE)
+
+  if (ligands_as_cols) {
+    x <- t(x)
+  }
+
+  new_ligand_target_influence(
+    influence = x,
+    ligand_seeds = as.list(rownames(x)),
+    ligand_names = rownames(x),
+    gene_ids = colnames(x),
+    params = params
+  )
+}
+
 ### primitives -----------------------------------------------------------------
 
 #' @export

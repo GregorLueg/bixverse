@@ -20,6 +20,9 @@
   ScanPy: raw or normalised counts in `X`, obs/var, and cached PCA, embeddings
   and sNN graph (`obsm`/`varm`/`obsp`). Counts are streamed in cell batches and
   written via [scx-core](https://crates.io/crates/scx-core).
+* `as_ligand_target_influence()` wraps a ligand-target matrix built elsewhere
+  (e.g. nichenetr) as a `LigandTargetInfluence`, so it can be scored with
+  `ligand_activity_scores()`.
 
 # bixverse 0.6.0
 
