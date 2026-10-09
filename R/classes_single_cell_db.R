@@ -894,67 +894,16 @@ SingleCellDuckDB <- R6::R6Class(
         add = TRUE
       )
 
-      new_cat_names <- h5_content[
-        group == "/obs/__categories" & otype == "H5I_DATASET",
-        name
-      ]
-      has_new_cats <- length(new_cat_names) > 0L
+      frame <- .read_h5ad_frame(h5_path, "/obs", h5_content)
 
-      obs_groups <- h5_content[
-        group == "/obs" & otype == "H5I_GROUP" & name != "__categories",
-        name
-      ]
-
-      idx_info <- .resolve_h5_index(h5_path, "/obs", h5_content)
-
-      skip <- c("_index", idx_info$idx_col)
-      direct <- h5_content[
-        group == "/obs" & otype == "H5I_DATASET" & !name %in% skip,
-        name
-      ]
-
-      if (
-        length(direct) == 0L &&
-          length(obs_groups) == 0L &&
-          !has_new_cats &&
-          is.null(idx_info$idx)
-      ) {
+      if (length(frame$cols) == 0L && is.null(frame$idx)) {
         stop("No obs data could be found in the h5 file. Nothing was loaded.")
       }
 
-      cols <- list()
+      obs_dt <- data.table::as.data.table(frame$cols)
 
-      for (g in obs_groups) {
-        sub_path <- paste0("/obs/", g)
-        sub_entries <- h5_content[
-          group == sub_path & otype == "H5I_DATASET",
-          name
-        ]
-        if (all(c("categories", "codes") %in% sub_entries)) {
-          categories <- rhdf5::h5read(h5_path, paste0(sub_path, "/categories"))
-          codes <- rhdf5::h5read(h5_path, paste0(sub_path, "/codes"))
-          codes[codes < 0L] <- NA_integer_
-          cols[[g]] <- factor(categories[codes + 1L], levels = categories)
-        }
-      }
-
-      for (d in direct) {
-        raw <- as.vector(rhdf5::h5read(h5_path, paste0("/obs/", d)))
-        if (has_new_cats && d %in% new_cat_names) {
-          categories <- as.vector(
-            rhdf5::h5read(h5_path, paste0("/obs/__categories/", d))
-          )
-          raw[raw < 0L] <- NA_integer_
-          cols[[d]] <- factor(categories[raw + 1L], levels = categories)
-        } else {
-          cols[[d]] <- raw
-        }
-      }
-
-      obs_dt <- data.table::as.data.table(cols)
-
-      if (!is.null(idx_info$idx)) {
-        obs_dt[, cell_id := idx_info$idx]
+      if (!is.null(frame$idx)) {
+        obs_dt[, cell_id := frame$idx]
         data.table::setcolorder(
           obs_dt,
           c("cell_id", setdiff(names(obs_dt), "cell_id"))
@@ -1019,67 +968,16 @@ SingleCellDuckDB <- R6::R6Class(
         add = TRUE
       )
 
-      new_cat_names <- h5_content[
-        group == "/var/__categories" & otype == "H5I_DATASET",
-        name
-      ]
-      has_new_cats <- length(new_cat_names) > 0L
+      frame <- .read_h5ad_frame(h5_path, "/var", h5_content)
 
-      var_groups <- h5_content[
-        group == "/var" & otype == "H5I_GROUP" & name != "__categories",
-        name
-      ]
-
-      idx_info <- .resolve_h5_index(h5_path, "/var", h5_content)
-
-      skip <- c("_index", idx_info$idx_col)
-      direct <- h5_content[
-        group == "/var" & otype == "H5I_DATASET" & !name %in% skip,
-        name
-      ]
-
-      if (
-        length(direct) == 0L &&
-          length(var_groups) == 0L &&
-          !has_new_cats &&
-          is.null(idx_info$idx)
-      ) {
+      if (length(frame$cols) == 0L && is.null(frame$idx)) {
         stop("No var data could be found in the h5 file. Nothing was loaded.")
       }
 
-      cols <- list()
+      var_dt <- data.table::as.data.table(frame$cols)
 
-      for (g in var_groups) {
-        sub_path <- paste0("/var/", g)
-        sub_entries <- h5_content[
-          group == sub_path & otype == "H5I_DATASET",
-          name
-        ]
-        if (all(c("categories", "codes") %in% sub_entries)) {
-          categories <- rhdf5::h5read(h5_path, paste0(sub_path, "/categories"))
-          codes <- rhdf5::h5read(h5_path, paste0(sub_path, "/codes"))
-          codes[codes < 0L] <- NA_integer_
-          cols[[g]] <- factor(categories[codes + 1L], levels = categories)
-        }
-      }
-
-      for (d in direct) {
-        raw <- as.vector(rhdf5::h5read(h5_path, paste0("/var/", d)))
-        if (has_new_cats && d %in% new_cat_names) {
-          categories <- as.vector(
-            rhdf5::h5read(h5_path, paste0("/var/__categories/", d))
-          )
-          raw[raw < 0L] <- NA_integer_
-          cols[[d]] <- factor(categories[raw + 1L], levels = categories)
-        } else {
-          cols[[d]] <- raw
-        }
-      }
-
-      var_dt <- data.table::as.data.table(cols)
-
-      if (!is.null(idx_info$idx)) {
-        var_dt[, gene_id := idx_info$idx]
+      if (!is.null(frame$idx)) {
+        var_dt[, gene_id := frame$idx]
         data.table::setcolorder(
           var_dt,
           c("gene_id", setdiff(names(var_dt), "gene_id"))
@@ -1141,72 +1039,18 @@ SingleCellDuckDB <- R6::R6Class(
 
         h5_content <- rhdf5::h5ls(fi$h5_path) |> data.table::setDT()
 
-        new_cat_names <- h5_content[
-          group == "/obs/__categories" & otype == "H5I_DATASET",
-          name
-        ]
-        has_new_cats <- length(new_cat_names) > 0L
+        frame <- .read_h5ad_frame(fi$h5_path, "/obs", h5_content)
 
-        obs_groups <- h5_content[
-          group == "/obs" & otype == "H5I_GROUP" & name != "__categories",
-          name
-        ]
-
-        idx_info <- .resolve_h5_index(fi$h5_path, "/obs", h5_content)
-
-        skip <- c("_index", idx_info$idx_col)
-        direct <- h5_content[
-          group == "/obs" & otype == "H5I_DATASET" & !name %in% skip,
-          name
-        ]
-
-        if (
-          length(direct) == 0L &&
-            length(obs_groups) == 0L &&
-            !has_new_cats &&
-            is.null(idx_info$idx)
-        ) {
+        if (length(frame$cols) == 0L && is.null(frame$idx)) {
           stop(sprintf("No obs data found in %s", fi$h5_path))
-        }
-
-        cols <- list()
-
-        for (g in obs_groups) {
-          sub_path <- paste0("/obs/", g)
-          sub_entries <- h5_content[
-            group == sub_path & otype == "H5I_DATASET",
-            name
-          ]
-          if (all(c("categories", "codes") %in% sub_entries)) {
-            categories <- rhdf5::h5read(
-              fi$h5_path,
-              paste0(sub_path, "/categories")
-            )
-            codes <- rhdf5::h5read(fi$h5_path, paste0(sub_path, "/codes"))
-            codes[codes < 0L] <- NA_integer_
-            cols[[g]] <- factor(categories[codes + 1L], levels = categories)
-          }
-        }
-
-        for (d in direct) {
-          raw <- as.vector(rhdf5::h5read(fi$h5_path, paste0("/obs/", d)))
-          if (has_new_cats && d %in% new_cat_names) {
-            categories <- as.vector(
-              rhdf5::h5read(fi$h5_path, paste0("/obs/__categories/", d))
-            )
-            raw[raw < 0L] <- NA_integer_
-            cols[[d]] <- factor(categories[raw + 1L], levels = categories)
-          } else {
-            cols[[d]] <- raw
-          }
         }
 
         rhdf5::h5closeAll()
 
-        obs_dt <- data.table::as.data.table(cols)
+        obs_dt <- data.table::as.data.table(frame$cols)
 
-        if (!is.null(idx_info$idx)) {
-          obs_dt[, cell_id := idx_info$idx]
+        if (!is.null(frame$idx)) {
+          obs_dt[, cell_id := frame$idx]
           data.table::setcolorder(
             obs_dt,
             c("cell_id", setdiff(names(obs_dt), "cell_id"))

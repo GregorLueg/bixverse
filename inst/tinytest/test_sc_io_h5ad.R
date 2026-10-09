@@ -970,6 +970,79 @@ expect_equal(
   info = "multi-dense main method returns expected dims"
 )
 
+## anndata >= 0.13 column encodings --------------------------------------------
+
+# regression for #252, fixture from data-raw/anndata_nullable_h5ad.py
+f_path_nullable <- "./synthetic_data/anndata_0_13_nullable.h5ad"
+
+expected_obs <- list(
+  donor = paste0("donor", 0:39),
+  sample = paste0("s", 0:39),
+  batch = factor(rep(c("A", "B"), 20L)),
+  n_doublets = rep(c(1L, NA_integer_), 20L),
+  is_doublet = rep(c(TRUE, NA), 20L),
+  age = 0:39,
+  passed_qc = rep(c(TRUE, FALSE), 20L)
+)
+
+meta_nullable <- read_h5ad_metadata(f_path_nullable)
+
+expect_equal(
+  current = meta_nullable$obs$.id,
+  target = paste0("cell", 0:39),
+  info = "anndata 0.13 - nullable string index read"
+)
+
+for (col in names(expected_obs)) {
+  expect_identical(
+    current = meta_nullable$obs[[col]],
+    target = expected_obs[[col]],
+    info = sprintf("anndata 0.13 - read_h5ad_metadata obs column %s", col)
+  )
+}
+
+expect_identical(
+  current = meta_nullable$var$symbol,
+  target = paste0("SYM", 0:4),
+  info = "anndata 0.13 - read_h5ad_metadata var nullable string column"
+)
+
+dir_nullable <- file.path(test_temp_dir, "anndata_nullable")
+dir.create(dir_nullable)
+
+sc_nullable <- load_h5ad(
+  object = SingleCells(dir_data = dir_nullable),
+  h5_path = path.expand(f_path_nullable),
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 1L,
+    min_lib_size = 1L,
+    min_cells = 1L
+  ),
+  .verbose = FALSE
+)
+
+obs_nullable <- get_sc_obs(sc_nullable)
+
+expect_equal(
+  current = obs_nullable$cell_id,
+  target = paste0("cell", 0:39),
+  info = "anndata 0.13 - load_h5ad cell ids"
+)
+
+for (col in names(expected_obs)) {
+  expect_identical(
+    current = obs_nullable[[col]],
+    target = expected_obs[[col]],
+    info = sprintf("anndata 0.13 - load_h5ad obs column %s", col)
+  )
+}
+
+expect_identical(
+  current = get_sc_var(sc_nullable)$symbol,
+  target = paste0("SYM", 0:4),
+  info = "anndata 0.13 - load_h5ad var nullable string column"
+)
+
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)

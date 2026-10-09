@@ -23,7 +23,11 @@
 
   if ("_index" %in% names(grp_attrs)) {
     idx_col <- grp_attrs[["_index"]]
-    idx <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/", idx_col)))
+    idx <- .read_h5ad_column(
+      f_path,
+      paste0(group_path, "/", idx_col),
+      h5_content
+    )
     return(list(idx = idx, idx_col = idx_col))
   }
 
@@ -39,6 +43,117 @@
   }
 
   list(idx = NULL, idx_col = NULL)
+}
+
+#' Read an h5ad dataset, mapping HDF5 enums to logical
+#'
+#' rhdf5 returns HDF5 enums as factors and `as.vector()` on a factor yields
+#' character. anndata only writes enums for booleans.
+#'
+#' @param f_path String. Path to the h5ad file.
+#' @param ds_path String. Full path of the dataset inside the file.
+#'
+#' @returns An atomic vector.
+#'
+#' @keywords internal
+.read_h5ad_dataset <- function(f_path, ds_path) {
+  x <- rhdf5::h5read(f_path, ds_path)
+  if (is.factor(x) && all(levels(x) %in% c("FALSE", "TRUE"))) {
+    return(as.logical(as.character(x)))
+  }
+  as.vector(x)
+}
+
+#' Read one column of an h5ad dataframe
+#'
+#' Handles plain arrays, categoricals (`categories` + `codes`) and the nullable
+#' encodings (`values` + `mask`), which anndata >= 0.13 also uses for every
+#' non-categorical string column.
+#'
+#' @param f_path String. Path to the h5ad file.
+#' @param col_path String. Full path of the column inside the file.
+#' @param h5_content data.table. Output of [rhdf5::h5ls()] on `f_path`.
+#'
+#' @returns An atomic vector or factor, or `NULL` for an unsupported encoding.
+#'
+#' @keywords internal
+.read_h5ad_column <- function(f_path, col_path, h5_content) {
+  sub_entries <- h5_content[
+    group == col_path & otype == "H5I_DATASET",
+    name
+  ]
+
+  if (length(sub_entries) == 0L) {
+    return(.read_h5ad_dataset(f_path, col_path))
+  }
+
+  if (all(c("categories", "codes") %in% sub_entries)) {
+    categories <- .read_h5ad_dataset(f_path, paste0(col_path, "/categories"))
+    codes <- .read_h5ad_dataset(f_path, paste0(col_path, "/codes"))
+    codes[codes < 0L] <- NA_integer_
+    return(factor(categories[codes + 1L], levels = categories))
+  }
+
+  if ("values" %in% sub_entries) {
+    values <- .read_h5ad_dataset(f_path, paste0(col_path, "/values"))
+    if ("mask" %in% sub_entries) {
+      values[.read_h5ad_dataset(f_path, paste0(col_path, "/mask"))] <- NA
+    }
+    return(values)
+  }
+
+  NULL
+}
+
+#' Read the columns of an h5ad dataframe group
+#'
+#' Columns stored as groups come first, then plain datasets, as h5ls lists
+#' them. Old-style categoricals (codes in a dataset, levels under
+#' `__categories`) are resolved. The index column is returned separately.
+#'
+#' @param f_path String. Path to the h5ad file.
+#' @param group_path String. The dataframe group, e.g. `"/obs"`.
+#' @param h5_content data.table. Output of [rhdf5::h5ls()] on `f_path`.
+#'
+#' @returns A list with `cols` (named list of column vectors) and `idx`
+#' (character vector or `NULL`).
+#'
+#' @keywords internal
+.read_h5ad_frame <- function(f_path, group_path, h5_content) {
+  idx_info <- .resolve_h5_index(f_path, group_path, h5_content)
+  skip <- c("_index", "__categories", idx_info$idx_col)
+
+  entries <- h5_content[group == group_path & !name %in% skip]
+  col_names <- c(
+    entries[otype == "H5I_GROUP", name],
+    entries[otype == "H5I_DATASET", name]
+  )
+
+  new_cat_names <- h5_content[
+    group == paste0(group_path, "/__categories") & otype == "H5I_DATASET",
+    name
+  ]
+
+  cols <- list()
+  for (col in col_names) {
+    col_path <- paste0(group_path, "/", col)
+    x <- .read_h5ad_column(f_path, col_path, h5_content)
+    if (is.null(x)) {
+      warning(sprintf("Skipping %s: unsupported h5ad encoding.", col_path))
+      next
+    }
+    if (col %in% new_cat_names) {
+      categories <- .read_h5ad_dataset(
+        f_path,
+        paste0(group_path, "/__categories/", col)
+      )
+      x[x < 0L] <- NA_integer_
+      x <- factor(categories[x + 1L], levels = categories)
+    }
+    cols[[col]] <- x
+  }
+
+  list(cols = cols, idx = idx_info$idx)
 }
 
 #' Read a sample of values from a matrix slot in an h5ad file
@@ -482,65 +597,13 @@ read_h5ad_metadata <- function(f_path) {
   meta <- get_h5ad_dimensions(f_path)
 
   .read_group_as_dt <- function(group_path) {
-    entries <- h5_content[group == group_path]
+    frame <- .read_h5ad_frame(f_path, group_path, h5_content)
+    dt <- data.table::as.data.table(frame$cols)
 
-    new_cat_names <- h5_content[
-      group == paste0(group_path, "/__categories") & otype == "H5I_DATASET",
-      name
-    ]
-    has_new_cats <- length(new_cat_names) > 0L
-
-    groups <- entries[
-      otype == "H5I_GROUP" & name != "__categories",
-      name
-    ]
-
-    # resolve index first so we can exclude it from direct datasets
-    idx_info <- .resolve_h5_index(f_path, group_path, h5_content)
-
-    cols <- list()
-
-    # old-format categoricals
-    for (g in groups) {
-      sub_path <- paste0(group_path, "/", g)
-      sub_entries <- h5_content[
-        group == sub_path & otype == "H5I_DATASET",
-        name
-      ]
-      if (all(c("categories", "codes") %in% sub_entries)) {
-        cats <- rhdf5::h5read(f_path, paste0(sub_path, "/categories"))
-        codes <- rhdf5::h5read(f_path, paste0(sub_path, "/codes"))
-        codes[codes < 0L] <- NA_integer_
-        cols[[g]] <- factor(cats[codes + 1L], levels = cats)
-      }
-    }
-
-    # direct datasets — exclude _index dataset and the attribute-referenced col
-    skip <- c("_index", idx_info$idx_col)
-    direct <- entries[
-      otype == "H5I_DATASET" & !name %in% skip,
-      name
-    ]
-
-    for (d in direct) {
-      raw <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/", d)))
-      if (has_new_cats && d %in% new_cat_names) {
-        categories <- as.vector(
-          rhdf5::h5read(f_path, paste0(group_path, "/__categories/", d))
-        )
-        raw[raw < 0L] <- NA_integer_
-        cols[[d]] <- factor(categories[raw + 1L], levels = categories)
-      } else {
-        cols[[d]] <- raw
-      }
-    }
-
-    dt <- data.table::as.data.table(cols)
-
-    if (!is.null(idx_info$idx)) {
-      dt[, .id := idx_info$idx]
+    if (!is.null(frame$idx)) {
+      dt[, .id := frame$idx]
     } else {
-      n <- if (length(cols) > 0L) length(cols[[1L]]) else 0L
+      n <- if (length(frame$cols) > 0L) length(frame$cols[[1L]]) else 0L
       dt[, .id := seq_len(n)]
     }
 
