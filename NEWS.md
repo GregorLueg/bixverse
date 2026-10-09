@@ -1,4 +1,4 @@
-# bixverse 0.6.2
+# bixverse 0.6.3
 
 ## Fix
 
