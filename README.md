@@ -33,10 +33,11 @@ of RAM.
 
 | Step | CPU | GPU |
 |---|---|---|
-| Stream and process to disk the 24 samples | ~3.5 min | |
+| Stream and process to disk the 24 samples from mtx | ~90 s | |
 | HVG selection (2k genes) | ~10 s | |
-| PCA (32 components) | ~25 s | 15 s |
-| kNN graph | ~90 s (NNDescent) | <30 s (CAGRA) |
+| PCA (32 components) | ~8 s | 5 s |
+| kNN graph | ~15 s (NNDescent) | ~10 s (CAGRA) |
+| Harmony v2 | ~4 s | ~4 s |
 
 Nothing here loads the full matrix into memory at any point. Counts sit on disk 
 in a Rust binary format, metadata sits in DuckDB, and the analysis streams data
