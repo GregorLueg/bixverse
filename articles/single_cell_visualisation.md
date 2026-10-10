@@ -397,14 +397,14 @@ dt <- extract_embedding_data(
   obs_cols = c("sc_type", "leiden_clusters", "Ribo")
 )
 head(dt)
-#>             cell_id     dim_1        dim_2    sc_type leiden_clusters      Ribo
-#>              <char>     <num>        <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -2.904104 -3.216339111    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -5.374538 -4.708022594    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  1.928853  3.916298628 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.509263  0.001145683         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -4.373352 -3.819267988    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -3.359194 -3.010173559         NK               2 0.4165899
+#>             cell_id     dim_1       dim_2    sc_type leiden_clusters      Ribo
+#>              <char>     <num>       <num>     <char>           <int>     <num>
+#> 1: AAACATACAACCAC-1 -2.803706 -3.16962457    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -5.272682 -4.65794992    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  2.010388  3.92012954 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.443664  0.06537197         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -4.273110 -3.77306724    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -3.258008 -2.96359968         NK               2 0.4165899
 ```
 
 ## Other 2D embeddings
@@ -576,14 +576,14 @@ dt <- extract_feature_plot_data(
 )
 
 head(dt)
-#>             cell_id     dim_1        dim_2    sc_type leiden_clusters      Ribo
-#>              <char>     <num>        <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -2.904104 -3.216339111    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -5.374538 -4.708022594    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  1.928853  3.916298628 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.509263  0.001145683         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -4.373352 -3.819267988    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -3.359194 -3.010173559         NK               2 0.4165899
+#>             cell_id     dim_1       dim_2    sc_type leiden_clusters      Ribo
+#>              <char>     <num>       <num>     <char>           <int>     <num>
+#> 1: AAACATACAACCAC-1 -2.803706 -3.16962457    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -5.272682 -4.65794992    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  2.010388  3.92012954 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.443664  0.06537197         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -4.273110 -3.77306724    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -3.258008 -2.96359968         NK               2 0.4165899
 #>               gene expression
 #>             <fctr>      <num>
 #> 1: ENSG00000156738          0
