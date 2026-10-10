@@ -588,7 +588,7 @@ c(
   archive_mb = archive_stats$archive_bytes / 1e6
 )
 #> binaries_mb  archive_mb 
-#>    0.477821    0.028114
+#>    0.481829    0.028114
 list.files(dir_h5)
 #> [1] "counts.bxa"   "memory.rds"   "sc_duckdb.db"
 ```

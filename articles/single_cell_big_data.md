@@ -81,7 +81,8 @@ sce <- SingleCells(dir_data = tempdir())
 sce <- load_mtx(object = sce, sc_mtx_io_param = load_params, csc_mem_gb = 8)
 ```
 
-This step is the slowest… A lot of things are actually happening here.
+This step is one of the slowest… A lot of things are actually happening
+here.
 
 - First, (streaming) scan to understand in how many cells a gene is
   expressed. Only keep genes that are expressed in whatever you set to
@@ -103,7 +104,7 @@ The DuckDB also gets populated with the metadata in the observations
 the data and processing it - is usually what takes quite a bit of time.
 If you have already loaded in the data and it exists on-disk from a
 previous session, skip the streaming step entirely and reconnect. On a
-MacBook Air with 24 GB and an M3 chip, this takes ~3.5 minutes.
+MacBook Air with 24 GB and an M3 chip, this takes 90 seconds minutes.
 
 ``` r
 
@@ -141,7 +142,7 @@ cells_without_doublets <- sce[[c("doublet", "cell_id")]][
 sce <- set_cells_to_keep(x = sce, cells_to_keep = cells_without_doublets)
 ```
 
-Due to having run over 24 samples in this case, this will take ~15
+Due to having run over 24 samples in this case, this will take ~6
 minutes. Ideal moment for a podcast, video of your favourite YouTuber
 and/or coffee - which ever floats your boat. Once you have passed this,
 things will get substantially faster.
@@ -161,7 +162,12 @@ downstream is unchanged.
 
 ``` r
 
-scrublet_res <- scrublet_gpu_sc(object = sce, group_by = "sample")
+scrublet_res <- scrublet_gpu_sc(
+  object = sce,
+  group_by = "sample",
+  # ivf squeezes more speed out on the GPU compared to exhaustive
+  scrublet_params = params_scrublet_gpu(knn = list(knn_method = "ivf"))
+)
 
 sce <- add_sc_new_obs(
   object = sce,
@@ -174,7 +180,8 @@ do not match bit for bit: the randomised SVD draws a different sketch
 and the GPU index breaks neighbour ties differently, so a handful of
 borderline calls can flip. The [GPU Scrublet
 vignette](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_scrublet.html)
-has the details, including which kNN backend to pick.
+has the details, including which kNN backend to pick. On the MacBook Air
+this does not accelerate the method massively. More towards 5 minutes.
 
 ## Quality control
 
@@ -294,7 +301,7 @@ cpu_res <- get_pca_factors(sce)
 cpu_s <- get_pca_singular_val(sce)
 ```
 
-This runs in ~25 seconds. Let’s compare this against the GPU-accelerated
+This runs in ~8 seconds. Let’s compare this against the GPU-accelerated
 version. In this case, the GEMMs prior to the thin SVD on the massively
 reduced matrix in the randomised SVD are run on the GPU. You pay for
 moving the data, but you should still see an acceleration compared to
@@ -316,11 +323,11 @@ gpu_s <- get_pca_singular_val(sce)
 plot(cpu_res[, 1], gpu_res[, 1])
 ```
 
-On the test MacBook Air, this runs in 15 seconds. In practice you would
+On the test MacBook Air, this runs in 5 seconds. In practice you would
 pick one. The GPU path becomes the more attractive option as cell counts
-grow; on this data set you can feel the difference (if VRAM permits).
-You will see some slight differences due to floating operation
-differences between CPU and GPU.
+grows and the more powerful your GPU is; on these data set you can feel
+the difference (if VRAM permits). You might see some slight differences
+due to floating operation differences between CPU and GPU.
 
 ## Nearest neighbours (GPU-accelerated)
 
@@ -331,8 +338,8 @@ thanks to CubeCL and WGPU, as long as you can fit the data into VRAM.
 `knn_method = "nndescent"` builds a CAGRA-style graph; `"ivf"` and
 `"exhaustive"` are also on offer, see the [GPU single cell
 vignette](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html).
-The time the GPU version takes is \<30 seconds. CPU version with
-`NNDescent` takes ~90 seconds.
+The time the GPU version takes is ~10 seconds. CPU version with
+`NNDescent` takes ~15 seconds.
 
 ``` r
 
@@ -397,16 +404,24 @@ You might wonder why in the case of tSNE we regenerate the kNN graph.
 You do not have to, but the rule-of-thumb is
 `k_neighbours = perplexity * 3.0`. With the default perplexity, we would
 need 30 neighbours, but we previously only returned 15. So, we just
-rerun this. Skip tSNE if you don’t need it, but the FFT-accelerated
-version is substantially faster than you would expect from tSNE. Also,
-if you want to, `bixverse.gpu` provides (since `"0.2.1"`) a
-GPU-accelerated Adam optimiser. You can run this via:
+rerun this. Skip tSNE if you don’t need it, but the (GPU-accelerated)
+FFT-accelerated version is substantially faster than you would expect
+from tSNE. Same for the GPU-accelerated Adam optimiser for UMAP. You can
+run this via:
 
 ``` r
 
 sce <- umap_gpu_sc(
   sce,
   slot_name = "umap_prior_gpu"
+)
+```
+
+``` r
+
+sce <- umap_tsne_sc(
+  sce,
+  slot_name = "tsne_prior_gpu"
 )
 ```
 
@@ -444,17 +459,18 @@ Okay, there is clearly a big sample batch effect. Let’s remove that one.
 Again you have two options here… Harmony ([version
 2](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v2) -
 recommended) on CPU or a GPU-accelerated version. Let’s check out the
-CPU version first… (~ 40 seconds)
+CPU version first… (~ 4 seconds)
 
 ``` r
 
 sce <- harmony_v2_sc(object = sce, batch_column = "sample")
 ```
 
-If you have a GPU at hand, you can also just use the GPU version (15
-seconds). Again, you will observe some slight numerical differences…
-This is due to the GPU implementation, but the overall structure of the
-data will be recovered in the same way.
+If you have a GPU at hand, you can also just use the GPU version (also 4
+seconds on the Air. The CPU path is already very optimised and the GPU
+is not particularly powerful). Again, you will observe some slight
+numerical differences… This is due to the GPU implementation, but the
+overall structure of the data will be recovered in the same way.
 
 ``` r
 

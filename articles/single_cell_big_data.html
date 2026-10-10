@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Scaling to millions of cells with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-09</p>
+      <p class="date">2026-10-10</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -188,14 +188,14 @@
 <span><span class="co"># but ensures your memory never blows up</span></span>
 <span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_mtx.html">load_mtx</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, sc_mtx_io_param <span class="op">=</span> <span class="va">load_params</span>, csc_mem_gb <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>This step is the slowest… A lot of things are actually happening here.</p>
+<p>This step is one of the slowest… A lot of things are actually happening here.</p>
 <ul>
 <li>First, (streaming) scan to understand in how many cells a gene is expressed. Only keep genes that are expressed in whatever you set to <code>min_cells</code>.</li>
 <li>Second, (streaming) scan, given the genes from the first step, which cells to include based on minimum library size and minimum features.</li>
 <li>Third, now that it’s clear which cells/genes to include, create quick temp files with the cells to keep with the genes already re-indexed. This way we avoid loading in the massive MTX file in one go into memory. These files are automatically cleaned up at the end and loaded sequentially and written to the CSR-type file (while the normalisation is also done on the fly).</li>
 <li>Lastly, load in the cell data in small chunks and do a transpose to a CSC style format for easy gene retrieval.</li>
 </ul>
-<p>This approach avoids loading the whole data into memory at any point. The DuckDB also gets populated with the metadata in the observations (based on what has been filtered) and the vars. This part - streaming the data and processing it - is usually what takes quite a bit of time. If you have already loaded in the data and it exists on-disk from a previous session, skip the streaming step entirely and reconnect. On a MacBook Air with 24 GB and an M3 chip, this takes ~3.5 minutes.</p>
+<p>This approach avoids loading the whole data into memory at any point. The DuckDB also gets populated with the metadata in the observations (based on what has been filtered) and the vars. This part - streaming the data and processing it - is usually what takes quite a bit of time. If you have already loaded in the data and it exists on-disk from a previous session, skip the streaming step entirely and reconnect. On a MacBook Air with 24 GB and an M3 chip, this takes 90 seconds minutes.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># the folder is hopefully not temp...</span></span>
@@ -222,20 +222,25 @@
 <span></span>
 <span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">sce</span>, cells_to_keep <span class="op">=</span> <span class="va">cells_without_doublets</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Due to having run over 24 samples in this case, this will take ~15 minutes. Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - which ever floats your boat. Once you have passed this, things will get substantially faster.</p>
+<p>Due to having run over 24 samples in this case, this will take ~6 minutes. Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - which ever floats your boat. Once you have passed this, things will get substantially faster.</p>
 <section class="level3"><h3 id="scrublet-on-the-gpu">Scrublet on the GPU<a class="anchor" aria-label="anchor" href="#scrublet-on-the-gpu"></a>
 </h3>
 <p>Got a GPU? <code>bixverse.gpu</code> ships <code>scrublet_gpu_sc()</code>, a drop-in for <code><a href="../reference/scrublet_sc.html">scrublet_sc()</a></code>. Three stages move to the device: the randomised sparse SVD, the projection of the simulated doublets into that PC space, and the kNN over the combined embedding. That embedding is <code>(1 + sim_doublet_ratio) * n_cells</code> rows tall, so the kNN is the stage that gets painful on the CPU as samples grow. HVG selection, the doublet simulation and the Otsu threshold stay on the CPU. <code>group_by</code> works the same way and the result is the same <code>ScrubletRes</code>, so everything downstream is unchanged.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">scrublet_res</span> <span class="op">&lt;-</span> <span class="fu">scrublet_gpu_sc</span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, group_by <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">scrublet_res</span> <span class="op">&lt;-</span> <span class="fu">scrublet_gpu_sc</span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  group_by <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>  <span class="co"># ivf squeezes more speed out on the GPU compared to exhaustive</span></span>
+<span>  scrublet_params <span class="op">=</span> <span class="fu">params_scrublet_gpu</span><span class="op">(</span>knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"ivf"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_sc_new_obs.html">add_sc_new_obs</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  obs_data <span class="op">=</span> <span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">scrublet_res</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Pick one of the two. Scores correlate (~0.99 on the demuxlet PBMCs) but do not match bit for bit: the randomised SVD draws a different sketch and the GPU index breaks neighbour ties differently, so a handful of borderline calls can flip. The <a href="https://gregorlueg.github.io/bixverse.gpu/articles/gpu_scrublet.html">GPU Scrublet vignette</a> has the details, including which kNN backend to pick.</p>
+<p>Pick one of the two. Scores correlate (~0.99 on the demuxlet PBMCs) but do not match bit for bit: the randomised SVD draws a different sketch and the GPU index breaks neighbour ties differently, so a handful of borderline calls can flip. The <a href="https://gregorlueg.github.io/bixverse.gpu/articles/gpu_scrublet.html">GPU Scrublet vignette</a> has the details, including which kNN backend to pick. On the MacBook Air this does not accelerate the method massively. More towards 5 minutes.</p>
 </section></section><section class="level2"><h2 id="quality-control">Quality control<a class="anchor" aria-label="anchor" href="#quality-control"></a>
 </h2>
 <section class="level3"><h3 id="gene-set-proportions">Gene set proportions<a class="anchor" aria-label="anchor" href="#gene-set-proportions"></a>
@@ -321,7 +326,7 @@
 <span><span class="va">cpu_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span>
 <span><span class="va">cpu_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pca_singular_val.html">get_pca_singular_val</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>This runs in ~25 seconds. Let’s compare this against the GPU-accelerated version. In this case, the GEMMs prior to the thin SVD on the massively reduced matrix in the randomised SVD are run on the GPU. You pay for moving the data, but you should still see an acceleration compared to the CPU form.</p>
+<p>This runs in ~8 seconds. Let’s compare this against the GPU-accelerated version. In this case, the GEMMs prior to the thin SVD on the massively reduced matrix in the randomised SVD are run on the GPU. You pay for moving the data, but you should still see an acceleration compared to the CPU form.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">calculate_pca_gpu_sc</span><span class="op">(</span></span>
@@ -337,10 +342,10 @@
 <span><span class="co"># sanity check on the leading component</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cpu_res</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">gpu_res</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>On the test MacBook Air, this runs in 15 seconds. In practice you would pick one. The GPU path becomes the more attractive option as cell counts grow; on this data set you can feel the difference (if VRAM permits). You will see some slight differences due to floating operation differences between CPU and GPU.</p>
+<p>On the test MacBook Air, this runs in 5 seconds. In practice you would pick one. The GPU path becomes the more attractive option as cell counts grows and the more powerful your GPU is; on these data set you can feel the difference (if VRAM permits). You might see some slight differences due to floating operation differences between CPU and GPU.</p>
 </section><section class="level2"><h2 id="nearest-neighbours-gpu-accelerated">Nearest neighbours (GPU-accelerated)<a class="anchor" aria-label="anchor" href="#nearest-neighbours-gpu-accelerated"></a>
 </h2>
-<p>The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes GPU-accelerated nearest neighbour search via <code>find_neighbours_gpu_sc()</code>, thanks to CubeCL and WGPU, as long as you can fit the data into VRAM. <code>knn_method = "nndescent"</code> builds a CAGRA-style graph; <code>"ivf"</code> and <code>"exhaustive"</code> are also on offer, see the <a href="https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html">GPU single cell vignette</a>. The time the GPU version takes is &lt;30 seconds. CPU version with <code>NNDescent</code> takes ~90 seconds.</p>
+<p>The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes GPU-accelerated nearest neighbour search via <code>find_neighbours_gpu_sc()</code>, thanks to CubeCL and WGPU, as long as you can fit the data into VRAM. <code>knn_method = "nndescent"</code> builds a CAGRA-style graph; <code>"ivf"</code> and <code>"exhaustive"</code> are also on offer, see the <a href="https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html">GPU single cell vignette</a>. The time the GPU version takes is ~10 seconds. CPU version with <code>NNDescent</code> takes ~15 seconds.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
@@ -392,7 +397,7 @@
 <span>  knn_method <span class="op">=</span> <span class="st">"nndescent"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>You might wonder why in the case of tSNE we regenerate the kNN graph. You do not have to, but the rule-of-thumb is <code>k_neighbours = perplexity * 3.0</code>. With the default perplexity, we would need 30 neighbours, but we previously only returned 15. So, we just rerun this. Skip tSNE if you don’t need it, but the FFT-accelerated version is substantially faster than you would expect from tSNE. Also, if you want to, <code>bixverse.gpu</code> provides (since <code>"0.2.1"</code>) a GPU-accelerated Adam optimiser. You can run this via:</p>
+<p>You might wonder why in the case of tSNE we regenerate the kNN graph. You do not have to, but the rule-of-thumb is <code>k_neighbours = perplexity * 3.0</code>. With the default perplexity, we would need 30 neighbours, but we previously only returned 15. So, we just rerun this. Skip tSNE if you don’t need it, but the (GPU-accelerated) FFT-accelerated version is substantially faster than you would expect from tSNE. Same for the GPU-accelerated Adam optimiser for UMAP. You can run this via:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">umap_gpu_sc</span><span class="op">(</span></span>
@@ -402,6 +407,13 @@
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">umap_tsne_sc</span><span class="op">(</span></span>
+<span>  <span class="va">sce</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"tsne_prior_gpu"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sce</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap_prior"</span>,</span>
@@ -414,7 +426,7 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sce</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne_prior"</span>,</span>
@@ -428,19 +440,19 @@
 </div>
 </section></section><section class="level2"><h2 id="batch-correction">Batch correction<a class="anchor" aria-label="anchor" href="#batch-correction"></a>
 </h2>
-<p>Okay, there is clearly a big sample batch effect. Let’s remove that one. Again you have two options here… Harmony (<a href="https://www.biorxiv.org/content/10.64898/2026.03.16.711825v2" class="external-link">version 2</a> - recommended) on CPU or a GPU-accelerated version. Let’s check out the CPU version first… (~ 40 seconds)</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>If you have a GPU at hand, you can also just use the GPU version (15 seconds). Again, you will observe some slight numerical differences… This is due to the GPU implementation, but the overall structure of the data will be recovered in the same way.</p>
+<p>Okay, there is clearly a big sample batch effect. Let’s remove that one. Again you have two options here… Harmony (<a href="https://www.biorxiv.org/content/10.64898/2026.03.16.711825v2" class="external-link">version 2</a> - recommended) on CPU or a GPU-accelerated version. Let’s check out the CPU version first… (~ 4 seconds)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>If you have a GPU at hand, you can also just use the GPU version (also 4 seconds on the Air. The CPU path is already very optimised and the GPU is not particularly powerful). Again, you will observe some slight numerical differences… This is due to the GPU implementation, but the overall structure of the data will be recovered in the same way.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">harmony_v2_gpu_sc</span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>Let’s overwrite the kNN graph with the now batch-corrected embedding:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">find_neighbours_gpu_sc</span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
@@ -453,7 +465,7 @@
 </h3>
 <p>Let’s requantify the kBET scores and see if we removed some of the batch effects…</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">kbet_post_gpu</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">kbet_post_gpu</span></span></code></pre></div>
@@ -462,7 +474,7 @@
 </h2>
 <p>This is a nice data set where the fast clustering makes a lot of sense… We use the k-means clustering to quantise the data to representative centroids and run the Louvain clustering specifically for the centroids and project the community membership back.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fast_cluster_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
@@ -481,7 +493,7 @@
 </section><section class="level2"><h2 id="differential-gene-expression">Differential gene expression<a class="anchor" aria-label="anchor" href="#differential-gene-expression"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">meta_data</span> <span class="op">&lt;-</span> <span class="va">sce</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"res_2"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">cells_grp_a</span> <span class="op">&lt;-</span> <span class="va">meta_data</span><span class="op">[</span><span class="va">res_2</span> <span class="op">==</span> <span class="st">"1"</span>, <span class="va">cell_id</span><span class="op">]</span></span>

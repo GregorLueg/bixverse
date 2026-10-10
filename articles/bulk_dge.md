@@ -50,6 +50,8 @@ about.
 data("airway", package = "airway")
 
 counts <- SummarizedExperiment::assay(airway, "counts")
+#> Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by
+#> 'DelayedArray::makeNindexFromArrayViewport' when loading 'SummarizedExperiment'
 
 meta_data <- as.data.table(
   as.data.frame(SummarizedExperiment::colData(airway)),
@@ -552,8 +554,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>      expr       min        lq      mean    median        uq       max neval
-#>     limma 1121.6495 1143.6482 1297.0143 1189.9343 1234.4051 1795.4344     5
-#>  bixverse  193.5868  194.0955  206.8478  195.5435  216.2951  234.7182     5
+#>     limma 1497.3972 1525.0977 1530.2212 1538.3550 1543.5422 1546.7138     5
+#>  bixverse  252.8155  254.1222  259.9795  254.6776  268.3079  269.9745     5
 ```
 
 And the edgeR quasi-likelihood chain, same counts and design as
@@ -580,8 +582,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>      expr      min       lq     mean   median       uq      max neval
-#>     edgeR 554.9447 556.0248 566.6643 568.5347 574.5297 579.2877     5
-#>  bixverse 162.3664 179.7035 183.4982 180.4227 183.3730 211.6254     5
+#>     edgeR 684.6329 711.8210 715.8152 726.2115 727.7348 728.6757     5
+#>  bixverse 218.6356 218.7936 228.5275 221.9456 238.7691 244.4936     5
 ```
 
 Both land a few times faster on the Rust side, on eight samples. Mileage
