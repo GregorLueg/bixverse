@@ -1,3 +1,9 @@
+# bixverse 0.6.3
+
+## Fix
+
+* Make the compile work on Windows arm64
+
 # bixverse 0.6.2
 
 ## Features
