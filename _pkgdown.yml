@@ -338,6 +338,7 @@ reference:
       - community_detection
       - constrained_page_rank
       - constrained_page_rank_ls
+      - leiden_clustering
       - diffuse_seed_nodes
       - permute_seed_nodes
       - get_diffusion_perms
@@ -869,6 +870,7 @@ reference:
       - rs_kbet
       - rs_knn_label_propagation
       - rs_knn_mat_to_edge_list
+      - rs_leiden_clustering
       - rs_generate_ligand_target_influence
       - rs_ligand_activity_scores
       - rs_limma_voom
