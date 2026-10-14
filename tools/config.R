@@ -117,6 +117,15 @@ cfg <- if (is_debug) "debug" else "release"
 # read in the Makevars.in file checking
 is_windows <- .Platform[["OS.type"]] == "windows"
 
+# ann-search-rs links Accelerate via `#[link(kind = "framework")]`, which a
+# staticlib does not pass on. R links with `-undefined dynamic_lookup`, so
+# without this the cblas symbols only fail at first call.
+.macos_libs <- if (Sys.info()[["sysname"]] == "Darwin") {
+  "-framework Accelerate "
+} else {
+  ""
+}
+
 # used to replace @TARGET_DIR@. Windows only, and it is about MAX_PATH rather
 # than taste. R CMD INSTALL builds under
 # `AppData/Local/Temp/RtmpXXXXXX/R.INSTALLXXXXXXXXXX/bixverse/src/`, 84
@@ -366,6 +375,7 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@CARGO_FEATURES@", .cargo_features, x = _, fixed = TRUE) |>
   gsub("@HDF5_EXPORTS@", .hdf5_exports, x = _, fixed = TRUE) |>
   gsub("@HDF5_LIBS@", .hdf5_libs, x = _, fixed = TRUE) |>
+  gsub("@MACOS_LIBS@", .macos_libs, x = _, fixed = TRUE) |>
   gsub("@HDF5_RUSTFLAGS@", .hdf5_rustflags, x = _, fixed = TRUE) |>
   gsub("@LINKER_RUSTFLAGS@", .linker_rustflags, x = _, fixed = TRUE)
 

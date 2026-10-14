@@ -6,6 +6,7 @@
 \usage{
 rs_sc_pca_residuals(
   f_path_gene,
+  f_path_cell,
   residual_fit,
   no_pcs,
   pca_params,
@@ -18,6 +19,9 @@ rs_sc_pca_residuals(
 }
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
+
+\item{f_path_cell}{String. Path to the \code{counts_cells.bin} file. Small cell
+selections are read from here instead of sweeping the gene file.}
 
 \item{residual_fit}{List. A fit from \code{\link[=rs_sc_fit_residuals]{rs_sc_fit_residuals()}}.}
 

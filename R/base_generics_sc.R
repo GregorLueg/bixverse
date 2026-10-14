@@ -1114,6 +1114,11 @@ get_knn_dist <- function(x, ...) {
 #' This is a helper function to identify highly variable genes for `SingleCells`
 #' (using the Rust-based streaming of data) or `MetaCells`.
 #'
+#' Small cell selections (up to 10% of the stored cells and at most 100k
+#' cells, e.g. most `SingleCellsSubset` objects) are read from the cell-major
+#' file into memory rather than sweeping the whole gene-major file, which makes
+#' the cost follow the selection instead of the store.
+#'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
 #' to `2000L`.
@@ -1178,6 +1183,11 @@ find_hvg_sc <- S7::new_generic(
 #' Unlike the log-normalised layer, which is computed once at ingestion and
 #' written to disk, nothing is precomputed here: the residual rows are
 #' regenerated on demand by whatever consumes the fit.
+#'
+#' Small cell selections (up to 10% of the stored cells and at most 100k
+#' cells) are read from the cell-major file into memory for the fit, the
+#' residual HVG selection and the residual PCA, instead of sweeping the whole
+#' gene-major file each time.
 #'
 #' With `group_column` one model is fitted per group. That is what a
 #' multi-sample experiment wants, since each sample keeps its own depth and
@@ -1500,12 +1510,14 @@ find_neighbours_sc <- S7::new_generic(
 #'
 #' @description
 #' This function will apply Leiden clustering on the sNN graph with the
-#' given resolution and add a column to the obs table.
+#' given resolution and add a column to the obs table. Runs in Rust via
+#' [leiden_clustering()]; the labels depend on `seed` only, `0` is the
+#' largest cluster.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param cluster_algorithm String. One of `c("leiden", "louvain")`.
-#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()]
-#' or [igraph::cluster_louvain()].
+#' @param res Numeric. The modularity resolution parameter, see
+#' [leiden_clustering()].
 #' @param name String. The name to add to the obs table in the DuckDB.
 #' @param modality String. On which modality to run the UMAP. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for

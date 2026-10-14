@@ -137,7 +137,11 @@ S7::method(fit_residuals_sc, ScOrScSubset) <- function(
     return(object)
   }
 
-  obs <- .residual_obs(object, cell_indices)
+  obs <- .residual_obs(
+    object,
+    cell_indices,
+    cols = c("cell_idx", group_column, covariate_columns)
+  )
 
   fit <- .fit_residuals(
     object = object,

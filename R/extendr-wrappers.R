@@ -1879,6 +1879,36 @@ rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, m
 #' @export
 rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering, data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed)
 
+#' Rust implementation of Leiden and Louvain clustering
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Modularity-based Leiden (or Louvain, with `refine = FALSE`) on an
+#' undirected weighted graph. Mirrors
+#' `igraph::cluster_leiden(objective_function = "modularity")`. The result
+#' depends on the seed only, not on the number of threads.
+#'
+#' @param from Integer vector. 1-based source node of each edge.
+#' @param to Integer vector. 1-based target node of each edge. Same length as
+#' `from`.
+#' @param weights Numeric vector. Edge weights, same length as `from`.
+#' @param n_nodes Integer. Number of nodes in the graph.
+#' @param leiden_params List. Named list with the optional fields (defaults
+#' in parentheses):
+#' \itemize{
+#'   \item `resolution` numeric, modularity resolution (1.0)
+#'   \item `beta` numeric, randomness of the refinement merges (0.01)
+#'   \item `n_iterations` integer, full Leiden iterations (2)
+#'   \item `refine` logical, `TRUE` for Leiden, `FALSE` for Louvain (TRUE)
+#'   \item `seed` integer, random seed (42)
+#' }
+#'
+#' @returns Integer vector with the 1-based community of each node; `1` is the
+#' largest community.
+#'
+#' @export
+rs_leiden_clustering <- function(from, to, weights, n_nodes, leiden_params) .Call(wrap__rs_leiden_clustering, from, to, weights, n_nodes, leiden_params)
+
 #' kNN label propagation
 #'
 #' @description
@@ -4042,6 +4072,8 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' in Seurat, plus the scran mean-variance trend.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+#' selections are read from here instead of sweeping the gene file.
 #' @param hvg_method String. Which HVG detection method to use. One of
 #' `c("vst", "meanvarbin", "dispersion", "scran")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
@@ -4090,7 +4122,7 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' @export
 #'
 #' @keywords internal
-rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose)
+rs_sc_hvg <- function(f_path_gene, f_path_cell, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, f_path_cell, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose)
 
 #' Calculate HVG per batch
 #'
@@ -4101,6 +4133,8 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' such as union of top genes per batch.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+#' selections are read from here instead of sweeping the gene file.
 #' @param hvg_method String. Which HVG detection method to use. One of
 #' `c("vst", "meanvarbin", "dispersion", "scran")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
@@ -4156,7 +4190,7 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' @export
 #'
 #' @keywords internal
-rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose)
+rs_sc_hvg_batch_aware <- function(f_path_gene, f_path_cell, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, f_path_cell, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, scran_params, streaming, verbose)
 
 #' Calculates PCA for single cell
 #'
@@ -4504,7 +4538,8 @@ rs_sc_infer_empty_droplets <- function(lib_size, empty_params) .Call(wrap__rs_sc
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
 #' @param f_path_cell String. Path to the `counts_cells.bin` file. Used for the
-#' library sizes, and for the per-cell totals of the analytic Pearson fit.
+#' library sizes, the per-cell totals of the analytic Pearson fit and, for small
+#' cell selections, the counts themselves instead of sweeping the gene file.
 #' @param method String. One of `c("sctransform", "analytic_pearson")`.
 #' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
 #' @param group_of_cell Integer vector or `NULL`. Group label per selected
@@ -4554,6 +4589,8 @@ rs_sc_fit_residuals <- function(f_path_gene, f_path_cell, method, cell_indices, 
 #' one row per worker rather than a genes-by-cells matrix.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+#' selections are read from here instead of sweeping the gene file.
 #' @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
 #' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
 #' Must be the selection the fit was fitted on.
@@ -4574,7 +4611,7 @@ rs_sc_fit_residuals <- function(f_path_gene, f_path_cell, method, cell_indices, 
 #' @references Seurat v5, `SCTransform.StdAssay`
 #'
 #' @keywords internal
-rs_sc_residual_variance <- function(f_path_gene, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose) .Call(wrap__rs_sc_residual_variance, f_path_gene, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose)
+rs_sc_residual_variance <- function(f_path_gene, f_path_cell, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose) .Call(wrap__rs_sc_residual_variance, f_path_gene, f_path_cell, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose)
 
 #' Calculates PCA on Pearson residuals for single cell
 #'
@@ -4590,6 +4627,8 @@ rs_sc_residual_variance <- function(f_path_gene, residual_fit, cell_indices, n_h
 #' flatten the very ranking the residuals produce.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+#' selections are read from here instead of sweeping the gene file.
 #' @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
 #' @param no_pcs Integer. Number of PCs to calculate.
 #' @param pca_params Named list. Contains the parameters to use for this PCA
@@ -4615,7 +4654,7 @@ rs_sc_residual_variance <- function(f_path_gene, residual_fit, cell_indices, n_h
 #' @export
 #'
 #' @keywords internal
-rs_sc_pca_residuals <- function(f_path_gene, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
+rs_sc_pca_residuals <- function(f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
 
 #' Writes scTransform-corrected counts to a new store
 #'

@@ -285,6 +285,8 @@ get_seurat_counts <- function(seurat_obj) {
 #'  \item raw - Sparse matrix representing the raw counts.
 #'  \item norm - Sparse matrix representing the norm counts.
 #' }
+#' Both matrices share one `p` and `j` vector, and inputs that already have the
+#' right storage type are used without a copy.
 #'
 #' @keywords internal
 get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
@@ -310,25 +312,29 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
   dims <- as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
   p <- as.integer(meta_cell_data$indptr)
   j <- as.integer(meta_cell_data$indices)
+  if (is.null(dimnames)) {
+    dimnames <- list(NULL, NULL)
+  }
 
+  # `Matrix::sparseMatrix()` copies every slot and gives each matrix its own
+  # index vectors. `new()` keeps the vectors as handed in, so raw and norm point
+  # at one `p` and `j` and a merge does not hold a second copy of its output.
   list(
-    raw = Matrix::sparseMatrix(
+    raw = methods::new(
+      "dgRMatrix",
       p = p,
       j = j,
       x = as.numeric(meta_cell_data$raw_counts),
-      dims = dims,
-      dimnames = dimnames,
-      repr = "R",
-      index1 = FALSE
+      Dim = dims,
+      Dimnames = dimnames
     ),
-    norm = Matrix::sparseMatrix(
+    norm = methods::new(
+      "dgRMatrix",
       p = p,
       j = j,
       x = as.numeric(meta_cell_data$norm_counts),
-      dims = dims,
-      dimnames = dimnames,
-      repr = "R",
-      index1 = FALSE
+      Dim = dims,
+      Dimnames = dimnames
     )
   )
 }

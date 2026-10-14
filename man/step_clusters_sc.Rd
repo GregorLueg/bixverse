@@ -15,8 +15,8 @@ step_clusters_sc(
 \arguments{
 \item{cluster_algorithm}{String. One of \code{c("leiden", "louvain")}.}
 
-\item{res}{Numeric. The resolution parameter for \code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}
-or \code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}.}
+\item{res}{Numeric. The modularity resolution parameter, see
+\code{\link[=leiden_clustering]{leiden_clustering()}}.}
 
 \item{name}{String. The name to add to the obs table in the DuckDB.}
 

@@ -177,13 +177,25 @@ print.ScResidualFit <- function(x, ...) {
 #'
 #' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param cell_indices Integer. The 0-based cells, in the order Rust gets them.
+#' @param cols Optional character vector. Columns to read for a `SingleCells`
+#' object, `cell_idx` is always added. Columns missing from the table are left
+#' out, so the callers can report them. `NULL` reads every column.
 #'
 #' @returns The observation table for those cells, row `i` being
 #' `cell_indices[i]`.
 #'
 #' @keywords internal
-.residual_obs <- function(object, cell_indices) {
-  obs <- get_sc_obs(object, filtered = TRUE)
+.residual_obs <- function(object, cell_indices, cols = NULL) {
+  checkmate::qassert(cols, c("0", "S+"))
+
+  # a subset holds its obs in memory, so narrowing only pays off on the store
+  cols <- if (!is.null(cols) && S7::S7_inherits(object, SingleCells)) {
+    intersect(
+      unique(c("cell_idx", cols)),
+      get_sc_duckdb(object)$get_obs_cols()
+    )
+  }
+  obs <- get_sc_obs(object, cols = cols, filtered = TRUE)
 
   if (!"cell_idx" %in% names(obs)) {
     stop("The observation table has no `cell_idx` column to align on.")
@@ -385,6 +397,7 @@ print.ScResidualFit <- function(x, ...) {
 
   res <- rs_sc_residual_variance(
     f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
     residual_fit = fit,
     cell_indices = cell_indices,
     n_hvg = hvg_no,
@@ -668,6 +681,7 @@ print.ScResidualFit <- function(x, ...) {
 
   res <- rs_sc_pca_residuals(
     f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
     residual_fit = fit,
     no_pcs = no_pcs,
     pca_params = pca_params,

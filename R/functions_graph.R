@@ -400,3 +400,74 @@ knn_graph_label_propagation <- function(
 
   list(assignment_probs = res, final_labels = final_labels)
 }
+
+# community detection ----------------------------------------------------------
+
+#' Leiden or Louvain community detection on an igraph
+#'
+#' @description
+#' Modularity-based Leiden (Traag et al.) or Louvain (Blondel et al.) community
+#' detection, run in Rust. Mirrors
+#' `igraph::cluster_leiden(objective_function = "modularity")`, but the result
+#' depends on `seed` only (not on the global RNG or the number of threads).
+#' Communities are numbered by size, `1` being the largest.
+#'
+#' @param graph igraph. Undirected. If it has an edge attribute `weight`, it is
+#' used, otherwise all edges get weight 1.
+#' @param resolution Numeric. Modularity resolution parameter. Higher values
+#' give more communities.
+#' @param algorithm String. One of `c("leiden", "louvain")`.
+#' @param beta Numeric. Randomness of the Leiden refinement merges. Ignored for
+#' Louvain.
+#' @param n_iterations Integer. Number of full iterations, each starting from
+#' the previous partition.
+#' @param seed Integer. Random seed.
+#'
+#' @returns Integer vector with the community of each node (1-based, `1` is
+#' the largest community).
+#'
+#' @export
+#'
+#' @references Traag, Waltman & van Eck, Sci Rep, 2019; Blondel, et al., J Stat
+#' Mech, 2008
+#'
+#' @examples
+#' g <- igraph::make_graph("Zachary")
+#' table(leiden_clustering(g))
+leiden_clustering <- function(
+  graph,
+  resolution = 1.0,
+  algorithm = c("leiden", "louvain"),
+  beta = 0.01,
+  n_iterations = 2L,
+  seed = 42L
+) {
+  algorithm <- match.arg(algorithm)
+  checkmate::assertClass(graph, "igraph")
+  checkmate::assertFALSE(igraph::is_directed(graph))
+  checkmate::qassert(resolution, "N1(0,)")
+  checkmate::assertChoice(algorithm, c("leiden", "louvain"))
+  checkmate::qassert(beta, "N1(0,)")
+  checkmate::qassert(n_iterations, "X1[1,)")
+  checkmate::qassert(seed, "X1[0,)")
+
+  edges <- igraph::as_edgelist(graph, names = FALSE)
+  weights <- igraph::E(graph)$weight
+  if (is.null(weights)) {
+    weights <- rep(1, nrow(edges))
+  }
+
+  rs_leiden_clustering(
+    from = as.integer(edges[, 1]),
+    to = as.integer(edges[, 2]),
+    weights = as.numeric(weights),
+    n_nodes = igraph::vcount(graph),
+    leiden_params = list(
+      resolution = resolution,
+      beta = beta,
+      n_iterations = as.integer(n_iterations),
+      refine = algorithm == "leiden",
+      seed = as.integer(seed)
+    )
+  )
+}

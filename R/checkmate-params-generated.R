@@ -3223,6 +3223,8 @@ checkScFastClusterParams <- function(x) {
       "full_snn",
       "pruning",
       "snn_similarity",
+      "cell_mediated",
+      "n_anchors",
       "k",
       "knn_method",
       "ann_dist",
@@ -3253,6 +3255,8 @@ checkScFastClusterParams <- function(x) {
       louvain_iters = "I1[1,)",
       full_snn = "B1",
       pruning = c("N1", "0"),
+      cell_mediated = "B1",
+      n_anchors = "I1[1,)",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -3268,10 +3272,10 @@ checkScFastClusterParams <- function(x) {
     ),
     label = "fast clustering params",
     hint = paste(
-      "kmeans_iters, batch_size and louvain_iters must be integers >=",
-      "1; drift_threshold and lr_alpha must be single numerics;",
-      "full_snn must be a boolean; pruning must be NULL or a single",
-      "numeric."
+      "kmeans_iters, batch_size, louvain_iters and n_anchors must be",
+      "integers >= 1; drift_threshold and lr_alpha must be single",
+      "numerics; full_snn and cell_mediated must be booleans; pruning",
+      "must be NULL or a single numeric."
     )
   )
   if (!isTRUE(res)) {
@@ -3294,10 +3298,10 @@ checkScFastClusterParams <- function(x) {
     ),
     label = "fast clustering params",
     hint = paste(
-      "kmeans_iters, batch_size and louvain_iters must be integers >=",
-      "1; drift_threshold and lr_alpha must be single numerics;",
-      "full_snn must be a boolean; pruning must be NULL or a single",
-      "numeric."
+      "kmeans_iters, batch_size, louvain_iters and n_anchors must be",
+      "integers >= 1; drift_threshold and lr_alpha must be single",
+      "numerics; full_snn and cell_mediated must be booleans; pruning",
+      "must be NULL or a single numeric."
     )
   )
   if (!isTRUE(res)) {

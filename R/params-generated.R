@@ -3371,6 +3371,15 @@ params_sc_empty_droplets <- function(
 #' 1]`. One of `c("jaccard", "rank")`. Defaults to `"jaccard"`.
 #' @param louvain_iters Integer. Number of iterations for Louvain clustering.
 #' Defaults to `10L`.
+#' @param cell_mediated Boolean. Shall the cell-mediated centroid graph from
+#' Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+#' then linked by the cells that sit near both, so two centroids that are close
+#' in space but have no cells between them stay apart. If `TRUE`, `snn`,
+#' `full_snn`, `pruning` and `snn_similarity` are ignored. See Wei, et al., PLoS
+#' Comput Biol, 2022. Defaults to `FALSE`.
+#' @param n_anchors Integer. Number of nearest centroids each cell links to in
+#' the cell-mediated graph. Only used if `cell_mediated = TRUE`. Defaults to
+#' `5L`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -3406,6 +3415,15 @@ params_sc_empty_droplets <- function(
 #'  across both cells, where lower-ranked (closer) shared neighbours result in
 #'  higher edge weights Both methods produce weights normalised to the range
 #'  `[0, 1]`. One of `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+#'  \item cell_mediated - Boolean. Shall the cell-mediated centroid graph from
+#'  Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+#'  then linked by the cells that sit near both, so two centroids that are close
+#'  in space but have no cells between them stay apart. If `TRUE`, `snn`,
+#'  `full_snn`, `pruning` and `snn_similarity` are ignored. See Wei, et al.,
+#'  PLoS Comput Biol, 2022. Defaults to `FALSE`.
+#'  \item n_anchors - Integer. Number of nearest centroids each cell links to in
+#'  the cell-mediated graph. Only used if `cell_mediated = TRUE`. Defaults to
+#'  `5L`.
 #'  \item The elements of [params_knn_defaults()], overridden by `knn`, spliced
 #'  in at this position.
 #' }
@@ -3420,6 +3438,8 @@ params_sc_fast_cluster <- function(
   pruning = NULL,
   snn_similarity = c("jaccard", "rank"),
   louvain_iters = 10L,
+  cell_mediated = FALSE,
+  n_anchors = 5L,
   knn = list(k = 5L)
 ) {
   snn_similarity <- match.arg(snn_similarity)
@@ -3433,6 +3453,8 @@ params_sc_fast_cluster <- function(
   checkmate::qassert(pruning, c("N1", "0"))
   checkmate::assertChoice(snn_similarity, c("jaccard", "rank"))
   checkmate::qassert(louvain_iters, "I1[1,)")
+  checkmate::qassert(cell_mediated, "B1")
+  checkmate::qassert(n_anchors, "I1[1,)")
 
   # Merge
   knn <- utils::modifyList(params_knn_defaults(), knn, keep.null = TRUE)
@@ -3447,7 +3469,9 @@ params_sc_fast_cluster <- function(
       louvain_iters = louvain_iters,
       full_snn = full_snn,
       pruning = pruning,
-      snn_similarity = snn_similarity
+      snn_similarity = snn_similarity,
+      cell_mediated = cell_mediated,
+      n_anchors = n_anchors
     ),
     knn
   )

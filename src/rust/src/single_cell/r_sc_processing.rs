@@ -377,8 +377,7 @@ fn rs_sc_get_top_genes_perc(
     let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
 
     let res = if streaming {
-        get_top_genes_perc_streaming(&reader, &top_n_vals, &cell_indices, verbose)
-            .to_extendr()?
+        get_top_genes_perc_streaming(&reader, &top_n_vals, &cell_indices, verbose).to_extendr()?
     } else {
         get_top_genes_perc(&reader, &top_n_vals, &cell_indices, verbose).to_extendr()?
     };
@@ -531,6 +530,8 @@ fn rs_pairwise_gene_cors(
 /// in Seurat, plus the scran mean-variance trend.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+/// selections are read from here instead of sweeping the gene file.
 /// @param hvg_method String. Which HVG detection method to use. One of
 /// `c("vst", "meanvarbin", "dispersion", "scran")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
@@ -583,6 +584,7 @@ fn rs_pairwise_gene_cors(
 #[allow(clippy::too_many_arguments)]
 fn rs_sc_hvg(
     f_path_gene: &str,
+    f_path_cell: &str,
     hvg_method: &str,
     cell_indices: Vec<i32>,
     loess_span: f64,
@@ -598,15 +600,79 @@ fn rs_sc_hvg(
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method method: {}", hvg_method))?;
+    let subset = CellSubset::load(
+        f_path_cell,
+        &cell_set,
+        reader.get_header().total_cells,
+        verbose > 0,
+    )?;
 
+    match &subset {
+        Some(sub) => hvg_from_reader(
+            &sub.reader()?,
+            &sub.local,
+            hvg_type,
+            loess_span,
+            &binning,
+            n_bins,
+            clip_max,
+            scran_params,
+            streaming,
+            verbose,
+        ),
+        None => hvg_from_reader(
+            &reader,
+            &cell_set,
+            hvg_type,
+            loess_span,
+            &binning,
+            n_bins,
+            clip_max,
+            scran_params,
+            streaming,
+            verbose,
+        ),
+    }
+}
+
+/// HVG statistics over one reader, the shared body of [`rs_sc_hvg`].
+///
+/// ### Params
+///
+/// * `reader` - Gene-major store, on disk or an in-memory cell subset.
+/// * `cell_set` - The selected cells, as indices into `reader`.
+/// * `hvg_type` - Which HVG method to run.
+/// * `loess_span` - Span of the loess (`vst`) or lowess (`scran`) trend.
+/// * `binning` - Binning strategy for `meanvarbin` and `dispersion`.
+/// * `n_bins` - Number of bins for `meanvarbin` and `dispersion`.
+/// * `clip_max` - Optional clipping value (`vst` only).
+/// * `scran_params` - The scran trend parameters as an R list.
+/// * `streaming` - Shall the genes be streamed in.
+/// * `verbose` - `0` quiet, `1` normal, `2` detailed.
+///
+/// ### Returns
+///
+/// The R list [`rs_sc_hvg`] documents.
+#[allow(clippy::too_many_arguments)]
+fn hvg_from_reader<S: SingleCellReading>(
+    reader: &S,
+    cell_set: &[usize],
+    hvg_type: HvgMethod,
+    loess_span: f64,
+    binning: &str,
+    n_bins: usize,
+    clip_max: Option<f32>,
+    scran_params: List,
+    streaming: bool,
+    verbose: usize,
+) -> Result<List, extendr_api::Error> {
     match hvg_type {
         HvgMethod::Vst => {
             let res = if streaming {
-                get_hvg_vst_streaming(&reader, &cell_set, loess_span as f32, clip_max, verbose)
+                get_hvg_vst_streaming(reader, cell_set, loess_span as f32, clip_max, verbose)
                     .to_extendr()?
             } else {
-                get_hvg_vst(&reader, &cell_set, loess_span as f32, clip_max, verbose)
-                    .to_extendr()?
+                get_hvg_vst(reader, cell_set, loess_span as f32, clip_max, verbose).to_extendr()?
             };
             Ok(list!(
                 mean = res.mean,
@@ -617,10 +683,9 @@ fn rs_sc_hvg(
         }
         HvgMethod::MeanVarBin => {
             let res = if streaming {
-                get_hvg_mvb_streaming(&reader, &cell_set, &binning, n_bins, verbose)
-                    .to_extendr()?
+                get_hvg_mvb_streaming(reader, cell_set, binning, n_bins, verbose).to_extendr()?
             } else {
-                get_hvg_mvb(&reader, &cell_set, &binning, n_bins, verbose).to_extendr()?
+                get_hvg_mvb(reader, cell_set, binning, n_bins, verbose).to_extendr()?
             };
             Ok(list!(
                 mean = res.mean,
@@ -631,11 +696,10 @@ fn rs_sc_hvg(
         }
         HvgMethod::Dispersion => {
             let res = if streaming {
-                get_hvg_dispersion_streaming(&reader, &cell_set, &binning, n_bins, verbose)
+                get_hvg_dispersion_streaming(reader, cell_set, binning, n_bins, verbose)
                     .to_extendr()?
             } else {
-                get_hvg_dispersion(&reader, &cell_set, &binning, n_bins, verbose)
-                    .to_extendr()?
+                get_hvg_dispersion(reader, cell_set, binning, n_bins, verbose).to_extendr()?
             };
             Ok(list!(
                 mean = res.mean,
@@ -650,9 +714,9 @@ fn rs_sc_hvg(
                 ..ScranTrendParams::from_r_list(scran_params)?
             };
             let res = if streaming {
-                get_hvg_scran_streaming(&reader, &cell_set, Some(params), verbose)
+                get_hvg_scran_streaming(reader, cell_set, Some(params), verbose)
             } else {
-                get_hvg_scran(&reader, &cell_set, Some(params), verbose)
+                get_hvg_scran(reader, cell_set, Some(params), verbose)
             }
             .to_extendr()?;
             Ok(list!(
@@ -674,6 +738,8 @@ fn rs_sc_hvg(
 /// such as union of top genes per batch.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+/// selections are read from here instead of sweeping the gene file.
 /// @param hvg_method String. Which HVG detection method to use. One of
 /// `c("vst", "meanvarbin", "dispersion", "scran")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
@@ -733,6 +799,7 @@ fn rs_sc_hvg(
 #[extendr]
 fn rs_sc_hvg_batch_aware(
     f_path_gene: &str,
+    f_path_cell: &str,
     hvg_method: &str,
     cell_indices: Vec<i32>,
     batch_labels: Vec<i32>,
@@ -750,23 +817,95 @@ fn rs_sc_hvg_batch_aware(
     let batch_set = batch_labels.r_int_convert();
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method method: {}", hvg_method))?;
+    // the batch labels are per selected cell, so they carry over to the
+    // renumbered subset unchanged
+    let subset = CellSubset::load(
+        f_path_cell,
+        &cell_set,
+        reader.get_header().total_cells,
+        verbose > 0,
+    )?;
 
+    match &subset {
+        Some(sub) => hvg_batch_aware_from_reader(
+            &sub.reader()?,
+            &sub.local,
+            &batch_set,
+            hvg_type,
+            loess_span,
+            &binning,
+            n_bins,
+            clip_max,
+            scran_params,
+            streaming,
+            verbose,
+        ),
+        None => hvg_batch_aware_from_reader(
+            &reader,
+            &cell_set,
+            &batch_set,
+            hvg_type,
+            loess_span,
+            &binning,
+            n_bins,
+            clip_max,
+            scran_params,
+            streaming,
+            verbose,
+        ),
+    }
+}
+
+/// Batch-aware HVG statistics over one reader, the shared body of
+/// [`rs_sc_hvg_batch_aware`].
+///
+/// ### Params
+///
+/// * `reader` - Gene-major store, on disk or an in-memory cell subset.
+/// * `cell_set` - The selected cells, as indices into `reader`.
+/// * `batch_set` - Batch label per selected cell, 0-indexed and dense.
+/// * `hvg_type` - Which HVG method to run.
+/// * `loess_span` - Span of the loess (`vst`) or lowess (`scran`) trend.
+/// * `binning` - Binning strategy for `meanvarbin` and `dispersion`.
+/// * `n_bins` - Number of bins for `meanvarbin` and `dispersion`.
+/// * `clip_max` - Optional clipping value (`vst` only).
+/// * `scran_params` - The scran trend parameters as an R list.
+/// * `streaming` - Shall the genes be streamed in.
+/// * `verbose` - `0` quiet, `1` normal, `2` detailed.
+///
+/// ### Returns
+///
+/// The R list [`rs_sc_hvg_batch_aware`] documents.
+#[allow(clippy::too_many_arguments)]
+fn hvg_batch_aware_from_reader<S: SingleCellReading>(
+    reader: &S,
+    cell_set: &[usize],
+    batch_set: &[usize],
+    hvg_type: HvgMethod,
+    loess_span: f64,
+    binning: &str,
+    n_bins: usize,
+    clip_max: Option<f32>,
+    scran_params: List,
+    streaming: bool,
+    verbose: usize,
+) -> Result<List, extendr_api::Error> {
     match hvg_type {
         HvgMethod::Vst => {
             let results = if streaming {
                 get_hvg_vst_batch_aware_streaming(
-                    &reader,
-                    &cell_set,
-                    &batch_set,
+                    reader,
+                    cell_set,
+                    batch_set,
                     loess_span as f32,
                     clip_max,
                     verbose,
                 )
             } else {
                 get_hvg_vst_batch_aware(
-                    &reader,
-                    &cell_set,
-                    &batch_set,
+                    reader,
+                    cell_set,
+                    batch_set,
                     loess_span as f32,
                     clip_max,
                     verbose,
@@ -804,22 +943,10 @@ fn rs_sc_hvg_batch_aware(
         HvgMethod::MeanVarBin => {
             let results = if streaming {
                 get_hvg_mvb_batch_aware_streaming(
-                    &reader,
-                    &cell_set,
-                    &batch_set,
-                    &binning,
-                    n_bins,
-                    verbose,
+                    reader, cell_set, batch_set, binning, n_bins, verbose,
                 )
             } else {
-                get_hvg_mvb_batch_aware(
-                    &reader,
-                    &cell_set,
-                    &batch_set,
-                    &binning,
-                    n_bins,
-                    verbose,
-                )
+                get_hvg_mvb_batch_aware(reader, cell_set, batch_set, binning, n_bins, verbose)
             }
             .to_extendr()?;
 
@@ -828,21 +955,11 @@ fn rs_sc_hvg_batch_aware(
         HvgMethod::Dispersion => {
             let results = if streaming {
                 get_hvg_dispersion_batch_aware_streaming(
-                    &reader,
-                    &cell_set,
-                    &batch_set,
-                    &binning,
-                    n_bins,
-                    verbose,
+                    reader, cell_set, batch_set, binning, n_bins, verbose,
                 )
             } else {
                 get_hvg_dispersion_batch_aware(
-                    &reader,
-                    &cell_set,
-                    &batch_set,
-                    &binning,
-                    n_bins,
-                    verbose,
+                    reader, cell_set, batch_set, binning, n_bins, verbose,
                 )
             }
             .to_extendr()?;
@@ -856,14 +973,14 @@ fn rs_sc_hvg_batch_aware(
             };
             let results = if streaming {
                 get_hvg_scran_batch_aware_streaming(
-                    &reader,
-                    &cell_set,
-                    &batch_set,
+                    reader,
+                    cell_set,
+                    batch_set,
                     Some(params),
                     verbose,
                 )
             } else {
-                get_hvg_scran_batch_aware(&reader, &cell_set, &batch_set, Some(params), verbose)
+                get_hvg_scran_batch_aware(reader, cell_set, batch_set, Some(params), verbose)
             }
             .to_extendr()?;
 
