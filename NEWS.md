@@ -1,3 +1,42 @@
+# bixverse 0.7.0
+
+## Features
+
+* `bixverse-rs` 0.7.0 under the hood, with `faer` 0.24 and `edge-rs` 0.3.
+* Leiden and Louvain now run in Rust: `leiden_clustering()` on any igraph, and
+  `find_clusters_sc()` uses it. Results depend on `seed` only, not on the
+  global RNG or the thread count.
+* `params_sc_fast_cluster()` gained `cell_mediated` and `n_anchors` for the
+  cell-mediated centroid graph from Secuer (Wei et al., PLoS Comput Biol,
+  2022).
+* `calc_meta_cell_compactness()` and `calc_meta_cell_separation()` score any
+  meta cell assignment against a diffusion map, including meta cells built
+  outside bixverse.
+
+## Performance
+
+* Small cell selections (up to 10% of the store and 100k cells, i.e. most
+  `SingleCellsSubset` objects) are read from the cell-major file for HVG
+  detection and the residual fits. HVG on 6k of 985k cells: 0.82 s to 43 ms.
+* Fused sparse batch readers on the Rust side; SCENIC, Scrublet, NEBULA,
+  CellPhoneDB, NMF, PCA, CellSweep, Bonsai and meta cells build their matrices
+  through them.
+* Exact covariance PCA uses the cell Gram when there are fewer cells than
+  genes, so small subsets no longer pay for a gene x gene eigendecomposition.
+* Subset filters are pushed into DuckDB, and meta cell matrices are built
+  without copies.
+
+## Changes
+
+* Clustering results shift compared to 0.6.x, since the igraph Leiden/Louvain
+  calls are gone.
+
+## Fixes
+
+* `set_residual_fit()`, `get_residual_fit()` and `remove_residual_fit()` work
+  on `SingleCellsSubset`.
+* Accelerate is linked properly on macOS.
+
 # bixverse 0.6.3
 
 ## Fix
