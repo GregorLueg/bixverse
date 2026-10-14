@@ -280,6 +280,78 @@ merge_meta_cells <- function(
   rows
 }
 
+## manifold scoring ------------------------------------------------------------
+
+#' Meta cell compactness in a diffusion map
+#'
+#' @description
+#' Scores a meta cell assignment for compactness, i.e. the mean variance across
+#' the diffusion components over the cells of each meta cell. Lower is better.
+#' Unlike [calc_manifold_metrics()], this works on any assignment, so meta
+#' cells generated outside bixverse (or on a different object) can be scored
+#' against an existing diffusion map.
+#'
+#' @param dcs Numeric matrix. The diffusion map coordinates, cells x
+#' components, for example `S7::prop(object, "other_data")$dcs` after
+#' [calc_diffusion_coordinates()]. Its rows follow the `used_cells` of the kNN
+#' object the diffusion map was built from.
+#' @param assignment Atomic vector of length `nrow(dcs)` with the meta cell of
+#' each row of `dcs`. `NA` marks cells that belong to no meta cell. Overlapping
+#' meta cells (hdWGCNA-style) cannot be expressed this way; use
+#' [calc_manifold_metrics()] for those.
+#'
+#' @returns Named numeric vector with one compactness value per meta cell,
+#' named and ordered like `split()` orders `assignment`.
+#'
+#' @export
+#'
+#' @references Persad, et al., Nat Biotechnol, 2023
+#'
+#' @examples
+#' set.seed(1L)
+#' dcs <- matrix(rnorm(200L), ncol = 2L)
+#' assignment <- rep(sprintf("mc_%i", 1:10), each = 10L)
+#' calc_meta_cell_compactness(dcs, assignment)
+calc_meta_cell_compactness <- function(dcs, assignment) {
+  checkmate::assertMatrix(dcs, mode = "numeric", any.missing = FALSE)
+  checkmate::assertAtomicVector(assignment, len = nrow(dcs))
+
+  rows <- split(seq_along(assignment), assignment)
+  stats::setNames(rs_metacell_compactness(dc = dcs, rows), names(rows))
+}
+
+#' Meta cell separation in a diffusion map
+#'
+#' @description
+#' Scores a meta cell assignment for separation, i.e. the Euclidean distance
+#' from each meta cell centroid in diffusion space to the nearest other meta
+#' cell centroid. Higher is better. Unlike [calc_manifold_metrics()], this
+#' works on any assignment, so meta cells generated outside bixverse (or on a
+#' different object) can be scored against an existing diffusion map.
+#'
+#' @inheritParams calc_meta_cell_compactness
+#'
+#' @returns Named numeric vector with one separation value per meta cell,
+#' named and ordered like `split()` orders `assignment`. A single meta cell
+#' yields `Inf`.
+#'
+#' @export
+#'
+#' @references Persad, et al., Nat Biotechnol, 2023
+#'
+#' @examples
+#' set.seed(1L)
+#' dcs <- matrix(rnorm(200L), ncol = 2L)
+#' assignment <- rep(sprintf("mc_%i", 1:10), each = 10L)
+#' calc_meta_cell_separation(dcs, assignment)
+calc_meta_cell_separation <- function(dcs, assignment) {
+  checkmate::assertMatrix(dcs, mode = "numeric", any.missing = FALSE)
+  checkmate::assertAtomicVector(assignment, len = nrow(dcs))
+
+  rows <- split(seq_along(assignment), assignment)
+  stats::setNames(rs_metacell_separation(dc = dcs, rows), names(rows))
+}
+
 ## purity ----------------------------------------------------------------------
 
 #' Build the meta cell purity columns

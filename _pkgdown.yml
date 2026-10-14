@@ -444,6 +444,8 @@ reference:
       - MetaCells
       - calc_diffusion_coordinates
       - calc_manifold_metrics
+      - calc_meta_cell_compactness
+      - calc_meta_cell_separation
       - calc_meta_cell_purity
       - get_meta_cell_purity
       - generate_supercells_sc
