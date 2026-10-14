@@ -20,6 +20,8 @@ A list of two items
 \item raw - Sparse matrix representing the raw counts.
 \item norm - Sparse matrix representing the norm counts.
 }
+Both matrices share one \code{p} and \code{j} vector, and inputs that already have the
+right storage type are used without a copy.
 }
 \description{
 Create sparse dgRMatrix matrices for raw and norm counts
