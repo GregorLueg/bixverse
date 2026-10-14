@@ -253,10 +253,10 @@ head(sc_object)
 #>    outlier leiden_clustering
 #>     <lgcl>             <int>
 #> 1:   FALSE                 0
-#> 2:   FALSE                 7
-#> 3:   FALSE                 0
-#> 4:   FALSE                 8
-#> 5:   FALSE                 2
+#> 2:   FALSE                 6
+#> 3:   FALSE                 5
+#> 4:   FALSE                10
+#> 5:   FALSE                 8
 #> 6:   FALSE                 0
 ```
 

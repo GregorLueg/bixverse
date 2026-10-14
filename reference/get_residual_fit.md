@@ -21,6 +21,9 @@ get_residual_fit(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_residual_fit(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_residual_fit(x, ...)
 ```
 
 ## Arguments

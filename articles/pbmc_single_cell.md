@@ -282,7 +282,7 @@ head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 #>      grp         gene_id      lfc     prop1     prop2 z_scores      p_values
 #>    <int>          <char>    <num>     <num>     <num>    <num>         <num>
 #> 1:     2 ENSG00000163220 4.194227 0.9884726 0.2042952 34.46479 1.352011e-260
-#> 2:     4 ENSG00000105374 4.155993 1.0000000 0.2162301 29.70839 2.991490e-194
+#> 2:     4 ENSG00000105374 4.132186 1.0000000 0.2117769 30.34837 1.319945e-202
 #> 3:     2 ENSG00000090382 4.083348 1.0000000 0.5126652 30.45956 4.474529e-204
 #> 4:     2 ENSG00000143546 3.677881 0.9711816 0.1189427 36.95369 3.177281e-299
 #> 5:     2 ENSG00000101439 3.430261 1.0000000 0.2411894 32.46707 1.555225e-231
@@ -290,7 +290,7 @@ head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 #>              fdr gene_symbol
 #>            <num>      <char>
 #> 1: 1.218703e-257      S100A9
-#> 2: 1.900024e-191        NKG7
+#> 2: 9.642196e-200        NKG7
 #> 3: 1.680558e-201         LYZ
 #> 4: 7.160003e-296      S100A8
 #> 5: 1.001343e-228        CST3
@@ -323,12 +323,12 @@ fast_clusted_dt <- get_data(fast_cluster_res)
 head(fast_clusted_dt)
 #>    cell_idx res_5 res_3 res_2 res_1.5 res_1 res_0.5
 #>       <int> <int> <int> <int>   <int> <int>   <int>
-#> 1:        1     4     0     0       0     0       0
-#> 2:        3     4     0     0       0     0       0
-#> 3:        4     3     4     4       4     3       3
-#> 4:        6     8     0     0       0     0       0
-#> 5:        8     4     0     0       0     0       0
-#> 6:        9     2     0     0       0     0       0
+#> 1:        1     2     2     0       0     0       0
+#> 2:        3     2     2     0       0     0       0
+#> 3:        4     1     4     4       4     4       3
+#> 4:        6    11     2     0       0     0       0
+#> 5:        8     2     2     0       0     0       0
+#> 6:        9     3     5     0       0     0       0
 ```
 
 If you want to explore the k-means memberships or centroids, there are
@@ -361,12 +361,12 @@ head(sc_object)
 #> 6:        9 AAACGCTGTAGCCA-1   530     1273    TRUE 0.011783189 0.3794187
 #>    outlier leiden_clusters res_5 res_3 res_2 res_1.5 res_1 res_0.5
 #>     <lgcl>           <int> <int> <int> <int>   <int> <int>   <int>
-#> 1:   FALSE               0     4     0     0       0     0       0
-#> 2:   FALSE               1     4     0     0       0     0       0
-#> 3:   FALSE               6     3     4     4       4     3       3
-#> 4:   FALSE               1     8     0     0       0     0       0
-#> 5:   FALSE               5     4     0     0       0     0       0
-#> 6:   FALSE               0     2     0     0       0     0       0
+#> 1:   FALSE               0     2     2     0       0     0       0
+#> 2:   FALSE               1     2     2     0       0     0       0
+#> 3:   FALSE               6     1     4     4       4     4       3
+#> 4:   FALSE               1    11     2     0       0     0       0
+#> 5:   FALSE               5     2     2     0       0     0       0
+#> 6:   FALSE               0     3     5     0       0     0       0
 ```
 
 ### Dimensionality reduction

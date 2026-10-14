@@ -1,7 +1,9 @@
 # Graph-based clustering of cells on the sNN graph
 
 This function will apply Leiden clustering on the sNN graph with the
-given resolution and add a column to the obs table.
+given resolution and add a column to the obs table. Runs in Rust via
+[`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md);
+the labels depend on `seed` only, `0` is the largest cluster.
 
 ## Usage
 
@@ -28,10 +30,8 @@ find_clusters_sc(
 
 - res:
 
-  Numeric. The resolution parameter for
-  [`igraph::cluster_leiden()`](https://r.igraph.org/reference/cluster_leiden.html)
-  or
-  [`igraph::cluster_louvain()`](https://r.igraph.org/reference/cluster_louvain.html).
+  Numeric. The modularity resolution parameter, see
+  [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md).
 
 - name:
 

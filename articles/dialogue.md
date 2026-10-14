@@ -223,10 +223,10 @@ dlg_res
 #>   Shared samples:   30
 #>   Programmes:       3
 #>     mcp_01 - worst pair p: 0.0448 | spans 4 cell type(s)
-#>     mcp_02 - worst pair p: 0.5 | spans 3 cell type(s)
-#>     mcp_03 - worst pair p: 0.08834 | spans 4 cell type(s)
+#>     mcp_02 - worst pair p: 0.4449 | spans 3 cell type(s)
+#>     mcp_03 - worst pair p: 0.1127 | spans 4 cell type(s)
 #>   Genes with a verdict: 1277
-#>   Signature genes:  1112 permissive | 719 strict
+#>   Signature genes:  1115 permissive | 721 strict
 ```
 
 `quality_col = "cell_q"` is the per-cell quality score the original
@@ -247,23 +247,23 @@ get_results(dlg_res)
 #>     programme cell_type_a cell_type_b      emp_p  pair_cor
 #>         <int>      <char>      <char>      <num>     <num>
 #>  1:         1   CD8+ IELs     CD8+ LP 0.04480159 0.9184860
-#>  2:         2   CD8+ IELs     CD8+ LP 0.04817104 0.7532821
-#>  3:         3   CD8+ IELs     CD8+ LP 0.07775252 0.6249087
+#>  2:         2   CD8+ IELs     CD8+ LP 0.04480159 0.7578601
+#>  3:         3   CD8+ IELs     CD8+ LP 0.05950722 0.6239857
 #>  4:         1   CD8+ IELs Macrophages 0.04480159 0.8783269
-#>  5:         2   CD8+ IELs Macrophages 0.04480159 0.8080615
-#>  6:         3   CD8+ IELs Macrophages 0.07775252 0.5694392
+#>  5:         2   CD8+ IELs Macrophages 0.04480159 0.8086600
+#>  6:         3   CD8+ IELs Macrophages 0.09401581 0.5704093
 #>  7:         1   CD8+ IELs         TA2 0.04480159 0.9216183
-#>  8:         2   CD8+ IELs         TA2 0.14933670 0.5434863
-#>  9:         3   CD8+ IELs         TA2 0.04817104 0.7229226
+#>  8:         2   CD8+ IELs         TA2 0.19322624 0.5431076
+#>  9:         3   CD8+ IELs         TA2 0.04480159 0.7218704
 #> 10:         1     CD8+ LP Macrophages 0.04480159 0.9437799
-#> 11:         2     CD8+ LP Macrophages 0.04480159 0.8039438
-#> 12:         3     CD8+ LP Macrophages 0.04480159 0.7622578
+#> 11:         2     CD8+ LP Macrophages 0.04480159 0.8032059
+#> 12:         3     CD8+ LP Macrophages 0.04480159 0.7624379
 #> 13:         1     CD8+ LP         TA2 0.04480159 0.9411470
-#> 14:         2     CD8+ LP         TA2 0.25520089 0.5148425
-#> 15:         3     CD8+ LP         TA2 0.05174027 0.6520660
+#> 14:         2     CD8+ LP         TA2 0.36451074 0.5162318
+#> 15:         3     CD8+ LP         TA2 0.05174027 0.6516344
 #> 16:         1 Macrophages         TA2 0.04480159 0.9127722
-#> 17:         2 Macrophages         TA2 0.50000000 0.4733177
-#> 18:         3 Macrophages         TA2 0.08833696 0.5969017
+#> 17:         2 Macrophages         TA2 0.44489458 0.4728795
+#> 18:         3 Macrophages         TA2 0.11266125 0.5973414
 ```
 
 A programme is only interesting if it holds up across *every* pair, so
@@ -281,8 +281,8 @@ that passed the mixed model.
 
 round(dlg_res$refit_fidelity, 3)
 #>             mcp_01 mcp_02 mcp_03
-#> CD8+ IELs    0.944  0.547  0.796
-#> CD8+ LP      0.949  0.703  0.758
+#> CD8+ IELs    0.944  0.546  0.795
+#> CD8+ LP      0.949  0.715  0.757
 #> Macrophages  0.985  0.876  0.877
 #> TA2          0.938  1.000  0.875
 ```
@@ -306,16 +306,16 @@ dcast(
 #>       cell_type programme  down    up
 #>          <char>     <int> <int> <int>
 #>  1:   CD8+ IELs         1    25    70
-#>  2:   CD8+ IELs         2     3    NA
-#>  3:   CD8+ IELs         3     6     1
+#>  2:   CD8+ IELs         2    NA     3
+#>  3:   CD8+ IELs         3     1     6
 #>  4:     CD8+ LP         1    57    73
-#>  5:     CD8+ LP         2     5     6
-#>  6:     CD8+ LP         3     7     1
-#>  7: Macrophages         1   154   180
-#>  8: Macrophages         2    20     1
-#>  9: Macrophages         3    29     6
+#>  5:     CD8+ LP         2     6     6
+#>  6:     CD8+ LP         3     1     7
+#>  7: Macrophages         1   154   181
+#>  8: Macrophages         2     1    20
+#>  9: Macrophages         3     6    29
 #> 10:         TA2         1    33    36
-#> 11:         TA2         3     5     1
+#> 11:         TA2         3     1     5
 ```
 
 ## Does it track the disease?
@@ -458,7 +458,7 @@ c(
   lib_size = nrow(dlg_lib$signatures[list == "strict"])
 )
 #>   cell_q lib_size 
-#>      719      328
+#>      721      328
 ```
 
 And the disease association survives.

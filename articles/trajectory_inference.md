@@ -249,18 +249,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> cc520b9c2a48c930
-#> 2:      rna embedding   umap    TRUE  FALSE   <NA> b7e77362b0a8d067
-#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 5690c05316908e34
-#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 9f7b7c4592a7aae8
-#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> e547dfb37628d5f3
+#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> 88a72414fdc23880
+#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 3da6b7f9926129a1
+#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 254c3468a623065b
+#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 5ac4a88ef87704fd
+#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> c4b7c73bbf6f1983
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: cc520b9c2a48c930,5690c05316908e34
-#> 3:                  cc520b9c2a48c930
-#> 4:                  5690c05316908e34
-#> 5:                  5690c05316908e34
+#> 2: 88a72414fdc23880,254c3468a623065b
+#> 3:                  88a72414fdc23880
+#> 4:                  254c3468a623065b
+#> 5:                  254c3468a623065b
 ```
 
 ## PAGA
@@ -275,7 +275,7 @@ paga_res <- run_paga_sc(
   sc_object,
   cluster_col = "leiden_clusters"
 )
-#> Running PAGA over the rna kNN graph (4142 cells, 8 clusters).
+#> Running PAGA over the rna kNN graph (4142 cells, 7 clusters).
 ```
 
 `connectivities` is the full abstracted graph, `connectivities_tree` its
@@ -287,25 +287,23 @@ cluster, with a zero diagonal.
 paga_res$sizes
 #>    cluster n_cells
 #>     <char>   <int>
-#> 1:       0     721
-#> 2:       1     705
-#> 3:       2     615
-#> 4:       3     558
-#> 5:       4     539
-#> 6:       5     493
-#> 7:       6     373
-#> 8:       7     138
+#> 1:       0    1006
+#> 2:       1     823
+#> 3:       2     635
+#> 4:       3     615
+#> 5:       4     528
+#> 6:       5     403
+#> 7:       6     132
 
 round(as.matrix(paga_res$connectivities), 3)
-#>       0     1     2     3     4     5     6     7
-#> 0 0.000 0.427 0.002 0.001 0.001 0.018 0.032 0.379
-#> 1 0.427 0.000 0.003 0.042 0.114 0.166 0.637 0.330
-#> 2 0.002 0.003 0.000 0.003 0.003 0.001 0.011 0.385
-#> 3 0.001 0.042 0.003 0.000 0.517 0.367 0.122 0.005
-#> 4 0.001 0.114 0.003 0.517 0.000 0.039 0.427 0.006
-#> 5 0.018 0.166 0.001 0.367 0.039 0.000 0.220 0.001
-#> 6 0.032 0.637 0.011 0.122 0.427 0.220 0.000 0.044
-#> 7 0.379 0.330 0.385 0.005 0.006 0.001 0.044 0.000
+#>       0     1     2     3     4     5     6
+#> 0 0.000 0.199 0.001 0.003 0.001 0.063 0.423
+#> 1 0.199 0.000 0.088 0.006 0.280 0.227 0.077
+#> 2 0.001 0.088 0.000 0.002 0.456 0.317 0.005
+#> 3 0.003 0.006 0.002 0.000 0.003 0.001 0.402
+#> 4 0.001 0.280 0.456 0.003 0.000 0.043 0.006
+#> 5 0.063 0.227 0.317 0.001 0.043 0.000 0.001
+#> 6 0.423 0.077 0.005 0.402 0.006 0.001 0.000
 ```
 
 [`paga_plot_sc()`](https://gregorlueg.github.io/bixverse.plots/reference/paga_plot_sc.html)

@@ -40,7 +40,9 @@ rs_sc_fit_residuals(
 - f_path_cell:
 
   String. Path to the `counts_cells.bin` file. Used for the library
-  sizes, and for the per-cell totals of the analytic Pearson fit.
+  sizes, the per-cell totals of the analytic Pearson fit and, for small
+  cell selections, the counts themselves instead of sweeping the gene
+  file.
 
 - method:
 

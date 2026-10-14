@@ -287,7 +287,7 @@ sc_object[["cell_type"]] <- obs$cell_type
 table(obs$cell_type)
 #> 
 #>   B cells        DC Monocytes        NK Platelets   T cells 
-#>       873        74      1016       336        11      3531
+#>       873        70      1020       336        11      3531
 ```
 
 ## Comparing the different methods
@@ -357,7 +357,7 @@ metrics_dt <- calculate_integration_metrics_sc(
 metrics_dt[]
 #>    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num> <num>          <num> <num>         <num>
-#> 1:       pca  0.01318267 0.8897316     0             NA     1     0.6782159
+#> 1:       pca  0.01318267 0.8897316     0             NA     1     0.6783617
 #>    graph_connectivity      method
 #>                 <num>      <char>
 #> 1:                  1 Uncorrected
@@ -417,10 +417,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "fastMNN"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6573844
+#> 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6578609
 #>    graph_connectivity  method
 #>                 <num>  <char>
-#> 1:          0.9408038 fastMNN
+#> 1:          0.9374576 fastMNN
 ```
 
 We can see clear improvements on the batch side: kBET acceptance, batch
@@ -501,7 +501,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6992418
+#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1      0.699389
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:                  1 Harmony
@@ -602,7 +602,7 @@ metrics_dt[method == "Harmony v2"]
 #> 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
-#> 1:     0.6978205                  1 Harmony v2
+#> 1:     0.6979642                  1 Harmony v2
 ```
 
 ``` r
@@ -701,7 +701,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat CCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       cca   0.7178565 0.8929735 0.4705881      0.8688793     1     0.7043481
+#> 1:       cca   0.7183701 0.8929769 0.4705881      0.8688658     1      0.704457
 #>    graph_connectivity     method
 #>                 <num>     <char>
 #> 1:                  1 Seurat CCA
@@ -779,7 +779,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat rPCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:      rpca   0.7846259 0.9078943 0.6423357      0.8138718     1     0.6966735
+#> 1:      rpca   0.7844547  0.907904 0.6423357      0.8138826     1     0.6967958
 #>    graph_connectivity      method
 #>                 <num>      <char>
 #> 1:                  1 Seurat rPCA
@@ -918,17 +918,17 @@ metrics_dt[, .(
 #> 2:     fastMNN  0.69251840 0.9413065 0.4705881      0.8861530     1
 #> 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1
 #> 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1
-#> 5:  Seurat CCA  0.71785653 0.8929735 0.4705881      0.8688793     1
-#> 6: Seurat rPCA  0.78462592 0.9078943 0.6423357      0.8138718     1
+#> 5:  Seurat CCA  0.71837014 0.8929769 0.4705881      0.8688658     1
+#> 6: Seurat rPCA  0.78445472 0.9079040 0.6423357      0.8138826     1
 #> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
-#> 1:     0.6782159          1.0000000
-#> 2:     0.6573844          0.9408038
-#> 3:     0.6992418          1.0000000
-#> 4:     0.6978205          1.0000000
-#> 5:     0.7043481          1.0000000
-#> 6:     0.6966735          1.0000000
+#> 1:     0.6783617          1.0000000
+#> 2:     0.6578609          0.9374576
+#> 3:     0.6993890          1.0000000
+#> 4:     0.6979642          1.0000000
+#> 5:     0.7044570          1.0000000
+#> 6:     0.6967958          1.0000000
 #> 7:            NA          1.0000000
 ```
 

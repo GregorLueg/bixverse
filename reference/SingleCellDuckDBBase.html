@@ -11,7 +11,7 @@ etc."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/l
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -157,7 +157,8 @@ etc.</p>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">get_obs_table</span><span class="op">(</span></span>
 <span>  indices <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cols <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  filtered <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  filtered <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  where_equal <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
@@ -169,6 +170,12 @@ etc.</p>
 
       <dt><code>filtered</code></dt>
 <dd><p>Boolean. Whether to return all cells or filtered to to_keep cells.</p></dd>
+
+      <dt><code>where_equal</code></dt>
+<dd><p>Optional named list. Only rows where each named column
+equals its value are returned; the value is cast to the column's type.
+Pushed into the query, so a few rows of a large table do not have to come
+through R.</p></dd>
 
 
 </dl><p></p></div>

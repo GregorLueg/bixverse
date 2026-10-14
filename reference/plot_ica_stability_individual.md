@@ -39,8 +39,4 @@ obj <- ica_evaluate_comp(
   .verbose = FALSE
 )
 plot_ica_stability_individual(obj)
-#> Warning: Removed 1 row containing missing values or values outside the scale range
-#> (`geom_line()`).
-#> Warning: Removed 1 row containing missing values or values outside the scale range
-#> (`geom_point()`).
 ```

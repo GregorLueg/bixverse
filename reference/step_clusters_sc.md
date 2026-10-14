@@ -24,10 +24,8 @@ step_clusters_sc(
 
 - res:
 
-  Numeric. The resolution parameter for
-  [`igraph::cluster_leiden()`](https://r.igraph.org/reference/cluster_leiden.html)
-  or
-  [`igraph::cluster_louvain()`](https://r.igraph.org/reference/cluster_louvain.html).
+  Numeric. The modularity resolution parameter, see
+  [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md).
 
 - name:
 

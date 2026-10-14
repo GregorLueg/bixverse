@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Sub-clustering and per-group pipelines</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-10</p>
+      <p class="date">2026-10-14</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -465,16 +465,16 @@
 <span><span class="op">]</span></span>
 <span><span class="co">#&gt;       grp        gene_symbol       lfc          fdr</span></span>
 <span><span class="co">#&gt;     &lt;int&gt;             &lt;char&gt;     &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1:     0             S100A4 1.5424920 1.947885e-87</span></span>
-<span><span class="co">#&gt;  2:     0            S100A10 0.8233794 7.058865e-30</span></span>
-<span><span class="co">#&gt;  3:     0              ANXA1 0.8222182 8.406427e-29</span></span>
-<span><span class="co">#&gt;  4:     0            S100A11 0.8162472 2.966387e-34</span></span>
-<span><span class="co">#&gt;  5:     0               IL32 0.8090412 4.971992e-34</span></span>
-<span><span class="co">#&gt;  6:     1               CCR7 0.5925658 2.975135e-22</span></span>
-<span><span class="co">#&gt;  7:     1            C6orf48 0.4198708 4.800646e-11</span></span>
-<span><span class="co">#&gt;  8:     1               CD8B 0.4193143 1.531082e-13</span></span>
-<span><span class="co">#&gt;  9:     1                CD7 0.3640330 1.282367e-07</span></span>
-<span><span class="co">#&gt; 10:     1               SELL 0.3356816 2.172734e-05</span></span>
+<span><span class="co">#&gt;  1:     0               CCR7 0.5642184 2.041524e-20</span></span>
+<span><span class="co">#&gt;  2:     0            C6orf48 0.4501169 1.178636e-12</span></span>
+<span><span class="co">#&gt;  3:     0               CD8B 0.4126715 5.109062e-13</span></span>
+<span><span class="co">#&gt;  4:     0                CD7 0.3531303 2.426653e-07</span></span>
+<span><span class="co">#&gt;  5:     0               SELL 0.3366527 1.902558e-05</span></span>
+<span><span class="co">#&gt;  6:     1             S100A4 1.4907115 5.171250e-82</span></span>
+<span><span class="co">#&gt;  7:     1               KLF6 0.8116387 3.714718e-27</span></span>
+<span><span class="co">#&gt;  8:     1               IL32 0.8064745 3.961200e-33</span></span>
+<span><span class="co">#&gt;  9:     1              ANXA1 0.7907043 7.146346e-27</span></span>
+<span><span class="co">#&gt; 10:     1            S100A10 0.7820998 4.275182e-27</span></span>
 <span><span class="co">#&gt; 11:     2 XXbac-BPG299F13.17 2.9117374 7.948966e-03</span></span>
 <span><span class="co">#&gt; 12:     2             FCER1A 2.8321354 3.452312e-41</span></span>
 <span><span class="co">#&gt; 13:     2              LZTS2 2.5425255 1.457232e-11</span></span>
@@ -534,8 +534,8 @@
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    t_subcluster     N</span></span>
 <span><span class="co">#&gt;          &lt;char&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:    T cells_0   545</span></span>
-<span><span class="co">#&gt; 2:    T cells_1   495</span></span>
+<span><span class="co">#&gt; 1:    T cells_0   520</span></span>
+<span><span class="co">#&gt; 2:    T cells_1   520</span></span>
 <span><span class="co">#&gt; 3:    T cells_2     2</span></span>
 <span><span class="co">#&gt; 4:         &lt;NA&gt;  1121</span></span></code></pre></div>
 </div>
@@ -555,12 +555,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">cell_id</span>, <span class="va">cell_type</span>, <span class="va">t_subcluster</span>, <span class="va">res_1</span>, <span class="va">res_0.5</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;             cell_id cell_type t_subcluster res_1 res_0.5</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;    &lt;char&gt;       &lt;char&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1: AAACATACAACCAC-1   T cells    T cells_1     1       1</span></span>
-<span><span class="co">#&gt; 2: AAACATTGATCAGC-1   T cells    T cells_0     0       0</span></span>
+<span><span class="co">#&gt; 1: AAACATACAACCAC-1   T cells    T cells_0     1       1</span></span>
+<span><span class="co">#&gt; 2: AAACATTGATCAGC-1   T cells    T cells_1     0       0</span></span>
 <span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1 Monocytes         &lt;NA&gt;    NA      NA</span></span>
-<span><span class="co">#&gt; 4: AAACGCACTGGTAC-1   T cells    T cells_0     0       0</span></span>
+<span><span class="co">#&gt; 4: AAACGCACTGGTAC-1   T cells    T cells_1     2       0</span></span>
 <span><span class="co">#&gt; 5: AAACGCTGGTTCTT-1        NK         &lt;NA&gt;    NA      NA</span></span>
-<span><span class="co">#&gt; 6: AAACGCTGTAGCCA-1   T cells    T cells_0     0       0</span></span></code></pre></div>
+<span><span class="co">#&gt; 6: AAACGCTGTAGCCA-1   T cells    T cells_1     2       0</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="pipelines">Pipelines<a class="anchor" aria-label="anchor" href="#pipelines"></a>
 </h2>
@@ -666,12 +666,12 @@
 <span><span class="co">#&gt;     fine_label     N</span></span>
 <span><span class="co">#&gt;         &lt;char&gt; &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:   B cells_0   280</span></span>
-<span><span class="co">#&gt; 2: Monocytes_0   248</span></span>
-<span><span class="co">#&gt; 3: Monocytes_1   211</span></span>
+<span><span class="co">#&gt; 2: Monocytes_0   254</span></span>
+<span><span class="co">#&gt; 3: Monocytes_1   205</span></span>
 <span><span class="co">#&gt; 4:        NK_0   257</span></span>
 <span><span class="co">#&gt; 5:        NK_1   125</span></span>
-<span><span class="co">#&gt; 6:   T cells_0   545</span></span>
-<span><span class="co">#&gt; 7:   T cells_1   495</span></span>
+<span><span class="co">#&gt; 6:   T cells_0   520</span></span>
+<span><span class="co">#&gt; 7:   T cells_1   520</span></span>
 <span><span class="co">#&gt; 8:   T cells_2     2</span></span></code></pre></div>
 </div>
 <p>The prefix is doing real work here. Every group’s Leiden run starts counting at zero, so without it the T cell <code>1</code> and the B cell <code>1</code> collapse into one label. Leave it out and you get a warning naming the values that clash.</p>

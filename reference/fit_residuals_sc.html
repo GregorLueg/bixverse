@@ -7,6 +7,10 @@ sct_corrected_counts_sc() all read it from there.
 Unlike the log-normalised layer, which is computed once at ingestion and
 written to disk, nothing is precomputed here: the residual rows are
 regenerated on demand by whatever consumes the fit.
+Small cell selections (up to 10% of the stored cells and at most 100k
+cells) are read from the cell-major file into memory for the fit, the
+residual HVG selection and the residual PCA, instead of sweeping the whole
+gene-major file each time.
 With group_column one model is fitted per group. That is what a
 multi-sample experiment wants, since each sample keeps its own depth and
 composition, and it changes how the residual HVG selection behaves, see
@@ -23,6 +27,10 @@ sct_corrected_counts_sc() all read it from there.
 Unlike the log-normalised layer, which is computed once at ingestion and
 written to disk, nothing is precomputed here: the residual rows are
 regenerated on demand by whatever consumes the fit.
+Small cell selections (up to 10% of the stored cells and at most 100k
+cells) are read from the cell-major file into memory for the fit, the
+residual HVG selection and the residual PCA, instead of sweeping the whole
+gene-major file each time.
 With group_column one model is fitted per group. That is what a
 multi-sample experiment wants, since each sample keeps its own depth and
 composition, and it changes how the residual HVG selection behaves, see
@@ -39,7 +47,7 @@ raw cells, of which there are usually far more than meta cells.'><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -135,6 +143,10 @@ currently kept. The fit lands in the cache, and
 <p>Unlike the log-normalised layer, which is computed once at ingestion and
 written to disk, nothing is precomputed here: the residual rows are
 regenerated on demand by whatever consumes the fit.</p>
+<p>Small cell selections (up to 10% of the stored cells and at most 100k
+cells) are read from the cell-major file into memory for the fit, the
+residual HVG selection and the residual PCA, instead of sweeping the whole
+gene-major file each time.</p>
 <p>With <code>group_column</code> one model is fitted per group. That is what a
 multi-sample experiment wants, since each sample keeps its own depth and
 composition, and it changes how the residual HVG selection behaves, see

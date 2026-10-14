@@ -709,6 +709,77 @@ Based on this, we can conclude the following:
   hdWGCNA is fast and simple but assignments overlap more in embedding
   space.
 
+### Scoring external assignments
+
+[`calc_manifold_metrics()`](https://gregorlueg.github.io/bixverse/reference/calc_manifold_metrics.md)
+only scores meta cells that bixverse generated. If you have an
+assignment from somewhere else (SEACells in Python, a different
+parameter set, a clustering you want to compare against), you can score
+it in an existing diffusion map with
+[`calc_meta_cell_compactness()`](https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_compactness.md)
+and
+[`calc_meta_cell_separation()`](https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_separation.md).
+They take the diffusion map and one label per row; `NA` marks cells that
+are not part of any meta cell. The rows of the diffusion map follow
+`knn_object$used_cells`, so that is what the labels need to be aligned
+to.
+
+To keep it self-contained, we pretend the SEACells assignment came from
+an outside tool as a cell to meta cell table, and compare it against a
+random assignment with the same meta cell sizes.
+
+``` r
+
+dcs <- S7::prop(seacells, "other_data")$dcs
+cell_ids <- get_sc_obs(sc_object)$cell_id
+
+# what an external tool would hand you: cell id -> meta cell
+external <- seacells[[]][,
+  .(cell_id = cell_ids[original_cell_idx[[1]]]),
+  by = meta_cell_id
+]
+
+assignment <- external$meta_cell_id[
+  match(knn_object$used_cells, external$cell_id)
+]
+
+set.seed(42L)
+random_assignment <- assignment
+random_assignment[!is.na(assignment)] <- sample(assignment[!is.na(assignment)])
+
+external_dt <- rbind(
+  data.table(
+    assignment = "SEACells",
+    compactness = calc_meta_cell_compactness(dcs, assignment),
+    separation = calc_meta_cell_separation(dcs, assignment)
+  ),
+  data.table(
+    assignment = "random",
+    compactness = calc_meta_cell_compactness(dcs, random_assignment),
+    separation = calc_meta_cell_separation(dcs, random_assignment)
+  )
+)
+
+external_dt[,
+  .(
+    median_compactness = median(compactness),
+    median_separation = median(separation)
+  ),
+  .(assignment)
+]
+#>    assignment median_compactness median_separation
+#>        <char>              <num>             <num>
+#> 1:   SEACells         0.02311406         0.2836786
+#> 2:     random         0.71382016         0.2430340
+```
+
+The SEACells numbers match what
+[`calc_manifold_metrics()`](https://gregorlueg.github.io/bixverse/reference/calc_manifold_metrics.md)
+wrote into the obs table above. The random assignment is the floor: meta
+cells that are spread across the manifold have a large variance and
+their centroids all collapse towards the middle, so compactness goes up
+and separation goes down.
+
 ## Working with the MetaCells class
 
 This is where the in-memory representation pays off. HVG selection, PCA,

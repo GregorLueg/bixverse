@@ -85,8 +85,8 @@ doublet_detection_boost_sc(
   ),
   .verbose = FALSE
 )
-#> BoostRes: 500 cells, 1 doublets (0.2%)
-#>   Score range: [0.0085, 0.8646]
+#> BoostRes: 500 cells, 2 doublets (0.4%)
+#>   Score range: [0.0000, 0.8291]
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

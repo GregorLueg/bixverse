@@ -28,3 +28,6 @@ A list of two items
 - raw - Sparse matrix representing the raw counts.
 
 - norm - Sparse matrix representing the norm counts.
+
+Both matrices share one `p` and `j` vector, and inputs that already have
+the right storage type are used without a copy.

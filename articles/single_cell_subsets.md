@@ -387,16 +387,16 @@ sub_markers[fdr <= 0.05][order(grp, -lfc)][,
 ]
 #>       grp        gene_symbol       lfc          fdr
 #>     <int>             <char>     <num>        <num>
-#>  1:     0             S100A4 1.5424920 1.947885e-87
-#>  2:     0            S100A10 0.8233794 7.058865e-30
-#>  3:     0              ANXA1 0.8222182 8.406427e-29
-#>  4:     0            S100A11 0.8162472 2.966387e-34
-#>  5:     0               IL32 0.8090412 4.971992e-34
-#>  6:     1               CCR7 0.5925658 2.975135e-22
-#>  7:     1            C6orf48 0.4198708 4.800646e-11
-#>  8:     1               CD8B 0.4193143 1.531082e-13
-#>  9:     1                CD7 0.3640330 1.282367e-07
-#> 10:     1               SELL 0.3356816 2.172734e-05
+#>  1:     0               CCR7 0.5642184 2.041524e-20
+#>  2:     0            C6orf48 0.4501169 1.178636e-12
+#>  3:     0               CD8B 0.4126715 5.109062e-13
+#>  4:     0                CD7 0.3531303 2.426653e-07
+#>  5:     0               SELL 0.3366527 1.902558e-05
+#>  6:     1             S100A4 1.4907115 5.171250e-82
+#>  7:     1               KLF6 0.8116387 3.714718e-27
+#>  8:     1               IL32 0.8064745 3.961200e-33
+#>  9:     1              ANXA1 0.7907043 7.146346e-27
+#> 10:     1            S100A10 0.7820998 4.275182e-27
 #> 11:     2 XXbac-BPG299F13.17 2.9117374 7.948966e-03
 #> 12:     2             FCER1A 2.8321354 3.452312e-41
 #> 13:     2              LZTS2 2.5425255 1.457232e-11
@@ -465,8 +465,8 @@ get_sc_obs(sc_object, filtered = TRUE)[, .N, by = t_subcluster][order(
 )]
 #>    t_subcluster     N
 #>          <char> <int>
-#> 1:    T cells_0   545
-#> 2:    T cells_1   495
+#> 1:    T cells_0   520
+#> 2:    T cells_1   520
 #> 3:    T cells_2     2
 #> 4:         <NA>  1121
 ```
@@ -500,12 +500,12 @@ sc_object <- add_sc_new_obs(sc_object, get_data(fast_sub))
 head(sc_object)[, .(cell_id, cell_type, t_subcluster, res_1, res_0.5)]
 #>             cell_id cell_type t_subcluster res_1 res_0.5
 #>              <char>    <char>       <char> <int>   <int>
-#> 1: AAACATACAACCAC-1   T cells    T cells_1     1       1
-#> 2: AAACATTGATCAGC-1   T cells    T cells_0     0       0
+#> 1: AAACATACAACCAC-1   T cells    T cells_0     1       1
+#> 2: AAACATTGATCAGC-1   T cells    T cells_1     0       0
 #> 3: AAACCGTGCTTCCG-1 Monocytes         <NA>    NA      NA
-#> 4: AAACGCACTGGTAC-1   T cells    T cells_0     0       0
+#> 4: AAACGCACTGGTAC-1   T cells    T cells_1     2       0
 #> 5: AAACGCTGGTTCTT-1        NK         <NA>    NA      NA
-#> 6: AAACGCTGTAGCCA-1   T cells    T cells_0     0       0
+#> 6: AAACGCTGTAGCCA-1   T cells    T cells_1     2       0
 ```
 
 ## Pipelines
@@ -639,12 +639,12 @@ get_sc_obs(sc_object, filtered = TRUE)[, .N, by = fine_label][order(fine_label)]
 #>     fine_label     N
 #>         <char> <int>
 #> 1:   B cells_0   280
-#> 2: Monocytes_0   248
-#> 3: Monocytes_1   211
+#> 2: Monocytes_0   254
+#> 3: Monocytes_1   205
 #> 4:        NK_0   257
 #> 5:        NK_1   125
-#> 6:   T cells_0   545
-#> 7:   T cells_1   495
+#> 6:   T cells_0   520
+#> 7:   T cells_1   520
 #> 8:   T cells_2     2
 ```
 

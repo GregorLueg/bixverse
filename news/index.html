@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,6 +93,36 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.0" id="bixverse-070">bixverse 0.7.0<a class="anchor" aria-label="anchor" href="#bixverse-070"></a></h2>
+<div class="section level3">
+<h3 id="features-0-7-0">Features<a class="anchor" aria-label="anchor" href="#features-0-7-0"></a></h3>
+<ul><li>
+<code>bixverse-rs</code> 0.7.0 under the hood, with <code>faer</code> 0.24 and <code>edge-rs</code> 0.3.</li>
+<li>Leiden and Louvain now run in Rust: <code><a href="../reference/leiden_clustering.html">leiden_clustering()</a></code> on any igraph, and <code><a href="../reference/find_clusters_sc.html">find_clusters_sc()</a></code> uses it. Results depend on <code>seed</code> only, not on the global RNG or the thread count.</li>
+<li>
+<code><a href="../reference/params_sc_fast_cluster.html">params_sc_fast_cluster()</a></code> gained <code>cell_mediated</code> and <code>n_anchors</code> for the cell-mediated centroid graph from Secuer (Wei et al., PLoS Comput Biol, 2022).</li>
+<li>
+<code><a href="../reference/calc_meta_cell_compactness.html">calc_meta_cell_compactness()</a></code> and <code><a href="../reference/calc_meta_cell_separation.html">calc_meta_cell_separation()</a></code> score any meta cell assignment against a diffusion map, including meta cells built outside bixverse.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-0-7-0">Performance<a class="anchor" aria-label="anchor" href="#performance-0-7-0"></a></h3>
+<ul><li>Small cell selections (up to 10% of the store and 100k cells, i.e. most <code>SingleCellsSubset</code> objects) are read from the cell-major file for HVG detection and the residual fits. HVG on 6k of 985k cells: 0.82 s to 43 ms.</li>
+<li>Fused sparse batch readers on the Rust side; SCENIC, Scrublet, NEBULA, CellPhoneDB, NMF, PCA, CellSweep, Bonsai and meta cells build their matrices through them.</li>
+<li>Exact covariance PCA uses the cell Gram when there are fewer cells than genes, so small subsets no longer pay for a gene x gene eigendecomposition.</li>
+<li>Subset filters are pushed into DuckDB, and meta cell matrices are built without copies.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changes-0-7-0">Changes<a class="anchor" aria-label="anchor" href="#changes-0-7-0"></a></h3>
+<ul><li>Clustering results shift compared to 0.6.x, since the igraph Leiden/Louvain calls are gone.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-7-0">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-7-0"></a></h3>
+<ul><li>
+<code><a href="../reference/set_residual_fit.html">set_residual_fit()</a></code>, <code><a href="../reference/get_residual_fit.html">get_residual_fit()</a></code> and <code><a href="../reference/remove_residual_fit.html">remove_residual_fit()</a></code> work on <code>SingleCellsSubset</code>.</li>
+<li>Accelerate is linked properly on macOS.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.3" id="bixverse-063">bixverse 0.6.3<a class="anchor" aria-label="anchor" href="#bixverse-063"></a></h2>
 <div class="section level3">

@@ -3,6 +3,11 @@
 This is a helper function to identify highly variable genes for
 `SingleCells` (using the Rust-based streaming of data) or `MetaCells`.
 
+Small cell selections (up to 10% of the stored cells and at most 100k
+cells, e.g. most `SingleCellsSubset` objects) are read from the
+cell-major file into memory rather than sweeping the whole gene-major
+file, which makes the cost follow the selection instead of the store.
+
 ## Usage
 
 ``` r

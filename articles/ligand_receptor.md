@@ -101,12 +101,12 @@ celltype_counts <- sc_object[[]][!is.na(celltype), .N, by = celltype][order(-N)]
 celltype_counts
 #>     celltype     N
 #>       <char> <int>
-#> 1: cluster_0  1198
-#> 2: cluster_1   486
+#> 1: cluster_0  1181
+#> 2: cluster_1   488
 #> 3: cluster_2   346
-#> 4: cluster_3   286
-#> 5: cluster_4   166
-#> 6: cluster_5   165
+#> 4: cluster_3   303
+#> 5: cluster_4   165
+#> 6: cluster_5   164
 #> 7: cluster_6    33
 #> 8: cluster_7    14
 #> 9: cluster_8     4
@@ -199,7 +199,7 @@ cpdb_res <- cellphonedb_sc(
 cpdb_sig <- cpdb_res[gate == TRUE & pval <= 0.05]
 
 nrow(cpdb_sig)
-#> [1] 525
+#> [1] 526
 ```
 
 That’s a lot of dropped interactions.
@@ -261,14 +261,14 @@ head(
 #>  5: cluster_8 cluster_2       APP      CD74 2.627127     0
 #>  6: cluster_6 cluster_2       APP      CD74 2.616888     0
 #>  7: cluster_7 cluster_6       PF4     CXCR3 2.607065     0
-#>  8: cluster_4 cluster_1      CD44    TYROBP 2.544029     0
-#>  9: cluster_4 cluster_4      CD44    TYROBP 2.449054     0
-#> 10: cluster_0 cluster_1      CD44    TYROBP 2.408698     0
+#>  8: cluster_5 cluster_1      CD44    TYROBP 2.545057     0
+#>  9: cluster_5 cluster_5      CD44    TYROBP 2.451785     0
+#> 10: cluster_0 cluster_1      CD44    TYROBP 2.405072     0
 ```
 
 Two things to keep in mind here. First, the permutation test asks for
 specificity, not just expression. PPIA-BSG passes the expression gate in
-81 of the 81 cluster pairs, but is significant in only 32 of them.
+81 of the 81 cluster pairs, but is significant in only 31 of them.
 Second, the top of that list is dominated by clusters 6 to 8, which hold
 33, 14, 4 cells. Means over a handful of cells are noisy, so treat hits
 from tiny clusters with care.
@@ -311,12 +311,12 @@ head(
 #>  5: cluster_8 cluster_2       APP      CD74 2.627127
 #>  6: cluster_6 cluster_2       APP      CD74 2.616888
 #>  7: cluster_7 cluster_6       PF4     CXCR3 2.607065
-#>  8: cluster_4 cluster_1      CD44    TYROBP 2.544029
-#>  9: cluster_4 cluster_4      CD44    TYROBP 2.449054
-#> 10: cluster_0 cluster_1      CD44    TYROBP 2.408698
+#>  8: cluster_5 cluster_1      CD44    TYROBP 2.545057
+#>  9: cluster_5 cluster_5      CD44    TYROBP 2.451785
+#> 10: cluster_0 cluster_1      CD44    TYROBP 2.405072
 ```
 
-292 interaction and cluster pair combinations pass the DEG gate, and 257
+288 interaction and cluster pair combinations pass the DEG gate, and 253
 of them are also significant in the permutation run. This is the route
 to take if you’ve got a proper DE setup, e.g. pseudo-bulk across samples
 (see the notes at the end). The cell type specificity then comes from
@@ -577,7 +577,7 @@ geneset_oi <- celltype_de[
   gene
 ]
 length(geneset_oi)
-#> [1] 838
+#> [1] 869
 ```
 
 ### Ligand activity scoring
@@ -595,22 +595,14 @@ activity <- ligand_activity_scores(
 )
 
 activity[order(-aupr_corrected)]
-#>         gene_set ligand     auroc      aupr aupr_corrected      pearson
-#>           <char> <char>     <num>     <num>          <num>        <num>
-#> 1: receiver_degs  TGFB1 0.6594982 0.3956790    0.170679012  0.299473381
-#> 2: receiver_degs   IL15 0.5663082 0.2353395    0.010339506  0.117053047
-#> 3: receiver_degs   CCL5 0.5501792 0.2291667    0.004166667 -0.004045534
-#> 4: receiver_degs CXCL10 0.5501792 0.2291667    0.004166667 -0.004045534
-#> 5: receiver_degs    TNF 0.5125448 0.2086676   -0.016332442 -0.004747876
-#> 6: receiver_degs  ICAM1 0.5125448 0.2086676   -0.016332442 -0.004747876
-#>      spearman
-#>         <num>
-#> 1: 0.26664795
-#> 2: 0.11085364
-#> 3: 0.09001531
-#> 4: 0.09001531
-#> 5: 0.02025577
-#> 6: 0.02025577
+#>         gene_set ligand     auroc      aupr aupr_corrected    pearson  spearman
+#>           <char> <char>     <num>     <num>          <num>      <num>     <num>
+#> 1: receiver_degs  TGFB1 0.7031250 0.4055556   0.2055555556 0.35548570 0.3252847
+#> 2: receiver_degs   IL15 0.6015625 0.2277778   0.0277777778 0.16504693 0.1626424
+#> 3: receiver_degs   CCL5 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457
+#> 4: receiver_degs CXCL10 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457
+#> 5: receiver_degs    TNF 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010
+#> 6: receiver_degs  ICAM1 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010
 ```
 
 ### Sender and receiver tables
@@ -682,12 +674,11 @@ head(
 )
 #>       sender  receiver ligand_symbol receptor_symbol prioritisation_score
 #>       <char>    <char>        <char>          <char>                <num>
-#> 1: cluster_4 cluster_0         TGFB1          TGFBR2            0.8333333
-#> 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7864823
-#> 3: cluster_3 cluster_0         TGFB1          TGFBR2            0.6756293
-#> 4: cluster_1 cluster_0          IL15           IL2RG            0.5830033
-#> 5: cluster_2 cluster_0         TGFB1          TGFBR2            0.5500000
-#> 6: cluster_4 cluster_0          IL15           IL2RG            0.5434125
+#> 1: cluster_1 cluster_0         TGFB1          TGFBR2            0.8111938
+#> 2: cluster_4 cluster_0         TGFB1          TGFBR2            0.7759259
+#> 3: cluster_3 cluster_0         TGFB1          TGFBR2            0.6811818
+#> 4: cluster_1 cluster_0          IL15           IL2RG            0.5752474
+#> 5: cluster_2 cluster_0         TGFB1          TGFBR2            0.5351852
 #>    prioritisation_rank
 #>                  <int>
 #> 1:                   1
@@ -695,7 +686,6 @@ head(
 #> 3:                   3
 #> 4:                   4
 #> 5:                   5
-#> 6:                   6
 ```
 
 ### Top interactions

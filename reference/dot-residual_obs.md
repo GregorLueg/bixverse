@@ -11,7 +11,7 @@ covariates gives plausible residuals and a wrong embedding.
 ## Usage
 
 ``` r
-.residual_obs(object, cell_indices)
+.residual_obs(object, cell_indices, cols = NULL)
 ```
 
 ## Arguments
@@ -23,6 +23,12 @@ covariates gives plausible residuals and a wrong embedding.
 - cell_indices:
 
   Integer. The 0-based cells, in the order Rust gets them.
+
+- cols:
+
+  Optional character vector. Columns to read for a `SingleCells` object,
+  `cell_idx` is always added. Columns missing from the table are left
+  out, so the callers can report them. `NULL` reads every column.
 
 ## Value
 

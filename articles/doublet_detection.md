@@ -241,13 +241,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.6819572
+#> [1] 0.6823458
 #> 
 #> $recall
-#> [1] 0.7152021
+#> [1] 0.7164849
 #> 
 #> $f1
-#> [1] 0.6981841
+#> [1] 0.6989987
 ```
 
 We have made it worse here, but maybe there are cases where the scores
@@ -291,13 +291,13 @@ boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 #> $precision
-#> [1] 0.6923744
+#> [1] 0.6506024
 #> 
 #> $recall
-#> [1] 0.512508
+#> [1] 0.6927518
 #> 
 #> $f1
-#> [1] 0.5890158
+#> [1] 0.6710158
 ```
 
 Overall, it takes longer and has worse performance (in this data set).
@@ -337,13 +337,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7152263
+#> [1] 0.7062883
 #> 
 #> $recall
-#> [1] 0.5574086
+#> [1] 0.5907633
 #> 
 #> $f1
-#> [1] 0.6265321
+#> [1] 0.6433811
 ```
 
 ### scDblFinder
@@ -382,13 +382,13 @@ doublet_metrics(
   actual = scdblfinder_dt$Call
 )
 #> $precision
-#> [1] 0.5916754
+#> [1] 0.6112054
 #> 
 #> $recall
-#> [1] 0.7203335
+#> [1] 0.6927518
 #> 
 #> $f1
-#> [1] 0.6496963
+#> [1] 0.6494287
 ```
 
 We can also extract the other scores from scDblFinder. We can for
@@ -409,8 +409,8 @@ table(
 )
 #>         weighted
 #> lightgbm FALSE  TRUE
-#>    FALSE 11979   651
-#>    TRUE     72  1826
+#>    FALSE 11852   909
+#>    TRUE     41  1726
 ```
 
 Or alternatively, the cxds scores can also be extracted and used. These
@@ -432,8 +432,8 @@ table(
 )
 #>         cxds
 #> lightgbm FALSE  TRUE
-#>    FALSE 12362   268
-#>    TRUE    849  1049
+#>    FALSE 12421   340
+#>    TRUE    790   977
 ```
 
 Should you observe that this is very flat or you only have a few data

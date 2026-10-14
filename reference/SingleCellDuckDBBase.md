@@ -79,7 +79,8 @@ Returns the full observation table from the DuckDB
     SingleCellDuckDBBase$get_obs_table(
       indices = NULL,
       cols = NULL,
-      filtered = FALSE
+      filtered = FALSE,
+      where_equal = NULL
     )
 
 #### Arguments
@@ -95,6 +96,13 @@ Returns the full observation table from the DuckDB
 - `filtered`:
 
   Boolean. Whether to return all cells or filtered to to_keep cells.
+
+- `where_equal`:
+
+  Optional named list. Only rows where each named column equals its
+  value are returned; the value is cast to the column's type. Pushed
+  into the query, so a few rows of a large table do not have to come
+  through R.
 
 #### Returns
 

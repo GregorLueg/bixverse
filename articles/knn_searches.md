@@ -348,7 +348,7 @@ nndescent_knn
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [3.8343, 155.6370]
+#>   Distance range: [3.8343, 155.7910]
 ```
 
 And benchmark it:

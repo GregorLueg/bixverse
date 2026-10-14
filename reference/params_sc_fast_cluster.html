@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,6 +109,8 @@
 <span>  pruning <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  snn_similarity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"jaccard"</span>, <span class="st">"rank"</span><span class="op">)</span>,</span>
 <span>  louvain_iters <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  cell_mediated <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  n_anchors <span class="op">=</span> <span class="fl">5L</span>,</span>
 <span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -165,6 +167,21 @@ higher edge weights Both methods produce weights normalised to the range <code>[
 Defaults to <code>10L</code>.</p></dd>
 
 
+<dt id="arg-cell-mediated">cell_mediated<a class="anchor" aria-label="anchor" href="#arg-cell-mediated"></a></dt>
+<dd><p>Boolean. Shall the cell-mediated centroid graph from
+Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+then linked by the cells that sit near both, so two centroids that are close
+in space but have no cells between them stay apart. If <code>TRUE</code>, <code>snn</code>,
+<code>full_snn</code>, <code>pruning</code> and <code>snn_similarity</code> are ignored. See Wei, et al., PLoS
+Comput Biol, 2022. Defaults to <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-n-anchors">n_anchors<a class="anchor" aria-label="anchor" href="#arg-n-anchors"></a></dt>
+<dd><p>Integer. Number of nearest centroids each cell links to in
+the cell-mediated graph. Only used if <code>cell_mediated = TRUE</code>. Defaults to
+<code>5L</code>.</p></dd>
+
+
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
 <dd><p>List. Optional overrides for kNN parameters. See
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
@@ -201,6 +218,15 @@ is determined by finding the shared neighbour with the lowest combined rank
 across both cells, where lower-ranked (closer) shared neighbours result in
 higher edge weights Both methods produce weights normalised to the range
 <code>[0, 1]</code>. One of <code>c("jaccard", "rank")</code>. Defaults to <code>"jaccard"</code>.</p></li>
+<li><p>cell_mediated - Boolean. Shall the cell-mediated centroid graph from
+Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+then linked by the cells that sit near both, so two centroids that are close
+in space but have no cells between them stay apart. If <code>TRUE</code>, <code>snn</code>,
+<code>full_snn</code>, <code>pruning</code> and <code>snn_similarity</code> are ignored. See Wei, et al.,
+PLoS Comput Biol, 2022. Defaults to <code>FALSE</code>.</p></li>
+<li><p>n_anchors - Integer. Number of nearest centroids each cell links to in
+the cell-mediated graph. Only used if <code>cell_mediated = TRUE</code>. Defaults to
+<code>5L</code>.</p></li>
 <li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
 in at this position.</p></li>
 </ul></div>

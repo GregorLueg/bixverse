@@ -15,6 +15,9 @@ remove_residual_fit(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 remove_residual_fit(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+remove_residual_fit(x, ...)
 ```
 
 ## Arguments

@@ -21,7 +21,7 @@ flatten the very ranking the residuals produce."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,6 +123,7 @@ flatten the very ranking the residuals produce.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">rs_sc_pca_residuals</span><span class="op">(</span></span>
 <span>  <span class="va">f_path_gene</span>,</span>
+<span>  <span class="va">f_path_cell</span>,</span>
 <span>  <span class="va">residual_fit</span>,</span>
 <span>  <span class="va">no_pcs</span>,</span>
 <span>  <span class="va">pca_params</span>,</span>
@@ -140,6 +141,11 @@ flatten the very ranking the residuals produce.</p>
 
 <dl><dt id="arg-f-path-gene">f_path_gene<a class="anchor" aria-label="anchor" href="#arg-f-path-gene"></a></dt>
 <dd><p>String. Path to the <code>counts_genes.bin</code> file.</p></dd>
+
+
+<dt id="arg-f-path-cell">f_path_cell<a class="anchor" aria-label="anchor" href="#arg-f-path-cell"></a></dt>
+<dd><p>String. Path to the <code>counts_cells.bin</code> file. Small cell
+selections are read from here instead of sweeping the gene file.</p></dd>
 
 
 <dt id="arg-residual-fit">residual_fit<a class="anchor" aria-label="anchor" href="#arg-residual-fit"></a></dt>

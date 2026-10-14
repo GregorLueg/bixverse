@@ -8,6 +8,7 @@ the three methods known in Seurat, plus the scran mean-variance trend.
 ``` r
 rs_sc_hvg(
   f_path_gene,
+  f_path_cell,
   hvg_method,
   cell_indices,
   loess_span,
@@ -25,6 +26,11 @@ rs_sc_hvg(
 - f_path_gene:
 
   String. Path to the `counts_genes.bin` file.
+
+- f_path_cell:
+
+  String. Path to the `counts_cells.bin` file. Small cell selections are
+  read from here instead of sweeping the gene file.
 
 - hvg_method:
 

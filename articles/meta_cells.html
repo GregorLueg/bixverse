@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Meta cells with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-10</p>
+      <p class="date">2026-10-14</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -655,14 +655,63 @@
 <li>At matched K (~250 metacells), SuperCells achieves the lowest median compactness, slightly ahead of hdWGCNA and SEACells. Separation is comparable between SuperCells and SEACells, with hdWGCNA noticeably lower.</li>
 <li>The methods differ markedly in where they place metacells. SEACells assigns 50% of metacells to low-density regions versus 24% for hdWGCNA and 41% for SuperCells, consistent with its kernel archetypal formulation seeking out underrepresented states.</li>
 <li>Method choice should reflect the downstream question. For tight aggregation in dense regions (e.g., bulk-like pseudo-replicates of common cell types), SuperCells is efficient and effective. For preserving rare populations or transitioning states (e.g., differentiation trajectories), SEACells’ rare-state bias is desirable, with the trade-off of more heterogeneous metacells in those regions. hdWGCNA is fast and simple but assignments overlap more in embedding space.</li>
-</ul></section></section></section><section class="level2"><h2 id="working-with-the-metacells-class">Working with the MetaCells class<a class="anchor" aria-label="anchor" href="#working-with-the-metacells-class"></a>
+</ul></section></section><section class="level3"><h3 id="scoring-external-assignments">Scoring external assignments<a class="anchor" aria-label="anchor" href="#scoring-external-assignments"></a>
+</h3>
+<p><code><a href="../reference/calc_manifold_metrics.html">calc_manifold_metrics()</a></code> only scores meta cells that bixverse generated. If you have an assignment from somewhere else (SEACells in Python, a different parameter set, a clustering you want to compare against), you can score it in an existing diffusion map with <code><a href="../reference/calc_meta_cell_compactness.html">calc_meta_cell_compactness()</a></code> and <code><a href="../reference/calc_meta_cell_separation.html">calc_meta_cell_separation()</a></code>. They take the diffusion map and one label per row; <code>NA</code> marks cells that are not part of any meta cell. The rows of the diffusion map follow <code>knn_object$used_cells</code>, so that is what the labels need to be aligned to.</p>
+<p>To keep it self-contained, we pretend the SEACells assignment came from an outside tool as a cell to meta cell table, and compare it against a random assignment with the same meta cell sizes.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dcs</span> <span class="op">&lt;-</span> <span class="fu">S7</span><span class="fu">::</span><span class="fu"><a href="https://rconsortium.github.io/S7/reference/prop.html" class="external-link">prop</a></span><span class="op">(</span><span class="va">seacells</span>, <span class="st">"other_data"</span><span class="op">)</span><span class="op">$</span><span class="va">dcs</span></span>
+<span><span class="va">cell_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">$</span><span class="va">cell_id</span></span>
+<span></span>
+<span><span class="co"># what an external tool would hand you: cell id -&gt; meta cell</span></span>
+<span><span class="va">external</span> <span class="op">&lt;-</span> <span class="va">seacells</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">[</span>,</span>
+<span>  <span class="fu">.</span><span class="op">(</span>cell_id <span class="op">=</span> <span class="va">cell_ids</span><span class="op">[</span><span class="va">original_cell_idx</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  by <span class="op">=</span> <span class="va">meta_cell_id</span></span>
+<span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">assignment</span> <span class="op">&lt;-</span> <span class="va">external</span><span class="op">$</span><span class="va">meta_cell_id</span><span class="op">[</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">knn_object</span><span class="op">$</span><span class="va">used_cells</span>, <span class="va">external</span><span class="op">$</span><span class="va">cell_id</span><span class="op">)</span></span>
+<span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span>
+<span><span class="va">random_assignment</span> <span class="op">&lt;-</span> <span class="va">assignment</span></span>
+<span><span class="va">random_assignment</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">assignment</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">assignment</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">assignment</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">external_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span>    assignment <span class="op">=</span> <span class="st">"SEACells"</span>,</span>
+<span>    compactness <span class="op">=</span> <span class="fu"><a href="../reference/calc_meta_cell_compactness.html">calc_meta_cell_compactness</a></span><span class="op">(</span><span class="va">dcs</span>, <span class="va">assignment</span><span class="op">)</span>,</span>
+<span>    separation <span class="op">=</span> <span class="fu"><a href="../reference/calc_meta_cell_separation.html">calc_meta_cell_separation</a></span><span class="op">(</span><span class="va">dcs</span>, <span class="va">assignment</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span>    assignment <span class="op">=</span> <span class="st">"random"</span>,</span>
+<span>    compactness <span class="op">=</span> <span class="fu"><a href="../reference/calc_meta_cell_compactness.html">calc_meta_cell_compactness</a></span><span class="op">(</span><span class="va">dcs</span>, <span class="va">random_assignment</span><span class="op">)</span>,</span>
+<span>    separation <span class="op">=</span> <span class="fu"><a href="../reference/calc_meta_cell_separation.html">calc_meta_cell_separation</a></span><span class="op">(</span><span class="va">dcs</span>, <span class="va">random_assignment</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">external_dt</span><span class="op">[</span>,</span>
+<span>  <span class="fu">.</span><span class="op">(</span></span>
+<span>    median_compactness <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">compactness</span><span class="op">)</span>,</span>
+<span>    median_separation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">separation</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu">.</span><span class="op">(</span><span class="va">assignment</span><span class="op">)</span></span>
+<span><span class="op">]</span></span>
+<span><span class="co">#&gt;    assignment median_compactness median_separation</span></span>
+<span><span class="co">#&gt;        &lt;char&gt;              &lt;num&gt;             &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:   SEACells         0.02311406         0.2836786</span></span>
+<span><span class="co">#&gt; 2:     random         0.71382016         0.2430340</span></span></code></pre></div>
+</div>
+<p>The SEACells numbers match what <code><a href="../reference/calc_manifold_metrics.html">calc_manifold_metrics()</a></code> wrote into the obs table above. The random assignment is the floor: meta cells that are spread across the manifold have a large variance and their centroids all collapse towards the middle, so compactness goes up and separation goes down.</p>
+</section></section><section class="level2"><h2 id="working-with-the-metacells-class">Working with the MetaCells class<a class="anchor" aria-label="anchor" href="#working-with-the-metacells-class"></a>
 </h2>
 <p>This is where the in-memory representation pays off. HVG selection, PCA, neighbour graphs and embeddings on a few hundred meta cells take seconds and do not touch the Rust binary files on disk. We will just take forward SEACells here, but the methods below work across all of <code>MetaCells</code>.</p>
 <section class="level3"><h3 id="hvgs-and-pca">HVGs and PCA<a class="anchor" aria-label="anchor" href="#hvgs-and-pca"></a>
 </h3>
 <p>The same HVG and PCA method dispatches you know from single cells work here…</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seacells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  hvg_no <span class="op">=</span> <span class="fl">2000L</span>,</span>
@@ -678,7 +727,7 @@
 </h3>
 <p>And also the same interfaces for neighbours, (Leiden) clustering and UMAP can be used here.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seacells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span></span>
@@ -697,7 +746,7 @@
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
@@ -717,7 +766,7 @@
 <p>Meta cells compress information and reduce sparsity. That makes them ideal for co-expression module detection methods and we can use a SCENIC implementation within bixverse <a href="https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic">akin to the single cell version</a> also on MetaCells.</p>
 <p>Let’s run this quickly…</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tf_dt</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span></span>
 <span>  <span class="st">"https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt"</span>,</span>
 <span>  header <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -743,7 +792,7 @@
 <span><span class="co">#&gt; SCENIC: 12464 target genes, 1282 TFs, 250 cells</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenic_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/identify_tf_to_genes.html">identify_tf_to_genes</a></span><span class="op">(</span></span>
 <span>  <span class="va">scenic_res</span>,</span>
 <span>  n_sd <span class="op">=</span> <span class="fl">2</span>,</span>
@@ -766,7 +815,7 @@
 </div>
 <p>In a proper situation we would filter down the TF to gene associations via motifs, please refer to the details in this <a href="https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic">vignette</a>. We will skip this step for now and just run AUCell to show how it works. Which statistic you get is controlled by <code><a href="../reference/params_sc_aucell.html">params_sc_aucell()</a></code>. The default is <code>"recovery"</code>, the original AUCell recovery curve, which is what SCENIC uses. <code>"wilcox"</code> (Mann-Whitney AUC over the full ranking) and <code>"ap"</code> (average precision) are the other two options.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">auc_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/aucell_sc.html">aucell_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  gs_list <span class="op">=</span> <span class="va">tf_to_gene_ls</span>,</span>
@@ -805,7 +854,7 @@
 <p>The same argument applies to matrix factorisation, and here compression buys you something concrete. Consensus NMF (<a href="https://elifesciences.org/articles/43803" class="external-link">Kotliar, et al.</a>) fits <code>n_runs</code> NMFs, pools their components, drops the ones sitting on their own, clusters the survivors and takes the median of each cluster. What survives is the programme structure the restarts agree on. The catch on raw single cells is memory: every restart is dense, and they all live at once. On a few thousand meta cells rather than a few hundred thousand cells, <code>n_runs = 50</code> is unremarkable. This is the path where consensus NMF is genuinely affordable.</p>
 <p>Start by picking <code>k</code>. <code><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc()</a></code> runs the consensus step across a range of ranks and reports stability against reconstruction error, keeping no factors.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mc_k_sweep</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  k_range <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">12</span>,</span>
@@ -848,7 +897,7 @@
 <span><span class="co">#&gt; 11:                0          10</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mc_k_sweep</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -859,7 +908,7 @@
 </div>
 <p>The usual rule is to take the last <code>k</code> before stability falls away, while the error curve is still coming down. Here it does not fall away so much as bounce: stability stays high across the whole range and dips and recovers, which says the meta cells support several plausible ranks rather than one obvious answer. It peaks at 6 and the error is still coming down there, so that is where we fit.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mc_nmf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/consensus_nmf_sc.html">consensus_nmf_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">6L</span>,</span>
@@ -881,7 +930,7 @@
 </div>
 <p><code><a href="../reference/get_stability.html">get_stability()</a></code> gives you the diagnostics: the mean silhouette of the clusters, the relative reconstruction errors, and a row per pooled component recording where it landed.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mc_nmf_diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stability.html">get_stability</a></span><span class="op">(</span><span class="va">mc_nmf</span><span class="op">)</span></span>
 <span><span class="va">mc_nmf_diag</span><span class="op">$</span><span class="va">stability</span></span>
 <span><span class="co">#&gt; [1] 0.9962956</span></span>
@@ -898,7 +947,7 @@
 <p>With 20 restarts, a cluster of 20 is a programme every run found. A thin one is a programme only some initialisations saw.</p>
 <p><code>W</code> (genes x k) and <code>H</code> (k x meta cells) come back in the same shape the single-run <code><a href="../reference/nmf_sc.html">nmf_sc()</a></code> gives you, so the activations drop straight onto the UMAP:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mc_h</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">mc_nmf</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">umap_nmf_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
@@ -932,7 +981,7 @@
 </div>
 <p>To read off what a programme is, rank the genes by their loading in <code>W</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mc_w</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">mc_nmf</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">top_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mc_w</span><span class="op">)</span>, \<span class="op">(</span><span class="va">comp</span><span class="op">)</span> <span class="op">{</span></span>
@@ -957,7 +1006,7 @@
 <p>Pseudo-bulks are conceptually adjacent but solve a different problem. Where meta cells are dense aggregates designed to feed into co-expression and archetype methods, pseudo-bulks are coarse summaries (typically one bulk per sample-by-cluster combination) used as input to bulk-style DGE tools such as limma-voom, edgeR or DESeq2 to get around pseudo-replication problems and p-value inflation in cell-based DGEs, see <a href="https://www.nature.com/articles/s41467-021-21038-1" class="external-link">Zimmerman et al.</a></p>
 <p><code>get_pseudobulked_sc</code> takes a named list of cell IDs and returns either a dense matrix or a sparse <code>dgRMatrix</code>. With <code>assay = "raw"</code> it sums raw counts (what bulk DGE tools expect); with <code>assay = "norm"</code> it averages normalised counts.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cl_dt</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leiden"</span>, <span class="st">"cell_id"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">cell_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">cl_dt</span><span class="op">$</span><span class="va">cell_id</span>, <span class="va">cl_dt</span><span class="op">$</span><span class="va">leiden</span><span class="op">)</span></span>
 <span></span>
@@ -976,7 +1025,7 @@
 </section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_cd34</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

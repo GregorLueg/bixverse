@@ -14,6 +14,8 @@ params_sc_fast_cluster(
   pruning = NULL,
   snn_similarity = c("jaccard", "rank"),
   louvain_iters = 10L,
+  cell_mediated = FALSE,
+  n_anchors = 5L,
   knn = list(k = 5L)
 )
 ```
@@ -70,6 +72,21 @@ params_sc_fast_cluster(
   Integer. Number of iterations for Louvain clustering. Defaults to
   `10L`.
 
+- cell_mediated:
+
+  Boolean. Shall the cell-mediated centroid graph from Secuer be built
+  instead of the kNN/sNN graph on the centroids. Centroids are then
+  linked by the cells that sit near both, so two centroids that are
+  close in space but have no cells between them stay apart. If `TRUE`,
+  `snn`, `full_snn`, `pruning` and `snn_similarity` are ignored. See
+  Wei, et al., PLoS Comput Biol, 2022. Defaults to `FALSE`.
+
+- n_anchors:
+
+  Integer. Number of nearest centroids each cell links to in the
+  cell-mediated graph. Only used if `cell_mediated = TRUE`. Defaults to
+  `5L`.
+
 - knn:
 
   List. Optional overrides for kNN parameters. See
@@ -118,6 +135,18 @@ A named list with the following elements:
   (closer) shared neighbours result in higher edge weights Both methods
   produce weights normalised to the range `[0, 1]`. One of
   `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+
+- cell_mediated - Boolean. Shall the cell-mediated centroid graph from
+  Secuer be built instead of the kNN/sNN graph on the centroids.
+  Centroids are then linked by the cells that sit near both, so two
+  centroids that are close in space but have no cells between them stay
+  apart. If `TRUE`, `snn`, `full_snn`, `pruning` and `snn_similarity`
+  are ignored. See Wei, et al., PLoS Comput Biol, 2022. Defaults to
+  `FALSE`.
+
+- n_anchors - Integer. Number of nearest centroids each cell links to in
+  the cell-mediated graph. Only used if `cell_mediated = TRUE`. Defaults
+  to `5L`.
 
 - The elements of
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),

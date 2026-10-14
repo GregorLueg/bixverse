@@ -560,6 +560,8 @@ network fusion.
   : Constrained personalised page rank
 - [`constrained_page_rank_ls()`](https://gregorlueg.github.io/bixverse/reference/constrained_page_rank_ls.md)
   : Constrained personalised page rank over a list
+- [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md)
+  : Leiden or Louvain community detection on an igraph
 - [`diffuse_seed_nodes()`](https://gregorlueg.github.io/bixverse/reference/diffuse_seed_nodes.md)
   : Diffuse seed genes over a network
 - [`permute_seed_nodes()`](https://gregorlueg.github.io/bixverse/reference/permute_seed_nodes.md)
@@ -791,6 +793,12 @@ Generating meta cells.
 
 - [`calc_manifold_metrics()`](https://gregorlueg.github.io/bixverse/reference/calc_manifold_metrics.md)
   : Calculate manifold metrics
+
+- [`calc_meta_cell_compactness()`](https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_compactness.md)
+  : Meta cell compactness in a diffusion map
+
+- [`calc_meta_cell_separation()`](https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_separation.md)
+  : Meta cell separation in a diffusion map
 
 - [`calc_meta_cell_purity()`](https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_purity.md)
   : Calculate meta cell purity
@@ -1765,6 +1773,9 @@ There is a lot more under the hood…
   **\[experimental\]** : kNN label propagation
 - [`rs_knn_mat_to_edge_list()`](https://gregorlueg.github.io/bixverse/reference/rs_knn_mat_to_edge_list.md)
   **\[experimental\]** : Flatten kNN matrix to edge list
+- [`rs_leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/rs_leiden_clustering.md)
+  **\[experimental\]** : Rust implementation of Leiden and Louvain
+  clustering
 - [`rs_generate_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/rs_generate_ligand_target_influence.md)
   **\[experimental\]** : Generate the ligand to target influence
   matrices

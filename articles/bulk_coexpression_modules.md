@@ -445,11 +445,11 @@ ica_modules <- get_modules(ica_res)
 ica_modules[, .N, by = module_id][order(-N)]
 #>    module_id     N
 #>       <char> <int>
-#> 1:      IC_5    90
-#> 2:      IC_1    58
-#> 3:      IC_4    48
-#> 4:      IC_2    38
-#> 5:      IC_3    35
+#> 1:      IC_1   136
+#> 2:      IC_4    78
+#> 3:      IC_2    65
+#> 4:      IC_3    55
+#> 5:      IC_5    55
 
 # Sparse and overlapping, which is the whole point of a factorisation.
 data.table(
@@ -459,7 +459,7 @@ data.table(
 )
 #>     rows unique_genes in_multiple_modules
 #>    <int>        <int>               <int>
-#> 1:   269          151                  63
+#> 1:   389          208                 164
 ```
 
 ## Method 4: DGRDL
@@ -845,7 +845,7 @@ recovery
 #> 2:        CoReMo 0.7500000
 #> 3:           NMF 0.6811551
 #> 4: Consensus NMF 0.5900000
-#> 5:           ICA 0.4809684
+#> 5:           ICA 0.5475788
 #> 6:         DGRDL 0.1505952
 ```
 
@@ -1039,10 +1039,10 @@ grid_res <- rbindlist(lapply(
 grid_res
 #>              generator     metric CoReMo   ICA   NMF
 #>                 <char>     <char>  <num> <num> <num>
-#> 1:         hub_modular    jaccard  0.750 0.481 0.681
-#> 2:         hub_modular factor_cor  0.985 0.523 0.988
-#> 3:             modular    jaccard  0.790 0.200 0.690
-#> 4:             modular factor_cor  0.983 0.635 0.986
+#> 1:         hub_modular    jaccard  0.750 0.548 0.681
+#> 2:         hub_modular factor_cor  0.985 0.352 0.988
+#> 3:             modular    jaccard  0.790 0.397 0.690
+#> 4:             modular factor_cor  0.983 0.616 0.986
 #> 5: non_negative_factor    jaccard  0.563 0.705 0.486
 #> 6: non_negative_factor factor_cor  0.959 0.722 0.966
 #> 7: non_gaussian_factor    jaccard  0.617 0.487 0.596

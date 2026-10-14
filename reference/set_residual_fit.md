@@ -15,6 +15,9 @@ set_residual_fit(x, residual_fit, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_residual_fit(x, residual_fit, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_residual_fit(x, residual_fit, ...)
 ```
 
 ## Arguments

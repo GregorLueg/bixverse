@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Bulk co-expression modules</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-10</p>
+      <p class="date">2026-10-14</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -484,11 +484,11 @@
 <span><span class="va">ica_modules</span><span class="op">[</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">module_id</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">N</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    module_id     N</span></span>
 <span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:      IC_5    90</span></span>
-<span><span class="co">#&gt; 2:      IC_1    58</span></span>
-<span><span class="co">#&gt; 3:      IC_4    48</span></span>
-<span><span class="co">#&gt; 4:      IC_2    38</span></span>
-<span><span class="co">#&gt; 5:      IC_3    35</span></span>
+<span><span class="co">#&gt; 1:      IC_1   136</span></span>
+<span><span class="co">#&gt; 2:      IC_4    78</span></span>
+<span><span class="co">#&gt; 3:      IC_2    65</span></span>
+<span><span class="co">#&gt; 4:      IC_3    55</span></span>
+<span><span class="co">#&gt; 5:      IC_5    55</span></span>
 <span></span>
 <span><span class="co"># Sparse and overlapping, which is the whole point of a factorisation.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
@@ -498,7 +498,7 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;     rows unique_genes in_multiple_modules</span></span>
 <span><span class="co">#&gt;    &lt;int&gt;        &lt;int&gt;               &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   269          151                  63</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:   389          208                 164</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="method-4-dgrdl">Method 4: DGRDL<a class="anchor" aria-label="anchor" href="#method-4-dgrdl"></a>
 </h2>
@@ -820,7 +820,7 @@
 <span><span class="co">#&gt; 2:        CoReMo 0.7500000</span></span>
 <span><span class="co">#&gt; 3:           NMF 0.6811551</span></span>
 <span><span class="co">#&gt; 4: Consensus NMF 0.5900000</span></span>
-<span><span class="co">#&gt; 5:           ICA 0.4809684</span></span>
+<span><span class="co">#&gt; 5:           ICA 0.5475788</span></span>
 <span><span class="co">#&gt; 6:         DGRDL 0.1505952</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -983,10 +983,10 @@
 <span><span class="va">grid_res</span></span>
 <span><span class="co">#&gt;              generator     metric CoReMo   ICA   NMF</span></span>
 <span><span class="co">#&gt;                 &lt;char&gt;     &lt;char&gt;  &lt;num&gt; &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         hub_modular    jaccard  0.750 0.481 0.681</span></span>
-<span><span class="co">#&gt; 2:         hub_modular factor_cor  0.985 0.523 0.988</span></span>
-<span><span class="co">#&gt; 3:             modular    jaccard  0.790 0.200 0.690</span></span>
-<span><span class="co">#&gt; 4:             modular factor_cor  0.983 0.635 0.986</span></span>
+<span><span class="co">#&gt; 1:         hub_modular    jaccard  0.750 0.548 0.681</span></span>
+<span><span class="co">#&gt; 2:         hub_modular factor_cor  0.985 0.352 0.988</span></span>
+<span><span class="co">#&gt; 3:             modular    jaccard  0.790 0.397 0.690</span></span>
+<span><span class="co">#&gt; 4:             modular factor_cor  0.983 0.616 0.986</span></span>
 <span><span class="co">#&gt; 5: non_negative_factor    jaccard  0.563 0.705 0.486</span></span>
 <span><span class="co">#&gt; 6: non_negative_factor factor_cor  0.959 0.722 0.966</span></span>
 <span><span class="co">#&gt; 7: non_gaussian_factor    jaccard  0.617 0.487 0.596</span></span>

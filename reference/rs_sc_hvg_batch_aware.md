@@ -9,6 +9,7 @@ downstream selection strategies such as union of top genes per batch.
 ``` r
 rs_sc_hvg_batch_aware(
   f_path_gene,
+  f_path_cell,
   hvg_method,
   cell_indices,
   batch_labels,
@@ -27,6 +28,11 @@ rs_sc_hvg_batch_aware(
 - f_path_gene:
 
   String. Path to the `counts_genes.bin` file.
+
+- f_path_cell:
+
+  String. Path to the `counts_cells.bin` file. Small cell selections are
+  read from here instead of sweeping the gene file.
 
 - hvg_method:
 

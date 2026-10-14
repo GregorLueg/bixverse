@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Trajectory inference with Palantir and PAGA</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-10</p>
+      <p class="date">2026-10-14</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -314,18 +314,18 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality  artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;    &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; cc520b9c2a48c930</span></span>
-<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; b7e77362b0a8d067</span></span>
-<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 5690c05316908e34</span></span>
-<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 9f7b7c4592a7aae8</span></span>
-<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; e547dfb37628d5f3</span></span>
+<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 88a72414fdc23880</span></span>
+<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; 3da6b7f9926129a1</span></span>
+<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 254c3468a623065b</span></span>
+<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 5ac4a88ef87704fd</span></span>
+<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; c4b7c73bbf6f1983</span></span>
 <span><span class="co">#&gt;                                 from</span></span>
 <span><span class="co">#&gt;                               &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                  </span></span>
-<span><span class="co">#&gt; 2: cc520b9c2a48c930,5690c05316908e34</span></span>
-<span><span class="co">#&gt; 3:                  cc520b9c2a48c930</span></span>
-<span><span class="co">#&gt; 4:                  5690c05316908e34</span></span>
-<span><span class="co">#&gt; 5:                  5690c05316908e34</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 88a72414fdc23880,254c3468a623065b</span></span>
+<span><span class="co">#&gt; 3:                  88a72414fdc23880</span></span>
+<span><span class="co">#&gt; 4:                  254c3468a623065b</span></span>
+<span><span class="co">#&gt; 5:                  254c3468a623065b</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="paga">PAGA<a class="anchor" aria-label="anchor" href="#paga"></a>
 </h2>
@@ -336,7 +336,7 @@
 <span>  <span class="va">sc_object</span>,</span>
 <span>  cluster_col <span class="op">=</span> <span class="st">"leiden_clusters"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Running PAGA over the rna kNN graph (4142 cells, 8 clusters).</span></span></code></pre></div>
+<span><span class="co">#&gt; Running PAGA over the rna kNN graph (4142 cells, 7 clusters).</span></span></code></pre></div>
 </div>
 <p><code>connectivities</code> is the full abstracted graph, <code>connectivities_tree</code> its maximum spanning forest. Both are symmetric sparse matrices named by cluster, with a zero diagonal.</p>
 <div class="cell">
@@ -344,25 +344,23 @@
 <code class="sourceCode R"><span><span class="va">paga_res</span><span class="op">$</span><span class="va">sizes</span></span>
 <span><span class="co">#&gt;    cluster n_cells</span></span>
 <span><span class="co">#&gt;     &lt;char&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:       0     721</span></span>
-<span><span class="co">#&gt; 2:       1     705</span></span>
-<span><span class="co">#&gt; 3:       2     615</span></span>
-<span><span class="co">#&gt; 4:       3     558</span></span>
-<span><span class="co">#&gt; 5:       4     539</span></span>
-<span><span class="co">#&gt; 6:       5     493</span></span>
-<span><span class="co">#&gt; 7:       6     373</span></span>
-<span><span class="co">#&gt; 8:       7     138</span></span>
+<span><span class="co">#&gt; 1:       0    1006</span></span>
+<span><span class="co">#&gt; 2:       1     823</span></span>
+<span><span class="co">#&gt; 3:       2     635</span></span>
+<span><span class="co">#&gt; 4:       3     615</span></span>
+<span><span class="co">#&gt; 5:       4     528</span></span>
+<span><span class="co">#&gt; 6:       5     403</span></span>
+<span><span class="co">#&gt; 7:       6     132</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">paga_res</span><span class="op">$</span><span class="va">connectivities</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       0     1     2     3     4     5     6     7</span></span>
-<span><span class="co">#&gt; 0 0.000 0.427 0.002 0.001 0.001 0.018 0.032 0.379</span></span>
-<span><span class="co">#&gt; 1 0.427 0.000 0.003 0.042 0.114 0.166 0.637 0.330</span></span>
-<span><span class="co">#&gt; 2 0.002 0.003 0.000 0.003 0.003 0.001 0.011 0.385</span></span>
-<span><span class="co">#&gt; 3 0.001 0.042 0.003 0.000 0.517 0.367 0.122 0.005</span></span>
-<span><span class="co">#&gt; 4 0.001 0.114 0.003 0.517 0.000 0.039 0.427 0.006</span></span>
-<span><span class="co">#&gt; 5 0.018 0.166 0.001 0.367 0.039 0.000 0.220 0.001</span></span>
-<span><span class="co">#&gt; 6 0.032 0.637 0.011 0.122 0.427 0.220 0.000 0.044</span></span>
-<span><span class="co">#&gt; 7 0.379 0.330 0.385 0.005 0.006 0.001 0.044 0.000</span></span></code></pre></div>
+<span><span class="co">#&gt;       0     1     2     3     4     5     6</span></span>
+<span><span class="co">#&gt; 0 0.000 0.199 0.001 0.003 0.001 0.063 0.423</span></span>
+<span><span class="co">#&gt; 1 0.199 0.000 0.088 0.006 0.280 0.227 0.077</span></span>
+<span><span class="co">#&gt; 2 0.001 0.088 0.000 0.002 0.456 0.317 0.005</span></span>
+<span><span class="co">#&gt; 3 0.003 0.006 0.002 0.000 0.003 0.001 0.402</span></span>
+<span><span class="co">#&gt; 4 0.001 0.280 0.456 0.003 0.000 0.043 0.006</span></span>
+<span><span class="co">#&gt; 5 0.063 0.227 0.317 0.001 0.043 0.000 0.001</span></span>
+<span><span class="co">#&gt; 6 0.423 0.077 0.005 0.402 0.006 0.001 0.000</span></span></code></pre></div>
 </div>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/paga_plot_sc.html">paga_plot_sc()</a></code> puts every cluster at the centroid of its cells in an embedding and draws the graph over them. A free layout of the abstracted graph would put the nodes somewhere arbitrary, which you then have to relate back to the UMAP by eye.</p>
 <div class="cell">

@@ -180,7 +180,9 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_gsva.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_knn_metrics.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_manifold_metrics.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_compactness.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_purity.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_separation.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_mitch.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_sc_type_scores.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_singscore.html</loc></url>
@@ -435,7 +437,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_label_columns.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_slot_value_sample.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-read_stamp.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-remap_communities_by_size.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-reset_sc_cells.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-residual_covariates.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-residual_gene_axis.html</loc></url>
@@ -681,6 +682,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/install_agent_skill.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/knn_graph_label_propagation.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/lda_k_sweep.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/leiden_clustering.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/ligand_activity_scores.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/load_existing.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/load_go_human_data.html</loc></url>
@@ -985,6 +987,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_knn_mat_to_edge_pairs.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_lda.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_lda_k_sweep.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_leiden_clustering.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_ligand_activity_scores.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_limma_voom.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_lisi.html</loc></url>

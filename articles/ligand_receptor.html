@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Ligand-receptor analysis with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-10</p>
+      <p class="date">2026-10-14</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -217,12 +217,12 @@
 <span><span class="va">celltype_counts</span></span>
 <span><span class="co">#&gt;     celltype     N</span></span>
 <span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1: cluster_0  1198</span></span>
-<span><span class="co">#&gt; 2: cluster_1   486</span></span>
+<span><span class="co">#&gt; 1: cluster_0  1181</span></span>
+<span><span class="co">#&gt; 2: cluster_1   488</span></span>
 <span><span class="co">#&gt; 3: cluster_2   346</span></span>
-<span><span class="co">#&gt; 4: cluster_3   286</span></span>
-<span><span class="co">#&gt; 5: cluster_4   166</span></span>
-<span><span class="co">#&gt; 6: cluster_5   165</span></span>
+<span><span class="co">#&gt; 4: cluster_3   303</span></span>
+<span><span class="co">#&gt; 5: cluster_4   165</span></span>
+<span><span class="co">#&gt; 6: cluster_5   164</span></span>
 <span><span class="co">#&gt; 7: cluster_6    33</span></span>
 <span><span class="co">#&gt; 8: cluster_7    14</span></span>
 <span><span class="co">#&gt; 9: cluster_8     4</span></span></code></pre></div>
@@ -292,7 +292,7 @@
 <span><span class="va">cpdb_sig</span> <span class="op">&lt;-</span> <span class="va">cpdb_res</span><span class="op">[</span><span class="va">gate</span> <span class="op">==</span> <span class="cn">TRUE</span> <span class="op">&amp;</span> <span class="va">pval</span> <span class="op">&lt;=</span> <span class="fl">0.05</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">cpdb_sig</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 525</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 526</span></span></code></pre></div>
 </div>
 <p>That’s a lot of dropped interactions. <code><a href="../reference/load_mtx.html">load_mtx()</a></code> throws out genes seen in fewer than 10 cells, and much of CellPhoneDB (neurotransmitter transporters, neuronal receptors, …) is simply not expressed in blood:</p>
 <div class="cell">
@@ -345,11 +345,11 @@
 <span><span class="co">#&gt;  5: cluster_8 cluster_2       APP      CD74 2.627127     0</span></span>
 <span><span class="co">#&gt;  6: cluster_6 cluster_2       APP      CD74 2.616888     0</span></span>
 <span><span class="co">#&gt;  7: cluster_7 cluster_6       PF4     CXCR3 2.607065     0</span></span>
-<span><span class="co">#&gt;  8: cluster_4 cluster_1      CD44    TYROBP 2.544029     0</span></span>
-<span><span class="co">#&gt;  9: cluster_4 cluster_4      CD44    TYROBP 2.449054     0</span></span>
-<span><span class="co">#&gt; 10: cluster_0 cluster_1      CD44    TYROBP 2.408698     0</span></span></code></pre></div>
+<span><span class="co">#&gt;  8: cluster_5 cluster_1      CD44    TYROBP 2.545057     0</span></span>
+<span><span class="co">#&gt;  9: cluster_5 cluster_5      CD44    TYROBP 2.451785     0</span></span>
+<span><span class="co">#&gt; 10: cluster_0 cluster_1      CD44    TYROBP 2.405072     0</span></span></code></pre></div>
 </div>
-<p>Two things to keep in mind here. First, the permutation test asks for specificity, not just expression. PPIA-BSG passes the expression gate in 81 of the 81 cluster pairs, but is significant in only 32 of them. Second, the top of that list is dominated by clusters 6 to 8, which hold 33, 14, 4 cells. Means over a handful of cells are noisy, so treat hits from tiny clusters with care.</p>
+<p>Two things to keep in mind here. First, the permutation test asks for specificity, not just expression. PPIA-BSG passes the expression gate in 81 of the 81 cluster pairs, but is significant in only 31 of them. Second, the top of that list is dominated by clusters 6 to 8, which hold 33, 14, 4 cells. Means over a handful of cells are noisy, so treat hits from tiny clusters with care.</p>
 </section><section class="level3"><h3 id="deg-based-analysis">DEG-based analysis<a class="anchor" aria-label="anchor" href="#deg-based-analysis"></a>
 </h3>
 <p>The alternative is CellPhoneDB’s DEG-based method. No permutations here. Instead, an interaction is kept for a pair if the expression gate passes and partner a is a marker of the sender or partner b a marker of the receiver. You decide what counts as a marker. Here we take genes with a log fold change above 0.5 and FDR &lt;= 0.05, and convert them to symbols to match the database.</p>
@@ -382,11 +382,11 @@
 <span><span class="co">#&gt;  5: cluster_8 cluster_2       APP      CD74 2.627127</span></span>
 <span><span class="co">#&gt;  6: cluster_6 cluster_2       APP      CD74 2.616888</span></span>
 <span><span class="co">#&gt;  7: cluster_7 cluster_6       PF4     CXCR3 2.607065</span></span>
-<span><span class="co">#&gt;  8: cluster_4 cluster_1      CD44    TYROBP 2.544029</span></span>
-<span><span class="co">#&gt;  9: cluster_4 cluster_4      CD44    TYROBP 2.449054</span></span>
-<span><span class="co">#&gt; 10: cluster_0 cluster_1      CD44    TYROBP 2.408698</span></span></code></pre></div>
+<span><span class="co">#&gt;  8: cluster_5 cluster_1      CD44    TYROBP 2.545057</span></span>
+<span><span class="co">#&gt;  9: cluster_5 cluster_5      CD44    TYROBP 2.451785</span></span>
+<span><span class="co">#&gt; 10: cluster_0 cluster_1      CD44    TYROBP 2.405072</span></span></code></pre></div>
 </div>
-<p>292 interaction and cluster pair combinations pass the DEG gate, and 257 of them are also significant in the permutation run. This is the route to take if you’ve got a proper DE setup, e.g. pseudo-bulk across samples (see the notes at the end). The cell type specificity then comes from the DE test instead of from shuffling labels.</p>
+<p>288 interaction and cluster pair combinations pass the DEG gate, and 253 of them are also significant in the permutation run. This is the route to take if you’ve got a proper DE setup, e.g. pseudo-bulk across samples (see the notes at the end). The cell type specificity then comes from the DE test instead of from shuffling labels.</p>
 </section></section><section class="level2"><h2 id="nichenet">NicheNet<a class="anchor" aria-label="anchor" href="#nichenet"></a>
 </h2>
 <p>NicheNet ranks upstream ligands by how well their predicted target genes line up with a gene set of interest in a receiver cell type. The pipeline:</p>
@@ -615,7 +615,7 @@
 <span>  <span class="va">gene</span></span>
 <span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">geneset_oi</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 838</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 869</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="ligand-activity-scoring">Ligand activity scoring<a class="anchor" aria-label="anchor" href="#ligand-activity-scoring"></a>
 </h3>
@@ -629,22 +629,14 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">activity</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">aupr_corrected</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;         gene_set ligand     auroc      aupr aupr_corrected      pearson</span></span>
-<span><span class="co">#&gt;           &lt;char&gt; &lt;char&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: receiver_degs  TGFB1 0.6594982 0.3956790    0.170679012  0.299473381</span></span>
-<span><span class="co">#&gt; 2: receiver_degs   IL15 0.5663082 0.2353395    0.010339506  0.117053047</span></span>
-<span><span class="co">#&gt; 3: receiver_degs   CCL5 0.5501792 0.2291667    0.004166667 -0.004045534</span></span>
-<span><span class="co">#&gt; 4: receiver_degs CXCL10 0.5501792 0.2291667    0.004166667 -0.004045534</span></span>
-<span><span class="co">#&gt; 5: receiver_degs    TNF 0.5125448 0.2086676   -0.016332442 -0.004747876</span></span>
-<span><span class="co">#&gt; 6: receiver_degs  ICAM1 0.5125448 0.2086676   -0.016332442 -0.004747876</span></span>
-<span><span class="co">#&gt;      spearman</span></span>
-<span><span class="co">#&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.26664795</span></span>
-<span><span class="co">#&gt; 2: 0.11085364</span></span>
-<span><span class="co">#&gt; 3: 0.09001531</span></span>
-<span><span class="co">#&gt; 4: 0.09001531</span></span>
-<span><span class="co">#&gt; 5: 0.02025577</span></span>
-<span><span class="co">#&gt; 6: 0.02025577</span></span></code></pre></div>
+<span><span class="co">#&gt;         gene_set ligand     auroc      aupr aupr_corrected    pearson  spearman</span></span>
+<span><span class="co">#&gt;           &lt;char&gt; &lt;char&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: receiver_degs  TGFB1 0.7031250 0.4055556   0.2055555556 0.35548570 0.3252847</span></span>
+<span><span class="co">#&gt; 2: receiver_degs   IL15 0.6015625 0.2277778   0.0277777778 0.16504693 0.1626424</span></span>
+<span><span class="co">#&gt; 3: receiver_degs   CCL5 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457</span></span>
+<span><span class="co">#&gt; 4: receiver_degs CXCL10 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457</span></span>
+<span><span class="co">#&gt; 5: receiver_degs    TNF 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010</span></span>
+<span><span class="co">#&gt; 6: receiver_degs  ICAM1 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="sender-and-receiver-tables">Sender and receiver tables<a class="anchor" aria-label="anchor" href="#sender-and-receiver-tables"></a>
 </h3>
@@ -704,20 +696,18 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;       sender  receiver ligand_symbol receptor_symbol prioritisation_score</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;    &lt;char&gt;        &lt;char&gt;          &lt;char&gt;                &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: cluster_4 cluster_0         TGFB1          TGFBR2            0.8333333</span></span>
-<span><span class="co">#&gt; 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7864823</span></span>
-<span><span class="co">#&gt; 3: cluster_3 cluster_0         TGFB1          TGFBR2            0.6756293</span></span>
-<span><span class="co">#&gt; 4: cluster_1 cluster_0          IL15           IL2RG            0.5830033</span></span>
-<span><span class="co">#&gt; 5: cluster_2 cluster_0         TGFB1          TGFBR2            0.5500000</span></span>
-<span><span class="co">#&gt; 6: cluster_4 cluster_0          IL15           IL2RG            0.5434125</span></span>
+<span><span class="co">#&gt; 1: cluster_1 cluster_0         TGFB1          TGFBR2            0.8111938</span></span>
+<span><span class="co">#&gt; 2: cluster_4 cluster_0         TGFB1          TGFBR2            0.7759259</span></span>
+<span><span class="co">#&gt; 3: cluster_3 cluster_0         TGFB1          TGFBR2            0.6811818</span></span>
+<span><span class="co">#&gt; 4: cluster_1 cluster_0          IL15           IL2RG            0.5752474</span></span>
+<span><span class="co">#&gt; 5: cluster_2 cluster_0         TGFB1          TGFBR2            0.5351852</span></span>
 <span><span class="co">#&gt;    prioritisation_rank</span></span>
 <span><span class="co">#&gt;                  &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:                   1</span></span>
 <span><span class="co">#&gt; 2:                   2</span></span>
 <span><span class="co">#&gt; 3:                   3</span></span>
 <span><span class="co">#&gt; 4:                   4</span></span>
-<span><span class="co">#&gt; 5:                   5</span></span>
-<span><span class="co">#&gt; 6:                   6</span></span></code></pre></div>
+<span><span class="co">#&gt; 5:                   5</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="top-interactions">Top interactions<a class="anchor" aria-label="anchor" href="#top-interactions"></a>
 </h3>
