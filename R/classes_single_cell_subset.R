@@ -79,12 +79,12 @@ SingleCellsSubset <- S7::new_class(
     sc_map <- S7::prop(sc_object, "sc_map")
     count_connection <- sc_object@count_connection
 
-    obs_table <- get_sc_obs(sc_object, filtered = TRUE)
-    checkmate::assertNames(
-      x = colnames(obs_table),
-      must.include = grouping_column
+    # filtered in DuckDB: pulling the full obs table to keep one group made the
+    # constructor cost scale with the parent rather than the subset
+    obs_table <- get_sc_duckdb(sc_object)$get_obs_table(
+      filtered = TRUE,
+      where_equal = stats::setNames(list(group), grouping_column)
     )
-    obs_table <- obs_table[get(grouping_column) == group, ]
 
     if (nrow(obs_table) == 0L) {
       stop(sprintf(

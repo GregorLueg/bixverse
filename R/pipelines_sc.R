@@ -428,8 +428,11 @@ meta_cells_per_group <- function(
   checkmate::qassert(groups, c("S+", "0"))
   checkmate::qassert(.verbose, "B1")
 
-  obs <- get_sc_obs(object, filtered = TRUE)
-  checkmate::assertNames(colnames(obs), must.include = group_col)
+  checkmate::assertNames(
+    get_sc_duckdb(object)$get_obs_cols(),
+    must.include = group_col
+  )
+  obs <- get_sc_obs(object, cols = group_col, filtered = TRUE)
 
   if (is.null(groups)) {
     groups <- unique(as.character(obs[[group_col]]))

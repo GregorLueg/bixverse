@@ -65,7 +65,8 @@ etc.
     \preformatted{SingleCellDuckDBBase$get_obs_table(
   indices = NULL,
   cols = NULL,
-  filtered = FALSE
+  filtered = FALSE,
+  where_equal = NULL
 )}
     \if{html}{\out{</div>}}
   }
@@ -75,6 +76,10 @@ etc.
       \item{\code{indices}}{Optional cell/obs indices.}
       \item{\code{cols}}{Optional column names to return.}
       \item{\code{filtered}}{Boolean. Whether to return all cells or filtered to to_keep cells.}
+      \item{\code{where_equal}}{Optional named list. Only rows where each named column
+equals its value are returned; the value is cast to the column's type.
+Pushed into the query, so a few rows of a large table do not have to come
+through R.}
     }
     \if{html}{\out{</div>}}
   }

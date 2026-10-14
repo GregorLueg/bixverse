@@ -47,14 +47,29 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param indices Optional cell/obs indices.
     #' @param cols Optional column names to return.
     #' @param filtered Boolean. Whether to return all cells or filtered to to_keep cells.
+    #' @param where_equal Optional named list. Only rows where each named column
+    #' equals its value are returned; the value is cast to the column's type.
+    #' Pushed into the query, so a few rows of a large table do not have to come
+    #' through R.
     #'
     #' @returns The observation table (if found) as a data.table with optionally
     #' selected indices and/or columns.
-    get_obs_table = function(indices = NULL, cols = NULL, filtered = FALSE) {
+    get_obs_table = function(
+      indices = NULL,
+      cols = NULL,
+      filtered = FALSE,
+      where_equal = NULL
+    ) {
       # checks
       checkmate::qassert(indices, c("0", "I+"))
       checkmate::qassert(cols, c("0", "S+"))
       checkmate::qassert(filtered, "B1")
+      checkmate::assertList(
+        where_equal,
+        types = "atomic",
+        names = "unique",
+        null.ok = TRUE
+      )
       private$check_obs_exists()
 
       con <- private$connect_db()
@@ -65,6 +80,14 @@ SingleCellDuckDBBase <- R6::R6Class(
           }
         }
       )
+
+      if (!is.null(where_equal)) {
+        obs_types <- DBI::dbGetQuery(con, "DESCRIBE obs")
+        checkmate::assertNames(
+          names(where_equal),
+          subset.of = obs_types$column_name
+        )
+      }
 
       col_part <- if (is.null(cols)) {
         "*"
@@ -86,6 +109,18 @@ SingleCellDuckDBBase <- R6::R6Class(
           sprintf("cell_idx IN (%s)", placeholders)
         )
         params <- as.list(indices)
+      }
+
+      # casting the value to the column type, not the column to a string, keeps
+      # the R semantics of `col == "1"` for a numeric column, whose string form
+      # would be "1.0"
+      for (col in names(where_equal)) {
+        col_type <- obs_types$column_type[obs_types$column_name == col]
+        where_clauses <- c(
+          where_clauses,
+          sprintf('"%s" = TRY_CAST(? AS %s)', col, col_type)
+        )
+        params <- c(params, list(as.character(where_equal[[col]])))
       }
 
       where_part <- if (length(where_clauses) > 0) {
@@ -437,39 +472,7 @@ SingleCellDuckDBBase <- R6::R6Class(
       new_data[, cell_idx := .I]
       DBI::dbWriteTable(con, "new_data", new_data, overwrite = TRUE)
 
-      existing_cols <- DBI::dbGetQuery(
-        con,
-        "SELECT column_name FROM information_schema.columns WHERE table_name = 'obs'"
-      )$column_name
-      new_cols <- setdiff(names(new_data), "cell_idx")
-      cols_to_exclude <- intersect(existing_cols, new_cols)
-
-      exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(
-          " EXCLUDE(",
-          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
-          ")"
-        )
-      } else {
-        ""
-      }
-
-      DBI::dbExecute(
-        con,
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE obs AS
-          SELECT
-            original.*%s,
-            new_data.* EXCLUDE(cell_idx)
-          FROM obs AS original
-          JOIN new_data ON original.cell_idx = new_data.cell_idx
-          ORDER BY original.cell_idx;
-          DROP TABLE new_data
-          ",
-          exclude_clause
-        )
-      )
+      private$write_columns(con, table = "obs", key = "cell_idx")
 
       invisible(self)
     },
@@ -495,39 +498,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       DBI::dbWriteTable(con, "new_data", new_data, overwrite = TRUE)
 
-      existing_cols <- DBI::dbGetQuery(
-        con,
-        "SELECT column_name FROM information_schema.columns WHERE table_name = 'obs'"
-      )$column_name
-      new_cols <- setdiff(names(new_data), "cell_idx")
-      cols_to_exclude <- intersect(existing_cols, new_cols)
-
-      exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(
-          " EXCLUDE(",
-          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
-          ")"
-        )
-      } else {
-        ""
-      }
-
-      DBI::dbExecute(
-        con,
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE obs AS
-          SELECT
-            original.*%s,
-            new_data.* EXCLUDE(cell_idx)
-          FROM obs AS original
-          LEFT JOIN new_data ON original.cell_idx = new_data.cell_idx
-          ORDER BY original.cell_idx;
-          DROP TABLE new_data
-          ",
-          exclude_clause
-        )
-      )
+      private$write_columns(con, table = "obs", key = "cell_idx")
 
       invisible(self)
     },
@@ -579,39 +550,7 @@ SingleCellDuckDBBase <- R6::R6Class(
       new_data[, gene_idx := .I]
       DBI::dbWriteTable(con, "new_data", new_data, overwrite = TRUE)
 
-      existing_cols <- DBI::dbGetQuery(
-        con,
-        "SELECT column_name FROM information_schema.columns WHERE table_name = 'var'"
-      )$column_name
-      new_cols <- setdiff(names(new_data), "gene_idx")
-      cols_to_exclude <- intersect(existing_cols, new_cols)
-
-      exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(
-          " EXCLUDE(",
-          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
-          ")"
-        )
-      } else {
-        ""
-      }
-
-      DBI::dbExecute(
-        con,
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE var AS
-          SELECT
-            original.*%s,
-            new_data.* EXCLUDE(gene_idx)
-          FROM var AS original
-          JOIN new_data ON original.gene_idx = new_data.gene_idx
-          ORDER BY original.gene_idx;
-          DROP TABLE new_data
-          ",
-          exclude_clause
-        )
-      )
+      private$write_columns(con, table = "var", key = "gene_idx")
 
       invisible(self)
     },
@@ -749,6 +688,56 @@ SingleCellDuckDBBase <- R6::R6Class(
   private = list(
     # Path to the DB
     db_path = NULL,
+    # Whether the obs, var and var_adt tables have been seen to exist
+    obs_exists = FALSE,
+    var_exists = FALSE,
+    var_adt_exists = FALSE,
+    # Write the columns of the `new_data` table into `table`, matched on `key`.
+    #
+    # Adds each column in place and fills it with one UPDATE, rather than
+    # rebuilding the whole table around a join. Columns that already exist are
+    # replaced, rows without a match in `new_data` are NULL, and `new_data` is
+    # dropped afterwards.
+    write_columns = function(con, table, key) {
+      types <- DBI::dbGetQuery(con, "DESCRIBE new_data")
+      types <- types[types$column_name != key, ]
+      quoted <- sprintf('"%s"', types$column_name)
+
+      for (i in seq_len(nrow(types))) {
+        DBI::dbExecute(
+          con,
+          sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s", table, quoted[i])
+        )
+        DBI::dbExecute(
+          con,
+          sprintf(
+            "ALTER TABLE %s ADD COLUMN %s %s",
+            table,
+            quoted[i],
+            types$column_type[i]
+          )
+        )
+      }
+
+      if (nrow(types) > 0L) {
+        DBI::dbExecute(
+          con,
+          sprintf(
+            "UPDATE %s SET %s FROM new_data WHERE %s.%s = new_data.%s",
+            table,
+            paste(
+              sprintf("%s = new_data.%s", quoted, quoted),
+              collapse = ", "
+            ),
+            table,
+            key,
+            key
+          )
+        )
+      }
+
+      DBI::dbExecute(con, "DROP TABLE new_data")
+    },
     # Helper to connect to the DB
     connect_db = function() {
       # `shared_home` is not about the database file, it is where duckdb keeps
@@ -764,6 +753,11 @@ SingleCellDuckDBBase <- R6::R6Class(
     },
     # Helper to check that obs table exists
     check_obs_exists = function() {
+      # tables are replaced but never dropped, so once seen this holds and
+      # the check does not have to open a connection on every call
+      if (isTRUE(private$obs_exists)) {
+        return(invisible(TRUE))
+      }
       con <- private$connect_db()
       on.exit(
         {
@@ -777,9 +771,15 @@ SingleCellDuckDBBase <- R6::R6Class(
       if (!res) {
         stop("Obs table was not found in the DB.")
       }
+      private$obs_exists <- TRUE
     },
     # Helper to check that var table exists
     check_var_exists = function() {
+      # tables are replaced but never dropped, so once seen this holds and
+      # the check does not have to open a connection on every call
+      if (isTRUE(private$var_exists)) {
+        return(invisible(TRUE))
+      }
       con <- private$connect_db()
       on.exit(
         {
@@ -794,9 +794,15 @@ SingleCellDuckDBBase <- R6::R6Class(
       if (!res) {
         stop("Var table was not found in the DB.")
       }
+      private$var_exists <- TRUE
     },
     # Helper to check that var table exists
     check_var_adt_exists = function() {
+      # tables are replaced but never dropped, so once seen this holds and
+      # the check does not have to open a connection on every call
+      if (isTRUE(private$var_adt_exists)) {
+        return(invisible(TRUE))
+      }
       con <- private$connect_db()
       on.exit(
         {
@@ -811,6 +817,7 @@ SingleCellDuckDBBase <- R6::R6Class(
       if (!res) {
         stop("Var table for ADT was not found in the DB.")
       }
+      private$var_adt_exists <- TRUE
     },
     # Check number of rows in the obs table
     check_obs_row = function() {

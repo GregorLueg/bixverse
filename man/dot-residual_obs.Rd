@@ -4,12 +4,16 @@
 \alias{.residual_obs}
 \title{Observation rows for the selected cells, in the selected order}
 \usage{
-.residual_obs(object, cell_indices)
+.residual_obs(object, cell_indices, cols = NULL)
 }
 \arguments{
 \item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
 
 \item{cell_indices}{Integer. The 0-based cells, in the order Rust gets them.}
+
+\item{cols}{Optional character vector. Columns to read for a \code{SingleCells}
+object, \code{cell_idx} is always added. Columns missing from the table are left
+out, so the callers can report them. \code{NULL} reads every column.}
 }
 \value{
 The observation table for those cells, row \code{i} being
