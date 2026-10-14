@@ -54,6 +54,11 @@ Unlike the log-normalised layer, which is computed once at ingestion and
 written to disk, nothing is precomputed here: the residual rows are
 regenerated on demand by whatever consumes the fit.
 
+Small cell selections (up to 10\% of the stored cells and at most 100k
+cells) are read from the cell-major file into memory for the fit, the
+residual HVG selection and the residual PCA, instead of sweeping the whole
+gene-major file each time.
+
 With \code{group_column} one model is fitted per group. That is what a
 multi-sample experiment wants, since each sample keeps its own depth and
 composition, and it changes how the residual HVG selection behaves, see

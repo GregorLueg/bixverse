@@ -1212,6 +1212,7 @@ S7::method(find_hvg_sc, SingleCells) <- function(
     hvg_params,
     rs_sc_hvg(
       f_path_gene = get_rust_count_gene_f_path(object),
+      f_path_cell = get_rust_count_cell_f_path(object),
       hvg_method = method,
       cell_indices = get_cells_to_keep(object),
       loess_span = loess_span,
@@ -1282,6 +1283,7 @@ S7::method(get_hvg_data_sc, SingleCells) <- function(
     hvg_params,
     rs_sc_hvg(
       f_path_gene = get_rust_count_gene_f_path(object),
+      f_path_cell = get_rust_count_cell_f_path(object),
       hvg_method = method,
       cell_indices = cell_indices,
       loess_span = loess_span,

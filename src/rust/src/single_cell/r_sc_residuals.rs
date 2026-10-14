@@ -11,7 +11,8 @@
 //! whichever model the list carries.
 
 use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_data::data_io::ParallelSparseReader;
+use bixverse_rs::single_cell::sc_data::bin_merge_io::gene_store_to_cell_store;
+use bixverse_rs::single_cell::sc_data::data_io::{ParallelSparseReader, SingleCellReading};
 use bixverse_rs::single_cell::sc_processing::analytic_pearson::model::{AprParams, AprResiduals};
 use bixverse_rs::single_cell::sc_processing::analytic_pearson::stream::{
     apr_gene_pass, build_apr_model, cell_totals_over_genes, fit_analytic_pearson_grouped,
@@ -29,8 +30,9 @@ use bixverse_rs::single_cell::sc_processing::sctransform::residuals::SctResidual
 use bixverse_rs::single_cell::sc_processing::sctransform::stream::{
     fit_sctransform, fit_sctransform_grouped, sct_corrected_counts, SctGroupedFit, SctStreamOpts,
 };
-use bixverse_rs::single_cell::sc_data::bin_merge_io::gene_store_to_cell_store;
 use extendr_api::prelude::*;
+
+use crate::single_cell::utils::CellSubset;
 
 /////////////
 // extendR //
@@ -202,7 +204,10 @@ fn extend_list(base: List, extra: &[(&str, Robj)]) -> List {
 /// ### Returns
 ///
 /// The owned fit, or an error naming what does not line up.
-pub(crate) fn parse_residual_fit(fit: List, cell_indices: &[usize]) -> Result<RResidualFit, extendr_api::Error> {
+pub(crate) fn parse_residual_fit(
+    fit: List,
+    cell_indices: &[usize],
+) -> Result<RResidualFit, extendr_api::Error> {
     let method: String = fit
         .index("method")
         .map_err(|_| Error::Other("The residual fit is missing 'method'".to_string()))?
@@ -214,9 +219,7 @@ pub(crate) fn parse_residual_fit(fit: List, cell_indices: &[usize]) -> Result<RR
         .index("cell_indices")
         .map_err(|_| Error::Other("The residual fit is missing 'cell_indices'".to_string()))?
         .as_integer_slice()
-        .ok_or_else(|| {
-            Error::Other("The residual fit 'cell_indices' is not integer".to_string())
-        })?
+        .ok_or_else(|| Error::Other("The residual fit 'cell_indices' is not integer".to_string()))?
         .iter()
         .map(|&c| c as usize)
         .collect();
@@ -319,7 +322,11 @@ pub(crate) fn with_residual_source<R>(
 /// ### Returns
 ///
 /// The [SctStreamOpts].
-pub(crate) fn stream_opts(gene_batch_size: Option<usize>, seed: u64, verbose: usize) -> SctStreamOpts {
+pub(crate) fn stream_opts(
+    gene_batch_size: Option<usize>,
+    seed: u64,
+    verbose: usize,
+) -> SctStreamOpts {
     let defaults = SctStreamOpts::default();
 
     SctStreamOpts {
@@ -339,7 +346,10 @@ pub(crate) fn stream_opts(gene_batch_size: Option<usize>, seed: u64, verbose: us
 /// ### Returns
 ///
 /// One label per selected cell, or an error when the length disagrees.
-pub(crate) fn resolve_groups(group_of_cell: Option<Vec<i32>>, n_cells: usize) -> Result<Vec<u32>, extendr_api::Error> {
+pub(crate) fn resolve_groups(
+    group_of_cell: Option<Vec<i32>>,
+    n_cells: usize,
+) -> Result<Vec<u32>, extendr_api::Error> {
     match group_of_cell {
         None => Ok(vec![0_u32; n_cells]),
         Some(groups) => {
@@ -380,7 +390,8 @@ pub(crate) fn resolve_groups(group_of_cell: Option<Vec<i32>>, n_cells: usize) ->
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
 /// @param f_path_cell String. Path to the `counts_cells.bin` file. Used for the
-/// library sizes, and for the per-cell totals of the analytic Pearson fit.
+/// library sizes, the per-cell totals of the analytic Pearson fit and, for small
+/// cell selections, the counts themselves instead of sweeping the gene file.
 /// @param method String. One of `c("sctransform", "analytic_pearson")`.
 /// @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
 /// @param group_of_cell Integer vector or `NULL`. Group label per selected
@@ -434,7 +445,19 @@ fn rs_sc_fit_residuals(
 
     let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let cell_reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+    let subset = CellSubset::load(
+        f_path_cell,
+        &cell_set,
+        gene_reader.get_header().total_cells,
+        verbose > 0,
+    )?;
+    let groups = match &group_of_cell {
+        None => None,
+        Some(_) => Some(resolve_groups(group_of_cell.clone(), n_cells)?),
+    };
 
+    // the drivers see the renumbered subset; R keeps the original selection as
+    // the fitted cells, so that is what goes back in the list
     match method {
         METHOD_SCT => {
             let sct_params = SctParams::from_r_list(params)?;
@@ -452,83 +475,157 @@ fn rs_sc_fit_residuals(
                 .collect();
             let log10_umi: Vec<f64> = library_sizes.iter().map(|&s| s.log10()).collect();
 
-            let fit = match &group_of_cell {
-                // A single fit is not the one-group case of the grouped fit:
-                // it subsamples for step 1 over the whole selection.
-                None => {
-                    let (model, _pass) = fit_sctransform(
-                        &gene_reader,
-                        &cell_set,
-                        &library_sizes,
-                        &covariates,
-                        &sct_params,
-                        None,
-                        None,
-                        opts,
-                    )
-                    .to_extendr()?;
-
-                    SctGroupedFit {
-                        genes: model.genes.clone(),
-                        models: vec![model],
-                        passes: Vec::new(),
-                        group_of_cell: vec![0_u32; n_cells],
-                    }
-                }
-                Some(_) => {
-                    let groups = resolve_groups(group_of_cell.clone(), n_cells)?;
-                    fit_sctransform_grouped(
-                        &gene_reader,
-                        &cell_set,
-                        &groups,
-                        &library_sizes,
-                        &covariates,
-                        &sct_params,
-                        opts,
-                    )
-                    .to_extendr()?
-                }
-            };
+            let fit = match &subset {
+                Some(sub) => fit_sct_on_reader(
+                    &sub.reader()?,
+                    &sub.local,
+                    groups.as_deref(),
+                    &library_sizes,
+                    &covariates,
+                    &sct_params,
+                    opts,
+                ),
+                None => fit_sct_on_reader(
+                    &gene_reader,
+                    &cell_set,
+                    groups.as_deref(),
+                    &library_sizes,
+                    &covariates,
+                    &sct_params,
+                    opts,
+                ),
+            }
+            .to_extendr()?;
 
             Ok(sct_fit_to_r_list(&fit, &log10_umi, &covariates, &cell_set))
         }
         METHOD_APR => {
             let apr_params = AprParams::from_r_list(params)?;
 
-            let fit = match &group_of_cell {
-                None => {
-                    let pass =
-                        apr_gene_pass(&gene_reader, &cell_set, &apr_params, opts).to_extendr()?;
-                    let totals =
-                        cell_totals_over_genes(&cell_reader, &cell_set, &pass.retained)
-                            .to_extendr()?;
-                    let model = build_apr_model(&pass, &totals, &apr_params).to_extendr()?;
-
-                    AprGroupedFit {
-                        models: vec![model],
-                        cell_totals: totals,
-                        group_of_cell: vec![0_u32; n_cells],
-                    }
-                }
-                Some(_) => {
-                    let groups = resolve_groups(group_of_cell.clone(), n_cells)?;
-                    fit_analytic_pearson_grouped(
-                        &gene_reader,
-                        &cell_reader,
-                        &cell_set,
-                        &groups,
-                        &apr_params,
-                        opts,
-                    )
-                    .to_extendr()?
-                }
-            };
+            let fit = match &subset {
+                Some(sub) => fit_apr_on_readers(
+                    &sub.reader()?,
+                    &sub.cell_reader()?,
+                    &sub.local,
+                    groups.as_deref(),
+                    &apr_params,
+                    opts,
+                ),
+                None => fit_apr_on_readers(
+                    &gene_reader,
+                    &cell_reader,
+                    &cell_set,
+                    groups.as_deref(),
+                    &apr_params,
+                    opts,
+                ),
+            }
+            .to_extendr()?;
 
             Ok(apr_fit_to_r_list(&fit, &cell_set))
         }
         other => Err(Error::Other(format!(
             "Unknown residual method '{other}'. Expected '{METHOD_SCT}' or '{METHOD_APR}'."
         ))),
+    }
+}
+
+/// Fit scTransform over one gene-major reader.
+///
+/// ### Params
+///
+/// * `gene_reader` - Gene-major store, on disk or an in-memory cell subset.
+/// * `cell_set` - The selected cells, as indices into `gene_reader`.
+/// * `groups` - Group label per selected cell, `None` for a single fit.
+/// * `library_sizes` - Library size per selected cell, read off the store.
+/// * `covariates` - Cell-level covariates.
+/// * `params` - The scTransform parameters.
+/// * `opts` - Stream options.
+///
+/// ### Returns
+///
+/// The fit, one model per group.
+fn fit_sct_on_reader<S: SingleCellReading>(
+    gene_reader: &S,
+    cell_set: &[usize],
+    groups: Option<&[u32]>,
+    library_sizes: &[f64],
+    covariates: &SctCovariates,
+    params: &SctParams,
+    opts: SctStreamOpts,
+) -> std::result::Result<SctGroupedFit, BixverseErrors> {
+    match groups {
+        // A single fit is not the one-group case of the grouped fit: it
+        // subsamples for step 1 over the whole selection.
+        None => {
+            let (model, _pass) = fit_sctransform(
+                gene_reader,
+                cell_set,
+                library_sizes,
+                covariates,
+                params,
+                None,
+                None,
+                opts,
+            )?;
+
+            Ok(SctGroupedFit {
+                genes: model.genes.clone(),
+                models: vec![model],
+                passes: Vec::new(),
+                group_of_cell: vec![0_u32; cell_set.len()],
+            })
+        }
+        Some(groups) => fit_sctransform_grouped(
+            gene_reader,
+            cell_set,
+            groups,
+            library_sizes,
+            covariates,
+            params,
+            opts,
+        ),
+    }
+}
+
+/// Fit the analytic Pearson model over one pair of readers.
+///
+/// ### Params
+///
+/// * `gene_reader` - Gene-major store, on disk or an in-memory cell subset.
+/// * `cell_reader` - Cell-major view of the same cells, for the per-cell
+///   totals over the retained genes.
+/// * `cell_set` - The selected cells, as indices into both readers.
+/// * `groups` - Group label per selected cell, `None` for a single fit.
+/// * `params` - The analytic Pearson parameters.
+/// * `opts` - Stream options.
+///
+/// ### Returns
+///
+/// The fit, one model per group.
+fn fit_apr_on_readers<G: SingleCellReading, C: SingleCellReading>(
+    gene_reader: &G,
+    cell_reader: &C,
+    cell_set: &[usize],
+    groups: Option<&[u32]>,
+    params: &AprParams,
+    opts: SctStreamOpts,
+) -> std::result::Result<AprGroupedFit, BixverseErrors> {
+    match groups {
+        None => {
+            let pass = apr_gene_pass(gene_reader, cell_set, params, opts)?;
+            let totals = cell_totals_over_genes(cell_reader, cell_set, &pass.retained)?;
+            let model = build_apr_model(&pass, &totals, params)?;
+
+            Ok(AprGroupedFit {
+                models: vec![model],
+                cell_totals: totals,
+                group_of_cell: vec![0_u32; cell_set.len()],
+            })
+        }
+        Some(groups) => {
+            fit_analytic_pearson_grouped(gene_reader, cell_reader, cell_set, groups, params, opts)
+        }
     }
 }
 
@@ -550,6 +647,8 @@ fn rs_sc_fit_residuals(
 /// one row per worker rather than a genes-by-cells matrix.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+/// selections are read from here instead of sweeping the gene file.
 /// @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
 /// @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
 /// Must be the selection the fit was fitted on.
@@ -573,6 +672,7 @@ fn rs_sc_fit_residuals(
 #[extendr]
 fn rs_sc_residual_variance(
     f_path_gene: &str,
+    f_path_cell: &str,
     residual_fit: List,
     cell_indices: Vec<i32>,
     n_hvg: usize,
@@ -584,9 +684,19 @@ fn rs_sc_residual_variance(
 
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let fit = parse_residual_fit(residual_fit, &cell_set)?;
+    let subset = CellSubset::load(
+        f_path_cell,
+        &cell_set,
+        reader.get_header().total_cells,
+        verbose > 0,
+    )?;
+    let in_memory = subset.as_ref().map(CellSubset::reader).transpose()?;
 
     let (genes, variance, hvg) = with_residual_source(&fit, |source| {
-        let per_group = residual_variance(&reader, source, &cell_set, opts)?;
+        let per_group = match (&subset, &in_memory) {
+            (Some(sub), Some(mem)) => residual_variance(mem, source, &sub.local, opts)?,
+            _ => residual_variance(&reader, source, &cell_set, opts)?,
+        };
         let hvg = select_residual_hvg(&per_group, source.genes(), n_hvg)?;
         Ok((source.genes().to_vec(), per_group, hvg))
     })?;
@@ -648,6 +758,8 @@ pub(crate) fn residual_variance_to_r_list(
 /// flatten the very ranking the residuals produce.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Small cell
+/// selections are read from here instead of sweeping the gene file.
 /// @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
 /// @param no_pcs Integer. Number of PCs to calculate.
 /// @param pca_params Named list. Contains the parameters to use for this PCA
@@ -677,6 +789,7 @@ pub(crate) fn residual_variance_to_r_list(
 #[extendr]
 fn rs_sc_pca_residuals(
     f_path_gene: &str,
+    f_path_cell: &str,
     residual_fit: List,
     no_pcs: usize,
     pca_params: List,
@@ -693,9 +806,27 @@ fn rs_sc_pca_residuals(
 
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let fit = parse_residual_fit(residual_fit, &cell_set)?;
+    let subset = CellSubset::load(
+        f_path_cell,
+        &cell_set,
+        reader.get_header().total_cells,
+        verbose > 0,
+    )?;
+    let in_memory = subset.as_ref().map(CellSubset::reader).transpose()?;
 
-    let res = with_residual_source(&fit, |source| {
-        pca_on_sc_residuals(
+    let res = with_residual_source(&fit, |source| match (&subset, &in_memory) {
+        (Some(sub), Some(mem)) => pca_on_sc_residuals(
+            mem,
+            &sub.local,
+            &gene_set,
+            no_pcs,
+            &pca_params,
+            source,
+            seed,
+            return_scaled,
+            verbose,
+        ),
+        _ => pca_on_sc_residuals(
             &reader,
             &cell_set,
             &gene_set,
@@ -705,7 +836,7 @@ fn rs_sc_pca_residuals(
             seed,
             return_scaled,
             verbose,
-        )
+        ),
     })?;
 
     let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();

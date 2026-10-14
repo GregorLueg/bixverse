@@ -21,7 +21,8 @@ rs_sc_fit_residuals(
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
 
 \item{f_path_cell}{String. Path to the \code{counts_cells.bin} file. Used for the
-library sizes, and for the per-cell totals of the analytic Pearson fit.}
+library sizes, the per-cell totals of the analytic Pearson fit and, for small
+cell selections, the counts themselves instead of sweeping the gene file.}
 
 \item{method}{String. One of \code{c("sctransform", "analytic_pearson")}.}
 

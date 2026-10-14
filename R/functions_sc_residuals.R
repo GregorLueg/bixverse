@@ -385,6 +385,7 @@ print.ScResidualFit <- function(x, ...) {
 
   res <- rs_sc_residual_variance(
     f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
     residual_fit = fit,
     cell_indices = cell_indices,
     n_hvg = hvg_no,
@@ -668,6 +669,7 @@ print.ScResidualFit <- function(x, ...) {
 
   res <- rs_sc_pca_residuals(
     f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
     residual_fit = fit,
     no_pcs = no_pcs,
     pca_params = pca_params,

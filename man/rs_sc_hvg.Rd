@@ -6,6 +6,7 @@
 \usage{
 rs_sc_hvg(
   f_path_gene,
+  f_path_cell,
   hvg_method,
   cell_indices,
   loess_span,
@@ -19,6 +20,9 @@ rs_sc_hvg(
 }
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
+
+\item{f_path_cell}{String. Path to the \code{counts_cells.bin} file. Small cell
+selections are read from here instead of sweeping the gene file.}
 
 \item{hvg_method}{String. Which HVG detection method to use. One of
 \code{c("vst", "meanvarbin", "dispersion", "scran")}.}
