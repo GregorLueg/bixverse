@@ -1,6 +1,8 @@
 use bixverse_rs::core::base::cors_similarity::*;
 use bixverse_rs::core::math::rbf::rbf_gaussian_mat;
 use bixverse_rs::graph::graph_clustering::*;
+use bixverse_rs::graph::graph_structures::edge_pairs_to_sparse_graph;
+use bixverse_rs::graph::leiden::{LeidenParams, leiden_sparse_graph};
 use bixverse_rs::ml::clustering::k_means::KMeansParamsWrappers;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
@@ -13,11 +15,77 @@ extendr_module! {
     mod r_graph_clustering;
     fn rs_spectral_clustering_sim;
     fn rs_spectral_clustering;
+    fn rs_leiden_clustering;
 }
 
 ///////////////
 // Functions //
 ///////////////
+
+/// Rust implementation of Leiden and Louvain clustering
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Modularity-based Leiden (or Louvain, with `refine = FALSE`) on an
+/// undirected weighted graph. Mirrors
+/// `igraph::cluster_leiden(objective_function = "modularity")`. The result
+/// depends on the seed only, not on the number of threads.
+///
+/// @param from Integer vector. 1-based source node of each edge.
+/// @param to Integer vector. 1-based target node of each edge. Same length as
+/// `from`.
+/// @param weights Numeric vector. Edge weights, same length as `from`.
+/// @param n_nodes Integer. Number of nodes in the graph.
+/// @param leiden_params List. Named list with the optional fields (defaults
+/// in parentheses):
+/// \itemize{
+///   \item `resolution` numeric, modularity resolution (1.0)
+///   \item `beta` numeric, randomness of the refinement merges (0.01)
+///   \item `n_iterations` integer, full Leiden iterations (2)
+///   \item `refine` logical, `TRUE` for Leiden, `FALSE` for Louvain (TRUE)
+///   \item `seed` integer, random seed (42)
+/// }
+///
+/// @returns Integer vector with the 1-based community of each node; `1` is the
+/// largest community.
+///
+/// @export
+#[extendr]
+fn rs_leiden_clustering(
+    from: &[i32],
+    to: &[i32],
+    weights: &[f64],
+    n_nodes: usize,
+    leiden_params: List,
+) -> extendr_api::Result<Vec<i32>> {
+    if from.len() != to.len() || from.len() != weights.len() {
+        return Err(Error::Other(format!(
+            "from ({}), to ({}) and weights ({}) must have the same length.",
+            from.len(),
+            to.len(),
+            weights.len()
+        )));
+    }
+    let params = LeidenParams::from_r_list(leiden_params)?;
+
+    let mut edges = Vec::with_capacity(2 * from.len());
+    for (&f, &t) in from.iter().zip(to) {
+        for x in [f, t] {
+            if x < 1 || x as usize > n_nodes {
+                return Err(Error::Other(format!(
+                    "Node index {} is outside 1..={}.",
+                    x, n_nodes
+                )));
+            }
+            edges.push((x - 1) as usize);
+        }
+    }
+
+    let graph = edge_pairs_to_sparse_graph(&edges, weights, n_nodes);
+    let membership = leiden_sparse_graph(&graph, Some(params)).to_extendr()?;
+
+    Ok(membership.iter().map(|&x| (x + 1) as i32).collect())
+}
 
 /// Rust implementation of spectral clustering
 ///

@@ -1879,6 +1879,36 @@ rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, m
 #' @export
 rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering, data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed)
 
+#' Rust implementation of Leiden and Louvain clustering
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Modularity-based Leiden (or Louvain, with `refine = FALSE`) on an
+#' undirected weighted graph. Mirrors
+#' `igraph::cluster_leiden(objective_function = "modularity")`. The result
+#' depends on the seed only, not on the number of threads.
+#'
+#' @param from Integer vector. 1-based source node of each edge.
+#' @param to Integer vector. 1-based target node of each edge. Same length as
+#' `from`.
+#' @param weights Numeric vector. Edge weights, same length as `from`.
+#' @param n_nodes Integer. Number of nodes in the graph.
+#' @param leiden_params List. Named list with the optional fields (defaults
+#' in parentheses):
+#' \itemize{
+#'   \item `resolution` numeric, modularity resolution (1.0)
+#'   \item `beta` numeric, randomness of the refinement merges (0.01)
+#'   \item `n_iterations` integer, full Leiden iterations (2)
+#'   \item `refine` logical, `TRUE` for Leiden, `FALSE` for Louvain (TRUE)
+#'   \item `seed` integer, random seed (42)
+#' }
+#'
+#' @returns Integer vector with the 1-based community of each node; `1` is the
+#' largest community.
+#'
+#' @export
+rs_leiden_clustering <- function(from, to, weights, n_nodes, leiden_params) .Call(wrap__rs_leiden_clustering, from, to, weights, n_nodes, leiden_params)
+
 #' kNN label propagation
 #'
 #' @description

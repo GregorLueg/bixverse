@@ -2,24 +2,6 @@
 
 ## helpers ---------------------------------------------------------------------
 
-### remapping communities ------------------------------------------------------
-
-#' Remap communities by size
-#'
-#' @description
-#' Remap community assignment by size
-#'
-#' @param labels Integer vector that represents the community assignment.
-#'
-#' @returns The remapped communities by size
-#'
-#' @keywords internal
-.remap_communities_by_size <- function(labels) {
-  counts <- sort(table(labels), decreasing = TRUE)
-  remap <- setNames(seq_along(counts) - 1L, names(counts))
-  unname(remap[as.character(labels)])
-}
-
 ### doublet detection helpers --------------------------------------------------
 
 #' Convert verbose argument to integer level
@@ -1625,19 +1607,15 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
     return(object)
   }
 
-  # set a global seed to ensure more reproducibility here
-  set.seed(seed)
-  clusters <- switch(
-    cluster_algorithm,
-    leiden = igraph::cluster_leiden(
-      graph = snn_graph,
-      objective_function = "modularity",
-      resolution = res
-    ),
-    louvain = igraph::cluster_louvain(graph = snn_graph, resolution = res)
+  clusters <- leiden_clustering(
+    graph = snn_graph,
+    resolution = res,
+    algorithm = cluster_algorithm,
+    seed = seed
   )
 
-  object[[name]] <- .remap_communities_by_size(clusters$membership)
+  # Rust returns 1-based labels ordered by size; the column is 0-based
+  object[[name]] <- clusters - 1L
 
   object
 }

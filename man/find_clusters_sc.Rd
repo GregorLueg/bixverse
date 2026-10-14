@@ -18,8 +18,8 @@ find_clusters_sc(
 
 \item{cluster_algorithm}{String. One of \code{c("leiden", "louvain")}.}
 
-\item{res}{Numeric. The resolution parameter for \code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}
-or \code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}.}
+\item{res}{Numeric. The modularity resolution parameter, see
+\code{\link[=leiden_clustering]{leiden_clustering()}}.}
 
 \item{name}{String. The name to add to the obs table in the DuckDB.}
 
@@ -34,7 +34,9 @@ The object with added clustering in the obs table.
 }
 \description{
 This function will apply Leiden clustering on the sNN graph with the
-given resolution and add a column to the obs table.
+given resolution and add a column to the obs table. Runs in Rust via
+\code{\link[=leiden_clustering]{leiden_clustering()}}; the labels depend on \code{seed} only, \code{0} is the
+largest cluster.
 }
 \examples{
 # Leiden on the cached sNN graph

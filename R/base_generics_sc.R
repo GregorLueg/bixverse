@@ -1500,12 +1500,14 @@ find_neighbours_sc <- S7::new_generic(
 #'
 #' @description
 #' This function will apply Leiden clustering on the sNN graph with the
-#' given resolution and add a column to the obs table.
+#' given resolution and add a column to the obs table. Runs in Rust via
+#' [leiden_clustering()]; the labels depend on `seed` only, `0` is the
+#' largest cluster.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param cluster_algorithm String. One of `c("leiden", "louvain")`.
-#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()]
-#' or [igraph::cluster_louvain()].
+#' @param res Numeric. The modularity resolution parameter, see
+#' [leiden_clustering()].
 #' @param name String. The name to add to the obs table in the DuckDB.
 #' @param modality String. On which modality to run the UMAP. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
