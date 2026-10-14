@@ -807,6 +807,36 @@ S7::method(remove_magic, SingleCellsSubset) <- function(x, ...) {
   x
 }
 
+#' @name set_residual_fit.SingleCellsSubset
+#'
+#' @rdname set_residual_fit
+#'
+#' @method set_residual_fit SingleCellsSubset
+S7::method(set_residual_fit, SingleCellsSubset) <- function(
+  x,
+  residual_fit,
+  ...
+) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  checkmate::assertClass(residual_fit, "ScResidualFit")
+  S7::prop(x, "sc_cache") <- set_residual_fit(
+    x = S7::prop(x, "sc_cache"),
+    residual_fit = residual_fit
+  )
+  .stamp_artefact(x, artefact = "residuals", from = .stamp_from(...))
+}
+
+#' @name remove_residual_fit.SingleCellsSubset
+#'
+#' @rdname remove_residual_fit
+#'
+#' @method remove_residual_fit SingleCellsSubset
+S7::method(remove_residual_fit, SingleCellsSubset) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  S7::prop(x, "sc_cache") <- remove_residual_fit(x = S7::prop(x, "sc_cache"))
+  x
+}
+
 #### getters -------------------------------------------------------------------
 
 #' @name get_pca_factors.SingleCellsSubset
@@ -942,6 +972,25 @@ S7::method(get_magic, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   res <- get_magic(x = S7::prop(x, "sc_cache"))
   .warn_sc_state(x, artefact = "magic")
+  .drop_stamp(res)
+}
+
+#' @name get_residual_fit.SingleCellsSubset
+#'
+#' @rdname get_residual_fit
+#'
+#' @method get_residual_fit SingleCellsSubset
+S7::method(get_residual_fit, SingleCellsSubset) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  res <- get_residual_fit(x = S7::prop(x, "sc_cache"))
+  if (is.null(res)) {
+    warning(paste(
+      "No fitted residual model found in the class.",
+      "Run fit_residuals_sc() first. Returning NULL."
+    ))
+    return(NULL)
+  }
+  .warn_sc_state(x, artefact = "residuals")
   .drop_stamp(res)
 }
 
