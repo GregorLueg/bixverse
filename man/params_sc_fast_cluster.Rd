@@ -13,6 +13,8 @@ params_sc_fast_cluster(
   pruning = NULL,
   snn_similarity = c("jaccard", "rank"),
   louvain_iters = 10L,
+  cell_mediated = FALSE,
+  n_anchors = 5L,
   knn = list(k = 5L)
 )
 }
@@ -49,6 +51,17 @@ higher edge weights Both methods produce weights normalised to the range \verb{[
 \item{louvain_iters}{Integer. Number of iterations for Louvain clustering.
 Defaults to \code{10L}.}
 
+\item{cell_mediated}{Boolean. Shall the cell-mediated centroid graph from
+Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+then linked by the cells that sit near both, so two centroids that are close
+in space but have no cells between them stay apart. If \code{TRUE}, \code{snn},
+\code{full_snn}, \code{pruning} and \code{snn_similarity} are ignored. See Wei, et al., PLoS
+Comput Biol, 2022. Defaults to \code{FALSE}.}
+
+\item{n_anchors}{Integer. Number of nearest centroids each cell links to in
+the cell-mediated graph. Only used if \code{cell_mediated = TRUE}. Defaults to
+\code{5L}.}
+
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
@@ -84,6 +97,15 @@ is determined by finding the shared neighbour with the lowest combined rank
 across both cells, where lower-ranked (closer) shared neighbours result in
 higher edge weights Both methods produce weights normalised to the range
 \verb{[0, 1]}. One of \code{c("jaccard", "rank")}. Defaults to \code{"jaccard"}.
+\item cell_mediated - Boolean. Shall the cell-mediated centroid graph from
+Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+then linked by the cells that sit near both, so two centroids that are close
+in space but have no cells between them stay apart. If \code{TRUE}, \code{snn},
+\code{full_snn}, \code{pruning} and \code{snn_similarity} are ignored. See Wei, et al.,
+PLoS Comput Biol, 2022. Defaults to \code{FALSE}.
+\item n_anchors - Integer. Number of nearest centroids each cell links to in
+the cell-mediated graph. Only used if \code{cell_mediated = TRUE}. Defaults to
+\code{5L}.
 \item The elements of \code{\link[=params_knn_defaults]{params_knn_defaults()}}, overridden by \code{knn}, spliced
 in at this position.
 }

@@ -505,15 +505,17 @@ spec_sc_fast_cluster <- param_spec(
     "full_snn",
     "pruning",
     "snn_similarity",
+    "cell_mediated",
+    "n_anchors",
     "knn"
   ),
   checker = "ScFastCluster",
   label = "fast clustering params",
   hint = paste(
-    "kmeans_iters, batch_size and louvain_iters must be integers",
-    ">= 1; drift_threshold and lr_alpha must be single numerics;",
-    "full_snn must be a boolean; pruning must be NULL or a single",
-    "numeric."
+    "kmeans_iters, batch_size, louvain_iters and n_anchors must be",
+    "integers >= 1; drift_threshold and lr_alpha must be single",
+    "numerics; full_snn and cell_mediated must be booleans; pruning",
+    "must be NULL or a single numeric."
   ),
   fields = list(
     kmeans_iters = p_int(
@@ -574,6 +576,26 @@ spec_sc_fast_cluster <- param_spec(
       10L,
       range = "[1,)",
       doc = "Number of iterations for Louvain clustering."
+    ),
+    cell_mediated = p_lgl(
+      FALSE,
+      doc = paste(
+        "Shall the cell-mediated centroid graph from Secuer be built",
+        "instead of the kNN/sNN graph on the centroids. Centroids are",
+        "then linked by the cells that sit near both, so two centroids",
+        "that are close in space but have no cells between them stay",
+        "apart. If `TRUE`, `snn`, `full_snn`, `pruning` and",
+        "`snn_similarity` are ignored. See Wei, et al., PLoS Comput",
+        "Biol, 2022."
+      )
+    ),
+    n_anchors = p_int(
+      5L,
+      range = "[1,)",
+      doc = paste(
+        "Number of nearest centroids each cell links to in the",
+        "cell-mediated graph. Only used if `cell_mediated = TRUE`."
+      )
     ),
     knn = p_merge(
       "knn_defaults",
