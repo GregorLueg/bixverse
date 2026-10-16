@@ -1,5 +1,5 @@
-use bixverse_rs::methods::ica::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::methods::ica::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////

@@ -178,7 +178,7 @@ checkScBoostParams <- function(x) {
       "n_probe",
       "km_type",
       "n_centroids",
-      "kmeans_iters",
+      "k_means_iter",
       "batch_size",
       "boost_rate",
       "replace",
@@ -218,7 +218,7 @@ checkScBoostParams <- function(x) {
       n_list = c("I1[1,)", "0"),
       n_probe = c("I1[1,)", "0"),
       n_centroids = c("I1", "0"),
-      kmeans_iters = "I1",
+      k_means_iter = "I1",
       batch_size = "I1",
       boost_rate = "N1[0,1]",
       replace = "B1",
@@ -1074,7 +1074,7 @@ assertEdgeRQlParams <- checkmate::makeAssertionFunction(checkEdgeRQlParams)
 checkFastClusterDefaultParams <- function(x) {
   res <- check_list_shape(
     x,
-    c("km_type", "n_centroids", "kmeans_iters", "batch_size")
+    c("km_type", "n_centroids", "k_means_iter", "batch_size")
   )
   if (!isTRUE(res)) {
     return(res)
@@ -1084,12 +1084,12 @@ checkFastClusterDefaultParams <- function(x) {
     x,
     list(
       n_centroids = c("I1", "0"),
-      kmeans_iters = "I1",
+      k_means_iter = "I1",
       batch_size = "I1"
     ),
     label = "FastCluster params",
     hint = paste(
-      "batch_size and kmeans_iters must be integers; n_centroids must",
+      "batch_size and k_means_iter must be integers; n_centroids must",
       "be an integer or NULL."
     )
   )
@@ -1104,7 +1104,7 @@ checkFastClusterDefaultParams <- function(x) {
     ),
     label = "FastCluster params",
     hint = paste(
-      "batch_size and kmeans_iters must be integers; n_centroids must",
+      "batch_size and k_means_iter must be integers; n_centroids must",
       "be an integer or NULL."
     )
   )
@@ -1615,6 +1615,87 @@ checkKnnParams <- function(x) {
 #'
 #' @keywords internal
 assertKnnParams <- checkmate::makeAssertionFunction(checkKnnParams)
+
+#' Check kNN graph params
+#'
+#' @description Checkmate extension for the output of
+#' [params_knn_graph_defaults()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkKnnGraphParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "knn_sym",
+      "snn_similarity",
+      "pruning",
+      "rescue",
+      "local_connectivity",
+      "mix_ratio",
+      "binary"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      pruning = "N1[0, 1]",
+      rescue = "B1",
+      local_connectivity = "N1[0,)",
+      mix_ratio = "N1[0, 1]",
+      binary = "B1"
+    ),
+    label = "kNN graph params",
+    hint = paste(
+      "pruning must be in [0, 1]; local_connectivity must be >= 0;",
+      "mix_ratio must be in [0, 1]; rescue and binary must be single",
+      "booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      knn_sym = c("snn", "umap", "knn"),
+      snn_similarity = c("jaccard", "rank")
+    ),
+    label = "kNN graph params",
+    hint = paste(
+      "pruning must be in [0, 1]; local_connectivity must be >= 0;",
+      "mix_ratio must be in [0, 1]; rescue and binary must be single",
+      "booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert kNN graph params
+#'
+#' @inheritParams checkKnnGraphParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertKnnGraphParams <- checkmate::makeAssertionFunction(checkKnnGraphParams)
 
 #' Check label propagation params
 #'
@@ -3215,30 +3296,30 @@ checkScFastClusterParams <- function(x) {
   res <- check_list_shape(
     x,
     c(
-      "kmeans_iters",
+      "n_centroids",
+      "km_type",
+      "k_means_iter",
       "batch_size",
       "drift_threshold",
       "lr_alpha",
-      "louvain_iters",
-      "full_snn",
-      "pruning",
-      "snn_similarity",
+      "dist",
       "cell_mediated",
       "n_anchors",
-      "k",
-      "knn_method",
-      "ann_dist",
-      "n_trees",
-      "search_budget",
-      "delta",
-      "diversify_prob",
-      "ef_budget",
-      "extract_knn",
-      "m",
-      "ef_construction",
-      "ef_search",
-      "n_list",
-      "n_probe"
+      "centroid_k",
+      "knn_sym",
+      "snn_similarity",
+      "pruning",
+      "rescue",
+      "local_connectivity",
+      "mix_ratio",
+      "binary",
+      "algorithm",
+      "n_iterations",
+      "beta",
+      "min_gain",
+      "local_moving",
+      "multi_level",
+      "max_evals"
     )
   )
   if (!isTRUE(res)) {
@@ -3248,34 +3329,31 @@ checkScFastClusterParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
-      kmeans_iters = "I1[1,)",
+      n_centroids = c("I1[2,)", "0"),
+      k_means_iter = "I1[1,)",
       batch_size = "I1[1,)",
       drift_threshold = "N1",
       lr_alpha = "N1",
-      louvain_iters = "I1[1,)",
-      full_snn = "B1",
-      pruning = c("N1", "0"),
       cell_mediated = "B1",
       n_anchors = "I1[1,)",
-      k = "I1[0,)",
-      n_trees = "I1[1,)",
-      search_budget = c("I1[1,)", "0"),
-      delta = "N1[0,1]",
-      diversify_prob = "N1[0,1]",
-      ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
-      m = "I1[1,)",
-      ef_construction = "I1[1,)",
-      ef_search = "I1[1,)",
-      n_list = c("I1[1,)", "0"),
-      n_probe = c("I1[1,)", "0")
+      centroid_k = "I1[1,)",
+      pruning = "N1[0, 1]",
+      rescue = "B1",
+      local_connectivity = "N1[0,)",
+      mix_ratio = "N1[0, 1]",
+      binary = "B1",
+      n_iterations = c("I1", "0"),
+      beta = "N1(0,)",
+      min_gain = "N1[0,)",
+      multi_level = "B1",
+      max_evals = "I1[1,)"
     ),
     label = "fast clustering params",
     hint = paste(
-      "kmeans_iters, batch_size, louvain_iters and n_anchors must be",
-      "integers >= 1; drift_threshold and lr_alpha must be single",
-      "numerics; full_snn and cell_mediated must be booleans; pruning",
-      "must be NULL or a single numeric."
+      "n_centroids must be NULL or an integer >= 2; k_means_iter,",
+      "batch_size, n_anchors, centroid_k and max_evals must be integers",
+      ">= 1; n_iterations must be NULL or a non-zero integer;",
+      "cell_mediated and multi_level must be booleans."
     )
   )
   if (!isTRUE(res)) {
@@ -3285,23 +3363,19 @@ checkScFastClusterParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      km_type = c("standard", "minibatch"),
+      dist = c("euclidean", "cosine"),
+      knn_sym = c("snn", "umap", "knn"),
       snn_similarity = c("jaccard", "rank"),
-      knn_method = c(
-        "kmknn",
-        "hnsw",
-        "annoy",
-        "nndescent",
-        "ivf",
-        "exhaustive"
-      ),
-      ann_dist = c("euclidean", "cosine")
+      algorithm = c("louvain", "leiden"),
+      local_moving = c("queue", "coloured")
     ),
     label = "fast clustering params",
     hint = paste(
-      "kmeans_iters, batch_size, louvain_iters and n_anchors must be",
-      "integers >= 1; drift_threshold and lr_alpha must be single",
-      "numerics; full_snn and cell_mediated must be booleans; pruning",
-      "must be NULL or a single numeric."
+      "n_centroids must be NULL or an integer >= 2; k_means_iter,",
+      "batch_size, n_anchors, centroid_k and max_evals must be integers",
+      ">= 1; n_iterations must be NULL or a non-zero integer;",
+      "cell_mediated and multi_level must be booleans."
     )
   )
   if (!isTRUE(res)) {
@@ -4238,9 +4312,13 @@ checkScNeighboursParams <- function(x) {
   res <- check_list_shape(
     x,
     c(
-      "full_snn",
-      "pruning",
+      "knn_sym",
       "snn_similarity",
+      "pruning",
+      "rescue",
+      "local_connectivity",
+      "mix_ratio",
+      "binary",
       "k",
       "knn_method",
       "ann_dist",
@@ -4264,8 +4342,11 @@ checkScNeighboursParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
-      full_snn = "B1",
       pruning = "N1[0, 1]",
+      rescue = "B1",
+      local_connectivity = "N1[0,)",
+      mix_ratio = "N1[0, 1]",
+      binary = "B1",
       k = "I1[0,)",
       n_trees = "I1[1,)",
       search_budget = c("I1[1,)", "0"),
@@ -4280,7 +4361,7 @@ checkScNeighboursParams <- function(x) {
       n_probe = c("I1[1,)", "0")
     ),
     label = "neighbour params",
-    hint = "full_snn must be a boolean; pruning must be in [0, 1]."
+    hint = "graph and knn must be lists of their respective parameters."
   )
   if (!isTRUE(res)) {
     return(res)
@@ -4289,6 +4370,7 @@ checkScNeighboursParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      knn_sym = c("snn", "umap", "knn"),
       snn_similarity = c("jaccard", "rank"),
       knn_method = c(
         "kmknn",
@@ -4301,7 +4383,7 @@ checkScNeighboursParams <- function(x) {
       ann_dist = c("euclidean", "cosine")
     ),
     label = "neighbour params",
-    hint = "full_snn must be a boolean; pruning must be in [0, 1]."
+    hint = "graph and knn must be lists of their respective parameters."
   )
   if (!isTRUE(res)) {
     return(res)
@@ -5531,7 +5613,6 @@ checkScWnnParams <- function(x) {
       "knn_range",
       "sigma_method",
       "sigma_idx",
-      "snn_type",
       "s_nn",
       "sd_scale",
       "kernel_power",
@@ -5596,7 +5677,6 @@ checkScWnnParams <- function(x) {
     x,
     list(
       sigma_method = c("snn_farthest", "sigma_idx"),
-      snn_type = c("full_connection", "limited"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -5670,7 +5750,7 @@ checkScDblFinderParams <- function(x) {
       "n_probe",
       "km_type",
       "n_centroids",
-      "kmeans_iters",
+      "k_means_iter",
       "batch_size",
       "n_genes",
       "doublet_ratio",
@@ -5718,7 +5798,7 @@ checkScDblFinderParams <- function(x) {
       n_list = c("I1[1,)", "0"),
       n_probe = c("I1[1,)", "0"),
       n_centroids = c("I1", "0"),
-      kmeans_iters = "I1",
+      k_means_iter = "I1",
       batch_size = "I1",
       n_genes = "I1[1,)",
       doublet_ratio = "N1(0,)",

@@ -87,7 +87,7 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
 #' The cluster-level ScType path ([score_clusters()]) stamps one label on every
 #' cell of a cluster, so a minority population sharing a Leiden community with a
 #' bigger one gets absorbed without anything flagging it. This runs the scoring
-#' per cell instead: the score matrix is smoothed over the sNN graph via label
+#' per cell instead: the score matrix is smoothed over the neighbour graph via label
 #' spreading (Zhou et al.), then each cell takes its own argmax. Cells whose best
 #' score falls below `score_floor` come back as `NA`.
 #'
@@ -156,22 +156,22 @@ S7::method(assign_sc_type, SingleCells) <- function(
   assertSctypeCellParams(sctype_cell_params)
   checkmate::qassert(.verbose, c("I1", "B1"))
 
-  snn_graph <- get_snn_graph(object)
-  if (is.null(snn_graph)) {
+  connectivities <- get_connectivities(object)
+  if (is.null(connectivities)) {
     warning(paste(
-      "No sNN graph found. Did you run find_neighbours_sc()?",
+      "No neighbour graph found. Did you run find_neighbours_sc()?",
       "Scoring without smoothing."
     ))
     edges <- NULL
   } else {
-    if (igraph::vcount(snn_graph) != sc_type_res$n_cells) {
+    if (igraph::vcount(connectivities) != sc_type_res$n_cells) {
       stop(sprintf(
-        "The sNN graph has %d nodes, but the ScType results %d cells.",
-        igraph::vcount(snn_graph),
+        "The neighbour graph has %d nodes, but the ScType results %d cells.",
+        igraph::vcount(connectivities),
         sc_type_res$n_cells
       ))
     }
-    edges <- igraph::as_edgelist(snn_graph, names = FALSE)
+    edges <- igraph::as_edgelist(connectivities, names = FALSE)
   }
 
   cluster_labels <- NULL
@@ -193,7 +193,8 @@ S7::method(assign_sc_type, SingleCells) <- function(
     sc_type_res = sc_type_res,
     from = if (is.null(edges)) NULL else as.integer(edges[, 1]),
     to = if (is.null(edges)) NULL else as.integer(edges[, 2]),
-    weights = if (is.null(snn_graph)) NULL else igraph::E(snn_graph)$weight,
+    weights = if (is.null(connectivities)) NULL else
+      igraph::E(connectivities)$weight,
     cluster_labels = cluster_labels,
     params = sctype_cell_params
   )

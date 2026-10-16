@@ -119,7 +119,7 @@ sc_object <- calculate_pca_sc(
 sc_object <- find_neighbours_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
-    pruning = 1 / 24,
+    graph = list(pruning = 1 / 24),
     knn = list(k = 30L, ann_dist = "euclidean")
   )
 )

@@ -4323,33 +4323,35 @@ rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wra
 #' @export
 rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, validate_index, verbose, seed)
 
-#' Generates the sNN graph for igraph
+#' Generates the neighbour graph for igraph
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function takes a kNN matrix and generates the inputs for an SNN
-#' graph based on it.
+#' Symmetrises a kNN matrix into an undirected, weighted graph. Three options:
+#' the bluster/Seurat shared nearest neighbour graph (`"snn"`), the ScanPy/UMAP
+#' fuzzy simplicial set (`"umap"`) or the plain kNN union (`"knn"`).
 #'
 #' @param knn_mat Integer matrix. Rows represent cells and the columns
-#' represent the neighbours (0-indexed!).
-#' @param snn_method String. Which method to use to calculate the similarity.
-#' Choice of `c("jaccard", "rank")`; anything else errors.
-#' @param limited_graph Boolean. Shall the sNNs only be calculated between
-#' direct neighbours in the graph, or between all possible combinations.
-#' @param pruning Float. Below which similarity value to prune the weight
-#' to 0. A cell that loses every edge keeps its strongest kNN edge.
+#' represent the neighbours (0-indexed!), self excluded and sorted by
+#' distance.
+#' @param knn_dist Optional numeric matrix of the same shape with the
+#' distances. Required for `knn_sym = "umap"`.
+#' @param graph_params Named list. Recognised keys: `knn_sym` (one of
+#' `c("snn", "umap", "knn")`); for `"snn"`: `snn_similarity` (one of
+#' `c("jaccard", "rank")`), `pruning` and `rescue`; for `"umap"`:
+#' `local_connectivity` and `mix_ratio`; for `"knn"`: `binary`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
 #' @returns A list with the following items:
 #' \itemize{
-#'  \item edges - Integer vector with the flattened sNN edge pairs
-#'  (1-indexed!), ready for `igraph::add_edges()`.
-#'  \item weights - sNN weights of the pairs above.
+#'  \item edges - Integer vector with the flattened edge pairs (1-indexed!),
+#'  each undirected edge once, ready for `igraph::add_edges()`.
+#'  \item weights - Edge weights of the pairs above.
 #' }
 #'
 #' @export
-rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
+rs_sc_knn_graph <- function(knn_mat, knn_dist, graph_params, verbose) .Call(wrap__rs_sc_knn_graph, knn_mat, knn_dist, graph_params, verbose)
 
 #' Helper to compare kNN graphs
 #'
@@ -4379,26 +4381,24 @@ rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Cal
 #' @export
 rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, knn_data_a, knn_data_b)
 
-#' Runs fast Louvain cluster on the data
+#' Runs fast clustering on the data
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Runs first k-means clustering, followed by a kNN detection on the centroids
-#' to then run Louvain clustering on the graph and propagate the membership
-#' back to the original data.
+#' Coarsens the cells with k-means, builds a graph over the centroids (a
+#' kNN graph with one of the symmetrisations, or the cell-mediated graph) and
+#' runs Louvain or Leiden on it. The community of each centroid is propagated
+#' back to its cells. With `n_seeds > 1` every resolution is run once per
+#' seed, the labels come from the seed with the lowest mean conductance and
+#' stability metrics across the seeds are returned.
 #'
-#' @param embd Numeric matrix. The original embedding.
-#' @param km_type String. One of `c("kmeans", "minibatch")` for the type of
-#' k means clustering to run.
-#' @param resolutions Numeric vector. The Louvain resolutions to iterate
-#' through.
-#' @param n_centroids Optional integer. The number of k-means centroids. If
-#' not provided, defaults to `floor(sqrt(nrow(embd)))`.
-#' @param fc_params Named list. The fast clustering parameters.
-#' @param snn Boolean. Shall the kNN graph be additionally transformed into
-#' an sNN graph.
-#' @param return_kmeans Boolean. Shall the k-means centroid assignments be
-#' returned alongside the memberships.
+#' @param embd Numeric matrix. The embedding, cells x features.
+#' @param resolutions Numeric vector. The resolutions to iterate through.
+#' @param fc_params Named list. The fast clustering parameters, see
+#' [params_sc_fast_cluster()]. Also carries the k-means keys (`km_type`,
+#' `kmeans_iters`, `batch_size`, `drift_threshold`, `lr_alpha`).
+#' @param n_seeds Integer. Number of seeds per resolution. `1L` runs a single
+#' pass without stability metrics.
 #' @param seed Integer. For reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -4406,61 +4406,19 @@ rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, k
 #' @returns A list with the following elements:
 #' \itemize{
 #'  \item membership - List with one integer membership vector per
-#'  resolution.
-#'  \item k_means_cluster - Integer vector with the k-means cluster per cell
-#'  if `return_kmeans = TRUE`, otherwise `NULL`.
-#'  \item centroids - Numerical matrix with the k-means centroids if
-#'  `return_kmeans = TRUE`, otherwise `NULL`.
+#'  resolution (0-indexed).
+#'  \item k_means_cluster - Integer vector with the k-means centroid per cell
+#'  (0-indexed).
+#'  \item centroids - Numerical matrix with the k-means centroids.
+#'  \item stats - `NULL` for `n_seeds = 1L`, otherwise a list with
+#'  `mean_ari`, `median_ari`, `mean_conductance`, `median_conductance` and
+#'  `mean_n_comms`, one value per resolution.
 #' }
 #'
 #' @export
 #'
 #' @keywords internal
-rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, seed, verbose)
-
-#' Runs fast Louvain cluster on the data (with multiple seeds)
-#'
-#' @description
-#' `r lifecycle::badge("experimental")`
-#' Runs first k-means clustering, followed by a kNN detection on the centroids
-#' to then run Louvain clustering with several seeds (based on the original
-#' one) on the graph and propagate the membership back to the original data.
-#' Returns additional metrics around cluster stability and community
-#' conductance.
-#'
-#' @param embd Numeric matrix. The original embedding.
-#' @param km_type String. One of `c("kmeans", "minibatch")` for the type of
-#' k means clustering to run.
-#' @param resolutions Numeric vector. The Louvain resolutions to iterate
-#' through.
-#' @param n_centroids Optional integer. The number of k-means centroids. If
-#' not provided, defaults to `floor(sqrt(nrow(embd)))`.
-#' @param fc_params Named list. The fast clustering parameters.
-#' @param snn Boolean. Shall the kNN graph be additionally transformed into
-#' an sNN graph.
-#' @param return_kmeans Boolean. Shall the k-means centroid assignments be
-#' returned alongside the memberships.
-#' @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
-#' @param seed Integer. For reproducibility.
-#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
-#' detailed verbosity.
-#'
-#' @returns A list with the following elements:
-#' \itemize{
-#'  \item membership - A list with `memberships` (one integer vector per
-#'  resolution, from the seed with the best conductance) and `stats` (list
-#'  with `mean_ari`, `median_ari`, `mean_conductance`, `median_conductance`
-#'  and `mean_n_comms`, one value per resolution).
-#'  \item k_means_cluster - Integer vector with the k-means cluster per cell
-#'  if `return_kmeans = TRUE`, otherwise `NULL`.
-#'  \item centroids - Numerical matrix with the k-means centroids if
-#'  `return_kmeans = TRUE`, otherwise `NULL`.
-#' }
-#'
-#' @export
-#'
-#' @keywords internal
-rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose) .Call(wrap__rs_fast_cluster_sc_grid, embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose)
+rs_fast_cluster_sc <- function(embd, resolutions, fc_params, n_seeds, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, resolutions, fc_params, n_seeds, seed, verbose)
 
 #' Impute a subset of genes with MAGIC
 #'

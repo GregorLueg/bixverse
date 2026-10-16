@@ -390,7 +390,7 @@ reference:
       - get_pca_singular_val
       - get_pca_loadings
       - get_pca_factors
-      - get_snn_graph
+      - get_connectivities
       - get_gene_names_from_idx
       - get_sc_available_features
       - setnames_sc
@@ -536,6 +536,7 @@ reference:
       - params_hvg_scran_defaults
       - params_pca_defaults
       - params_knn_defaults
+      - params_knn_graph_defaults
       - params_sc_knn
       - params_kmeans_defaults
       - params_fast_cluster_default
@@ -916,7 +917,7 @@ reference:
       - rs_remove_batch_effect
       - rs_sc_knn
       - rs_sc_knn_w_dist
-      - rs_sc_snn
+      - rs_sc_knn_graph
       - rs_set_similarity
       - rs_set_similarity_list
       - rs_set_similarity_list2

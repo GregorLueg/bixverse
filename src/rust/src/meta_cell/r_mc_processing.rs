@@ -2,20 +2,20 @@
 //! variants used for single cells due to the massive compression achieved
 //! with meta cells.
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::mc_analysis::metrics::pairwise_gene_correlations_in_memory;
-use bixverse_rs::single_cell::mc_processing::hvg_pca::*;
-use bixverse_rs::single_cell::sc_data::in_memory_io::InMemorySparseReader;
-use bixverse_rs::single_cell::sc_processing::analytic_pearson::model::AprParams;
-use bixverse_rs::single_cell::sc_processing::analytic_pearson::stream::{
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::mc_analysis::metrics::pairwise_gene_correlations_in_memory;
+use bixverse_r::single_cell::mc_processing::hvg_pca::*;
+use bixverse_r::single_cell::sc_data::in_memory_io::InMemorySparseReader;
+use bixverse_r::single_cell::sc_processing::analytic_pearson::model::AprParams;
+use bixverse_r::single_cell::sc_processing::analytic_pearson::stream::{
     apr_gene_pass, build_apr_model, cell_totals_over_genes, fit_analytic_pearson_grouped,
     AprGroupedFit,
 };
-use bixverse_rs::single_cell::sc_processing::hvg::*;
-use bixverse_rs::single_cell::sc_processing::pca::{pca_on_sc_residuals, SingleCellPcaParams};
-use bixverse_rs::single_cell::sc_processing::residuals::residual_variance;
-use bixverse_rs::single_cell::sc_processing::sctransform::model::{SctCovariates, SctParams};
-use bixverse_rs::single_cell::sc_processing::sctransform::stream::{
+use bixverse_r::single_cell::sc_processing::hvg::*;
+use bixverse_r::single_cell::sc_processing::pca::{pca_on_sc_residuals, SingleCellPcaParams};
+use bixverse_r::single_cell::sc_processing::residuals::residual_variance;
+use bixverse_r::single_cell::sc_processing::sctransform::model::{SctCovariates, SctParams};
+use bixverse_r::single_cell::sc_processing::sctransform::stream::{
     fit_sctransform, fit_sctransform_grouped, SctGroupedFit, SctStreamOpts,
 };
 use extendr_api::*;

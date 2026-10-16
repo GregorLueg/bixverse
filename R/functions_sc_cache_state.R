@@ -1,7 +1,7 @@
 # single cell cache state ------------------------------------------------------
 
 # every artefact that lands in an `ScCache` (PCA factors, embeddings, the kNN
-# object, the sNN graph, the MAGIC imputed layer, the fitted residual model)
+# object, the neighbour graph, the MAGIC imputed layer, the fitted residual model)
 # carries a provenance stamp as
 # an attribute on the payload itself. the stamp records the cell set it was
 # computed on and the ids of the artefacts it was derived from, which is what
@@ -64,7 +64,32 @@
 #'
 #' @keywords internal
 .migrate_sc_cache <- function(x) {
+  if (is.null(x)) {
+    return(x)
+  }
+  # renamed in 0.8.0: the graph is no longer necessarily an sNN
+  if ("snn_graph" %in% names(x)) {
+    x[["connectivities"]] <- x[["snn_graph"]]
+    x[["snn_graph"]] <- NULL
+  }
   .migrate_sc_state(x, new_sc_cache(), "ScCache")
+}
+
+#' Bring a loaded `other_data` slot into the current shape
+#'
+#' @param x The `other_data` list loaded from disk.
+#'
+#' @returns `other_data` with the `wnn` graph under `connectivities`.
+#'
+#' @keywords internal
+.migrate_other_data <- function(x) {
+  wnn <- x[["wnn"]]
+  if (!is.null(wnn) && "snn" %in% names(wnn)) {
+    wnn[["connectivities"]] <- wnn[["snn"]]
+    wnn[["snn"]] <- NULL
+    x[["wnn"]] <- wnn
+  }
+  x
 }
 
 #' Bring a loaded `ScMap` into the current shape
@@ -86,12 +111,25 @@ SC_STAMP_ATTR <- "bixverse_stamp"
 #' Artefact kinds a cache can hold
 #'
 #' @keywords internal
-SC_ARTEFACTS <- c("pca", "embedding", "knn", "snn", "magic", "residuals")
+SC_ARTEFACTS <- c(
+  "pca",
+  "embedding",
+  "knn",
+  "connectivities",
+  "magic",
+  "residuals"
+)
 
 #' Embedding names that would collide with an artefact label
 #'
 #' @keywords internal
-SC_RESERVED_EMBEDDINGS <- c("pca", "knn", "snn", "magic", "residuals")
+SC_RESERVED_EMBEDDINGS <- c(
+  "pca",
+  "knn",
+  "connectivities",
+  "magic",
+  "residuals"
+)
 
 #' Monotonic counter so two stamps minted in the same clock tick still differ
 #'
@@ -306,13 +344,12 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' what the provenance machinery reads; user facing code goes through the
 #' getters.
 #'
-#' The `wnn` pseudo modality stores its graph under `snn` and its embeddings
-#' under `embeddings`, where a real `ScCache` uses `snn_graph` and
-#' `other_embeddings`, hence the flag.
+#' The `wnn` pseudo modality stores its embeddings under `embeddings`, where a
+#' real `ScCache` uses `other_embeddings`, hence the flag.
 #'
 #' @param cache The cache list.
-#' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
-#' "magic", "residuals")`.
+#' @param artefact String. One of `c("pca", "embedding", "knn",
+#' "connectivities", "magic", "residuals")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param wnn Boolean. Whether `cache` is the `wnn` slot rather than an
 #' `ScCache`.
@@ -329,7 +366,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
     artefact,
     pca = if (wnn) NULL else cache[["pca_factors"]],
     knn = cache[["knn"]],
-    snn = if (wnn) cache[["snn"]] else cache[["snn_graph"]],
+    connectivities = cache[["connectivities"]],
     # the imputed layer is RNA expression whichever graph smoothed it, so it
     # only ever lives in a real `ScCache`, never in the wnn pseudo cache
     magic = if (wnn) NULL else cache[["magic"]],
@@ -355,7 +392,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
     artefact,
     pca = "pca_factors",
     knn = "knn",
-    snn = if (wnn) "snn" else "snn_graph",
+    connectivities = "connectivities",
     magic = "magic",
     residuals = "residual_fit",
     embedding = if (wnn) "embeddings" else "other_embeddings",
@@ -440,7 +477,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
       list(list(artefact = "pca", name = NA_character_)),
       purrr::map(embd_names, \(nm) list(artefact = "embedding", name = nm)),
       list(list(artefact = "knn", name = NA_character_)),
-      list(list(artefact = "snn", name = NA_character_)),
+      list(list(artefact = "connectivities", name = NA_character_)),
       list(list(artefact = "magic", name = NA_character_)),
       list(list(artefact = "residuals", name = NA_character_))
     )
@@ -548,8 +585,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' both the cache and the cell state. A no-op when the artefact is absent.
 #'
 #' @param x The object owning the cache.
-#' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
-#' "magic", "residuals")`.
+#' @param artefact String. One of `c("pca", "embedding", "knn",
+#' "connectivities", "magic", "residuals")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param modality String. The modality the artefact was written to.
 #' @param from Character vector of parent artefact names.
@@ -604,7 +641,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' under it, when a parent it was built on no longer exists (i.e. was
 #' recomputed and minted a new id), or when a parent is itself stale. The last
 #' case is why this recurses: without it, re-running the PCA marks the kNN
-#' stale but the sNN still resolves its untouched parent and passes.
+#' stale but the graph still resolves its untouched parent and passes.
 #'
 #' @param label String. The artefact label to evaluate.
 #' @param artefacts List as returned by [.sc_artefacts()].
@@ -663,7 +700,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' @returns A `data.table` with one row per present artefact and the columns
 #' \itemize{
 #'   \item modality - The modality the artefact lives in.
-#'   \item artefact - One of `pca`, `embedding`, `knn`, `snn`, `magic`.
+#'   \item artefact - One of `pca`, `embedding`, `knn`, `connectivities`,
+#'   `magic`.
 #'   \item name - The embedding name, `NA` for the others.
 #'   \item stamped - Whether the artefact carries a provenance stamp.
 #'   \item stale - Whether it disagrees with the current state.
@@ -795,8 +833,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' getters as presence probes on artefacts they are about to overwrite.
 #'
 #' @param x The object owning the cache.
-#' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
-#' "magic", "residuals")`.
+#' @param artefact String. One of `c("pca", "embedding", "knn",
+#' "connectivities", "magic", "residuals")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param modality String. The modality read from.
 #'
@@ -943,7 +981,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' @param x `SingleCells`, `SingleCellsSubset`, `MetaCells` or
 #' `SingleCellsMultiModal` class.
 #' @param artefacts Character vector. Artefacts to check, either an artefact
-#' kind (`"pca"`, `"knn"`, `"snn"`, `"magic"`) or an embedding name
+#' kind (`"pca"`, `"knn"`, `"connectivities"`, `"magic"`) or an embedding name
 #' (`"umap"`). May be modality qualified (`"adt:pca"`).
 #' @param modality String. Modality to resolve unqualified names against. One
 #' of `c("rna", "adt", "atac", "wnn")`.
@@ -1047,7 +1085,8 @@ assert_sc_state <- checkmate::makeAssertionFunction(check_sc_state)
 #' @returns A `data.table` with the columns
 #' \itemize{
 #'   \item modality - The modality the artefact lives in.
-#'   \item artefact - One of `pca`, `embedding`, `knn`, `snn`, `magic`.
+#'   \item artefact - One of `pca`, `embedding`, `knn`, `connectivities`,
+#'   `magic`.
 #'   \item name - The embedding name, `NA` for the others.
 #'   \item stamped - Whether the artefact carries a provenance stamp.
 #'   \item stale - Whether it disagrees with the current state.

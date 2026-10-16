@@ -5,111 +5,146 @@
 \title{Fast single cell clustering parameters}
 \usage{
 params_sc_fast_cluster(
-  kmeans_iters = 100L,
+  n_centroids = NULL,
+  km_type = c("standard", "minibatch"),
+  k_means_iter = 100L,
   batch_size = 4096L,
   drift_threshold = 1e-04,
   lr_alpha = 1,
-  full_snn = FALSE,
-  pruning = NULL,
-  snn_similarity = c("jaccard", "rank"),
-  louvain_iters = 10L,
+  dist = c("euclidean", "cosine"),
   cell_mediated = FALSE,
   n_anchors = 5L,
-  knn = list(k = 5L)
+  centroid_k = 15L,
+  centroid_graph = list(),
+  algorithm = c("louvain", "leiden"),
+  n_iterations = NULL,
+  beta = 0.01,
+  min_gain = 0,
+  local_moving = c("queue", "coloured"),
+  multi_level = TRUE,
+  max_evals = 10L
 )
 }
 \arguments{
-\item{kmeans_iters}{Integer. Number of iterations for k-means clustering.
-Defaults to \code{100L}.}
+\item{n_centroids}{Integer or \code{NULL}. Number of k-means centroids. If \code{NULL},
+defaults to \code{floor(sqrt(n_cells))}. Defaults to \code{NULL}.}
 
-\item{batch_size}{Integer. Batch size for mini batch k-means clustering.
-Defaults to \code{4096L}.}
+\item{km_type}{String. Which k-means to run for the coarsening. One of
+\code{c("standard", "minibatch")}. Defaults to \code{"standard"}.}
 
-\item{drift_threshold}{Numeric. The drift for the mini batch k-means
-clustering. If the centroid drift is below this, the mini batch k-means
-terminates. Defaults to \code{1e-04}.}
+\item{k_means_iter}{Integer. Number of k-means iterations. Defaults to
+\code{100L}.}
 
-\item{lr_alpha}{Numeric. Learning rate alpha parameter for mini batch
-k-means. Defaults to \code{1.0}.}
+\item{batch_size}{Integer. \code{km_type = "minibatch"} only. Batch size. Defaults
+to \code{4096L}.}
 
-\item{full_snn}{Boolean. Shall the full shared nearest neighbour graph be
-generated that generates edges between all cells instead of between only
-neighbours. Defaults to \code{FALSE}.}
+\item{drift_threshold}{Numeric. \code{km_type = "minibatch"} only. The mini batch
+k-means stops once the centroid drift falls below this. Defaults to \code{1e-04}.}
 
-\item{pruning}{Numeric or \code{NULL}. Weights below this threshold will be set to
-0 in the generation of the sNN graph. A node that loses every edge keeps its
-strongest kNN edge. If not provided, defaults to \code{1 / ceil(k * 0.8)}.
-Defaults to \code{NULL}.}
+\item{lr_alpha}{Numeric. \code{km_type = "minibatch"} only. Learning rate alpha.
+Defaults to \code{1.0}.}
 
-\item{snn_similarity}{String. The Jaccard similarity calculates the Jaccard
-between the neighbours, whereas the rank method calculates edge weights based
-on the ranking of shared neighbours. For the rank method, the weight is
-determined by finding the shared neighbour with the lowest combined rank
-across both cells, where lower-ranked (closer) shared neighbours result in
-higher edge weights Both methods produce weights normalised to the range \verb{[0, 1]}. One of \code{c("jaccard", "rank")}. Defaults to \code{"jaccard"}.}
-
-\item{louvain_iters}{Integer. Number of iterations for Louvain clustering.
-Defaults to \code{10L}.}
+\item{dist}{String. Distance for the k-means and the centroid graph. One of
+\code{c("euclidean", "cosine")}. Defaults to \code{"euclidean"}.}
 
 \item{cell_mediated}{Boolean. Shall the cell-mediated centroid graph from
-Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
-then linked by the cells that sit near both, so two centroids that are close
-in space but have no cells between them stay apart. If \code{TRUE}, \code{snn},
-\code{full_snn}, \code{pruning} and \code{snn_similarity} are ignored. See Wei, et al., PLoS
-Comput Biol, 2022. Defaults to \code{FALSE}.}
+Secuer be built instead of the kNN graph on the centroids. Centroids are then
+linked by the cells that sit near both, so two centroids that are close in
+space but have no cells between them stay apart. If \code{TRUE}, \code{centroid_k} and
+\code{centroid_graph} are ignored. Defaults to \code{FALSE}.}
 
 \item{n_anchors}{Integer. Number of nearest centroids each cell links to in
 the cell-mediated graph. Only used if \code{cell_mediated = TRUE}. Defaults to
 \code{5L}.}
 
-\item{knn}{List. Optional overrides for kNN parameters. See
-\code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
-\code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{extract_knn}, \code{m}, \code{ef_construction},
-\code{ef_search}, \code{n_list} and \code{n_probe}. Sets the default \code{k = 5L}. See
-\code{\link[=params_knn_defaults]{params_knn_defaults()}} for the available elements. Defaults to \code{list(k = 5L)}.}
+\item{centroid_k}{Integer. Neighbours per centroid in the exact centroid kNN.
+Only used if \code{cell_mediated = FALSE}. Defaults to \code{15L}.}
+
+\item{centroid_graph}{List. Optional overrides for how the centroid kNN is
+turned into a graph. See \code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}}. Only used
+if \code{cell_mediated = FALSE}. See \code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}} for the
+available elements. Defaults to \code{list()}.}
+
+\item{algorithm}{String. Community detection on the centroid graph. One of
+\code{c("louvain", "leiden")}. Defaults to \code{"louvain"}.}
+
+\item{n_iterations}{Integer or \code{NULL}. Number of iterations of the community
+detection. A negative value iterates until stable. If \code{NULL}, \code{2L} for
+Louvain and \code{5L} for Leiden, which gave the best modularity across synthetic
+graphs. Defaults to \code{NULL}.}
+
+\item{beta}{Numeric. Leiden only. Randomness of the refinement step. Defaults
+to \code{0.01}.}
+
+\item{min_gain}{Numeric. With a negative \code{n_iterations}, also stop once an
+iteration gains no more than this in modularity. Defaults to \code{0.0}.}
+
+\item{local_moving}{String. \code{"queue"} is Traag's sequential queue.
+\code{"coloured"} moves the nodes of one colour class in parallel, which only
+kicks in on larger levels of the graph. One of \code{c("queue", "coloured")}.
+Defaults to \code{"queue"}.}
+
+\item{multi_level}{Boolean. Shall the communities be aggregated and refined
+in levels. Defaults to \code{TRUE}.}
+
+\item{max_evals}{Integer. Cap on the node evaluations per local moving phase,
+in units of the number of nodes. Defaults to \code{10L}.}
 }
 \value{
 A named list with the following elements:
 \itemize{
-\item kmeans_iters - Integer. Number of iterations for k-means clustering.
-Defaults to \code{100L}.
-\item batch_size - Integer. Batch size for mini batch k-means clustering.
+\item n_centroids - Integer or \code{NULL}. Number of k-means centroids. If
+\code{NULL}, defaults to \code{floor(sqrt(n_cells))}. Defaults to \code{NULL}.
+\item km_type - String. Which k-means to run for the coarsening. One of
+\code{c("standard", "minibatch")}. Defaults to \code{"standard"}.
+\item k_means_iter - Integer. Number of k-means iterations. Defaults to
+\code{100L}.
+\item batch_size - Integer. \code{km_type = "minibatch"} only. Batch size.
 Defaults to \code{4096L}.
-\item drift_threshold - Numeric. The drift for the mini batch k-means
-clustering. If the centroid drift is below this, the mini batch k-means
-terminates. Defaults to \code{1e-04}.
-\item lr_alpha - Numeric. Learning rate alpha parameter for mini batch
-k-means. Defaults to \code{1.0}.
-\item louvain_iters - Integer. Number of iterations for Louvain clustering.
-Defaults to \code{10L}.
-\item full_snn - Boolean. Shall the full shared nearest neighbour graph be
-generated that generates edges between all cells instead of between only
-neighbours. Defaults to \code{FALSE}.
-\item pruning - Numeric or \code{NULL}. Weights below this threshold will be set
-to 0 in the generation of the sNN graph. A node that loses every edge keeps
-its strongest kNN edge. If not provided, defaults to \code{1 / ceil(k * 0.8)}.
-Defaults to \code{NULL}.
-\item snn_similarity - String. The Jaccard similarity calculates the Jaccard
-between the neighbours, whereas the rank method calculates edge weights
-based on the ranking of shared neighbours. For the rank method, the weight
-is determined by finding the shared neighbour with the lowest combined rank
-across both cells, where lower-ranked (closer) shared neighbours result in
-higher edge weights Both methods produce weights normalised to the range
-\verb{[0, 1]}. One of \code{c("jaccard", "rank")}. Defaults to \code{"jaccard"}.
+\item drift_threshold - Numeric. \code{km_type = "minibatch"} only. The mini
+batch k-means stops once the centroid drift falls below this. Defaults to
+\code{1e-04}.
+\item lr_alpha - Numeric. \code{km_type = "minibatch"} only. Learning rate alpha.
+Defaults to \code{1.0}.
+\item dist - String. Distance for the k-means and the centroid graph. One of
+\code{c("euclidean", "cosine")}. Defaults to \code{"euclidean"}.
 \item cell_mediated - Boolean. Shall the cell-mediated centroid graph from
-Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+Secuer be built instead of the kNN graph on the centroids. Centroids are
 then linked by the cells that sit near both, so two centroids that are close
-in space but have no cells between them stay apart. If \code{TRUE}, \code{snn},
-\code{full_snn}, \code{pruning} and \code{snn_similarity} are ignored. See Wei, et al.,
-PLoS Comput Biol, 2022. Defaults to \code{FALSE}.
+in space but have no cells between them stay apart. If \code{TRUE}, \code{centroid_k}
+and \code{centroid_graph} are ignored. Defaults to \code{FALSE}.
 \item n_anchors - Integer. Number of nearest centroids each cell links to in
 the cell-mediated graph. Only used if \code{cell_mediated = TRUE}. Defaults to
 \code{5L}.
-\item The elements of \code{\link[=params_knn_defaults]{params_knn_defaults()}}, overridden by \code{knn}, spliced
-in at this position.
+\item centroid_k - Integer. Neighbours per centroid in the exact centroid
+kNN. Only used if \code{cell_mediated = FALSE}. Defaults to \code{15L}.
+\item The elements of \code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}}, overridden by
+\code{centroid_graph}, spliced in at this position.
+\item algorithm - String. Community detection on the centroid graph. One of
+\code{c("louvain", "leiden")}. Defaults to \code{"louvain"}.
+\item n_iterations - Integer or \code{NULL}. Number of iterations of the
+community detection. A negative value iterates until stable. If \code{NULL}, \code{2L}
+for Louvain and \code{5L} for Leiden, which gave the best modularity across
+synthetic graphs. Defaults to \code{NULL}.
+\item beta - Numeric. Leiden only. Randomness of the refinement step.
+Defaults to \code{0.01}.
+\item min_gain - Numeric. With a negative \code{n_iterations}, also stop once an
+iteration gains no more than this in modularity. Defaults to \code{0.0}.
+\item local_moving - String. \code{"queue"} is Traag's sequential queue.
+\code{"coloured"} moves the nodes of one colour class in parallel, which only
+kicks in on larger levels of the graph. One of \code{c("queue", "coloured")}.
+Defaults to \code{"queue"}.
+\item multi_level - Boolean. Shall the communities be aggregated and refined
+in levels. Defaults to \code{TRUE}.
+\item max_evals - Integer. Cap on the node evaluations per local moving
+phase, in units of the number of nodes. Defaults to \code{10L}.
 }
 }
 \description{
-Fast single cell clustering parameters
+Fast clustering coarsens the cells with k-means, builds a graph
+over the centroids and runs Louvain or Leiden on it. The community of each
+centroid is handed back to its cells.
+}
+\references{
+Wei, et al., PLoS Comput Biol, 2022.
 }

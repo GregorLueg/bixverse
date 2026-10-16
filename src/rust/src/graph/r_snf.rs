@@ -1,6 +1,6 @@
-use bixverse_rs::methods::methods_r_wrapper::r_matrix_list_to_vec;
-use bixverse_rs::methods::snf::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::methods_r_wrapper::r_matrix_list_to_vec;
+use bixverse_r::methods::snf::*;
+use bixverse_r::prelude::*;
 use extendr_api::scalar::Rbool;
 use extendr_api::*;
 use faer::MatRef;

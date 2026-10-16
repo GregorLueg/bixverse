@@ -661,6 +661,27 @@ expect_false(
   info = "Migration keeps everything the saved cache did carry"
 )
 
+### renamed slots --------------------------------------------------------------
+
+# before 0.8.0 the neighbour graph lived under `snn_graph`
+saved$sc_cache[["connectivities"]] <- NULL
+saved$sc_cache[["snn_graph"]] <- igraph::make_ring(5L)
+qs2::qs_save(saved, memory_path)
+
+expect_silent(
+  current = renamed_object <- load_existing(
+    SingleCells(dir_data = test_dir),
+    .verbose = FALSE
+  ),
+  info = "A renamed slot is carried over without a warning"
+)
+
+expect_equal(
+  current = igraph::vcount(get_sc_cache(renamed_object)$connectivities),
+  target = 5L,
+  info = "The old snn_graph comes back under connectivities"
+)
+
 ### slots the constructor no longer knows --------------------------------------
 
 saved$sc_cache[["legacy_slot"]] <- "dropped"

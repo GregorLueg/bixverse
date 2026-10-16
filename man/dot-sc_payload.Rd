@@ -9,7 +9,7 @@
 \arguments{
 \item{cache}{The cache list.}
 
-\item{artefact}{String. One of \code{c("pca", "embedding", "knn", "snn", "magic", "residuals")}.}
+\item{artefact}{String. One of \code{c("pca", "embedding", "knn", "connectivities", "magic", "residuals")}.}
 
 \item{name}{String. Embedding name, only used when \code{artefact = "embedding"}.}
 
@@ -24,8 +24,7 @@ Raw slot access with no freshness checking and no stamp stripping. This is
 what the provenance machinery reads; user facing code goes through the
 getters.
 
-The \code{wnn} pseudo modality stores its graph under \code{snn} and its embeddings
-under \code{embeddings}, where a real \code{ScCache} uses \code{snn_graph} and
-\code{other_embeddings}, hence the flag.
+The \code{wnn} pseudo modality stores its embeddings under \code{embeddings}, where a
+real \code{ScCache} uses \code{other_embeddings}, hence the flag.
 }
 \keyword{internal}

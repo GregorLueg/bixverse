@@ -50,7 +50,7 @@ new_sc_cache <- function() {
     pca_singular_vals = NULL,
     other_embeddings = list(),
     knn = NULL,
-    snn_graph = NULL,
+    connectivities = NULL,
     magic = NULL,
     residual_fit = NULL
   )
@@ -185,8 +185,8 @@ set_embedding.ScCache <- function(x, embd, name, ...) {
   checkmate::qassert(name, "S1")
   # `get_embedding()` treats "pca" as a virtual name that wins over
   # `other_embeddings`, so an embedding stored under it could never be read
-  # back. "knn"/"snn" would collide with the artefact labels used by the
-  # provenance stamps.
+  # back. "knn"/"connectivities" would collide with the artefact labels used
+  # by the provenance stamps.
   if (name %in% SC_RESERVED_EMBEDDINGS) {
     stop(sprintf(
       "'%s' is a reserved embedding name. Choose a different one.",
@@ -212,15 +212,15 @@ set_knn.ScCache <- function(x, knn, ...) {
   return(x)
 }
 
-#' @rdname set_snn_graph
+#' @rdname set_connectivities
 #'
 #' @export
-set_snn_graph.ScCache <- function(x, snn_graph, ...) {
+set_connectivities.ScCache <- function(x, connectivities, ...) {
   # checks
   checkmate::assertClass(x, "ScCache")
-  checkmate::assertClass(snn_graph, "igraph")
+  checkmate::assertClass(connectivities, "igraph")
 
-  x[["snn_graph"]] <- snn_graph
+  x[["connectivities"]] <- connectivities
 
   return(x)
 }
@@ -237,14 +237,14 @@ remove_knn.ScCache <- function(x, ...) {
   return(x)
 }
 
-#' @rdname remove_snn_graph
+#' @rdname remove_connectivities
 #'
 #' @export
-remove_snn_graph.ScCache <- function(x, ...) {
+remove_connectivities.ScCache <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "ScCache")
 
-  x[["snn_graph"]] <- NULL
+  x[["connectivities"]] <- NULL
 
   return(x)
 }
@@ -583,14 +583,14 @@ get_knn_obj.ScCache <- function(x, ...) {
   x[["knn"]]
 }
 
-#' @rdname get_snn_graph
+#' @rdname get_connectivities
 #'
 #' @export
-get_snn_graph.ScCache <- function(x, ...) {
+get_connectivities.ScCache <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "ScCache")
 
-  return(x[["snn_graph"]])
+  return(x[["connectivities"]])
 }
 
 #' @rdname get_magic
@@ -643,7 +643,7 @@ get_residual_fit.ScCache <- function(x, ...) {
 #'   \item{dir_data}{Path to the directory in which the data will be saved on
 #'   disk.}
 #'   \item{sc_cache}{Class with cached data. Contains less memory-heavy objects
-#'   such as embeddings, kNN information or sNN graphs.}
+#'   such as embeddings, kNN information or neighbour graphs.}
 #'   \item{sc_map}{Class containing various mapping information such as HVG
 #'   indices, cells to keep, etc.}
 #'   \item{dims}{Dimensions of the original data.}
@@ -1625,12 +1625,12 @@ S7::method(get_knn_obj, SingleCells) <- function(
   return(.drop_stamp(res))
 }
 
-#' @name get_snn_graph.SingleCells
+#' @name get_connectivities.SingleCells
 #'
-#' @rdname get_snn_graph
+#' @rdname get_connectivities
 #'
-#' @method get_snn_graph SingleCells
-S7::method(get_snn_graph, SingleCells) <- function(
+#' @method get_connectivities SingleCells
+S7::method(get_connectivities, SingleCells) <- function(
   x,
   ...
 ) {
@@ -1638,11 +1638,11 @@ S7::method(get_snn_graph, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
-  res <- get_snn_graph(
+  res <- get_connectivities(
     x = S7::prop(x, "sc_cache")
   )
 
-  .warn_sc_state(x, artefact = "snn")
+  .warn_sc_state(x, artefact = "connectivities")
 
   return(.drop_stamp(res))
 }
@@ -2307,27 +2307,27 @@ S7::method(set_knn, SingleCells) <- function(
 }
 
 
-#' @name set_snn_graph.SingleCells
+#' @name set_connectivities.SingleCells
 #'
-#' @rdname set_snn_graph
+#' @rdname set_connectivities
 #'
-#' @method set_snn_graph SingleCells
-S7::method(set_snn_graph, SingleCells) <- function(
+#' @method set_connectivities SingleCells
+S7::method(set_connectivities, SingleCells) <- function(
   x,
-  snn_graph,
+  connectivities,
   ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
-  checkmate::assertClass(snn_graph, "igraph")
+  checkmate::assertClass(connectivities, "igraph")
 
   # add the data using the S3 method
-  S7::prop(x, "sc_cache") <- set_snn_graph(
+  S7::prop(x, "sc_cache") <- set_connectivities(
     x = S7::prop(x, "sc_cache"),
-    snn_graph = snn_graph
+    connectivities = connectivities
   )
 
-  x <- .stamp_artefact(x, artefact = "snn", from = .stamp_from(...))
+  x <- .stamp_artefact(x, artefact = "connectivities", from = .stamp_from(...))
 
   return(x)
 }
@@ -2353,12 +2353,12 @@ S7::method(remove_knn, SingleCells) <- function(
 }
 
 
-#' @name remove_snn_graph.SingleCells
+#' @name remove_connectivities.SingleCells
 #'
-#' @rdname remove_snn_graph
+#' @rdname remove_connectivities
 #'
-#' @method remove_snn_graph SingleCells
-S7::method(remove_snn_graph, SingleCells) <- function(
+#' @method remove_connectivities SingleCells
+S7::method(remove_connectivities, SingleCells) <- function(
   x,
   ...
 ) {
@@ -2366,7 +2366,7 @@ S7::method(remove_snn_graph, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
-  S7::prop(x, "sc_cache") <- remove_snn_graph(
+  S7::prop(x, "sc_cache") <- remove_connectivities(
     x = S7::prop(x, "sc_cache")
   )
 
@@ -2477,7 +2477,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
   hvg_calculated <- !is.null(sc_map[["hvg_gene_indices"]])
   pca_calculated <- !is.null(sc_cache[["pca_factors"]])
   knn_generated <- !is.null(sc_cache[["knn"]])
-  snn_generated <- !is.null(sc_cache[["snn_graph"]])
+  graph_generated <- !is.null(sc_cache[["connectivities"]])
 
   other_embeddings <- names(sc_cache[["other_embeddings"]])
   other_embeddings_str <- if (length(other_embeddings) > 0) {
@@ -2513,7 +2513,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
     sprintf("  PCA calculated: %s\n", pca_calculated),
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
     sprintf("  KNN generated: %s\n", knn_generated),
-    sprintf("  SNN generated: %s\n", snn_generated),
+    sprintf("  Graph generated: %s\n", graph_generated),
     sprintf("  MAGIC imputed: %s\n", magic_str),
     sprintf("  Residual model: %s\n", residual_str),
     sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),

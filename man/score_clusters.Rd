@@ -37,7 +37,7 @@ scores <- calc_sc_type_scores(
 clusters <- fast_cluster_sc(
   sc,
   resolutions = 1.0,
-  n_centroids = 30L,
+  fc_params = params_sc_fast_cluster(n_centroids = 30L),
   .verbose = FALSE
 )
 head(score_clusters(scores, cluster_labels = get_data(clusters)$res_1))

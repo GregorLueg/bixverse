@@ -1,8 +1,8 @@
-use bixverse_rs::core::math::matrix_helpers::scale_matrix_col;
-use bixverse_rs::core::math::pca_missing::*;
-use bixverse_rs::core::math::pca_svd::*;
-use bixverse_rs::prelude::*;
-use bixverse_rs::utils::matrix_utils::nested_vector_to_faer_mat;
+use bixverse_r::core::math::matrix_helpers::scale_matrix_col;
+use bixverse_r::core::math::pca_missing::*;
+use bixverse_r::core::math::pca_svd::*;
+use bixverse_r::prelude::*;
+use bixverse_r::utils::matrix_utils::nested_vector_to_faer_mat;
 use extendr_api::prelude::*;
 use faer::Mat;
 
@@ -57,7 +57,7 @@ fn rs_prcomp(
     let nrow = x_scaled.nrows() as f64;
     let svd_res = x_scaled
         .thin_svd()
-        .map_err(|e| BixverseErrors::FaerSvdError(format!("{e:?}")))
+        .map_err(|e| CoreErrors::FaerSvdError(format!("{e:?}")))
         .to_extendr()?;
     let scores = x_scaled * svd_res.V();
     let n = top_pcs.unwrap_or(scores.ncols());

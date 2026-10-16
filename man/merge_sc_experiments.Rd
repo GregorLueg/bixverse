@@ -63,7 +63,7 @@ surviving raw counts using \code{sc_qc_param$target_size}.
 
 Obs columns are intersected across inputs. The result obs gains an \code{exp_id}
 column. Inputs that already have an \code{exp_id} column are rejected. The
-\code{sc_cache} and \code{sc_map} of the target are populated fresh; any PCA, kNN, sNN
+\code{sc_cache} and \code{sc_map} of the target are populated fresh; any PCA, kNN, neighbour graph
 or HVG state on the inputs is not carried over and must be re-run.
 }
 \examples{

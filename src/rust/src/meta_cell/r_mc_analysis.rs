@@ -1,27 +1,26 @@
 //! Analysis methods for meta cells specifically: SCENIC, AUCell, HotSpot,
 //! VISION, NMF and DIALOGUE.
 
-use bixverse_rs::core::math::stats::p_adjust_fdr;
-use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
-use bixverse_rs::methods::nmf_hals::HalsOpts;
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
-use bixverse_rs::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
-use bixverse_rs::single_cell::mc_analysis::hotspot_mc::*;
-use bixverse_rs::single_cell::mc_analysis::nebula_mc::nebula_metacells;
-use bixverse_rs::single_cell::mc_analysis::nmf_mc::*;
-use bixverse_rs::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
-use bixverse_rs::single_cell::mc_analysis::vision_mc::calculate_vision_metacells;
-use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::AucellParams;
-use bixverse_rs::single_cell::sc_analysis::dialogue::DialogueParams;
-use bixverse_rs::single_cell::sc_analysis::hotspot::{
+use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
+use bixverse_r::core::math::stats::p_adjust_fdr;
+use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
+use bixverse_r::methods::nmf_hals::HalsOpts;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
+use bixverse_r::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
+use bixverse_r::single_cell::mc_analysis::hotspot_mc::*;
+use bixverse_r::single_cell::mc_analysis::nebula_mc::nebula_metacells;
+use bixverse_r::single_cell::mc_analysis::nmf_mc::*;
+use bixverse_r::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
+use bixverse_r::single_cell::mc_analysis::vision_mc::calculate_vision_metacells;
+use bixverse_r::single_cell::sc_analysis::dge_pathway_scores::AucellParams;
+use bixverse_r::single_cell::sc_analysis::dialogue::DialogueParams;
+use bixverse_r::single_cell::sc_analysis::hotspot::{
     HotSpotGeneRes, HotSpotPairRes, HotSpotParams,
 };
-use bixverse_rs::single_cell::sc_analysis::nebula::NebulaScParams;
-use bixverse_rs::single_cell::sc_analysis::scenic::ScenicParams;
-use bixverse_rs::single_cell::sc_analysis::vision::{
-    calc_autocorr_with_clusters, r_list_to_sig_genes,
-};
+use bixverse_r::single_cell::sc_analysis::nebula::NebulaScParams;
+use bixverse_r::single_cell::sc_analysis::scenic::ScenicParams;
+use bixverse_r::single_cell::sc_analysis::vision::calc_autocorr_with_clusters;
 use extendr_api::*;
 use faer::{Mat, MatRef};
 
@@ -643,7 +642,7 @@ fn rs_nmf_single_mc(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_f32(sparse_data)?;
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let nmf_res = nmf_single_run_mc(
         sparse,
         k,
@@ -712,7 +711,7 @@ fn rs_nmf_multi_mc(
 ) -> Result<List> {
     // CHECK: same caveat as rs_nmf_single_mc on the f32 conversion.
     let sparse = mc_list_to_sparse_f32(sparse_data)?;
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let nmf_res = nmf_multiple_run_mc(
         sparse,
         k,
@@ -804,7 +803,7 @@ fn rs_nmf_consensus_mc(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_f32(sparse_data)?;
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
     let nmf_res = nmf_consensus_run_mc(
         sparse,
@@ -883,7 +882,7 @@ fn rs_nmf_k_sweep_mc(
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let k_range = k_range.r_int_convert();
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
     let sweep_res = nmf_k_sweep_run_mc(
         sparse,

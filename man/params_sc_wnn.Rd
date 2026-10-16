@@ -9,7 +9,6 @@ params_sc_wnn(
   knn_range = 200L,
   sigma_method = c("snn_farthest", "sigma_idx"),
   sigma_idx = 19L,
-  snn_type = c("full_connection", "limited"),
   s_nn = 20L,
   sd_scale = 1,
   kernel_power = 1,
@@ -29,10 +28,6 @@ input must contain at least this many neighbours. Defaults to \code{200L}.}
 
 \item{sigma_idx}{Integer. \code{"sigma_idx"} only: 0-based kNN index for
 bandwidth.e. \code{k_nn - 1}). Defaults to \code{19L}.}
-
-\item{snn_type}{String. sNN type. The limited version only considers edges
-that exist in the kNN. One of \code{c("full_connection", "limited")}. Defaults to
-\code{"full_connection"}.}
 
 \item{s_nn}{Integer. \code{"snn_farthest"} only: kNN size used to build the SNN
 graph. Defaults to \code{20L}.}
@@ -64,9 +59,6 @@ input must contain at least this many neighbours. Defaults to \code{200L}.
 \item sigma_method - String. Bandwidth method. One of \code{c("snn_farthest", "sigma_idx")}. Defaults to \code{"snn_farthest"}.
 \item sigma_idx - Integer. \code{"sigma_idx"} only: 0-based kNN index for
 bandwidth.e. \code{k_nn - 1}). Defaults to \code{19L}.
-\item snn_type - String. sNN type. The limited version only considers edges
-that exist in the kNN. One of \code{c("full_connection", "limited")}. Defaults to
-\code{"full_connection"}.
 \item s_nn - Integer. \code{"snn_farthest"} only: kNN size used to build the SNN
 graph. Defaults to \code{20L}.
 \item sd_scale - Numeric. Multiplier on sigma. Defaults to \code{1.0}.

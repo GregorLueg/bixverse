@@ -233,11 +233,12 @@ head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 ### Fast clustering
 
 In the case of large data sets there is an option to run an accelerated form
-of clustering. This runs first k-means clustering (with default `sqrt(N)` 
-cells), then kNN on the centroids, followed by Louvain (Leiden is not yet
-supported, but on the to-do list) across a set of resolutions. There is also an 
-option to run this across several seeds to check for stability of the 
-clustering. If you ran the grid search, the membership
+of clustering. This runs first k-means clustering (with default `sqrt(N)`
+centroids), then builds a graph on the centroids (a kNN graph, or the
+cell-mediated graph from Secuer), followed by Louvain or Leiden across a set of
+resolutions. See `params_sc_fast_cluster()` for the options. With
+`n_seeds > 1` every resolution is run once per seed to check the stability of
+the clustering. In that case, the membership
 
 ```{r}
 #| label: fast clustering
@@ -246,8 +247,7 @@ fast_cluster_res <- fast_cluster_sc(
   resolutions = c(5, 3, 2, 1.5, 1, 0.5),
   # also return the k-mean clustering
   return_kmeans = TRUE,
-  no_seeds = 25L,
-  grid_search = TRUE
+  n_seeds = 25L
 )
 
 fast_clusted_dt <- get_data(fast_cluster_res)

@@ -5,12 +5,12 @@
 //! bindings are handed the `SingleCellNearestNeighbour` list straight from R.
 //! Every cell index that crosses this boundary, in and out, is 0-indexed.
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_trajectory::gene_trends::{
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_trajectory::gene_trends::{
     compute_gene_trends, select_branch_cells, BranchSelectionParams, GeneTrendsParams,
 };
-use bixverse_rs::single_cell::sc_trajectory::paga::{run_paga, PagaResult};
-use bixverse_rs::single_cell::sc_trajectory::palantir::{run_palantir, PalantirParams};
+use bixverse_r::single_cell::sc_trajectory::paga::{run_paga, PagaResult};
+use bixverse_r::single_cell::sc_trajectory::palantir::{run_palantir, PalantirParams};
 use extendr_api::*;
 
 use crate::single_cell::utils::{knn_data_to_rust, knn_indices_processing};

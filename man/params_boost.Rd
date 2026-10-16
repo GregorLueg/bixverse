@@ -71,7 +71,7 @@ available elements. Defaults to \code{list(k = 0L)}.}
 \item{fast_cluster_params}{List. Optional overrides for the fast clustering
 parameters. Only relevant if \code{fast_cluster = TRUE}. See
 \code{\link[=params_fast_cluster_default]{params_fast_cluster_default()}} for available parameters: \code{km_type},
-\code{n_centroids}, \code{kmeans_iters} and \code{batch_size}. See
+\code{n_centroids}, \code{k_means_iter} and \code{batch_size}. See
 \code{\link[=params_fast_cluster_default]{params_fast_cluster_default()}} for the available elements. Defaults to
 \code{list()}.}
 }

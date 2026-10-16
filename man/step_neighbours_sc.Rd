@@ -24,19 +24,9 @@ use. If \code{NULL} all will be used.}
 on \code{SingleCellsMultiModal} class.}
 
 \item{neighbours_params}{List. Output of \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
-A list with the following items:
-\itemize{
-\item full_snn - Boolean. Shall the full shared nearest neighbour graph
-be generated that generates edges between all cells instead of between
-only neighbours.
-\item pruning - Numeric. Weights below this threshold will be set to 0 in
-the generation of the sNN graph.
-\item snn_similarity - String. One of \code{c("rank", "jaccard")}. Defines how
-the weight from the SNN graph is calculated. For details, please see
-\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
-\item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
-for available parameters and their defaults.
-}}
+Carries the graph parameters (see
+\code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}}) and the kNN parameters (see
+\code{\link[=params_knn_defaults]{params_knn_defaults()}}).}
 
 \item{seed}{Integer. For reproducibility.}
 

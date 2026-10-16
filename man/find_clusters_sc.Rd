@@ -2,7 +2,7 @@
 % Please edit documentation in R/base_generics_sc.R
 \name{find_clusters_sc}
 \alias{find_clusters_sc}
-\title{Graph-based clustering of cells on the sNN graph}
+\title{Graph-based clustering of cells on the neighbour graph}
 \usage{
 find_clusters_sc(
   object,
@@ -10,7 +10,8 @@ find_clusters_sc(
   res = 1,
   name = "leiden_clustering",
   modality = c("rna", "adt", "wnn"),
-  seed = 42L
+  seed = 42L,
+  ...
 )
 }
 \arguments{
@@ -28,18 +29,21 @@ find_clusters_sc(
 multi-modal versions with the added data.}
 
 \item{seed}{Integer. For reproducibility.}
+
+\item{...}{Further parameters for \code{\link[=leiden_clustering]{leiden_clustering()}}: \code{n_iterations},
+\code{beta}, \code{min_gain} and \code{local_moving}.}
 }
 \value{
 The object with added clustering in the obs table.
 }
 \description{
-This function will apply Leiden clustering on the sNN graph with the
+This function will apply Leiden or Louvain on the neighbour graph with the
 given resolution and add a column to the obs table. Runs in Rust via
 \code{\link[=leiden_clustering]{leiden_clustering()}}; the labels depend on \code{seed} only, \code{0} is the
 largest cluster.
 }
 \examples{
-# Leiden on the cached sNN graph
+# Leiden on the cached neighbour graph
 sc <- demo_single_cells()
 sc <- find_clusters_sc(sc, res = 1.0, name = "clusters")
 table(get_sc_obs(sc)$clusters)

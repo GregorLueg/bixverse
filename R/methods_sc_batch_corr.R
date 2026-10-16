@@ -1281,7 +1281,7 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
     warning("Prior kNN matrix found. Will be overwritten.")
   }
 
-  # hard tier: the kNN built here feeds the sNN and everything downstream
+  # hard tier: the kNN built here feeds the neighbour graph and everything downstream
   assert_sc_state(object, artefacts = embd_to_use)
 
   embd <- switch(embd_to_use, pca = get_pca_factors(object))
@@ -1372,13 +1372,17 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
     index1 = TRUE
   )
 
-  snn_graph <- igraph::graph_from_adjacency_matrix(
+  connectivities <- igraph::graph_from_adjacency_matrix(
     sparse_mat,
     mode = "max",
     weighted = TRUE
   )
 
-  object <- set_snn_graph(object, snn_graph = snn_graph, from = "knn")
+  object <- set_connectivities(
+    object,
+    connectivities = connectivities,
+    from = "knn"
+  )
 
   object
 }

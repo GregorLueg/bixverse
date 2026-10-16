@@ -20,7 +20,7 @@
 #'
 #' Obs columns are intersected across inputs. The result obs gains an `exp_id`
 #' column. Inputs that already have an `exp_id` column are rejected. The
-#' `sc_cache` and `sc_map` of the target are populated fresh; any PCA, kNN, sNN
+#' `sc_cache` and `sc_map` of the target are populated fresh; any PCA, kNN, neighbour graph
 #' or HVG state on the inputs is not carried over and must be re-run.
 #'
 #' @param target A freshly constructed `SingleCells` pointing at the output

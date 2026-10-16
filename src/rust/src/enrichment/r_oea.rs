@@ -1,6 +1,6 @@
-use bixverse_rs::enrichment::oae::*;
-use bixverse_rs::prelude::*;
-use bixverse_rs::utils::vec_utils::flatten_vector;
+use bixverse_r::enrichment::oae::*;
+use bixverse_r::prelude::*;
+use bixverse_r::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxBuildHasher;

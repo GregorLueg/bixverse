@@ -1,7 +1,8 @@
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::multi_modal::adt::h5_10x_adt_io::TenxDenseModality;
-use bixverse_rs::single_cell::multi_modal::adt::{dsb::*, h5_10x_adt_io::read_tenx_h5_modality};
-use bixverse_rs::single_cell::sc_data::h5_10x_io::parse_tenx_version;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_data::h5_10x_adt_io::{TenxDenseModality, read_tenx_h5_modality};
+use bixverse_r::single_cell::multi_modal::adt::dsb::*;
+use bixverse_r::mm_r_wrappers::dsb_params_from_r_list;
+use bixverse_r::single_cell::sc_data::h5_10x_io::parse_tenx_version;
 use extendr_api::Nullable::Null;
 use extendr_api::*;
 
@@ -226,7 +227,7 @@ fn rs_dsb(
     verbose: usize,
 ) -> Result<List> {
     let raw_counts = r_matrix_to_faer_fp32(&raw_counts);
-    let dsb_params = DsbParams::from_r_list(dsb_params, isotype_indices)?;
+    let dsb_params = dsb_params_from_r_list(dsb_params, isotype_indices)?;
 
     let background_counts_provided = background_counts != Null;
 

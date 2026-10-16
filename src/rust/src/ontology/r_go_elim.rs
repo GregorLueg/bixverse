@@ -1,8 +1,8 @@
-use bixverse_rs::enrichment::enrichment_r_wrapper::prepare_gsea_params;
-use bixverse_rs::enrichment::gsea::*;
-use bixverse_rs::ontology::go_elim::*;
-use bixverse_rs::ontology::ontology_r_wrappers::prepare_go_data;
-use bixverse_rs::prelude::*;
+use bixverse_r::enrichment_r_wrapper::prepare_gsea_params;
+use bixverse_r::enrichment::gsea::*;
+use bixverse_r::ontology::go_elim::*;
+use bixverse_r::ontology_r_wrappers::prepare_go_data;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};

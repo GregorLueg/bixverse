@@ -1,7 +1,7 @@
-use bixverse_rs::core::math::matrix_helpers::rank_matrix_col;
-use bixverse_rs::enrichment::enrichment_r_wrapper::get_gsva_gs_indices;
-use bixverse_rs::enrichment::singscore::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::core::math::matrix_helpers::rank_matrix_col;
+use bixverse_r::enrichment_r_wrapper::get_gsva_gs_indices;
+use bixverse_r::enrichment::singscore::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////

@@ -2,20 +2,16 @@
 % Please edit documentation in R/methods_sc_processing.R
 \name{fast_cluster_sc}
 \alias{fast_cluster_sc}
-\title{Run fast Louvain clustering on a SingleCells object}
+\title{Run fast clustering on a SingleCells object}
 \usage{
 fast_cluster_sc(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   resolutions = c(2, 1, 0.5),
-  km_type = c("kmeans", "minibatch"),
-  n_centroids = NULL,
   fc_params = params_sc_fast_cluster(),
-  snn = TRUE,
+  n_seeds = 1L,
   return_kmeans = FALSE,
-  grid_search = FALSE,
-  no_seeds = 10L,
   seed = 42L,
   .verbose = TRUE
 )
@@ -27,25 +23,14 @@ fast_cluster_sc(
 
 \item{no_embd_to_use}{Optional integer. Number of dimensions to keep.}
 
-\item{resolutions}{Numeric vector. Louvain resolutions.}
-
-\item{km_type}{String. One of \code{c("kmeans", "minibatch")}. The former runs
-standard k-means, the latter a mini-batch version that can be useful for
-large data sets.}
-
-\item{n_centroids}{Optional integer. Number of k-means centroids. Defaults
-to \code{sqrt(n_cells)} Rust-side if \code{NULL}.}
+\item{resolutions}{Numeric vector. Modularity resolutions.}
 
 \item{fc_params}{List. Output of \code{\link[=params_sc_fast_cluster]{params_sc_fast_cluster()}}.}
 
-\item{snn}{Boolean. Convert kNN to sNN.}
+\item{n_seeds}{Integer. Number of seeds per resolution. \code{1L} runs a single
+pass without stability statistics.}
 
 \item{return_kmeans}{Boolean. Return k-means assignments and centroids.}
-
-\item{grid_search}{Boolean. Run multi-seed grid version.}
-
-\item{no_seeds}{Integer. Number of additional seeds (only used when
-\code{grid_search = TRUE}).}
 
 \item{seed}{Integer. Reproducibility.}
 
@@ -58,7 +43,9 @@ verbosity.}
 \describe{
 \item{memberships}{data.table with \code{cell_idx} and one column per
 resolution (\verb{res_<value>}).}
-\item{stats}{data.table of grid statistics, or \code{NULL}.}
+\item{stats}{data.table with \code{resolution}, \code{mean_ari}, \code{median_ari},
+\code{mean_conductance}, \code{median_conductance} and \code{mean_n_comms}, or \code{NULL}
+for \code{n_seeds = 1L}.}
 \item{k_means_cluster}{Integer vector of k-means assignments, or \code{NULL}.}
 \item{centroids}{Numeric matrix of centroids, or \code{NULL}.}
 \item{resolutions}{Resolutions used.}
@@ -66,9 +53,13 @@ resolution (\verb{res_<value>}).}
 with \code{cell_indices} stored as an attribute (0-indexed).
 }
 \description{
-Runs k-means on the chosen embedding, builds a kNN graph on the centroids,
-applies Louvain clustering and propagates memberships back to the cells.
-Optionally runs a grid over multiple seeds and returns stability statistics.
+Coarsens the cells with k-means on the chosen embedding, builds a graph over
+the centroids (a kNN graph with one of the symmetrisations of
+\code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}}, or the cell-mediated graph) and runs Louvain
+or Leiden on it. The community of each centroid is handed back to its cells.
+With \code{n_seeds > 1}, every resolution is run once per seed, the labels come
+from the seed with the lowest mean conductance and the stability across the
+seeds is returned.
 }
 \examples{
 # k-means centroids, Louvain on top, memberships back to the cells
@@ -76,10 +67,13 @@ sc <- demo_single_cells()
 res <- fast_cluster_sc(
   sc,
   resolutions = c(1.0, 0.5),
-  n_centroids = 30L,
+  fc_params = params_sc_fast_cluster(n_centroids = 30L),
   .verbose = FALSE
 )
 head(get_data(res))
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
+\references{
+Wei, et al., PLoS Comput Biol, 2022.
 }

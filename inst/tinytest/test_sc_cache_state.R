@@ -87,7 +87,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = .stamp_row(status, "snn")$from[[1]],
+  current = .stamp_row(status, "connectivities")$from[[1]],
   target = knn_id,
   info = "the snn records the knn it was built on"
 )
@@ -110,7 +110,7 @@ expect_null(
 )
 
 expect_null(
-  current = attr(get_snn_graph(sc_object), "bixverse_stamp"),
+  current = attr(get_connectivities(sc_object), "bixverse_stamp"),
   info = "the snn getter does not leak the stamp"
 )
 
@@ -163,12 +163,12 @@ expect_true(
 )
 
 expect_true(
-  current = .stamp_row(repaired_status, "snn")$stale,
+  current = .stamp_row(repaired_status, "connectivities")$stale,
   info = "the snn is stale through its upstream knn, not directly"
 )
 
 expect_equal(
-  current = .stamp_row(repaired_status, "snn")$reason,
+  current = .stamp_row(repaired_status, "connectivities")$reason,
   target = "the cell set changed since it was computed",
   info = "the snn fails on its own cell hash before the chain is consulted"
 )
@@ -193,7 +193,7 @@ expect_false(
 )
 
 expect_equal(
-  current = .stamp_row(final_status, "snn")$from[[1]],
+  current = .stamp_row(final_status, "connectivities")$from[[1]],
   target = .stamp_row(final_status, "knn")$id,
   info = "the snn points at the new knn id, not the old one"
 )
@@ -219,7 +219,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = .stamp_row(repca_status, "snn")$reason,
+  current = .stamp_row(repca_status, "connectivities")$reason,
   target = "its upstream `rna:knn` is stale",
   info = "the snn is stale transitively, through an otherwise valid knn"
 )
@@ -264,7 +264,9 @@ sc_legacy <- sc_object
 legacy_cache <- S7::prop(sc_legacy, "sc_cache")
 legacy_cache$pca_factors <- bixverse:::.drop_stamp(legacy_cache$pca_factors)
 legacy_cache$knn <- bixverse:::.drop_stamp(legacy_cache$knn)
-legacy_cache$snn_graph <- bixverse:::.drop_stamp(legacy_cache$snn_graph)
+legacy_cache$connectivities <- bixverse:::.drop_stamp(
+  legacy_cache$connectivities
+)
 legacy_cache$other_embeddings$umap <- bixverse:::.drop_stamp(
   legacy_cache$other_embeddings$umap
 )
@@ -310,7 +312,7 @@ expect_true(
 )
 
 expect_true(
-  current = .stamp_row(removed_status, "snn")$stale,
+  current = .stamp_row(removed_status, "connectivities")$stale,
   info = "the snn goes stale once the knn it derives from is gone"
 )
 

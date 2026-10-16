@@ -203,7 +203,7 @@ params_blitzgsea <- function(
 #' @param fast_cluster_params List. Optional overrides for the fast clustering
 #' parameters. Only relevant if `fast_cluster = TRUE`. See
 #' [params_fast_cluster_default()] for available parameters: `km_type`,
-#' `n_centroids`, `kmeans_iters` and `batch_size`. See
+#' `n_centroids`, `k_means_iter` and `batch_size`. See
 #' [params_fast_cluster_default()] for the available elements. Defaults to
 #' `list()`.
 #'
@@ -1118,7 +1118,7 @@ params_edger_ql <- function(
 #'  `c("minibatch", "standard")`. Defaults to `"minibatch"`.
 #'  \item n_centroids - Integer or `NULL`. The number of centroids to use.
 #'  `NULL` uses `sqrt(N_cells) * 4` centroids. Defaults to `NULL`.
-#'  \item kmeans_iters - Integer. Number of maximum k-means iterations. Defaults
+#'  \item k_means_iter - Integer. Number of maximum k-means iterations. Defaults
 #'  to `100L`.
 #'  \item batch_size - Integer. Max batch size, capped at `N_cells / 2`
 #'  depending on the data set. Defaults to `4098L`.
@@ -1129,7 +1129,7 @@ params_fast_cluster_default <- function() {
   list(
     km_type = "minibatch",
     n_centroids = NULL,
-    kmeans_iters = 100L,
+    k_means_iter = 100L,
     batch_size = 4098L
   )
 }
@@ -1560,6 +1560,60 @@ params_knn_defaults <- function() {
     ef_search = 100L,
     n_list = NULL,
     n_probe = NULL
+  )
+}
+
+#' Helper function to generate the kNN graph defaults
+#'
+#' @description Controls how a kNN is turned into the undirected, weighted graph
+#' that the clustering runs on. `"snn"` is the shared nearest neighbour graph of
+#' bluster/Seurat, `"umap"` the fuzzy simplicial set ScanPy builds (its
+#' `obsp/connectivities`) and `"knn"` the plain kNN union. Each method only
+#' reads its own parameters.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item knn_sym - String. How to symmetrise the kNN into a graph. One of
+#'  `c("snn", "umap", "knn")`. Defaults to `"snn"`.
+#'  \item snn_similarity - String. `"snn"` only. `"jaccard"` weighs an edge by
+#'  the Jaccard index of the two (self-inclusive) neighbour sets. `"rank"` takes
+#'  the shared neighbour with the lowest combined rank, so closer shared
+#'  neighbours give heavier edges. Both are scaled to `[0, 1]`. One of
+#'  `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+#'  \item pruning - Numeric. `"snn"` only. Edges below this weight are dropped.
+#'  For the Jaccard weight a threshold `p` keeps pairs that share at least a
+#'  fraction `2p / (1 + p)` of their (self-inclusive) neighbourhoods, rounded up
+#'  to whole cells, so the same value means the same thing at any `k`. The
+#'  default asks for about 12%, i.e. 2 of 16 shared cells at `k = 15`, in line
+#'  with Seurat's `1/15`. Avoid a threshold that equals one of the discrete
+#'  weights exactly, or float rounding decides whether the edge survives.
+#'  Defaults to `0.0625`.
+#'  \item rescue - Boolean. `"snn"` only. Reconnect the small components that
+#'  pruning cuts off via their strongest sNN edge, so they do not turn up as
+#'  tiny clusters. Defaults to `TRUE`.
+#'  \item local_connectivity - Numeric. `"umap"` only. Number of nearest
+#'  neighbours assumed to be fully connected, as in umap-learn. Defaults to
+#'  `1.0`.
+#'  \item mix_ratio - Numeric. `"umap"` only. `1` is the fuzzy union of the
+#'  directed kNN memberships, `0` the fuzzy intersection (umap-learn's
+#'  `set_op_mix_ratio`). Defaults to `1.0`.
+#'  \item binary - Boolean. `"knn"` only. If `TRUE`, every edge weighs 1.
+#'  Otherwise mutual neighbours weigh 2 and one-sided ones 1. Defaults to
+#'  `FALSE`.
+#' }
+#'
+#' @references Xu & Su, Bioinformatics, 2015; McInnes, et al., arXiv, 2018.
+#'
+#' @export
+params_knn_graph_defaults <- function() {
+  list(
+    knn_sym = "snn",
+    snn_similarity = "jaccard",
+    pruning = 0.0625,
+    rescue = TRUE,
+    local_connectivity = 1.0,
+    mix_ratio = 1.0,
+    binary = FALSE
   )
 }
 
@@ -3346,134 +3400,184 @@ params_sc_empty_droplets <- function(
 
 #' Fast single cell clustering parameters
 #'
-#' @param kmeans_iters Integer. Number of iterations for k-means clustering.
-#' Defaults to `100L`.
-#' @param batch_size Integer. Batch size for mini batch k-means clustering.
-#' Defaults to `4096L`.
-#' @param drift_threshold Numeric. The drift for the mini batch k-means
-#' clustering. If the centroid drift is below this, the mini batch k-means
-#' terminates. Defaults to `1e-04`.
-#' @param lr_alpha Numeric. Learning rate alpha parameter for mini batch
-#' k-means. Defaults to `1.0`.
-#' @param full_snn Boolean. Shall the full shared nearest neighbour graph be
-#' generated that generates edges between all cells instead of between only
-#' neighbours. Defaults to `FALSE`.
-#' @param pruning Numeric or `NULL`. Weights below this threshold will be set to
-#' 0 in the generation of the sNN graph. A node that loses every edge keeps its
-#' strongest kNN edge. If not provided, defaults to `1 / ceil(k * 0.8)`.
-#' Defaults to `NULL`.
-#' @param snn_similarity String. The Jaccard similarity calculates the Jaccard
-#' between the neighbours, whereas the rank method calculates edge weights based
-#' on the ranking of shared neighbours. For the rank method, the weight is
-#' determined by finding the shared neighbour with the lowest combined rank
-#' across both cells, where lower-ranked (closer) shared neighbours result in
-#' higher edge weights Both methods produce weights normalised to the range `[0,
-#' 1]`. One of `c("jaccard", "rank")`. Defaults to `"jaccard"`.
-#' @param louvain_iters Integer. Number of iterations for Louvain clustering.
-#' Defaults to `10L`.
+#' @description Fast clustering coarsens the cells with k-means, builds a graph
+#' over the centroids and runs Louvain or Leiden on it. The community of each
+#' centroid is handed back to its cells.
+#'
+#' @param n_centroids Integer or `NULL`. Number of k-means centroids. If `NULL`,
+#' defaults to `floor(sqrt(n_cells))`. Defaults to `NULL`.
+#' @param km_type String. Which k-means to run for the coarsening. One of
+#' `c("standard", "minibatch")`. Defaults to `"standard"`.
+#' @param k_means_iter Integer. Number of k-means iterations. Defaults to
+#' `100L`.
+#' @param batch_size Integer. `km_type = "minibatch"` only. Batch size. Defaults
+#' to `4096L`.
+#' @param drift_threshold Numeric. `km_type = "minibatch"` only. The mini batch
+#' k-means stops once the centroid drift falls below this. Defaults to `1e-04`.
+#' @param lr_alpha Numeric. `km_type = "minibatch"` only. Learning rate alpha.
+#' Defaults to `1.0`.
+#' @param dist String. Distance for the k-means and the centroid graph. One of
+#' `c("euclidean", "cosine")`. Defaults to `"euclidean"`.
 #' @param cell_mediated Boolean. Shall the cell-mediated centroid graph from
-#' Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
-#' then linked by the cells that sit near both, so two centroids that are close
-#' in space but have no cells between them stay apart. If `TRUE`, `snn`,
-#' `full_snn`, `pruning` and `snn_similarity` are ignored. See Wei, et al., PLoS
-#' Comput Biol, 2022. Defaults to `FALSE`.
+#' Secuer be built instead of the kNN graph on the centroids. Centroids are then
+#' linked by the cells that sit near both, so two centroids that are close in
+#' space but have no cells between them stay apart. If `TRUE`, `centroid_k` and
+#' `centroid_graph` are ignored. Defaults to `FALSE`.
 #' @param n_anchors Integer. Number of nearest centroids each cell links to in
 #' the cell-mediated graph. Only used if `cell_mediated = TRUE`. Defaults to
 #' `5L`.
-#' @param knn List. Optional overrides for kNN parameters. See
-#' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. Sets the default `k = 5L`. See
-#' [params_knn_defaults()] for the available elements. Defaults to `list(k =
-#' 5L)`.
+#' @param centroid_k Integer. Neighbours per centroid in the exact centroid kNN.
+#' Only used if `cell_mediated = FALSE`. Defaults to `15L`.
+#' @param centroid_graph List. Optional overrides for how the centroid kNN is
+#' turned into a graph. See [bixverse::params_knn_graph_defaults()]. Only used
+#' if `cell_mediated = FALSE`. See [params_knn_graph_defaults()] for the
+#' available elements. Defaults to `list()`.
+#' @param algorithm String. Community detection on the centroid graph. One of
+#' `c("louvain", "leiden")`. Defaults to `"louvain"`.
+#' @param n_iterations Integer or `NULL`. Number of iterations of the community
+#' detection. A negative value iterates until stable. If `NULL`, `2L` for
+#' Louvain and `5L` for Leiden, which gave the best modularity across synthetic
+#' graphs. Defaults to `NULL`.
+#' @param beta Numeric. Leiden only. Randomness of the refinement step. Defaults
+#' to `0.01`.
+#' @param min_gain Numeric. With a negative `n_iterations`, also stop once an
+#' iteration gains no more than this in modularity. Defaults to `0.0`.
+#' @param local_moving String. `"queue"` is Traag's sequential queue.
+#' `"coloured"` moves the nodes of one colour class in parallel, which only
+#' kicks in on larger levels of the graph. One of `c("queue", "coloured")`.
+#' Defaults to `"queue"`.
+#' @param multi_level Boolean. Shall the communities be aggregated and refined
+#' in levels. Defaults to `TRUE`.
+#' @param max_evals Integer. Cap on the node evaluations per local moving phase,
+#' in units of the number of nodes. Defaults to `10L`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item kmeans_iters - Integer. Number of iterations for k-means clustering.
-#'  Defaults to `100L`.
-#'  \item batch_size - Integer. Batch size for mini batch k-means clustering.
+#'  \item n_centroids - Integer or `NULL`. Number of k-means centroids. If
+#'  `NULL`, defaults to `floor(sqrt(n_cells))`. Defaults to `NULL`.
+#'  \item km_type - String. Which k-means to run for the coarsening. One of
+#'  `c("standard", "minibatch")`. Defaults to `"standard"`.
+#'  \item k_means_iter - Integer. Number of k-means iterations. Defaults to
+#'  `100L`.
+#'  \item batch_size - Integer. `km_type = "minibatch"` only. Batch size.
 #'  Defaults to `4096L`.
-#'  \item drift_threshold - Numeric. The drift for the mini batch k-means
-#'  clustering. If the centroid drift is below this, the mini batch k-means
-#'  terminates. Defaults to `1e-04`.
-#'  \item lr_alpha - Numeric. Learning rate alpha parameter for mini batch
-#'  k-means. Defaults to `1.0`.
-#'  \item louvain_iters - Integer. Number of iterations for Louvain clustering.
-#'  Defaults to `10L`.
-#'  \item full_snn - Boolean. Shall the full shared nearest neighbour graph be
-#'  generated that generates edges between all cells instead of between only
-#'  neighbours. Defaults to `FALSE`.
-#'  \item pruning - Numeric or `NULL`. Weights below this threshold will be set
-#'  to 0 in the generation of the sNN graph. A node that loses every edge keeps
-#'  its strongest kNN edge. If not provided, defaults to `1 / ceil(k * 0.8)`.
-#'  Defaults to `NULL`.
-#'  \item snn_similarity - String. The Jaccard similarity calculates the Jaccard
-#'  between the neighbours, whereas the rank method calculates edge weights
-#'  based on the ranking of shared neighbours. For the rank method, the weight
-#'  is determined by finding the shared neighbour with the lowest combined rank
-#'  across both cells, where lower-ranked (closer) shared neighbours result in
-#'  higher edge weights Both methods produce weights normalised to the range
-#'  `[0, 1]`. One of `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+#'  \item drift_threshold - Numeric. `km_type = "minibatch"` only. The mini
+#'  batch k-means stops once the centroid drift falls below this. Defaults to
+#'  `1e-04`.
+#'  \item lr_alpha - Numeric. `km_type = "minibatch"` only. Learning rate alpha.
+#'  Defaults to `1.0`.
+#'  \item dist - String. Distance for the k-means and the centroid graph. One of
+#'  `c("euclidean", "cosine")`. Defaults to `"euclidean"`.
 #'  \item cell_mediated - Boolean. Shall the cell-mediated centroid graph from
-#'  Secuer be built instead of the kNN/sNN graph on the centroids. Centroids are
+#'  Secuer be built instead of the kNN graph on the centroids. Centroids are
 #'  then linked by the cells that sit near both, so two centroids that are close
-#'  in space but have no cells between them stay apart. If `TRUE`, `snn`,
-#'  `full_snn`, `pruning` and `snn_similarity` are ignored. See Wei, et al.,
-#'  PLoS Comput Biol, 2022. Defaults to `FALSE`.
+#'  in space but have no cells between them stay apart. If `TRUE`, `centroid_k`
+#'  and `centroid_graph` are ignored. Defaults to `FALSE`.
 #'  \item n_anchors - Integer. Number of nearest centroids each cell links to in
 #'  the cell-mediated graph. Only used if `cell_mediated = TRUE`. Defaults to
 #'  `5L`.
-#'  \item The elements of [params_knn_defaults()], overridden by `knn`, spliced
-#'  in at this position.
+#'  \item centroid_k - Integer. Neighbours per centroid in the exact centroid
+#'  kNN. Only used if `cell_mediated = FALSE`. Defaults to `15L`.
+#'  \item The elements of [params_knn_graph_defaults()], overridden by
+#'  `centroid_graph`, spliced in at this position.
+#'  \item algorithm - String. Community detection on the centroid graph. One of
+#'  `c("louvain", "leiden")`. Defaults to `"louvain"`.
+#'  \item n_iterations - Integer or `NULL`. Number of iterations of the
+#'  community detection. A negative value iterates until stable. If `NULL`, `2L`
+#'  for Louvain and `5L` for Leiden, which gave the best modularity across
+#'  synthetic graphs. Defaults to `NULL`.
+#'  \item beta - Numeric. Leiden only. Randomness of the refinement step.
+#'  Defaults to `0.01`.
+#'  \item min_gain - Numeric. With a negative `n_iterations`, also stop once an
+#'  iteration gains no more than this in modularity. Defaults to `0.0`.
+#'  \item local_moving - String. `"queue"` is Traag's sequential queue.
+#'  `"coloured"` moves the nodes of one colour class in parallel, which only
+#'  kicks in on larger levels of the graph. One of `c("queue", "coloured")`.
+#'  Defaults to `"queue"`.
+#'  \item multi_level - Boolean. Shall the communities be aggregated and refined
+#'  in levels. Defaults to `TRUE`.
+#'  \item max_evals - Integer. Cap on the node evaluations per local moving
+#'  phase, in units of the number of nodes. Defaults to `10L`.
 #' }
+#'
+#' @references Wei, et al., PLoS Comput Biol, 2022.
 #'
 #' @export
 params_sc_fast_cluster <- function(
-  kmeans_iters = 100L,
+  n_centroids = NULL,
+  km_type = c("standard", "minibatch"),
+  k_means_iter = 100L,
   batch_size = 4096L,
   drift_threshold = 1e-04,
   lr_alpha = 1.0,
-  full_snn = FALSE,
-  pruning = NULL,
-  snn_similarity = c("jaccard", "rank"),
-  louvain_iters = 10L,
+  dist = c("euclidean", "cosine"),
   cell_mediated = FALSE,
   n_anchors = 5L,
-  knn = list(k = 5L)
+  centroid_k = 15L,
+  centroid_graph = list(),
+  algorithm = c("louvain", "leiden"),
+  n_iterations = NULL,
+  beta = 0.01,
+  min_gain = 0.0,
+  local_moving = c("queue", "coloured"),
+  multi_level = TRUE,
+  max_evals = 10L
 ) {
-  snn_similarity <- match.arg(snn_similarity)
+  km_type <- match.arg(km_type)
+  dist <- match.arg(dist)
+  algorithm <- match.arg(algorithm)
+  local_moving <- match.arg(local_moving)
 
   # Checks
-  checkmate::qassert(kmeans_iters, "I1[1,)")
+  checkmate::qassert(n_centroids, c("I1[2,)", "0"))
+  checkmate::assertChoice(km_type, c("standard", "minibatch"))
+  checkmate::qassert(k_means_iter, "I1[1,)")
   checkmate::qassert(batch_size, "I1[1,)")
   checkmate::qassert(drift_threshold, "N1")
   checkmate::qassert(lr_alpha, "N1")
-  checkmate::qassert(full_snn, "B1")
-  checkmate::qassert(pruning, c("N1", "0"))
-  checkmate::assertChoice(snn_similarity, c("jaccard", "rank"))
-  checkmate::qassert(louvain_iters, "I1[1,)")
+  checkmate::assertChoice(dist, c("euclidean", "cosine"))
   checkmate::qassert(cell_mediated, "B1")
   checkmate::qassert(n_anchors, "I1[1,)")
+  checkmate::qassert(centroid_k, "I1[1,)")
+  checkmate::assertChoice(algorithm, c("louvain", "leiden"))
+  checkmate::qassert(n_iterations, c("I1", "0"))
+  checkmate::qassert(beta, "N1(0,)")
+  checkmate::qassert(min_gain, "N1[0,)")
+  checkmate::assertChoice(local_moving, c("queue", "coloured"))
+  checkmate::qassert(multi_level, "B1")
+  checkmate::qassert(max_evals, "I1[1,)")
 
   # Merge
-  knn <- utils::modifyList(params_knn_defaults(), knn, keep.null = TRUE)
+  centroid_graph <- utils::modifyList(
+    params_knn_graph_defaults(),
+    centroid_graph,
+    keep.null = TRUE
+  )
 
   # Return
   c(
     list(
-      kmeans_iters = kmeans_iters,
+      n_centroids = n_centroids,
+      km_type = km_type,
+      k_means_iter = k_means_iter,
       batch_size = batch_size,
       drift_threshold = drift_threshold,
       lr_alpha = lr_alpha,
-      louvain_iters = louvain_iters,
-      full_snn = full_snn,
-      pruning = pruning,
-      snn_similarity = snn_similarity,
+      dist = dist,
       cell_mediated = cell_mediated,
-      n_anchors = n_anchors
+      n_anchors = n_anchors,
+      centroid_k = centroid_k
     ),
-    knn
+    centroid_graph,
+    list(
+      algorithm = algorithm,
+      n_iterations = n_iterations,
+      beta = beta,
+      min_gain = min_gain,
+      local_moving = local_moving,
+      multi_level = multi_level,
+      max_evals = max_evals
+    )
   )
 }
 
@@ -4353,25 +4457,11 @@ params_sc_mtx_io <- function(
 
 #' Wrapper function for parameters for neighbour identification in single cell
 #'
-#' @param full_snn Boolean. Shall the full shared nearest neighbour graph be
-#' generated that generates edges between all cells instead of between only
-#' neighbours. Defaults to `TRUE`.
-#' @param pruning Numeric. Weights below this threshold will be set to 0 in the
-#' generation of the sNN graph. Seurat uses for example `1/15` with `k = 20`. As
-#' the default k is set to 15, we set it to `1/12`. Track this against `k`
-#' rather than leaving it: the threshold is a share of the neighbourhood, so the
-#' same value prunes far harder at a larger `k`. A cell that loses every edge to
-#' pruning keeps its strongest kNN edge, so it does not drop out as a one-cell
-#' cluster. Over-pruning still fails quietly otherwise: small groups of cells
-#' that only share neighbours with each other split off as tiny communities.
-#' Defaults to `0.08333333333333333`.
-#' @param snn_similarity String. The Jaccard similarity calculates the Jaccard
-#' between the neighbours, whereas the rank method calculates edge weights based
-#' on the ranking of shared neighbours. For the rank method, the weight is
-#' determined by finding the shared neighbour with the lowest combined rank
-#' across both cells, where lower-ranked (closer) shared neighbours result in
-#' higher edge weights Both methods produce weights normalised to the range `[0,
-#' 1]`. One of `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+#' @param graph List. Optional overrides for how the kNN is turned into the
+#' graph. See [bixverse::params_knn_graph_defaults()] for available parameters:
+#' `knn_sym`, `snn_similarity`, `pruning`, `rescue`, `local_connectivity`,
+#' `mix_ratio` and `binary`. See [params_knn_graph_defaults()] for the available
+#' elements. Defaults to `list()`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -4381,53 +4471,30 @@ params_sc_mtx_io <- function(
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item full_snn - Boolean. Shall the full shared nearest neighbour graph be
-#'  generated that generates edges between all cells instead of between only
-#'  neighbours. Defaults to `TRUE`.
-#'  \item pruning - Numeric. Weights below this threshold will be set to 0 in
-#'  the generation of the sNN graph. Seurat uses for example `1/15` with `k =
-#'  20`. As the default k is set to 15, we set it to `1/12`. Track this against
-#'  `k` rather than leaving it: the threshold is a share of the neighbourhood,
-#'  so the same value prunes far harder at a larger `k`. A cell that loses every
-#'  edge to pruning keeps its strongest kNN edge, so it does not drop out as a
-#'  one-cell cluster. Over-pruning still fails quietly otherwise: small groups
-#'  of cells that only share neighbours with each other split off as tiny
-#'  communities. Defaults to `0.08333333333333333`.
-#'  \item snn_similarity - String. The Jaccard similarity calculates the Jaccard
-#'  between the neighbours, whereas the rank method calculates edge weights
-#'  based on the ranking of shared neighbours. For the rank method, the weight
-#'  is determined by finding the shared neighbour with the lowest combined rank
-#'  across both cells, where lower-ranked (closer) shared neighbours result in
-#'  higher edge weights Both methods produce weights normalised to the range
-#'  `[0, 1]`. One of `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+#'  \item The elements of [params_knn_graph_defaults()], overridden by `graph`,
+#'  spliced in at this position.
 #'  \item The elements of [params_knn_defaults()], overridden by `knn`, spliced
 #'  in at this position.
 #' }
 #'
 #' @export
 params_sc_neighbours <- function(
-  full_snn = TRUE,
-  pruning = 0.08333333333333333,
-  snn_similarity = c("jaccard", "rank"),
+  graph = list(),
   knn = list()
 ) {
-  snn_similarity <- match.arg(snn_similarity)
-
   # Checks
-  checkmate::qassert(full_snn, "B1")
-  checkmate::qassert(pruning, "N1[0, 1]")
-  checkmate::assertChoice(snn_similarity, c("jaccard", "rank"))
 
   # Merge
+  graph <- utils::modifyList(
+    params_knn_graph_defaults(),
+    graph,
+    keep.null = TRUE
+  )
   knn <- utils::modifyList(params_knn_defaults(), knn, keep.null = TRUE)
 
   # Return
   c(
-    list(
-      full_snn = full_snn,
-      pruning = pruning,
-      snn_similarity = snn_similarity
-    ),
+    graph,
     knn
   )
 }
@@ -5536,9 +5603,6 @@ params_sc_vision <- function(
 #' "sigma_idx")`. Defaults to `"snn_farthest"`.
 #' @param sigma_idx Integer. `"sigma_idx"` only: 0-based kNN index for
 #' bandwidth.e. `k_nn - 1`). Defaults to `19L`.
-#' @param snn_type String. sNN type. The limited version only considers edges
-#' that exist in the kNN. One of `c("full_connection", "limited")`. Defaults to
-#' `"full_connection"`.
 #' @param s_nn Integer. `"snn_farthest"` only: kNN size used to build the SNN
 #' graph. Defaults to `20L`.
 #' @param sd_scale Numeric. Multiplier on sigma. Defaults to `1.0`.
@@ -5564,9 +5628,6 @@ params_sc_vision <- function(
 #'  "sigma_idx")`. Defaults to `"snn_farthest"`.
 #'  \item sigma_idx - Integer. `"sigma_idx"` only: 0-based kNN index for
 #'  bandwidth.e. `k_nn - 1`). Defaults to `19L`.
-#'  \item snn_type - String. sNN type. The limited version only considers edges
-#'  that exist in the kNN. One of `c("full_connection", "limited")`. Defaults to
-#'  `"full_connection"`.
 #'  \item s_nn - Integer. `"snn_farthest"` only: kNN size used to build the SNN
 #'  graph. Defaults to `20L`.
 #'  \item sd_scale - Numeric. Multiplier on sigma. Defaults to `1.0`.
@@ -5585,7 +5646,6 @@ params_sc_wnn <- function(
   knn_range = 200L,
   sigma_method = c("snn_farthest", "sigma_idx"),
   sigma_idx = 19L,
-  snn_type = c("full_connection", "limited"),
   s_nn = 20L,
   sd_scale = 1.0,
   kernel_power = 1.0,
@@ -5594,14 +5654,12 @@ params_sc_wnn <- function(
   knn = list()
 ) {
   sigma_method <- match.arg(sigma_method)
-  snn_type <- match.arg(snn_type)
 
   # Checks
   checkmate::qassert(k_nn, "I1[1,)")
   checkmate::qassert(knn_range, "I1[1,)")
   checkmate::assertChoice(sigma_method, c("snn_farthest", "sigma_idx"))
   checkmate::qassert(sigma_idx, "I1[0,)")
-  checkmate::assertChoice(snn_type, c("full_connection", "limited"))
   checkmate::qassert(s_nn, "I1[1,)")
   checkmate::qassert(sd_scale, "N1(0,)")
   checkmate::qassert(kernel_power, "N1(0,)")
@@ -5618,7 +5676,6 @@ params_sc_wnn <- function(
       knn_range = knn_range,
       sigma_method = sigma_method,
       sigma_idx = sigma_idx,
-      snn_type = snn_type,
       s_nn = s_nn,
       sd_scale = sd_scale,
       kernel_power = kernel_power,
@@ -5690,7 +5747,7 @@ params_sc_wnn <- function(
 #' @param fast_cluster_params List. Optional overrides for the fast clustering
 #' parameters. Only relevant if `fast_cluster = TRUE`. See
 #' [params_fast_cluster_default()] for available parameters: `km_type`,
-#' `n_centroids`, `kmeans_iters` and `batch_size`. See
+#' `n_centroids`, `k_means_iter` and `batch_size`. See
 #' [params_fast_cluster_default()] for the available elements. Defaults to
 #' `list()`.
 #'

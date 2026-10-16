@@ -34,7 +34,7 @@
 #'   \item{obs_table}{The meta cell observation table.}
 #'   \item{var_table}{The meta cell variable table.}
 #'   \item{data}{List with the raw and normalised counts.}
-#'   \item{sc_cache}{Class with embeddings, kNN/sNN graphs, etc. Shared with
+#'   \item{sc_cache}{Class with embeddings, kNN/neighbour graphs, etc. Shared with
 #'   [bixverse::SingleCells()].}
 #'   \item{original_assignment}{List with original assignment information.}
 #'   \item{dims}{Dimensions of the new meta cell matrices.}
@@ -179,7 +179,7 @@ S7::method(print, MetaCells) <- function(x, ...) {
   hvg_calculated <- !is.null(other_data[["hvg"]])
   pca_calculated <- !is.null(sc_cache[["pca_factors"]])
   knn_generated <- !is.null(sc_cache[["knn"]])
-  snn_generated <- !is.null(sc_cache[["snn_graph"]])
+  graph_generated <- !is.null(sc_cache[["connectivities"]])
   other_embeddings <- names(sc_cache[["other_embeddings"]])
   other_embeddings_str <- if (length(other_embeddings) > 0) {
     paste(other_embeddings, collapse = ", ")
@@ -206,7 +206,7 @@ S7::method(print, MetaCells) <- function(x, ...) {
     sprintf("  PCA calculated: %s\n", pca_calculated),
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
     sprintf("  KNN generated: %s\n", knn_generated),
-    sprintf("  SNN generated: %s\n", snn_generated),
+    sprintf("  Graph generated: %s\n", graph_generated),
     sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )
@@ -902,26 +902,26 @@ S7::method(set_knn, MetaCells) <- function(
   return(x)
 }
 
-#' @name set_snn_graph.MetaCells
+#' @name set_connectivities.MetaCells
 #'
-#' @rdname set_snn_graph
+#' @rdname set_connectivities
 #'
-#' @method set_snn_graph MetaCells
-S7::method(set_snn_graph, MetaCells) <- function(
+#' @method set_connectivities MetaCells
+S7::method(set_connectivities, MetaCells) <- function(
   x,
-  snn_graph,
+  connectivities,
   ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
-  checkmate::assertClass(snn_graph, "igraph")
+  checkmate::assertClass(connectivities, "igraph")
 
-  S7::prop(x, "sc_cache") <- set_snn_graph(
+  S7::prop(x, "sc_cache") <- set_connectivities(
     x = S7::prop(x, "sc_cache"),
-    snn_graph = snn_graph
+    connectivities = connectivities
   )
 
-  x <- .stamp_artefact(x, artefact = "snn", from = .stamp_from(...))
+  x <- .stamp_artefact(x, artefact = "connectivities", from = .stamp_from(...))
 
   return(x)
 }
@@ -945,19 +945,19 @@ S7::method(remove_knn, MetaCells) <- function(
   return(x)
 }
 
-#' @name remove_snn_graph.MetaCells
+#' @name remove_connectivities.MetaCells
 #'
-#' @rdname remove_snn_graph
+#' @rdname remove_connectivities
 #'
-#' @method remove_snn_graph MetaCells
-S7::method(remove_snn_graph, MetaCells) <- function(
+#' @method remove_connectivities MetaCells
+S7::method(remove_connectivities, MetaCells) <- function(
   x,
   ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
 
-  S7::prop(x, "sc_cache") <- remove_snn_graph(
+  S7::prop(x, "sc_cache") <- remove_connectivities(
     x = S7::prop(x, "sc_cache")
   )
 
@@ -1149,23 +1149,23 @@ S7::method(get_knn_obj, MetaCells) <- function(
   return(.drop_stamp(res))
 }
 
-#' @name get_snn_graph.MetaCells
+#' @name get_connectivities.MetaCells
 #'
-#' @rdname get_snn_graph
+#' @rdname get_connectivities
 #'
-#' @method get_snn_graph MetaCells
-S7::method(get_snn_graph, MetaCells) <- function(
+#' @method get_connectivities MetaCells
+S7::method(get_connectivities, MetaCells) <- function(
   x,
   ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
 
-  res <- get_snn_graph(
+  res <- get_connectivities(
     x = S7::prop(x, "sc_cache")
   )
 
-  .warn_sc_state(x, artefact = "snn")
+  .warn_sc_state(x, artefact = "connectivities")
 
   return(.drop_stamp(res))
 }

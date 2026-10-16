@@ -543,7 +543,7 @@ fast_cluster_res <- fast_cluster_sc(
   object = sce,
   embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
   return_kmeans = FALSE,
-  grid_search = TRUE,
+  n_seeds = 10L,
   .verbose = 2L
 )
 

@@ -11,7 +11,7 @@ check_sc_state(x, artefacts, modality = "rna")
 \code{SingleCellsMultiModal} class.}
 
 \item{artefacts}{Character vector. Artefacts to check, either an artefact
-kind (\code{"pca"}, \code{"knn"}, \code{"snn"}, \code{"magic"}) or an embedding name
+kind (\code{"pca"}, \code{"knn"}, \code{"connectivities"}, \code{"magic"}) or an embedding name
 (\code{"umap"}). May be modality qualified (\code{"adt:pca"}).}
 
 \item{modality}{String. Modality to resolve unqualified names against. One

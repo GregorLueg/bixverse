@@ -3,12 +3,12 @@
 //! Every cell, gene and node index that crosses this boundary, in and out, is
 //! 0-indexed. The root's parent is `-1`.
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::mc_analysis::bonsai_mc::sanity_bonsai_mc;
-use bixverse_rs::single_cell::sc_analysis::bonsai::{
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::mc_analysis::bonsai_mc::sanity_bonsai_mc;
+use bixverse_r::single_cell::sc_analysis::bonsai::{
     bonsai_layout, parse_bonsai_layout, sanity_bonsai_sc, BonsaiScParams,
 };
-use bixverse_rs::single_cell::sc_r_wrappers::{bonsai_sc_to_r_list, parents_from_r, parents_to_r};
+use bixverse_r::sc_r_wrappers::{bonsai_sc_to_r_list, parents_from_r, parents_to_r};
 use extendr_api::*;
 
 use crate::meta_cell::utils::mc_list_to_sparse_u32;

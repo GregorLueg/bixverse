@@ -450,13 +450,13 @@ get_adt_names.ADTCounts <- function(x) {
 #'   \item{dir_data}{Path to the directory in which the data will be saved on
 #'   disk.}
 #'   \item{sc_cache}{Class with cached data. Contains less memory-heavy objects
-#'   such as embeddings, kNN information or sNN graphs for the single cell
+#'   such as embeddings, kNN information or neighbour graphs for the single cell
 #'   RNAseq.}
 #'   \item{adt_cache}{Class with cached data. Contains less memory-heavy objects
-#'   such as embeddings, kNN information or sNN graphs for the single cell
+#'   such as embeddings, kNN information or neighbour graphs for the single cell
 #'   Antibody-Derived Tags.}
 #'   \item{atac_cache}{Class with cached data. Contains less memory-heavy objects
-#'   such as embeddings, kNN information or sNN graphs for the single cell
+#'   such as embeddings, kNN information or neighbour graphs for the single cell
 #'   chromatin accessability.}
 #'   \item{sc_map}{Class containing various mapping information such as HVG
 #'   indices, cells to keep, etc.}
@@ -552,7 +552,7 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
   rna_hvg <- !is.null(sc_map[["hvg_gene_indices"]])
   rna_pca <- !is.null(sc_cache[["pca_factors"]])
   rna_knn <- !is.null(sc_cache[["knn"]])
-  rna_snn <- !is.null(sc_cache[["snn_graph"]])
+  rna_graph <- !is.null(sc_cache[["connectivities"]])
   rna_other <- names(sc_cache[["other_embeddings"]])
   rna_other_str <- if (length(rna_other) > 0) {
     paste(rna_other, collapse = ", ")
@@ -565,7 +565,7 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
   adt_n_features <- if (adt_present) ncol(adt_counts$raw_counts) else 0L
   adt_pca <- !is.null(adt_cache[["pca_factors"]])
   adt_knn <- !is.null(adt_cache[["knn"]])
-  adt_snn <- !is.null(adt_cache[["snn_graph"]])
+  adt_graph <- !is.null(adt_cache[["connectivities"]])
   adt_other <- names(adt_cache[["other_embeddings"]])
   adt_other_str <- if (length(adt_other) > 0) {
     paste(adt_other, collapse = ", ")
@@ -583,14 +583,14 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
     sprintf("    PCA calculated: %s\n", rna_pca),
     sprintf("    Other embeddings: %s\n", rna_other_str),
     sprintf("    KNN generated: %s\n", rna_knn),
-    sprintf("    SNN generated: %s\n", rna_snn),
+    sprintf("    Graph generated: %s\n", rna_graph),
     "  ADT:\n",
     sprintf("    Present: %s\n", adt_present),
     sprintf("    No features: %i\n", adt_n_features),
     sprintf("    PCA calculated: %s\n", adt_pca),
     sprintf("    Other embeddings: %s\n", adt_other_str),
     sprintf("    KNN generated: %s\n", adt_knn),
-    sprintf("    SNN generated: %s\n", adt_snn),
+    sprintf("    Graph generated: %s\n", adt_graph),
     "  ATAC: not yet implemented\n",
     sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
@@ -978,19 +978,19 @@ S7::method(set_knn, SingleCellsMultiModal) <- function(
   )
 }
 
-S7::method(set_snn_graph, SingleCellsMultiModal) <- function(
+S7::method(set_connectivities, SingleCellsMultiModal) <- function(
   x,
-  snn_graph,
+  connectivities,
   modality = c("rna", "adt"),
   ...
 ) {
   modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
-  checkmate::assertClass(snn_graph, "igraph")
-  S7::prop(x, slot) <- set_snn_graph(S7::prop(x, slot), snn_graph)
+  checkmate::assertClass(connectivities, "igraph")
+  S7::prop(x, slot) <- set_connectivities(S7::prop(x, slot), connectivities)
   .stamp_artefact(
     x,
-    artefact = "snn",
+    artefact = "connectivities",
     modality = modality,
     from = .stamp_from(...)
   )
@@ -1007,14 +1007,14 @@ S7::method(remove_knn, SingleCellsMultiModal) <- function(
   x
 }
 
-S7::method(remove_snn_graph, SingleCellsMultiModal) <- function(
+S7::method(remove_connectivities, SingleCellsMultiModal) <- function(
   x,
   modality = c("rna", "adt"),
   ...
 ) {
   modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
-  S7::prop(x, slot) <- remove_snn_graph(S7::prop(x, slot))
+  S7::prop(x, slot) <- remove_connectivities(S7::prop(x, slot))
   x
 }
 
@@ -1218,7 +1218,7 @@ S7::method(get_knn_obj, SingleCellsMultiModal) <- function(
   .drop_stamp(res)
 }
 
-S7::method(get_snn_graph, SingleCellsMultiModal) <- function(
+S7::method(get_connectivities, SingleCellsMultiModal) <- function(
   x,
   modality = c("rna", "adt", "wnn"),
   ...
@@ -1226,13 +1226,13 @@ S7::method(get_snn_graph, SingleCellsMultiModal) <- function(
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
   modality <- match.arg(modality)
   if (modality == "wnn") {
-    res <- .integration_slot(x, modality)[["snn"]]
-    .warn_sc_state(x, artefact = "snn", modality = modality)
+    res <- .integration_slot(x, modality)[["connectivities"]]
+    .warn_sc_state(x, artefact = "connectivities", modality = modality)
     return(.drop_stamp(res))
   }
   slot <- .cache_slot_from_modality(modality)
-  res <- get_snn_graph(S7::prop(x, slot))
-  .warn_sc_state(x, artefact = "snn", modality = modality)
+  res <- get_connectivities(S7::prop(x, slot))
+  .warn_sc_state(x, artefact = "connectivities", modality = modality)
   .drop_stamp(res)
 }
 

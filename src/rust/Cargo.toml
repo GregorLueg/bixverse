@@ -15,7 +15,7 @@ name = 'bixverse'
 ## switches it off with `--no-default-features` when it finds an external
 ## libhdf5, which is what makes the Windows cross-host builds link.
 default = ["hdf5-static"]
-hdf5-static = ["bixverse-rs/hdf5-static"]
+hdf5-static = ["bixverse-r/hdf5-static"]
 
 [profile.dev.package.faer]
 opt-level = 3
@@ -31,24 +31,23 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.7.0", default-features = false, features = [
+bixverse-r = { version = "0.8.0", default-features = false, features = [
     "single-cell",
     "multi-modal",
     "dge",
     "bonsai",
     "accelerate",
-    "r"
+    "h5"
 ] }
 edge-rs = "0.3.0"
 extendr-api = "0.9.0"
-either = "1.15.0"
 faer = { version = '0.24.4' }
 half = { version = "2.7.1", features = ["serde"] }
 petgraph = { version = "0.8.3", features = ["rayon"] }
 rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
-# h5ad export; HDF5 itself comes in through bixverse-rs, so no vendored copy
+# h5ad export; HDF5 itself comes in through bixverse-r, so no vendored copy
 scx-core = { version = "0.5.0", default-features = false }
 serde_json = "1"
 sprs = "0.11"
@@ -57,9 +56,12 @@ thousands = "*"
 # c-blosc compiles its own win32 pthread shim into blosc.o, which clashes with
 # the winpthread that Rust std links on windows-gnu. No Blosc/LZF on Windows.
 [target.'cfg(not(windows))'.dependencies]
-bixverse-rs = { version = "0.7.0", default-features = false, features = [
+bixverse-r = { version = "0.8.0", default-features = false, features = [
     "hdf5-filters",
 ] }
+
+[patch.crates-io]
+bixverse-r = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/crates/bixverse-r" }
 
 [[bin]]
 name = "document"

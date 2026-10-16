@@ -27,19 +27,9 @@ use. If \code{NULL} all will be used.}
 on \code{SingleCellsMultiModal} class.}
 
 \item{neighbours_params}{List. Output of \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
-A list with the following items:
-\itemize{
-\item full_snn - Boolean. Shall the full shared nearest neighbour graph
-be generated that generates edges between all cells instead of between
-only neighbours.
-\item pruning - Numeric. Weights below this threshold will be set to 0 in
-the generation of the sNN graph.
-\item snn_similarity - String. One of \code{c("rank", "jaccard")}. Defines how
-the weight from the SNN graph is calculated. For details, please see
-\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
-\item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
-for available parameters and their defaults.
-}}
+Carries the graph parameters (see
+\code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}}) and the kNN parameters (see
+\code{\link[=params_knn_defaults]{params_knn_defaults()}}).}
 
 \item{seed}{Integer. For reproducibility.}
 
@@ -48,7 +38,7 @@ for available parameters and their defaults.
 verbosity.}
 }
 \value{
-The object with added KNN matrix.
+The object with the added kNN and neighbour graph.
 }
 \description{
 This function will generate the kNNs based on a given embedding. Available
@@ -75,11 +65,13 @@ large number of neighbours.
 used across different R single cell packages (Seurat, SCE). This version
 is purely memory-based.
 }
-Subsequently, the kNN graph will be additionally transformed into a shared
-nearest neighbour graph for clustering methods.
+Subsequently, the kNN is symmetrised into the neighbour graph the
+clustering methods run on: the shared nearest neighbour graph (default),
+the UMAP fuzzy simplicial set or the kNN union, see
+\code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}}.
 }
 \examples{
-# kNN and the sNN graph on top of the PCA
+# kNN and the neighbour graph on top of the PCA
 sc <- demo_single_cells(prepped = FALSE)
 sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 sc <- calculate_pca_sc(sc, no_pcs = 10L, .verbose = FALSE)

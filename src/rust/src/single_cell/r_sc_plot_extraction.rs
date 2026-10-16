@@ -1,7 +1,7 @@
 use extendr_api::*;
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_data::plotting::*;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_data::plotting::*;
 
 /////////////
 // extendR //

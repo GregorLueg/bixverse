@@ -2,8 +2,8 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use rayon::prelude::*;
 
-use bixverse_rs::core::math::stats::calculate_critval;
-use bixverse_rs::prelude::*;
+use bixverse_r::core::math::stats::calculate_critval;
+use bixverse_r::prelude::*;
 
 ////////////////////
 // extendr Module //

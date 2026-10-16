@@ -1,9 +1,9 @@
-use bixverse_rs::methods::methods_r_wrapper::{
+use bixverse_r::methods_r_wrapper::{
     r_matrix_list_to_vec, r_matrix_vec_to_named_matrices,
 };
-use bixverse_rs::methods::rbh::*;
-use bixverse_rs::prelude::*;
-use bixverse_rs::utils::vec_utils::flatten_vector;
+use bixverse_r::methods::rbh::*;
+use bixverse_r::prelude::*;
+use bixverse_r::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 

@@ -207,7 +207,7 @@ expect_true(
 )
 expect_true(
   current = checkmate::testClass(
-    get_snn_graph(sc_mm, modality = "adt"),
+    get_connectivities(sc_mm, modality = "adt"),
     "igraph"
   ),
   info = "mm: adt snn graph returned as igraph"
@@ -237,7 +237,7 @@ expect_true(
 )
 expect_true(
   current = checkmate::testClass(
-    get_snn_graph(sc_mm, modality = "wnn"),
+    get_connectivities(sc_mm, modality = "wnn"),
     "igraph"
   ),
   info = "mm: wnn snn graph returned as igraph"

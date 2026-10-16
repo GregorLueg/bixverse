@@ -415,12 +415,12 @@ expect_equal(
 )
 
 expect_true(
-  current = class(get_snn_graph(mc_object)) == "igraph",
+  current = class(get_connectivities(mc_object)) == "igraph",
   info = "mc snn - igraph returned"
 )
 
 expect_equal(
-  current = igraph::vcount(get_snn_graph(mc_object)),
+  current = igraph::vcount(get_connectivities(mc_object)),
   target = target_n_metacells,
   info = "mc snn - graph vertex count matches meta cell count"
 )

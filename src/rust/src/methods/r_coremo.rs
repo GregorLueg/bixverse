@@ -1,8 +1,8 @@
-use bixverse_rs::core::base::cors_similarity::*;
-use bixverse_rs::core::math::rbf::*;
-use bixverse_rs::core::math::vector_helpers::*;
-use bixverse_rs::methods::coremo::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::core::base::cors_similarity::*;
+use bixverse_r::core::math::rbf::*;
+use bixverse_r::core::math::vector_helpers::*;
+use bixverse_r::methods::coremo::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 use faer::Mat;

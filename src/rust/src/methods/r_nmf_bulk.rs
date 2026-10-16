@@ -1,9 +1,10 @@
-use bixverse_rs::methods::nmf_bulk::{
+use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
+use bixverse_r::methods::nmf_bulk::{
     nmf_consensus_run, nmf_k_sweep_run, nmf_multiple_run, nmf_single_run,
 };
-use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
-use bixverse_rs::methods::nmf_hals::HalsOpts;
-use bixverse_rs::prelude::*;
+use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
+use bixverse_r::methods::nmf_hals::HalsOpts;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
@@ -64,7 +65,7 @@ fn rs_nmf_single_bulk(
 ) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
     let nmf_hals_opt: HalsOpts<f64> =
-        HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+        hals_opts_from_r_list(nmf_hals_params, seed)?;
     let nmf_res = nmf_single_run(x, k, preprocessing, Some(nmf_hals_opt), verbose)
         .to_extendr()?;
 
@@ -121,7 +122,7 @@ fn rs_nmf_multi_bulk(
 ) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
     let nmf_hals_opt: HalsOpts<f64> =
-        HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+        hals_opts_from_r_list(nmf_hals_params, seed)?;
     let nmf_res = nmf_multiple_run(
         x,
         k,
@@ -207,7 +208,7 @@ fn rs_nmf_consensus_bulk(
 ) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
     let nmf_hals_opt: HalsOpts<f64> =
-        HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+        hals_opts_from_r_list(nmf_hals_params, seed)?;
     let consensus_opt: ConsensusParams<f64> =
         ConsensusParams::from_r_list(nmf_consensus_params)?;
     let nmf_res = nmf_consensus_run(
@@ -279,7 +280,7 @@ fn rs_nmf_k_sweep_bulk(
     let x = r_matrix_to_faer(&x);
     let k_range = k_range.r_int_convert();
     let nmf_hals_opt: HalsOpts<f64> =
-        HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+        hals_opts_from_r_list(nmf_hals_params, seed)?;
     let consensus_opt: ConsensusParams<f64> =
         ConsensusParams::from_r_list(nmf_consensus_params)?;
     let sweep_res = nmf_k_sweep_run(

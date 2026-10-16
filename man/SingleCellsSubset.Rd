@@ -35,7 +35,7 @@ valid without further translation.
 \item{var_table}{Variable/feature table (unchanged from parent).}
 \item{grouping_column}{Column in obs used to define the subset.}
 \item{group}{Value of \code{grouping_column} represented by this subset.}
-\item{sc_cache}{Fresh \code{ScCache} for subset-specific PCA, kNN, sNN,
+\item{sc_cache}{Fresh \code{ScCache} for subset-specific PCA, kNN, neighbour graph,
 embeddings.}
 \item{sc_map}{\code{ScMap} restricted to the subset cells. \code{cell_mapping}
 stays 1-indexed and \code{cells_to_keep_idx} stays 0-indexed, both in the

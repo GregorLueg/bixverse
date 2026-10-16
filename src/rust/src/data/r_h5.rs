@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_data::h5ad_io::*;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_data::h5ad_io::*;
 
 /////////////
 // extendR //
@@ -66,7 +66,7 @@ fn rs_h5ad_data(
     });
 
     let file_format = parse_compressed_sparse_format(&cs_type)
-        .ok_or_else(|| BixverseErrors::UnknownSparseFormat(cs_type.to_string()))
+        .ok_or_else(|| ScDataErrors::UnknownSparseFormat(cs_type.to_string()))
         .to_extendr()?;
 
     let file_quality = match file_format {

@@ -1,4 +1,4 @@
-use bixverse_rs::graph::graph_label_propagations::*;
+use bixverse_r::graph::graph_label_propagations::*;
 use extendr_api::prelude::*;
 use std::collections::HashMap;
 

@@ -1,5 +1,5 @@
-use bixverse_rs::core::math::sparse::count_zeroes;
-use bixverse_rs::prelude::*;
+use bixverse_r::core::math::sparse::count_zeroes;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////

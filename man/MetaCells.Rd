@@ -51,7 +51,7 @@ detection ones will be made available).
 \item{obs_table}{The meta cell observation table.}
 \item{var_table}{The meta cell variable table.}
 \item{data}{List with the raw and normalised counts.}
-\item{sc_cache}{Class with embeddings, kNN/sNN graphs, etc. Shared with
+\item{sc_cache}{Class with embeddings, kNN/neighbour graphs, etc. Shared with
 \code{\link[=SingleCells]{SingleCells()}}.}
 \item{original_assignment}{List with original assignment information.}
 \item{dims}{Dimensions of the new meta cell matrices.}

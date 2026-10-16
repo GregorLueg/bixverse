@@ -315,7 +315,7 @@ expect_true(
 )
 
 expect_true(
-  current = checkmate::testClass(get_snn_graph(subset_bbknn), "igraph"),
+  current = checkmate::testClass(get_connectivities(subset_bbknn), "igraph"),
   info = "subset bbknn - sNN graph generated"
 )
 

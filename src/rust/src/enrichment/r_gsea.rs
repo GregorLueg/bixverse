@@ -1,5 +1,5 @@
-use bixverse_rs::enrichment::gsea::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::enrichment::gsea::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;

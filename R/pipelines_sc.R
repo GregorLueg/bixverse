@@ -599,7 +599,8 @@ step_clusters_sc <- function(
   res = 1.0,
   name = "leiden_clustering",
   modality = c("rna", "adt", "wnn"),
-  seed = 42L
+  seed = 42L,
+  ...
 ) {
   new_sc_step(
     "clusters",
@@ -609,7 +610,8 @@ step_clusters_sc <- function(
       res = res,
       name = name,
       modality = modality,
-      seed = seed
+      seed = seed,
+      ...
     ),
     accepts = SC_STEP_CLASSES
   )

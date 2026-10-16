@@ -3,10 +3,10 @@ use faer::Mat;
 use rayon::iter::*;
 use rustc_hash::FxHashSet;
 
-use bixverse_rs::core::base::cors_similarity::*;
-use bixverse_rs::prelude::*;
-use bixverse_rs::utils::matrix_utils::upper_triangle_indices;
-use bixverse_rs::utils::*;
+use bixverse_r::core::base::cors_similarity::*;
+use bixverse_r::prelude::*;
+use bixverse_r::utils::matrix_utils::upper_triangle_indices;
+use bixverse_r::utils::*;
 
 ////////////////////
 // extendr Module //
@@ -229,7 +229,7 @@ fn rs_dist(x: RMatrix<f64>, distance_type: String) -> extendr_api::Result<RArray
         DistanceType::Cosine => column_pairwise_cosine_dist(data),
         DistanceType::Canberra => column_pairwise_canberra_dist(data),
         DistanceType::Correlation => {
-            let cor = bixverse_rs::core::base::cors_similarity::column_pairwise_cor(data, false);
+            let cor = bixverse_r::core::base::cors_similarity::column_pairwise_cor(data, false);
             faer::Mat::from_fn(cor.nrows(), cor.ncols(), |i, j| 1.0 - cor[(i, j)])
         }
     };

@@ -1,16 +1,17 @@
+use bixverse_r::sc_r_wrappers::cell_sweep_fit_to_r_list;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use std::time::Instant;
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_data::{
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_data::{
     archive_io::*, bin_merge_io::*, gene_file_io::*, h5_10x_io::*, h5_10x_multifile_io::*,
     h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
 };
-use bixverse_rs::single_cell::sc_processing::cellsweep::{
+use bixverse_r::single_cell::sc_processing::cellsweep::{
     run_cellsweep, CellSweepParams, CellSweepSample,
 };
-use bixverse_rs::single_cell::sc_r_wrappers::cellsweep_sample_from_r_list;
+use bixverse_r::sc_r_wrappers::cellsweep_sample_from_r_list;
 
 use crate::single_cell::utils::norm_counts_to_f32;
 
@@ -1380,7 +1381,7 @@ impl SingleCellCountData {
             .fits
             .iter()
             .zip(&sample_specs)
-            .map(|(fit, sample)| fit.to_r_list(&sample.sample_id))
+            .map(|(fit, sample)| cell_sweep_fit_to_r_list(fit, &sample.sample_id))
             .collect::<List>();
 
         Ok(list!(

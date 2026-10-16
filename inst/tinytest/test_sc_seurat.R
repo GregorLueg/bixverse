@@ -286,7 +286,9 @@ seurat_obj <- Seurat::FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
 sc_object <- find_neighbours_sc(
   sc_object,
   # same as seurat
-  neighbours_params = params_sc_neighbours(pruning = 1 / 12),
+  neighbours_params = params_sc_neighbours(
+    graph = list(pruning = 1 / 12)
+  ),
   .verbose = FALSE
 )
 

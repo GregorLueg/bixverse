@@ -1,9 +1,9 @@
-use bixverse_rs::graph::graph_structures::{
+use bixverse_r::graph::graph_structures::{
     graph_from_strings, graph_from_strings_with_attributes,
 };
-use bixverse_rs::graph::page_rank::*;
-use bixverse_rs::methods::graph_diffusions::tied_diffusion_parallel;
-use bixverse_rs::prelude::*;
+use bixverse_r::graph::page_rank::*;
+use bixverse_r::methods::graph_diffusions::tied_diffusion_parallel;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 use petgraph::Graph;

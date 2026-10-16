@@ -14,7 +14,7 @@ A named list with the following elements:
 \code{c("minibatch", "standard")}. Defaults to \code{"minibatch"}.
 \item n_centroids - Integer or \code{NULL}. The number of centroids to use.
 \code{NULL} uses \code{sqrt(N_cells) * 4} centroids. Defaults to \code{NULL}.
-\item kmeans_iters - Integer. Number of maximum k-means iterations. Defaults
+\item k_means_iter - Integer. Number of maximum k-means iterations. Defaults
 to \code{100L}.
 \item batch_size - Integer. Max batch size, capped at \code{N_cells / 2}
 depending on the data set. Defaults to \code{4098L}.

@@ -1,6 +1,6 @@
-use bixverse_rs::enrichment::enrichment_r_wrapper::get_gsva_gs_indices;
-use bixverse_rs::enrichment::gsva::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::enrichment_r_wrapper::get_gsva_gs_indices;
+use bixverse_r::enrichment::gsva::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 use rustc_hash::FxHashMap;
 
