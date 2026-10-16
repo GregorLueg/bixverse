@@ -26,7 +26,13 @@ spec_knn_graph_defaults <- param_defaults(
     knn_sym = p_choice(
       "snn",
       c("snn", "umap", "knn"),
-      doc = "How to symmetrise the kNN into a graph."
+      doc = paste(
+        "How to symmetrise the kNN into a graph. Clustering resolutions do",
+        "not carry over between the methods: the `\"umap\"` and `\"knn\"`",
+        "graphs only hold kNN pairs, the sNN graph also links cells that",
+        "merely share neighbours, so at the same resolution the former two",
+        "split into more communities."
+      )
     ),
     snn_similarity = p_choice(
       "jaccard",

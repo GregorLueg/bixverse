@@ -283,14 +283,9 @@ seurat_obj <- Seurat::FindNeighbors(
 seurat_obj <- Seurat::FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
 
 #bixverse part
-sc_object <- find_neighbours_sc(
-  sc_object,
-  # same as seurat
-  neighbours_params = params_sc_neighbours(
-    graph = list(pruning = 1 / 12)
-  ),
-  .verbose = FALSE
-)
+# the default pruning asks for the same share of shared neighbours as
+# seurat's 1/15
+sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 
 # different resolution because leiden vs louvain
 sc_object <- find_clusters_sc(sc_object, res = 1.0)
