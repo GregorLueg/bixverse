@@ -214,7 +214,8 @@ sc_object <- find_neighbours_sc(
 
 Leiden clustering followed by differential gene expression across all clusters.
 You can also run Louvain if you want, but Leiden is thought of to have better
-properties, see [Traag, et al.](https://www.nature.com/articles/s41598-019-41695-z).
+properties, see 
+[Traag, et al.](https://www.nature.com/articles/s41598-019-41695-z).
 
 ```{r}
 #| label: clustering and markers

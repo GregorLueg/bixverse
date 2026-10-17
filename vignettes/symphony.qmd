@@ -187,7 +187,7 @@ PBMC vignette.
 
 ```{r}
 #| label: reference clustering
-sc_ref <- find_clusters_sc(sc_ref, res = 0.5, name = "leiden_clusters")
+sc_ref <- find_clusters_sc(sc_ref, res = 1, name = "leiden_clusters")
 
 sc_ref <- umap_sc(
   sc_ref,
@@ -343,6 +343,7 @@ between the methods.
 
 ```{r}
 #| label: build symphony ref
+# needs +1L because 0-indexed HVGs are returned
 hvg_indices <- get_hvg(sc_ref) + 1L
 
 symphony_ref <- build_symphony_ref(
