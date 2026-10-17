@@ -484,7 +484,6 @@ dependencies = [
  "extendr-api",
  "faer",
  "half",
- "petgraph",
  "rand 0.9.5",
  "rayon",
  "rustc-hash 2.1.3",
@@ -546,7 +545,6 @@ dependencies = [
  "faer",
  "num-traits",
  "once_cell",
- "petgraph",
  "rand 0.9.5",
  "rand_distr 0.5.1",
  "rayon",
@@ -583,6 +581,7 @@ dependencies = [
  "bixverse-sc-data",
  "bixverse-sc-gpu",
  "document-features",
+ "hdf5-metno",
 ]
 
 [[package]]
@@ -600,7 +599,6 @@ dependencies = [
  "faer",
  "half",
  "indexmap",
- "petgraph",
  "rand 0.9.5",
  "rayon",
  "rustc-hash 2.1.3",
@@ -2852,7 +2850,6 @@ dependencies = [
  "allocator-api2 0.2.21",
  "equivalent",
  "foldhash 0.1.5",
- "rayon",
 ]
 
 [[package]]
@@ -3204,7 +3201,6 @@ checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
 dependencies = [
  "equivalent",
  "hashbrown 0.17.1",
- "rayon",
 ]
 
 [[package]]
@@ -4266,19 +4262,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed93ba1a9ffcca32130a5188701c81c0c49cf00d4b7c5007d5148951d743adcb"
 dependencies = [
  "pest",
-]
-
-[[package]]
-name = "petgraph"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8701b58ea97060d5e5b155d383a69952a60943f0e6dfe30b04c287beb0b27455"
-dependencies = [
- "fixedbitset",
- "hashbrown 0.15.5",
- "indexmap",
- "rayon",
- "serde",
 ]
 
 [[package]]
