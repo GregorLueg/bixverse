@@ -41,6 +41,15 @@
   `k_means_iter`.
 * `rs_sc_knn_graph()` replaces `rs_sc_snn()`. `rs_fast_cluster_sc()` absorbs
   `rs_fast_cluster_sc_grid()`.
+* The Symphony vignette is now "Clustering, cell type annotation and reference
+  mapping" (`cell_type_annotation`). On top of Symphony it covers the graph
+  choice, Leiden vs Louvain, fast clustering and per-cell scType calls.
+
+## Fixes
+
+* `transfer_labels_symphony()` no longer panics when the reference labels
+  contain `NA` (e.g. scType Unknown cells). `NA` is treated as its own class,
+  so query cells can come back `NA`.
 
 # bixverse 0.7.0
 
