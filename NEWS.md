@@ -9,8 +9,6 @@
   kNN union). Pass it via `graph` in `params_sc_neighbours()` or `graph_params`
   in `generate_wnn_graph_sc()`. Resolutions don't carry over: at the same
   resolution the `"umap"` and `"knn"` graphs split into more communities.
-* sNN pruning has a `rescue` switch. It reconnects small components that
-  pruning cuts off via their strongest sNN edge.
 * `fast_cluster_sc()` is rewritten. It coarsens the cells with k-means, builds
   a graph over the centroids (a symmetrised centroid kNN or the Secuer
   cell-mediated graph) and runs Louvain or Leiden on it. All knobs live in
@@ -41,9 +39,6 @@
   `km_type = "kmeans"` is now `"standard"`; `n_seeds` replaces the grid search.
 * `kmeans_iters` in `params_fast_cluster_default()` (Boost, scDblFinder) is now
   `k_means_iter`.
-* `leiden_clustering()` defaults to `n_iterations = 5L` for Leiden and `2L` for
-  Louvain (was `2L` for both). These gave the best modularity across synthetic
-  graphs.
 * `rs_sc_knn_graph()` replaces `rs_sc_snn()`. `rs_fast_cluster_sc()` absorbs
   `rs_fast_cluster_sc_grid()`.
 
