@@ -7,8 +7,8 @@
   clustering runs on: `"snn"` (bluster/Seurat sNN, the default), `"umap"` (the
   fuzzy simplicial set ScanPy keeps in `obsp/connectivities`) or `"knn"` (plain
   kNN union). Pass it via `graph` in `params_sc_neighbours()` or `graph_params`
-  in `generate_wnn_graph_sc()`. Resolutions don't carry over: at the same
-  resolution the `"umap"` and `"knn"` graphs split into more communities.
+  in `generate_wnn_graph_sc()`. Resolutions don't carry over between the
+  graphs, retune them when switching.
 * `fast_cluster_sc()` is rewritten. It coarsens the cells with k-means, builds
   a graph over the centroids (a symmetrised centroid kNN or the Secuer
   cell-mediated graph) and runs Louvain or Leiden on it. All knobs live in

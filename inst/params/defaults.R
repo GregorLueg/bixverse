@@ -30,8 +30,9 @@ spec_knn_graph_defaults <- param_defaults(
         "How to symmetrise the kNN into a graph. Clustering resolutions do",
         "not carry over between the methods: the `\"umap\"` and `\"knn\"`",
         "graphs only hold kNN pairs, the sNN graph also links cells that",
-        "merely share neighbours, so at the same resolution the former two",
-        "split into more communities."
+        "share neighbours and prunes weak edges. The same resolution can",
+        "give more or fewer communities depending on the data, so retune it",
+        "when switching."
       )
     ),
     snn_similarity = p_choice(

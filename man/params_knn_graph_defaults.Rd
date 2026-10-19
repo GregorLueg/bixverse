@@ -11,9 +11,10 @@ A named list with the following elements:
 \itemize{
 \item knn_sym - String. How to symmetrise the kNN into a graph. Clustering
 resolutions do not carry over between the methods: the \code{"umap"} and \code{"knn"}
-graphs only hold kNN pairs, the sNN graph also links cells that merely share
-neighbours, so at the same resolution the former two split into more
-communities. One of \code{c("snn", "umap", "knn")}. Defaults to \code{"snn"}.
+graphs only hold kNN pairs, the sNN graph also links cells that share
+neighbours and prunes weak edges. The same resolution can give more or fewer
+communities depending on the data, so retune it when switching. One of
+\code{c("snn", "umap", "knn")}. Defaults to \code{"snn"}.
 \item snn_similarity - String. \code{"snn"} only. \code{"jaccard"} weighs an edge by
 the Jaccard index of the two (self-inclusive) neighbour sets. \code{"rank"} takes
 the shared neighbour with the lowest combined rank, so closer shared
