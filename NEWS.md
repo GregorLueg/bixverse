@@ -2,53 +2,50 @@
 
 ## Features
 
-* `bixverse-r` 0.8.0 under the hood; `petgraph` is gone from the dependency
-  tree.
-* New `params_knn_graph_defaults()` controls how the kNN becomes the graph the
-  clustering runs on via `knn_sym`: `"snn"` (bluster/Seurat sNN, default),
-  `"umap"` (the fuzzy simplicial set ScanPy stores in `obsp/connectivities`)
-  or `"knn"` (plain kNN union). `params_sc_neighbours()` takes it via `graph`,
-  `generate_wnn_graph_sc()` via `graph_params`. Resolutions do not carry over
-  between graph types: the `"umap"` and `"knn"` graphs split into more
-  communities at the same resolution.
-* sNN pruning got a `rescue` switch that reconnects small components cut off
-  by pruning via their strongest sNN edge.
-* `fast_cluster_sc()` rewritten: k-means coarsening, a graph over the centroids
-  (exact centroid kNN symmetrised via `params_knn_graph_defaults()`, or the
-  Secuer cell-mediated graph) and Louvain or Leiden on top. All knobs live in
-  `params_sc_fast_cluster()` (`n_centroids`, `km_type`, `dist`, `centroid_k`,
-  `centroid_graph`, `algorithm`, ...). `n_seeds > 1` runs each resolution per
-  seed, keeps the labels of the seed with the lowest mean conductance and
-  returns ARI/conductance stability stats.
-* `leiden_clustering()` gained `min_gain` and `local_moving`
-  (`"queue"` or the parallel `"coloured"`); a negative `n_iterations` iterates
-  until stable. `find_clusters_sc()` and `step_clusters_sc()` pass these on
-  via `...`.
+* `bixverse-r` 0.8.0 under the hood. `petgraph` is out of the dependency tree.
+* New `params_knn_graph_defaults()`. Its `knn_sym` picks the graph the
+  clustering runs on: `"snn"` (bluster/Seurat sNN, the default), `"umap"` (the
+  fuzzy simplicial set ScanPy keeps in `obsp/connectivities`) or `"knn"` (plain
+  kNN union). Pass it via `graph` in `params_sc_neighbours()` or `graph_params`
+  in `generate_wnn_graph_sc()`. Resolutions don't carry over: at the same
+  resolution the `"umap"` and `"knn"` graphs split into more communities.
+* sNN pruning has a `rescue` switch. It reconnects small components that
+  pruning cuts off via their strongest sNN edge.
+* `fast_cluster_sc()` is rewritten. It coarsens the cells with k-means, builds
+  a graph over the centroids (a symmetrised centroid kNN or the Secuer
+  cell-mediated graph) and runs Louvain or Leiden on it. All knobs live in
+  `params_sc_fast_cluster()`. With `n_seeds > 1` it runs every resolution once
+  per seed, keeps the labels of the seed with the lowest mean conductance and
+  returns ARI and conductance stability stats.
+* `leiden_clustering()` gained `min_gain` and `local_moving` (`"queue"`, or
+  `"coloured"` to move nodes in parallel). A negative `n_iterations` iterates
+  until stable. `find_clusters_sc()` and `step_clusters_sc()` pass these on via
+  `...`.
 
 ## Changes
 
-* `get_snn_graph()`, `set_snn_graph()` and `remove_snn_graph()` are renamed to
-  `get_connectivities()`, `set_connectivities()` and
-  `remove_connectivities()`, since the cached graph is no longer necessarily
-  an sNN. The old names still work with a deprecation warning. The cache slot,
-  the `"snn"` artefact in the state checks and `graph = "snn"` in the
-  ForceAtlas2 layout are now `"connectivities"`. Objects saved with 0.7.x are
-  migrated on `load_existing()`.
-* Default sNN pruning went from `1/12` to `1/16` (about 2 of 16 shared cells at
-  `k = 15`, in line with Seurat's `1/15`). The WNN graph uses the same default
-  instead of `1/15`.
+* Clustering results shift against 0.7.0: new pruning default, new
+  `n_iterations` defaults and the rewritten fast clustering.
+* `get_snn_graph()`, `set_snn_graph()` and `remove_snn_graph()` are now
+  `get_connectivities()`, `set_connectivities()` and `remove_connectivities()`,
+  since the graph isn't always an sNN any more. The old names still work and
+  warn. The cache slot, the state check artefact and `graph` in the ForceAtlas2
+  layout went from `"snn"` to `"connectivities"`. `load_existing()` migrates
+  objects saved with 0.7.x.
+* Default sNN pruning dropped from `1/12` to `1/16`, i.e. about 2 of 16 shared
+  cells at `k = 15`, in line with Seurat's `1/15`. The WNN graph uses the same
+  default instead of `1/15`.
 * `full_snn` (neighbours) and `snn_type` (WNN) are gone.
-* `fast_cluster_sc()`: `km_type`, `n_centroids` and `snn` moved into
-  `params_sc_fast_cluster()`, `km_type = "kmeans"` is now `"standard"`, and
-  `grid_search`/`no_seeds` are replaced by `n_seeds`.
+* `fast_cluster_sc()` lost `km_type`, `n_centroids`, `snn`, `grid_search` and
+  `no_seeds`. The first two moved into `params_sc_fast_cluster()`, where
+  `km_type = "kmeans"` is now `"standard"`; `n_seeds` replaces the grid search.
 * `kmeans_iters` in `params_fast_cluster_default()` (Boost, scDblFinder) is now
   `k_means_iter`.
-* `n_iterations` in `leiden_clustering()` defaults to `5L` for Leiden and `2L`
-  for Louvain (was `2L` for both), which gave the best modularity across
-  synthetic graphs. Together with the new pruning default, clustering results
-  shift compared to 0.7.0.
-* `rs_sc_snn()` is replaced by `rs_sc_knn_graph()`; `rs_fast_cluster_sc_grid()`
-  is folded into `rs_fast_cluster_sc()`.
+* `leiden_clustering()` defaults to `n_iterations = 5L` for Leiden and `2L` for
+  Louvain (was `2L` for both). These gave the best modularity across synthetic
+  graphs.
+* `rs_sc_knn_graph()` replaces `rs_sc_snn()`. `rs_fast_cluster_sc()` absorbs
+  `rs_fast_cluster_sc_grid()`.
 
 # bixverse 0.7.0
 
