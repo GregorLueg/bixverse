@@ -85,8 +85,8 @@ navbar:
           href: articles/trajectory_inference.html
         - text: "Cell trees with Bonsai"
           href: articles/bonsai.html
-        - text: "Reference mapping via Symphony"
-          href: articles/symphony.html
+        - text: "Clustering, annotation and reference mapping"
+          href: articles/cell_type_annotation.html
         - text: "Multi-modal analysis"
           href: articles/multi_modal_single_cells.html
         - text: -------
@@ -150,7 +150,7 @@ articles:
       - single_cell_big_data
       - multi_modal_single_cells
       - single_cell_visualisation
-      - symphony
+      - cell_type_annotation
       - ligand_receptor
 
 reference:
