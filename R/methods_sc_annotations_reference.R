@@ -687,7 +687,8 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
 #' labels).
 #' @param query `SingleCells` with a `"symphony"` embedding attached.
 #' @param label_column String. Name of a column in the reference's stored
-#' labels.
+#' labels. `NA` labels are treated as their own class, so query cells can
+#' come back `NA`.
 #' @param knn_params List. Output of [params_sc_knn()].
 #' @param seed Integer.
 #' @param .verbose Boolean or integer.
@@ -787,7 +788,9 @@ S7::method(transfer_labels_symphony, SymphonyReference) <- function(
   }
 
   ref_labels_raw <- unlist(labels[[label_column]])
-  ref_label_factor <- factor(ref_labels_raw)
+  # NA (e.g. scType Unknown) becomes its own class, otherwise it reaches Rust
+  # as NA_integer_ and panics as an out of bounds index
+  ref_label_factor <- factor(ref_labels_raw, exclude = NULL)
   ref_label_idx <- as.integer(ref_label_factor) - 1L
 
   res <- rs_transfer_labels_symphony(

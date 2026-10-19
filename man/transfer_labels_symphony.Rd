@@ -20,7 +20,8 @@ labels).}
 \item{query}{\code{SingleCells} with a \code{"symphony"} embedding attached.}
 
 \item{label_column}{String. Name of a column in the reference's stored
-labels.}
+labels. \code{NA} labels are treated as their own class, so query cells can
+come back \code{NA}.}
 
 \item{knn_params}{List. Output of \code{\link[=params_sc_knn]{params_sc_knn()}}.}
 
