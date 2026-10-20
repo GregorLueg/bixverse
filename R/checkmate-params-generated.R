@@ -234,7 +234,7 @@ checkScBoostParams <- function(x) {
       "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
       "resolution and p_thresh must be > 0; target_size must be > 0;",
       "log_transform, mean_center, normalise_variance, replace and",
-      "fast_cluster must be booleans; svd_solver must be one of",
+      "fast_cluster must be booleans; svd_solver must be one of auto,",
       "covariance, randomised or exact; clip_max must be NULL or a",
       "positive numeric."
     )
@@ -248,7 +248,7 @@ checkScBoostParams <- function(x) {
     list(
       hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
-      svd_solver = c("randomised", "covariance", "exact"),
+      svd_solver = c("randomised", "auto", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -266,7 +266,7 @@ checkScBoostParams <- function(x) {
       "boost_rate and voter_thresh must be in [0, 1]; loess_span,",
       "resolution and p_thresh must be > 0; target_size must be > 0;",
       "log_transform, mean_center, normalise_variance, replace and",
-      "fast_cluster must be booleans; svd_solver must be one of",
+      "fast_cluster must be booleans; svd_solver must be one of auto,",
       "covariance, randomised or exact; clip_max must be NULL or a",
       "positive numeric."
     )
@@ -3473,7 +3473,7 @@ checkScFastmnnParams <- function(x) {
     hint = paste(
       "no_pcs must be an integer >= 1; ndist must be a positive",
       "numeric; size_factor must be numeric; svd_solver must be one of",
-      "covariance, randomised or exact; cos_norm, sparse_svd,",
+      "auto, covariance, randomised or exact; cos_norm, sparse_svd,",
       "mean_center, normalise_variance and clr must be booleans."
     )
   )
@@ -3499,7 +3499,7 @@ checkScFastmnnParams <- function(x) {
     hint = paste(
       "no_pcs must be an integer >= 1; ndist must be a positive",
       "numeric; size_factor must be numeric; svd_solver must be one of",
-      "covariance, randomised or exact; cos_norm, sparse_svd,",
+      "auto, covariance, randomised or exact; cos_norm, sparse_svd,",
       "mean_center, normalise_variance and clr must be booleans."
     )
   )
@@ -5828,7 +5828,7 @@ checkScDblFinderParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      svd_solver = c("randomised", "covariance", "exact"),
+      svd_solver = c("randomised", "auto", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -6162,8 +6162,8 @@ checkScScrubletParams <- function(x) {
       "stdev_doublet_rate must be in [0, 1]; loess_span and",
       "sim_doublet_ratio must be > 0; target_size must be >= 0;",
       "log_transform, mean_center and normalise_variance must be",
-      "booleans; svd_solver must be one of covariance, randomised or",
-      "exact; clip_max and manual_threshold must be NULL or positive",
+      "booleans; svd_solver must be one of auto, covariance, randomised",
+      "or exact; clip_max and manual_threshold must be NULL or positive",
       "numerics."
     )
   )
@@ -6176,7 +6176,7 @@ checkScScrubletParams <- function(x) {
     list(
       hvg_method = c("vst", "meanvarbin", "dispersion", "scran"),
       binning_strategy = c("equal_width", "equal_frequency"),
-      svd_solver = c("randomised", "covariance", "exact"),
+      svd_solver = c("randomised", "auto", "covariance", "exact"),
       knn_method = c(
         "kmknn",
         "hnsw",
@@ -6194,8 +6194,8 @@ checkScScrubletParams <- function(x) {
       "stdev_doublet_rate must be in [0, 1]; loess_span and",
       "sim_doublet_ratio must be > 0; target_size must be >= 0;",
       "log_transform, mean_center and normalise_variance must be",
-      "booleans; svd_solver must be one of covariance, randomised or",
-      "exact; clip_max and manual_threshold must be NULL or positive",
+      "booleans; svd_solver must be one of auto, covariance, randomised",
+      "or exact; clip_max and manual_threshold must be NULL or positive",
       "numerics."
     )
   )

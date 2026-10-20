@@ -12,9 +12,10 @@ A named list with the following elements:
 \item no_pcs - Integer. Number of PCs to consider. Defaults to \code{30L}.
 \item svd_solver - String. Which solver to use. \code{"randomised"} (default) is
 a randomised SVD, approximate in the trailing components. \code{"covariance"}
-builds the gene x gene cross-product and eigendecomposes it. \code{"exact"} is
+builds the gene x gene cross-product and eigendecomposes it. \code{"auto"} takes
+Lanczos on the sparse path and \code{"covariance"} on the dense one. \code{"exact"} is
 Lanczos on the sparse path and a full SVD on the dense one. See
-\code{\link[=params_sc_pca]{params_sc_pca()}} for the trade-offs. One of \code{c("randomised", "covariance", "exact")}. Defaults to \code{"randomised"}.
+\code{\link[=params_sc_pca]{params_sc_pca()}} for the trade-offs. One of \code{c("randomised", "auto", "covariance", "exact")}. Defaults to \code{"randomised"}.
 }
 }
 \description{

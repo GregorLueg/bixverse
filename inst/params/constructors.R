@@ -26,8 +26,8 @@ spec_scrublet <- param_spec(
     "stdev_doublet_rate must be in [0, 1]; loess_span and",
     "sim_doublet_ratio must be > 0; target_size must be >= 0;",
     "log_transform, mean_center and normalise_variance must be",
-    "booleans; svd_solver must be one of covariance, randomised or",
-    "exact; clip_max and manual_threshold must be NULL or positive",
+    "booleans; svd_solver must be one of auto, covariance, randomised",
+    "or exact; clip_max and manual_threshold must be NULL or positive",
     "numerics."
   ),
   fields = list(
@@ -139,8 +139,8 @@ spec_boost <- param_spec(
     "resolution and p_thresh must be > 0; target_size must be >",
     "0; log_transform, mean_center, normalise_variance, replace",
     "and fast_cluster must be booleans; svd_solver must be one of",
-    "covariance, randomised or exact; clip_max must be NULL or a",
-    "positive numeric."
+    "auto, covariance, randomised or exact; clip_max must be NULL or",
+    "a positive numeric."
   ),
   fields = list(
     boost_rate = p_dbl(
@@ -1387,7 +1387,7 @@ spec_sc_fastmnn <- param_spec(
   hint = paste(
     "no_pcs must be an integer >= 1; ndist must be a positive",
     "numeric; size_factor must be numeric; svd_solver must be one of",
-    "covariance, randomised or exact; cos_norm, sparse_svd,",
+    "auto, covariance, randomised or exact; cos_norm, sparse_svd,",
     "mean_center, normalise_variance and clr must be booleans."
   ),
   fields = list(
