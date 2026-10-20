@@ -4648,13 +4648,14 @@ params_sc_palantir <- function(
 #' @param size_factor Numeric. The used size factor during I/O. It needs to be
 #' the same as during I/O to have correct results when using the `PFlogPF`
 #' transformation. Defaults to `10000.0`.
-#' @param svd_solver String. Which solver to use. `"covariance"` builds the gene
-#' x gene cross-product and eigendecomposes it: exact, and the fastest option
-#' for a few thousand HVGs, but its cost grows with the square of the gene
-#' number in memory and the cube in time. `"randomised"` is a randomised SVD,
-#' approximate in the trailing components. `"exact"` is a full SVD on the dense
-#' path and Lanczos on the sparse one. One of `c("covariance", "randomised",
-#' "exact")`. Defaults to `"covariance"`.
+#' @param svd_solver String. Which solver to use. `"auto"` takes Lanczos on the
+#' sparse path and `"covariance"` on the dense one, the fastest exact option on
+#' each. `"covariance"` builds the gene x gene cross-product and eigendecomposes
+#' it: its cost grows with the square of the gene number in memory and the cube
+#' in time. `"randomised"` is a randomised SVD, approximate in the trailing
+#' components. `"exact"` is a full SVD on the dense path and Lanczos on the
+#' sparse one. One of `c("auto", "covariance", "randomised", "exact")`. Defaults
+#' to `"auto"`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -4669,13 +4670,14 @@ params_sc_palantir <- function(
 #'  \item size_factor - Numeric. The used size factor during I/O. It needs to be
 #'  the same as during I/O to have correct results when using the `PFlogPF`
 #'  transformation. Defaults to `10000.0`.
-#'  \item svd_solver - String. Which solver to use. `"covariance"` builds the
-#'  gene x gene cross-product and eigendecomposes it: exact, and the fastest
-#'  option for a few thousand HVGs, but its cost grows with the square of the
-#'  gene number in memory and the cube in time. `"randomised"` is a randomised
-#'  SVD, approximate in the trailing components. `"exact"` is a full SVD on the
-#'  dense path and Lanczos on the sparse one. One of `c("covariance",
-#'  "randomised", "exact")`. Defaults to `"covariance"`.
+#'  \item svd_solver - String. Which solver to use. `"auto"` takes Lanczos on
+#'  the sparse path and `"covariance"` on the dense one, the fastest exact
+#'  option on each. `"covariance"` builds the gene x gene cross-product and
+#'  eigendecomposes it: its cost grows with the square of the gene number in
+#'  memory and the cube in time. `"randomised"` is a randomised SVD, approximate
+#'  in the trailing components. `"exact"` is a full SVD on the dense path and
+#'  Lanczos on the sparse one. One of `c("auto", "covariance", "randomised",
+#'  "exact")`. Defaults to `"auto"`.
 #' }
 #'
 #' @export
@@ -4685,7 +4687,7 @@ params_sc_pca <- function(
   randomised = NULL,
   clr = FALSE,
   size_factor = 10000.0,
-  svd_solver = c("covariance", "randomised", "exact")
+  svd_solver = c("auto", "covariance", "randomised", "exact")
 ) {
   svd_solver <- match.arg(svd_solver)
 
@@ -4695,7 +4697,10 @@ params_sc_pca <- function(
   checkmate::qassert(randomised, c("B1", "0"))
   checkmate::qassert(clr, "B1")
   checkmate::qassert(size_factor, "N1")
-  checkmate::assertChoice(svd_solver, c("covariance", "randomised", "exact"))
+  checkmate::assertChoice(
+    svd_solver,
+    c("auto", "covariance", "randomised", "exact")
+  )
 
   if (!is.null(randomised)) {
     svd_solver <- c("exact", "randomised")[randomised + 1L]

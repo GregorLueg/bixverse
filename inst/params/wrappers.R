@@ -1617,7 +1617,7 @@ spec_sc_pca <- param_spec(
   label = "single cell PCA params",
   hint = paste(
     "mean_center, normalise_variance and clr must be single booleans;",
-    "svd_solver must be one of covariance, randomised or exact;",
+    "svd_solver must be one of auto, covariance, randomised or exact;",
     "size_factor must be a single numeric."
   ),
   # randomised stays in its old position so positional calls keep working.
@@ -1666,16 +1666,17 @@ spec_sc_pca <- param_spec(
       )
     ),
     svd_solver = p_choice(
-      "covariance",
-      c("covariance", "randomised", "exact"),
+      "auto",
+      c("auto", "covariance", "randomised", "exact"),
       doc = paste(
-        "Which solver to use. `\"covariance\"` builds the gene x gene",
-        "cross-product and eigendecomposes it: exact, and the fastest",
-        "option for a few thousand HVGs, but its cost grows with the",
-        "square of the gene number in memory and the cube in time.",
-        "`\"randomised\"` is a randomised SVD, approximate in the",
-        "trailing components. `\"exact\"` is a full SVD on the dense",
-        "path and Lanczos on the sparse one."
+        "Which solver to use. `\"auto\"` takes Lanczos on the sparse path",
+        "and `\"covariance\"` on the dense one, the fastest exact option",
+        "on each. `\"covariance\"` builds the gene x gene cross-product",
+        "and eigendecomposes it: its cost grows with the square of the",
+        "gene number in memory and the cube in time. `\"randomised\"` is",
+        "a randomised SVD, approximate in the trailing components.",
+        "`\"exact\"` is a full SVD on the dense path and Lanczos on the",
+        "sparse one."
       )
     )
   )

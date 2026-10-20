@@ -3493,7 +3493,7 @@ checkScFastmnnParams <- function(x) {
         "exhaustive"
       ),
       ann_dist = c("euclidean", "cosine"),
-      svd_solver = c("covariance", "randomised", "exact")
+      svd_solver = c("auto", "covariance", "randomised", "exact")
     ),
     label = "fastMNN params",
     hint = paste(
@@ -4572,7 +4572,7 @@ checkScPcaParams <- function(x) {
     label = "single cell PCA params",
     hint = paste(
       "mean_center, normalise_variance and clr must be single booleans;",
-      "svd_solver must be one of covariance, randomised or exact;",
+      "svd_solver must be one of auto, covariance, randomised or exact;",
       "size_factor must be a single numeric."
     )
   )
@@ -4583,12 +4583,12 @@ checkScPcaParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      svd_solver = c("covariance", "randomised", "exact")
+      svd_solver = c("auto", "covariance", "randomised", "exact")
     ),
     label = "single cell PCA params",
     hint = paste(
       "mean_center, normalise_variance and clr must be single booleans;",
-      "svd_solver must be one of covariance, randomised or exact;",
+      "svd_solver must be one of auto, covariance, randomised or exact;",
       "size_factor must be a single numeric."
     )
   )
@@ -4912,7 +4912,7 @@ checkScSeuratCcaParams <- function(x) {
         "exhaustive"
       ),
       ann_dist = c("euclidean", "cosine"),
-      svd_solver = c("covariance", "randomised", "exact")
+      svd_solver = c("auto", "covariance", "randomised", "exact")
     ),
     label = "Seurat CCA params"
   )
@@ -5029,7 +5029,7 @@ checkScSeuratRpcaParams <- function(x) {
         "exhaustive"
       ),
       ann_dist = c("euclidean", "cosine"),
-      svd_solver = c("covariance", "randomised", "exact")
+      svd_solver = c("auto", "covariance", "randomised", "exact")
     ),
     label = "Seurat rPCA params"
   )

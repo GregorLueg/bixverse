@@ -10,7 +10,7 @@ params_sc_pca(
   randomised = NULL,
   clr = FALSE,
   size_factor = 10000,
-  svd_solver = c("covariance", "randomised", "exact")
+  svd_solver = c("auto", "covariance", "randomised", "exact")
 )
 }
 \arguments{
@@ -30,12 +30,14 @@ et al. Defaults to \code{FALSE}.}
 the same as during I/O to have correct results when using the \code{PFlogPF}
 transformation. Defaults to \code{10000.0}.}
 
-\item{svd_solver}{String. Which solver to use. \code{"covariance"} builds the gene
-x gene cross-product and eigendecomposes it: exact, and the fastest option
-for a few thousand HVGs, but its cost grows with the square of the gene
-number in memory and the cube in time. \code{"randomised"} is a randomised SVD,
-approximate in the trailing components. \code{"exact"} is a full SVD on the dense
-path and Lanczos on the sparse one. One of \code{c("covariance", "randomised", "exact")}. Defaults to \code{"covariance"}.}
+\item{svd_solver}{String. Which solver to use. \code{"auto"} takes Lanczos on the
+sparse path and \code{"covariance"} on the dense one, the fastest exact option on
+each. \code{"covariance"} builds the gene x gene cross-product and eigendecomposes
+it: its cost grows with the square of the gene number in memory and the cube
+in time. \code{"randomised"} is a randomised SVD, approximate in the trailing
+components. \code{"exact"} is a full SVD on the dense path and Lanczos on the
+sparse one. One of \code{c("auto", "covariance", "randomised", "exact")}. Defaults
+to \code{"auto"}.}
 }
 \value{
 A named list with the following elements:
@@ -51,12 +53,13 @@ Booeshaghi, et al. Defaults to \code{FALSE}.
 \item size_factor - Numeric. The used size factor during I/O. It needs to be
 the same as during I/O to have correct results when using the \code{PFlogPF}
 transformation. Defaults to \code{10000.0}.
-\item svd_solver - String. Which solver to use. \code{"covariance"} builds the
-gene x gene cross-product and eigendecomposes it: exact, and the fastest
-option for a few thousand HVGs, but its cost grows with the square of the
-gene number in memory and the cube in time. \code{"randomised"} is a randomised
-SVD, approximate in the trailing components. \code{"exact"} is a full SVD on the
-dense path and Lanczos on the sparse one. One of \code{c("covariance", "randomised", "exact")}. Defaults to \code{"covariance"}.
+\item svd_solver - String. Which solver to use. \code{"auto"} takes Lanczos on
+the sparse path and \code{"covariance"} on the dense one, the fastest exact
+option on each. \code{"covariance"} builds the gene x gene cross-product and
+eigendecomposes it: its cost grows with the square of the gene number in
+memory and the cube in time. \code{"randomised"} is a randomised SVD, approximate
+in the trailing components. \code{"exact"} is a full SVD on the dense path and
+Lanczos on the sparse one. One of \code{c("auto", "covariance", "randomised", "exact")}. Defaults to \code{"auto"}.
 }
 }
 \description{

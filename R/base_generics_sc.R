@@ -1354,9 +1354,9 @@ get_hvg_data_sc <- S7::new_generic(
 #'
 #' @description
 #' This function will run PCA on the detected highly variable genes. The
-#' solver is set via `svd_solver` in [params_sc_pca()]; the default builds the
-#' gene x gene cross-product from the sparse data, which is exact and the
-#' fastest option for a few thousand HVGs.
+#' solver is set via `svd_solver` in [params_sc_pca()]; the default `"auto"`
+#' runs Lanczos on the sparse path and the gene x gene cross-product on the
+#' dense one, the fastest exact option on each.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
@@ -1378,7 +1378,7 @@ get_hvg_data_sc <- S7::new_generic(
 #' layer. Needs `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since
 #' the residuals already carry the signal as variance, and does not support
 #' `sparse_svd`: a residual column is dense even where the counts are not.
-#' On this dense path the default `svd_solver = "covariance"` pays for a full
+#' On this dense path the default `svd_solver = "auto"` pays for a full
 #' gene x gene cross-product and is slower than `svd_solver = "randomised"`,
 #' so pick the latter in [params_sc_pca()] when speed matters. Not supported
 #' for `MetaCells`.
