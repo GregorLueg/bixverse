@@ -403,6 +403,27 @@ knn_graph_label_propagation <- function(
 
 # community detection ----------------------------------------------------------
 
+## helpers ---------------------------------------------------------------------
+
+#' Default number of community detection iterations
+#'
+#' @description
+#' `5L` for Leiden and `2L` for Louvain, which gave the best modularity across
+#' synthetic graphs.
+#'
+#' @param algorithm String. One of `c("leiden", "louvain")`.
+#'
+#' @returns Integer.
+#'
+#' @keywords internal
+.default_community_iters <- function(algorithm) {
+  checkmate::assertChoice(algorithm, c("leiden", "louvain"))
+
+  switch(algorithm, leiden = 5L, louvain = 2L)
+}
+
+## main ------------------------------------------------------------------------
+
 #' Leiden or Louvain community detection on an igraph
 #'
 #' @description
@@ -489,21 +510,4 @@ leiden_clustering <- function(
       seed = as.integer(seed)
     )
   )
-}
-
-#' Default number of community detection iterations
-#'
-#' @description
-#' `5L` for Leiden and `2L` for Louvain, which gave the best modularity across
-#' synthetic graphs.
-#'
-#' @param algorithm String. One of `c("leiden", "louvain")`.
-#'
-#' @returns Integer.
-#'
-#' @keywords internal
-.default_community_iters <- function(algorithm) {
-  checkmate::assertChoice(algorithm, c("leiden", "louvain"))
-
-  switch(algorithm, leiden = 5L, louvain = 2L)
 }
