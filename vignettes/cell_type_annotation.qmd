@@ -299,8 +299,17 @@ plot_overlap <- function(a, b, name_a, name_b) {
   dt <- data.table(a = factor(a), b = factor(b))[, .N, by = .(a, b)] %>%
     .[, frac := N / sum(N), by = a]
 
+  # light text on the dark end of viridis, dark text on the yellow end
   ggplot(dt, aes(x = b, y = a, fill = frac)) +
     geom_tile() +
+    geom_text(
+      aes(
+        label = sprintf("%.2f", frac),
+        colour = ifelse(frac < 0.5, "white", "black")
+      ),
+      size = 2.5
+    ) +
+    scale_colour_identity() +
     scale_fill_viridis_c(limits = c(0, 1)) +
     labs(x = name_b, y = name_a, fill = "Fraction:") +
     theme_minimal()
