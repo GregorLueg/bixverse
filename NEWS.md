@@ -19,9 +19,16 @@
   `"coloured"` to move nodes in parallel). A negative `n_iterations` iterates
   until stable. `find_clusters_sc()` and `step_clusters_sc()` pass these on via
   `...`.
+* `params_sc_pca()` has a new `svd_solver = "auto"`, which is now the default.
+  It runs Lanczos on the sparse path and the covariance solver on the dense
+  one. The doublet detection methods (`params_scrublet()`, `params_boost()`,
+  `params_scdblfinder()`) accept it too; their default stays `"randomised"`.
 
 ## Changes
 
+* The default `svd_solver` of `params_sc_pca()` is `"auto"` rather than
+  `"covariance"`, so on the sparse path the PCs now come from Lanczos. Both are
+  exact, but the trailing PCs can shift slightly.
 * Clustering results shift against 0.7.0: new pruning default, new
   `n_iterations` defaults and the rewritten fast clustering.
 * `get_snn_graph()`, `set_snn_graph()` and `remove_snn_graph()` are now
