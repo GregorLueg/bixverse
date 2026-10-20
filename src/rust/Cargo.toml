@@ -64,11 +64,11 @@ name = "document"
 path = "document.rs"
 
 [patch.crates-io]
-bixverse-r = { path = "../../../bixverse-rs/crates/bixverse-r" }
-bixverse-rs = { path = "../../../bixverse-rs/crates/bixverse-rs" }
-bixverse-core = { path = "../../../bixverse-rs/crates/bixverse-core" }
-bixverse-gpu = { path = "../../../bixverse-rs/crates/bixverse-gpu" }
-bixverse-methods = { path = "../../../bixverse-rs/crates/bixverse-methods" }
-bixverse-sc = { path = "../../../bixverse-rs/crates/bixverse-sc" }
-bixverse-sc-data = { path = "../../../bixverse-rs/crates/bixverse-sc-data" }
-bixverse-sc-gpu = { path = "../../../bixverse-rs/crates/bixverse-sc-gpu" }
+bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
+bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
+bixverse-core = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
+bixverse-gpu = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
+bixverse-methods = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
+bixverse-sc = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
+bixverse-sc-data = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
+bixverse-sc-gpu = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
