@@ -21,7 +21,7 @@ the chosen combination."><meta property="og:image" content="https://gregorlueg.g
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,7 @@ the chosen combination."><meta property="og:image" content="https://gregorlueg.g
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -203,12 +203,12 @@ modality is set via <code>embd_modality</code> and passing it again will error.<
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dt</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"dim_1"</span>, <span class="st">"dim_2"</span>, <span class="st">"gene"</span>, <span class="st">"expression"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     cell_id      dim_1      dim_2    gene expression</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;      &lt;num&gt;      &lt;num&gt;  &lt;fctr&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001 -0.3694211  3.0682013 gene_01   6.222656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002  2.2331283 -2.5044506 gene_01   4.113281</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003 -2.4834063  0.5060492 gene_01   4.300781</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_004  1.3577558  2.6232290 gene_01   5.757812</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_005  2.1342576 -0.2906672 gene_01   0.000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_006 -2.6232185  0.5387377 gene_01   0.000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001  0.3694211  3.0682013 gene_01   6.222656</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002 -2.2331283 -2.5044506 gene_01   4.113281</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003  2.4834063  0.5060492 gene_01   4.300781</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_004 -1.3577558  2.6232290 gene_01   5.757812</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_005 -2.1342576 -0.2906672 gene_01   0.000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_006  2.6232185  0.5387377 gene_01   0.000000</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

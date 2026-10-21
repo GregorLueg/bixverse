@@ -188,9 +188,9 @@ sc_object[["cell_type"]] <- cell_type_anno$cell_type[match(
 get_sc_obs(sc_object, filtered = TRUE)[, .N, by = cell_type][order(-N)]
 #>    cell_type     N
 #>       <char> <int>
-#> 1:   T cells  1042
-#> 2: Monocytes   459
-#> 3:        NK   382
+#> 1:   T cells  1056
+#> 2: Monocytes   458
+#> 3:        NK   369
 #> 4:   B cells   280
 ```
 
@@ -223,14 +223,14 @@ t_cells <- SingleCellsSubset(
 
 t_cells
 #> Single cell experiment (subset).
-#>   No cells: 1042
+#>   No cells: 1056
 #>   No genes: 11139
 #>   Group: cell_type = T cells
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   Stale artefacts: none
 ```
 
@@ -247,7 +247,7 @@ work.
 ``` r
 
 dim(t_cells)
-#> [1]  1042 11139
+#> [1]  1056 11139
 
 head(t_cells)[, .(cell_id, cell_idx, lib_size, cell_type)]
 #>             cell_id cell_idx lib_size cell_type
@@ -255,9 +255,9 @@ head(t_cells)[, .(cell_id, cell_idx, lib_size, cell_type)]
 #> 1: AAACATACAACCAC-1        1     2418   T cells
 #> 2: AAACATTGATCAGC-1        3     3144   T cells
 #> 3: AAACGCACTGGTAC-1        6     2154   T cells
-#> 4: AAACGCTGTAGCCA-1        9     1273   T cells
-#> 5: AAACTTGATCCAGA-1       12     2382   T cells
-#> 6: AAAGAGACGAGATA-1       13     2403   T cells
+#> 4: AAACGCTGGTTCTT-1        8     2255   T cells
+#> 5: AAACGCTGTAGCCA-1        9     1273   T cells
+#> 6: AAACTTGATCCAGA-1       12     2382   T cells
 ```
 
 ### A note on indices
@@ -322,14 +322,14 @@ t_cells <- umap_sc(t_cells, .verbose = FALSE)
 
 t_cells
 #> Single cell experiment (subset).
-#>   No cells: 1042
+#>   No cells: 1056
 #>   No genes: 11139
 #>   Group: cell_type = T cells
 #>   HVG calculated: TRUE
 #>   PCA calculated: TRUE
 #>   Other embeddings: umap
 #>   KNN generated: TRUE
-#>   SNN generated: TRUE
+#>   Graph generated: TRUE
 #>   Stale artefacts: none
 ```
 
@@ -342,7 +342,7 @@ global_hvg <- get_hvg(sc_object)
 subset_hvg <- get_hvg(t_cells)
 
 length(intersect(global_hvg, subset_hvg))
-#> [1] 1014
+#> [1] 1026
 ```
 
 Around a thousand of the 2000 genes are different, and the ones that
@@ -385,23 +385,18 @@ sub_markers[fdr <= 0.05][order(grp, -lfc)][,
   by = grp,
   .SDcols = c("gene_symbol", "lfc", "fdr")
 ]
-#>       grp        gene_symbol       lfc          fdr
-#>     <int>             <char>     <num>        <num>
-#>  1:     0               CCR7 0.5642184 2.041524e-20
-#>  2:     0            C6orf48 0.4501169 1.178636e-12
-#>  3:     0               CD8B 0.4126715 5.109062e-13
-#>  4:     0                CD7 0.3531303 2.426653e-07
-#>  5:     0               SELL 0.3366527 1.902558e-05
-#>  6:     1             S100A4 1.4907115 5.171250e-82
-#>  7:     1               KLF6 0.8116387 3.714718e-27
-#>  8:     1               IL32 0.8064745 3.961200e-33
-#>  9:     1              ANXA1 0.7907043 7.146346e-27
-#> 10:     1            S100A10 0.7820998 4.275182e-27
-#> 11:     2 XXbac-BPG299F13.17 2.9117374 7.948966e-03
-#> 12:     2             FCER1A 2.8321354 3.452312e-41
-#> 13:     2              LZTS2 2.5425255 1.457232e-11
-#> 14:     2               GPX1 2.4128747 1.024864e-02
-#> 15:     2              USP30 2.3416917 1.347109e-22
+#>       grp gene_symbol       lfc          fdr
+#>     <int>      <char>     <num>        <num>
+#>  1:     0      S100A4 1.4726014 2.114318e-82
+#>  2:     0       ANXA1 0.7822316 3.739047e-26
+#>  3:     0        KLF6 0.7729779 2.906348e-25
+#>  4:     0     S100A11 0.7653841 3.571465e-30
+#>  5:     0       CLIC1 0.7572558 5.222734e-30
+#>  6:     1        CCR7 0.5253577 5.487946e-18
+#>  7:     1        SELL 0.4101167 2.251945e-08
+#>  8:     1     C6orf48 0.3642153 2.531462e-08
+#>  9:     1       RPS3A 0.3562278 3.690789e-30
+#> 10:     1         CD7 0.3320332 2.878776e-06
 ```
 
 S100A4, ANXA1 and IL32 on one side, CCR7, SELL and CD8B on the other.
@@ -458,17 +453,16 @@ sc_object <- merge_subset_obs(
   cols = "t_subcluster",
   prefix_values = TRUE
 )
-#> Merged 1 column(s) for 1042 cells into obs (1658 cells left as NA).
+#> Merged 1 column(s) for 1056 cells into obs (1644 cells left as NA).
 
 get_sc_obs(sc_object, filtered = TRUE)[, .N, by = t_subcluster][order(
   t_subcluster
 )]
 #>    t_subcluster     N
 #>          <char> <int>
-#> 1:    T cells_0   520
-#> 2:    T cells_1   520
-#> 3:    T cells_2     2
-#> 4:         <NA>  1121
+#> 1:    T cells_0   540
+#> 2:    T cells_1   516
+#> 3:         <NA>  1107
 ```
 
 `prefix_values = TRUE` stamps the subset’s group onto every value, so
@@ -500,12 +494,12 @@ sc_object <- add_sc_new_obs(sc_object, get_data(fast_sub))
 head(sc_object)[, .(cell_id, cell_type, t_subcluster, res_1, res_0.5)]
 #>             cell_id cell_type t_subcluster res_1 res_0.5
 #>              <char>    <char>       <char> <int>   <int>
-#> 1: AAACATACAACCAC-1   T cells    T cells_0     1       1
-#> 2: AAACATTGATCAGC-1   T cells    T cells_1     0       0
+#> 1: AAACATACAACCAC-1   T cells    T cells_0     0       0
+#> 2: AAACATTGATCAGC-1   T cells    T cells_0     0       0
 #> 3: AAACCGTGCTTCCG-1 Monocytes         <NA>    NA      NA
-#> 4: AAACGCACTGGTAC-1   T cells    T cells_1     2       0
-#> 5: AAACGCTGGTTCTT-1        NK         <NA>    NA      NA
-#> 6: AAACGCTGTAGCCA-1   T cells    T cells_1     2       0
+#> 4: AAACGCACTGGTAC-1   T cells    T cells_0     0       0
+#> 5: AAACGCTGGTTCTT-1   T cells    T cells_0     0       0
+#> 6: AAACGCTGTAGCCA-1   T cells    T cells_0     0       0
 ```
 
 ## Pipelines
@@ -559,7 +553,7 @@ b_cells
 #>   PCA calculated: TRUE
 #>   Other embeddings: none
 #>   KNN generated: TRUE
-#>   SNN generated: TRUE
+#>   Graph generated: TRUE
 #>   Stale artefacts: none
 ```
 
@@ -608,9 +602,9 @@ summary_dt <- data.table::rbindlist(purrr::imap(per_group, \(x, name) {
 summary_dt[order(-n_cells)]
 #>    cell_type n_cells n_subclusters hvg_shared_with_global
 #>       <char>   <int>         <int>                  <int>
-#> 1:   T cells    1042             3                   1014
-#> 2: Monocytes     459             2                    820
-#> 3:        NK     382             2                    671
+#> 1:   T cells    1056             2                   1026
+#> 2: Monocytes     458             2                    820
+#> 3:        NK     369             2                    665
 #> 4:   B cells     280             1                    581
 ```
 
@@ -639,13 +633,12 @@ get_sc_obs(sc_object, filtered = TRUE)[, .N, by = fine_label][order(fine_label)]
 #>     fine_label     N
 #>         <char> <int>
 #> 1:   B cells_0   280
-#> 2: Monocytes_0   254
-#> 3: Monocytes_1   205
-#> 4:        NK_0   257
-#> 5:        NK_1   125
-#> 6:   T cells_0   520
-#> 7:   T cells_1   520
-#> 8:   T cells_2     2
+#> 2: Monocytes_0   266
+#> 3: Monocytes_1   192
+#> 4:        NK_0   232
+#> 5:        NK_1   137
+#> 6:   T cells_0   540
+#> 7:   T cells_1   516
 ```
 
 The prefix is doing real work here. Every group’s Leiden run starts

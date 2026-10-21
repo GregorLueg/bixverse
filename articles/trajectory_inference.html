@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Trajectory inference with Palantir and PAGA</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-14</p>
+      <p class="date">2026-10-21</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -197,7 +197,7 @@
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
-<span><span class="co">#&gt;   SNN generated: FALSE</span></span>
+<span><span class="co">#&gt;   Graph generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
@@ -206,7 +206,7 @@
 </section><section class="level2"><h2 id="feature-selection-pca-and-neighbours">Feature selection, PCA and neighbours<a class="anchor" aria-label="anchor" href="#feature-selection-pca-and-neighbours"></a>
 </h2>
 <p>Standard pipeline. The one choice worth spelling out is <code>k = 30</code> on the kNN graph: Palantir builds its diffusion kernel from whatever graph is stored on the object, and 30 neighbours is what the reference uses. The distance metric has to be euclidean, since the diffusion kernel is a Gaussian over a metric distance and cosine is not one.</p>
-<p><code>pruning</code> has to move with <code>k</code>. The default of <code>1/12</code> is set for the default <code>k = 15</code>, and since the threshold is a share of the neighbourhood, leaving it alone at <code>k = 30</code> prunes twice as hard. Nothing errors, you just get cells with too few shared neighbours dropping out as one-cell clusters.</p>
+<p><code>pruning</code> does not have to move with <code>k</code>. A Jaccard threshold <code>p</code> asks two cells to share a fraction <code>2p / (1 + p)</code> of their neighbourhoods, whatever <code>k</code> is, so the default <code>1/16</code> keeps the same ~12% at <code>k = 30</code> as at <code>k = 15</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
@@ -223,13 +223,11 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span></span>
-<span>    pruning <span class="op">=</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">24</span>,</span>
 <span>    knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">30L</span>, ann_dist <span class="op">=</span> <span class="st">"euclidean"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
-<span><span class="co">#&gt; Transforming sNN data to igraph.</span></span>
+<span><span class="co">#&gt; Generating the snn graph.</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
@@ -312,20 +310,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    modality  artefact   name stamped  stale reason               id</span></span>
-<span><span class="co">#&gt;      &lt;char&gt;    &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 88a72414fdc23880</span></span>
-<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; 3da6b7f9926129a1</span></span>
-<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 254c3468a623065b</span></span>
-<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 5ac4a88ef87704fd</span></span>
-<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; c4b7c73bbf6f1983</span></span>
+<span><span class="co">#&gt;    modality       artefact   name stamped  stale reason               id</span></span>
+<span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 2eb6297969df90ad</span></span>
+<span><span class="co">#&gt; 2:      rna      embedding   umap    TRUE  FALSE   &lt;NA&gt; f67314c00a8b005e</span></span>
+<span><span class="co">#&gt; 3:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 0c64e05b2fb2715d</span></span>
+<span><span class="co">#&gt; 4:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 38845c6f709dcb2f</span></span>
+<span><span class="co">#&gt; 5:      rna          magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 9b665a2f1b2c9233</span></span>
 <span><span class="co">#&gt;                                 from</span></span>
 <span><span class="co">#&gt;                               &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                  </span></span>
-<span><span class="co">#&gt; 2: 88a72414fdc23880,254c3468a623065b</span></span>
-<span><span class="co">#&gt; 3:                  88a72414fdc23880</span></span>
-<span><span class="co">#&gt; 4:                  254c3468a623065b</span></span>
-<span><span class="co">#&gt; 5:                  254c3468a623065b</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 2eb6297969df90ad,0c64e05b2fb2715d</span></span>
+<span><span class="co">#&gt; 3:                  2eb6297969df90ad</span></span>
+<span><span class="co">#&gt; 4:                  0c64e05b2fb2715d</span></span>
+<span><span class="co">#&gt; 5:                  0c64e05b2fb2715d</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="paga">PAGA<a class="anchor" aria-label="anchor" href="#paga"></a>
 </h2>
@@ -336,7 +334,7 @@
 <span>  <span class="va">sc_object</span>,</span>
 <span>  cluster_col <span class="op">=</span> <span class="st">"leiden_clusters"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Running PAGA over the rna kNN graph (4142 cells, 7 clusters).</span></span></code></pre></div>
+<span><span class="co">#&gt; Running PAGA over the rna kNN graph (4142 cells, 9 clusters).</span></span></code></pre></div>
 </div>
 <p><code>connectivities</code> is the full abstracted graph, <code>connectivities_tree</code> its maximum spanning forest. Both are symmetric sparse matrices named by cluster, with a zero diagonal.</p>
 <div class="cell">
@@ -344,23 +342,27 @@
 <code class="sourceCode R"><span><span class="va">paga_res</span><span class="op">$</span><span class="va">sizes</span></span>
 <span><span class="co">#&gt;    cluster n_cells</span></span>
 <span><span class="co">#&gt;     &lt;char&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:       0    1006</span></span>
-<span><span class="co">#&gt; 2:       1     823</span></span>
-<span><span class="co">#&gt; 3:       2     635</span></span>
-<span><span class="co">#&gt; 4:       3     615</span></span>
-<span><span class="co">#&gt; 5:       4     528</span></span>
-<span><span class="co">#&gt; 6:       5     403</span></span>
-<span><span class="co">#&gt; 7:       6     132</span></span>
+<span><span class="co">#&gt; 1:       0     691</span></span>
+<span><span class="co">#&gt; 2:       1     674</span></span>
+<span><span class="co">#&gt; 3:       2     634</span></span>
+<span><span class="co">#&gt; 4:       3     523</span></span>
+<span><span class="co">#&gt; 5:       4     449</span></span>
+<span><span class="co">#&gt; 6:       5     429</span></span>
+<span><span class="co">#&gt; 7:       6     413</span></span>
+<span><span class="co">#&gt; 8:       7     186</span></span>
+<span><span class="co">#&gt; 9:       8     143</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">paga_res</span><span class="op">$</span><span class="va">connectivities</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       0     1     2     3     4     5     6</span></span>
-<span><span class="co">#&gt; 0 0.000 0.199 0.001 0.003 0.001 0.063 0.423</span></span>
-<span><span class="co">#&gt; 1 0.199 0.000 0.088 0.006 0.280 0.227 0.077</span></span>
-<span><span class="co">#&gt; 2 0.001 0.088 0.000 0.002 0.456 0.317 0.005</span></span>
-<span><span class="co">#&gt; 3 0.003 0.006 0.002 0.000 0.003 0.001 0.402</span></span>
-<span><span class="co">#&gt; 4 0.001 0.280 0.456 0.003 0.000 0.043 0.006</span></span>
-<span><span class="co">#&gt; 5 0.063 0.227 0.317 0.001 0.043 0.000 0.001</span></span>
-<span><span class="co">#&gt; 6 0.423 0.077 0.005 0.402 0.006 0.001 0.000</span></span></code></pre></div>
+<span><span class="co">#&gt;       0     1     2     3     4     5     6     7     8</span></span>
+<span><span class="co">#&gt; 0 0.000 0.474 0.001 0.000 0.001 0.002 0.026 0.001 0.395</span></span>
+<span><span class="co">#&gt; 1 0.474 0.000 0.028 0.070 0.599 0.003 0.196 0.000 0.328</span></span>
+<span><span class="co">#&gt; 2 0.001 0.028 0.000 0.445 0.121 0.003 0.329 0.001 0.005</span></span>
+<span><span class="co">#&gt; 3 0.000 0.070 0.445 0.000 0.431 0.004 0.044 0.000 0.006</span></span>
+<span><span class="co">#&gt; 4 0.001 0.599 0.121 0.431 0.000 0.015 0.258 0.000 0.077</span></span>
+<span><span class="co">#&gt; 5 0.002 0.003 0.003 0.004 0.015 0.000 0.004 0.701 0.533</span></span>
+<span><span class="co">#&gt; 6 0.026 0.196 0.329 0.044 0.258 0.004 0.000 0.000 0.004</span></span>
+<span><span class="co">#&gt; 7 0.001 0.000 0.001 0.000 0.000 0.701 0.000 0.000 0.000</span></span>
+<span><span class="co">#&gt; 8 0.395 0.328 0.005 0.006 0.077 0.533 0.004 0.000 0.000</span></span></code></pre></div>
 </div>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/paga_plot_sc.html">paga_plot_sc()</a></code> puts every cluster at the centroid of its cells in an embedding and draws the graph over them. A free layout of the abstracted graph would put the nodes somewhere arbitrary, which you then have to relate back to the UMAP by eye.</p>
 <div class="cell">
@@ -666,7 +668,7 @@
 <p>Palantir has more moving parts than most methods in this package, and several of them fail quietly rather than loudly. In rough order of how often they bite:</p>
 <ul>
 <li>
-<strong><code>pruning</code> left at its default.</strong> Covered above, and the only one on this list that is upstream of Palantir entirely. It costs you clusters, not pseudotime, but a one-cell cluster then walks into PAGA and comes back out as a fat edge into a dot, because the null model has almost no possible edges to normalise against.</li>
+<strong>Pruning too hard.</strong> Upstream of Palantir entirely. It costs you clusters, not pseudotime, but a one-cell cluster then walks into PAGA and comes back out as a fat edge into a dot, because the null model has almost no possible edges to normalise against. <code>rescue = TRUE</code> (the default) reconnects the small components pruning cuts off, so this mainly bites with it switched off.</li>
 <li>
 <strong>The start cell.</strong> Covered above. Set <code>use_early_cell_as_start = FALSE</code> to get the reference behaviour and it can move your root onto a branch tip. If pseudotime comes back anti-correlated with what you expect, check <code>start_cell</code> on the result object first. Note that pseudotime is not pinned to zero at the start cell either: the refinement can put the minimum on a neighbour, and a start cell far from zero means it disagreed with your anchor.</li>
 <li>

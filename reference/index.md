@@ -429,8 +429,8 @@ THE single cell class with a large number of getters.
   : Get the PCA loadings
 - [`get_pca_factors()`](https://gregorlueg.github.io/bixverse/reference/get_pca_factors.md)
   : Get the PCA factors
-- [`get_snn_graph()`](https://gregorlueg.github.io/bixverse/reference/get_snn_graph.md)
-  : Get the sNN graph
+- [`get_connectivities()`](https://gregorlueg.github.io/bixverse/reference/get_connectivities.md)
+  : Get the neighbour graph
 - [`get_gene_names_from_idx()`](https://gregorlueg.github.io/bixverse/reference/get_gene_names_from_idx.md)
   : Get the gene names based on the gene idx
 - [`get_sc_available_features()`](https://gregorlueg.github.io/bixverse/reference/get_sc_available_features.md)
@@ -801,6 +801,8 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Helper function to generate default parameters for PCA
 - [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   : Helper function to generate kNN defaults
+- [`params_knn_graph_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.md)
+  : Helper function to generate the kNN graph defaults
 - [`params_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_knn.md)
   : Parameters for single cell kNN searches
 - [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md)
@@ -865,10 +867,10 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
   : Calculate module activity scores
 
 - [`fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_cluster_sc.md)
-  : Run fast Louvain clustering on a SingleCells object
+  : Run fast clustering on a SingleCells object
 
 - [`find_clusters_sc()`](https://gregorlueg.github.io/bixverse/reference/find_clusters_sc.md)
-  : Graph-based clustering of cells on the sNN graph
+  : Graph-based clustering of cells on the neighbour graph
 
 - [`find_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_markers_sc.md)
   : Calculate DGE between two cell groups
@@ -1656,8 +1658,8 @@ There is a lot more under the hood…
 - [`rs_sc_knn_w_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_w_dist.md)
   **\[experimental\]** : Generates the kNN graph with additional
   distances
-- [`rs_sc_snn()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_snn.md)
-  **\[experimental\]** : Generates the sNN graph for igraph
+- [`rs_sc_knn_graph()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_graph.md)
+  **\[experimental\]** : Generates the neighbour graph for igraph
 - [`rs_set_similarity()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity.md)
   **\[experimental\]** : Set similarities
 - [`rs_set_similarity_list()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list.md)

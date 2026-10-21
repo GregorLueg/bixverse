@@ -46,7 +46,7 @@ Returns the `SingleCells` class for further operations.
 - sc_cache:
 
   Class with cached data. Contains less memory-heavy objects such as
-  embeddings, kNN information or sNN graphs.
+  embeddings, kNN information or neighbour graphs.
 
 - sc_map:
 
@@ -71,7 +71,7 @@ sc
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none

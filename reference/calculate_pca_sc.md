@@ -3,8 +3,8 @@
 This function will run PCA on the detected highly variable genes. The
 solver is set via `svd_solver` in
 [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md);
-the default builds the gene x gene cross-product from the sparse data,
-which is exact and the fastest option for a few thousand HVGs.
+the default `"auto"` runs Lanczos on the sparse path and the gene x gene
+cross-product on the dense one, the fastest exact option on each.
 
 ## Usage
 
@@ -66,8 +66,8 @@ calculate_pca_sc(
   `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since the
   residuals already carry the signal as variance, and does not support
   `sparse_svd`: a residual column is dense even where the counts are
-  not. On this dense path the default `svd_solver = "covariance"` pays
-  for a full gene x gene cross-product and is slower than
+  not. On this dense path the default `svd_solver = "auto"` pays for a
+  full gene x gene cross-product and is slower than
   `svd_solver = "randomised"`, so pick the latter in
   [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
   when speed matters. Not supported for `MetaCells`.

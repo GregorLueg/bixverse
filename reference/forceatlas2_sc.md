@@ -15,7 +15,7 @@ is what scanpy's `draw_graph` does.
   from the chosen embedding), turned into the UMAP fuzzy union graph
   first. This matches scanpy.
 
-- `"snn"` - The sNN graph from
+- `"connectivities"` - The neighbour graph from
   [`find_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/find_neighbours_sc.md),
   i.e. the same graph the Leiden/Louvain clustering runs on. `use_knn`,
   `embd_to_use`, `no_embd_to_use`, `k`, `knn_method` and `nn_params` do
@@ -28,7 +28,7 @@ is what scanpy's `draw_graph` does.
 ``` r
 forceatlas2_sc(
   object,
-  graph = c("knn", "snn"),
+  graph = c("knn", "connectivities"),
   use_knn = TRUE,
   embd_to_use = "pca",
   slot_name = "fa2",
@@ -52,8 +52,8 @@ forceatlas2_sc(
 
 - graph:
 
-  String. Which graph to lay out. One of `c("knn", "snn")`. Defaults to
-  `"knn"`.
+  String. Which graph to lay out. One of `c("knn", "connectivities")`.
+  Defaults to `"knn"`.
 
 - use_knn:
 
@@ -78,7 +78,8 @@ forceatlas2_sc(
 - init_embd:
 
   Optional string. Name of a stored 2D embedding, e.g. `"umap"`, to
-  initialise the layout with. `"snn"` only. Defaults to `NULL`.
+  initialise the layout with. `"connectivities"` only. Defaults to
+  `NULL`.
 
 - modality:
 
@@ -128,16 +129,16 @@ Jacomy, et al., PLoS ONE, 2014
 ## Examples
 
 ``` r
-# ForceAtlas2 on the cached kNN graph, then on the sNN graph
+# ForceAtlas2 on the cached kNN graph, then on the neighbour graph
 sc <- demo_single_cells()
 sc <- forceatlas2_sc(sc, .verbose = FALSE)
 sc <- forceatlas2_sc(
   sc,
-  graph = "snn",
-  slot_name = "fa2_snn",
+  graph = "connectivities",
+  slot_name = "fa2_graph",
   .verbose = FALSE
 )
-dim(get_embedding(sc, "fa2_snn"))
+dim(get_embedding(sc, "fa2_graph"))
 #> [1] 500   2
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)

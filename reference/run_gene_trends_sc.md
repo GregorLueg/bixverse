@@ -131,7 +131,7 @@ head(res$trends)
 #> 2: cell_099 0.02040816 gene_01   6.247292
 #> 3: cell_099 0.04081633 gene_01   6.229469
 #> 4: cell_099 0.06122449 gene_01   6.205736
-#> 5: cell_099 0.08163265 gene_01   6.176020
+#> 5: cell_099 0.08163265 gene_01   6.176019
 #> 6: cell_099 0.10204082 gene_01   6.140287
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)

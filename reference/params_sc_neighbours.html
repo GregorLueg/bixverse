@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -100,43 +100,19 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_neighbours</span><span class="op">(</span></span>
-<span>  full_snn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  pruning <span class="op">=</span> <span class="fl">0.0833333333333333</span>,</span>
-<span>  snn_similarity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"jaccard"</span>, <span class="st">"rank"</span><span class="op">)</span>,</span>
-<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_neighbours</span><span class="op">(</span>graph <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-full-snn">full_snn<a class="anchor" aria-label="anchor" href="#arg-full-snn"></a></dt>
-<dd><p>Boolean. Shall the full shared nearest neighbour graph be
-generated that generates edges between all cells instead of between only
-neighbours. Defaults to <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-pruning">pruning<a class="anchor" aria-label="anchor" href="#arg-pruning"></a></dt>
-<dd><p>Numeric. Weights below this threshold will be set to 0 in the
-generation of the sNN graph. Seurat uses for example <code>1/15</code> with <code>k = 20</code>. As
-the default k is set to 15, we set it to <code>1/12</code>. Track this against <code>k</code>
-rather than leaving it: the threshold is a share of the neighbourhood, so the
-same value prunes far harder at a larger <code>k</code>. A cell that loses every edge to
-pruning keeps its strongest kNN edge, so it does not drop out as a one-cell
-cluster. Over-pruning still fails quietly otherwise: small groups of cells
-that only share neighbours with each other split off as tiny communities.
-Defaults to <code>0.08333333333333333</code>.</p></dd>
-
-
-<dt id="arg-snn-similarity">snn_similarity<a class="anchor" aria-label="anchor" href="#arg-snn-similarity"></a></dt>
-<dd><p>String. The Jaccard similarity calculates the Jaccard
-between the neighbours, whereas the rank method calculates edge weights based
-on the ranking of shared neighbours. For the rank method, the weight is
-determined by finding the shared neighbour with the lowest combined rank
-across both cells, where lower-ranked (closer) shared neighbours result in
-higher edge weights Both methods produce weights normalised to the range <code>[0, 1]</code>. One of <code>c("jaccard", "rank")</code>. Defaults to <code>"jaccard"</code>.</p></dd>
+<dl><dt id="arg-graph">graph<a class="anchor" aria-label="anchor" href="#arg-graph"></a></dt>
+<dd><p>List. Optional overrides for how the kNN is turned into the
+graph. See <code><a href="params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code> for available parameters:
+<code>knn_sym</code>, <code>snn_similarity</code>, <code>pruning</code>, <code>rescue</code>, <code>local_connectivity</code>,
+<code>mix_ratio</code> and <code>binary</code>. See <code><a href="params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code> for the available
+elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
@@ -150,24 +126,8 @@ available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html"
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list with the following elements:</p><ul><li><p>full_snn - Boolean. Shall the full shared nearest neighbour graph be
-generated that generates edges between all cells instead of between only
-neighbours. Defaults to <code>TRUE</code>.</p></li>
-<li><p>pruning - Numeric. Weights below this threshold will be set to 0 in
-the generation of the sNN graph. Seurat uses for example <code>1/15</code> with <code>k = 20</code>. As the default k is set to 15, we set it to <code>1/12</code>. Track this against
-<code>k</code> rather than leaving it: the threshold is a share of the neighbourhood,
-so the same value prunes far harder at a larger <code>k</code>. A cell that loses every
-edge to pruning keeps its strongest kNN edge, so it does not drop out as a
-one-cell cluster. Over-pruning still fails quietly otherwise: small groups
-of cells that only share neighbours with each other split off as tiny
-communities. Defaults to <code>0.08333333333333333</code>.</p></li>
-<li><p>snn_similarity - String. The Jaccard similarity calculates the Jaccard
-between the neighbours, whereas the rank method calculates edge weights
-based on the ranking of shared neighbours. For the rank method, the weight
-is determined by finding the shared neighbour with the lowest combined rank
-across both cells, where lower-ranked (closer) shared neighbours result in
-higher edge weights Both methods produce weights normalised to the range
-<code>[0, 1]</code>. One of <code>c("jaccard", "rank")</code>. Defaults to <code>"jaccard"</code>.</p></li>
+    <p>A named list with the following elements:</p><ul><li><p>The elements of <code><a href="params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code>, overridden by <code>graph</code>,
+spliced in at this position.</p></li>
 <li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
 in at this position.</p></li>
 </ul></div>

@@ -200,8 +200,7 @@ sc_object <- find_neighbours_sc(
   )
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 You can however also generate the kNN indices like this:

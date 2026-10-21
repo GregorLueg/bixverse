@@ -24,7 +24,8 @@ A `data.table` with the columns
 
 - modality - The modality the artefact lives in.
 
-- artefact - One of `pca`, `embedding`, `knn`, `snn`, `magic`.
+- artefact - One of `pca`, `embedding`, `knn`, `connectivities`,
+  `magic`.
 
 - name - The embedding name, `NA` for the others.
 
@@ -44,16 +45,16 @@ A `data.table` with the columns
 # what the object holds and whether it still agrees with the cells
 sc <- demo_single_cells()
 get_sc_cache_status(sc)
-#>    modality artefact   name stamped  stale reason               id
-#>      <char>   <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna      pca   <NA>    TRUE  FALSE   <NA> 43e526fdf0d4d9e0
-#> 2:      rna      knn   <NA>    TRUE  FALSE   <NA> b07416e286cce64c
-#> 3:      rna      snn   <NA>    TRUE  FALSE   <NA> 07a5d093676be397
+#>    modality       artefact   name stamped  stale reason               id
+#>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> a7871821210d14e8
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 747b6dd302102112
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> f16ace390c19467f
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 43e526fdf0d4d9e0
-#> 3: b07416e286cce64c
+#> 2: a7871821210d14e8
+#> 3: 747b6dd302102112
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

@@ -14,7 +14,9 @@ leiden_clustering(
   resolution = 1,
   algorithm = c("leiden", "louvain"),
   beta = 0.01,
-  n_iterations = 2L,
+  n_iterations = NULL,
+  min_gain = 0,
+  local_moving = c("queue", "coloured"),
   seed = 42L
 )
 ```
@@ -42,8 +44,21 @@ leiden_clustering(
 
 - n_iterations:
 
-  Integer. Number of full iterations, each starting from the previous
-  partition.
+  Optional integer. Number of full iterations, each starting from the
+  previous partition. A negative value iterates until the partition is
+  stable. If `NULL`, `5L` for Leiden and `2L` for Louvain, which gave
+  the best modularity across synthetic graphs.
+
+- min_gain:
+
+  Numeric. With a negative `n_iterations`, also stop once an iteration
+  gains no more than this in modularity.
+
+- local_moving:
+
+  String. One of `c("queue", "coloured")`. `"queue"` is Traag's
+  sequential queue. `"coloured"` moves the nodes of one colour class in
+  parallel, which only kicks in on larger levels of the graph.
 
 - seed:
 

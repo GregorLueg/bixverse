@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Doublet detection with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-14</p>
+      <p class="date">2026-10-21</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -200,7 +200,7 @@
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
-<span><span class="co">#&gt;   SNN generated: FALSE</span></span>
+<span><span class="co">#&gt;   Graph generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
@@ -384,13 +384,13 @@
 <span>  actual <span class="op">=</span> <span class="va">boosted_fast_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.7062883</span></span>
+<span><span class="co">#&gt; [1] 0.7041825</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.5907633</span></span>
+<span><span class="co">#&gt; [1] 0.5939705</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6433811</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6443981</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="scdblfinder">scDblFinder<a class="anchor" aria-label="anchor" href="#scdblfinder"></a>
 </h3>
@@ -419,13 +419,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scdblfinder_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6112054</span></span>
+<span><span class="co">#&gt; [1] 0.6086957</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.6927518</span></span>
+<span><span class="co">#&gt; [1] 0.7363695</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6494287</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6664731</span></span></code></pre></div>
 </div>
 <p>We can also extract the other scores from scDblFinder. We can for example extract the weighted score, identify the threshold via Otsu’s method and check the doublets like this.</p>
 <div class="cell">
@@ -442,8 +442,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         weighted</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 11852   909</span></span>
-<span><span class="co">#&gt;    TRUE     41  1726</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 11771   871</span></span>
+<span><span class="co">#&gt;    TRUE     57  1829</span></span></code></pre></div>
 </div>
 <p>Or alternatively, the cxds scores can also be extracted and used. These scores were originally developed by <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7703774/" class="external-link">Bais and Kostka</a> and are used as an input into the classifier.</p>
 <div class="cell">
@@ -460,13 +460,13 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         cxds</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 12421   340</span></span>
-<span><span class="co">#&gt;    TRUE    790   977</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 12412   230</span></span>
+<span><span class="co">#&gt;    TRUE    799  1087</span></span></code></pre></div>
 </div>
 <p>Should you observe that this is very flat or you only have a few data points (this can occur in low complexity experiments in which the highest expressing genes are VERY similar across all the cells for example in cell culture experiments), you can bump <code>cxds_genes</code> up. The default here is 500L, but you might want to increase this pending your experiment.</p>
 </section><section class="level3"><h3 id="pca-solver-and-hvg-method">PCA solver and HVG method<a class="anchor" aria-label="anchor" href="#pca-solver-and-hvg-method"></a>
 </h3>
-<p>All three methods run their own PCA on the observed and simulated cells. You pick the solver via <code>svd_solver</code> in the <code>pca</code> list. The default here is <code>"randomised"</code>, a randomised SVD that is approximate in the trailing components. <code>"covariance"</code> builds the gene x gene cross-product over the HVGs and eigendecomposes it, which is exact. It’s the default in <code><a href="../reference/params_sc_pca.html">params_sc_pca()</a></code>, but the doublet methods run on more genes and that matrix grows with the square of the gene count, so it gets painfully slow here. <code>"exact"</code> runs Lanczos on the sparse path and a full SVD on the dense one. Scrublet and the boosted method also take the HVG method via the <code>hvg</code> list, including the scran trend:</p>
+<p>All three methods run their own PCA on the observed and simulated cells. You pick the solver via <code>svd_solver</code> in the <code>pca</code> list. The default here is <code>"randomised"</code>, a randomised SVD that is approximate in the trailing components. <code>"covariance"</code> builds the gene x gene cross-product over the HVGs and eigendecomposes it, which is exact, but the doublet methods run on more genes and that matrix grows with the square of the gene count, so it gets painfully slow here. <code>"auto"</code> (the default in <code><a href="../reference/params_sc_pca.html">params_sc_pca()</a></code>) runs Lanczos on the sparse path and the covariance solver on the dense one. <code>"exact"</code> runs Lanczos on the sparse path and a full SVD on the dense one. Scrublet and the boosted method also take the HVG method via the <code>hvg</code> list, including the scran trend:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/params_scrublet.html">params_scrublet</a></span><span class="op">(</span></span>

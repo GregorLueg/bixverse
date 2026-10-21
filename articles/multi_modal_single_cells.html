@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Multi-modal single cell analysis with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-14</p>
+      <p class="date">2026-10-21</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -311,8 +311,7 @@
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
-<span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
+<span><span class="co">#&gt; Generating the snn graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
@@ -330,10 +329,10 @@
 <span><span class="co">#&gt;    outlier leiden_clustering</span></span>
 <span><span class="co">#&gt;     &lt;lgcl&gt;             &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:   FALSE                 0</span></span>
-<span><span class="co">#&gt; 2:   FALSE                 6</span></span>
-<span><span class="co">#&gt; 3:   FALSE                 5</span></span>
+<span><span class="co">#&gt; 2:   FALSE                 5</span></span>
+<span><span class="co">#&gt; 3:   FALSE                 0</span></span>
 <span><span class="co">#&gt; 4:   FALSE                10</span></span>
-<span><span class="co">#&gt; 5:   FALSE                 8</span></span>
+<span><span class="co">#&gt; 5:   FALSE                 1</span></span>
 <span><span class="co">#&gt; 6:   FALSE                 0</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -381,8 +380,7 @@
 <span>  modality <span class="op">=</span> <span class="st">"adt"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
-<span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
+<span><span class="co">#&gt; Generating the snn graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
@@ -518,8 +516,7 @@
 <span>  wnn_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_wnn.html">params_sc_wnn</a></span><span class="op">(</span>sd_scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running WNN graph generation.</span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: TRUE) from WNN graph.</span></span>
-<span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
+<span><span class="co">#&gt; Generating the snn graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">

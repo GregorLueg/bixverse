@@ -21,7 +21,7 @@ Write an artefact payload back into a cache
 - artefact:
 
   String. One of
-  `c("pca", "embedding", "knn", "snn", "magic", "residuals")`.
+  `c("pca", "embedding", "knn", "connectivities", "magic", "residuals")`.
 
 - name:
 

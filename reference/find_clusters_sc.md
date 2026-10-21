@@ -1,7 +1,7 @@
-# Graph-based clustering of cells on the sNN graph
+# Graph-based clustering of cells on the neighbour graph
 
-This function will apply Leiden clustering on the sNN graph with the
-given resolution and add a column to the obs table. Runs in Rust via
+This function will apply Leiden or Louvain on the neighbour graph with
+the given resolution and add a column to the obs table. Runs in Rust via
 [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md);
 the labels depend on `seed` only, `0` is the largest cluster.
 
@@ -14,7 +14,8 @@ find_clusters_sc(
   res = 1,
   name = "leiden_clustering",
   modality = c("rna", "adt", "wnn"),
-  seed = 42L
+  seed = 42L,
+  ...
 )
 ```
 
@@ -47,6 +48,12 @@ find_clusters_sc(
 
   Integer. For reproducibility.
 
+- ...:
+
+  Further parameters for
+  [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md):
+  `n_iterations`, `beta`, `min_gain` and `local_moving`.
+
 ## Value
 
 The object with added clustering in the obs table.
@@ -54,7 +61,7 @@ The object with added clustering in the obs table.
 ## Examples
 
 ``` r
-# Leiden on the cached sNN graph
+# Leiden on the cached neighbour graph
 sc <- demo_single_cells()
 sc <- find_clusters_sc(sc, res = 1.0, name = "clusters")
 table(get_sc_obs(sc)$clusters)

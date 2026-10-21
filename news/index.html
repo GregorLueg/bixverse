@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -93,6 +93,43 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.0" id="bixverse-080">bixverse 0.8.0<a class="anchor" aria-label="anchor" href="#bixverse-080"></a></h2>
+<div class="section level3">
+<h3 id="features-0-8-0">Features<a class="anchor" aria-label="anchor" href="#features-0-8-0"></a></h3>
+<ul><li>
+<code>bixverse-r</code> 0.8.0 under the hood. <code>petgraph</code> is out of the dependency tree.</li>
+<li>New <code><a href="../reference/params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code>. Its <code>knn_sym</code> picks the graph the clustering runs on: <code>"snn"</code> (bluster/Seurat sNN, the default), <code>"umap"</code> (the fuzzy simplicial set ScanPy keeps in <code>obsp/connectivities</code>) or <code>"knn"</code> (plain kNN union). Pass it via <code>graph</code> in <code><a href="../reference/params_sc_neighbours.html">params_sc_neighbours()</a></code> or <code>graph_params</code> in <code><a href="../reference/generate_wnn_graph_sc.html">generate_wnn_graph_sc()</a></code>. Resolutions don’t carry over between the graphs, retune them when switching.</li>
+<li>
+<code><a href="../reference/fast_cluster_sc.html">fast_cluster_sc()</a></code> is rewritten. It coarsens the cells with k-means, builds a graph over the centroids (a symmetrised centroid kNN or the Secuer cell-mediated graph) and runs Louvain or Leiden on it. All knobs live in <code><a href="../reference/params_sc_fast_cluster.html">params_sc_fast_cluster()</a></code>. With <code>n_seeds &gt; 1</code> it runs every resolution once per seed, keeps the labels of the seed with the lowest mean conductance and returns ARI and conductance stability stats.</li>
+<li>
+<code><a href="../reference/leiden_clustering.html">leiden_clustering()</a></code> gained <code>min_gain</code> and <code>local_moving</code> (<code>"queue"</code>, or <code>"coloured"</code> to move nodes in parallel). A negative <code>n_iterations</code> iterates until stable. <code><a href="../reference/find_clusters_sc.html">find_clusters_sc()</a></code> and <code><a href="../reference/step_clusters_sc.html">step_clusters_sc()</a></code> pass these on via <code>...</code>.</li>
+<li>
+<code><a href="../reference/params_sc_pca.html">params_sc_pca()</a></code> has a new <code>svd_solver = "auto"</code>, which is now the default. It runs Lanczos on the sparse path and the covariance solver on the dense one. The doublet detection methods (<code><a href="../reference/params_scrublet.html">params_scrublet()</a></code>, <code><a href="../reference/params_boost.html">params_boost()</a></code>, <code><a href="../reference/params_scdblfinder.html">params_scdblfinder()</a></code>) accept it too; their default stays <code>"randomised"</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changes-0-8-0">Changes<a class="anchor" aria-label="anchor" href="#changes-0-8-0"></a></h3>
+<ul><li>The default <code>svd_solver</code> of <code><a href="../reference/params_sc_pca.html">params_sc_pca()</a></code> is <code>"auto"</code> rather than <code>"covariance"</code>, so on the sparse path the PCs now come from Lanczos. Both are exact, but the trailing PCs can shift slightly.</li>
+<li>Clustering results shift against 0.7.0: new pruning default, new <code>n_iterations</code> defaults and the rewritten fast clustering.</li>
+<li>
+<code><a href="../reference/snn_graph_deprecated.html">get_snn_graph()</a></code>, <code><a href="../reference/snn_graph_deprecated.html">set_snn_graph()</a></code> and <code><a href="../reference/snn_graph_deprecated.html">remove_snn_graph()</a></code> are now <code><a href="../reference/get_connectivities.html">get_connectivities()</a></code>, <code><a href="../reference/set_connectivities.html">set_connectivities()</a></code> and <code><a href="../reference/remove_connectivities.html">remove_connectivities()</a></code>, since the graph isn’t always an sNN any more. The old names still work and warn. The cache slot, the state check artefact and <code>graph</code> in the ForceAtlas2 layout went from <code>"snn"</code> to <code>"connectivities"</code>. <code><a href="../reference/load_existing.html">load_existing()</a></code> migrates objects saved with 0.7.x.</li>
+<li>Default sNN pruning dropped from <code>1/12</code> to <code>1/16</code>, i.e. about 2 of 16 shared cells at <code>k = 15</code>, in line with Seurat’s <code>1/15</code>. The WNN graph uses the same default instead of <code>1/15</code>.</li>
+<li>
+<code>full_snn</code> (neighbours) and <code>snn_type</code> (WNN) are gone.</li>
+<li>
+<code><a href="../reference/fast_cluster_sc.html">fast_cluster_sc()</a></code> lost <code>km_type</code>, <code>n_centroids</code>, <code>snn</code>, <code>grid_search</code> and <code>no_seeds</code>. The first two moved into <code><a href="../reference/params_sc_fast_cluster.html">params_sc_fast_cluster()</a></code>, where <code>km_type = "kmeans"</code> is now <code>"standard"</code>; <code>n_seeds</code> replaces the grid search.</li>
+<li>
+<code>kmeans_iters</code> in <code><a href="../reference/params_fast_cluster_default.html">params_fast_cluster_default()</a></code> (Boost, scDblFinder) is now <code>k_means_iter</code>.</li>
+<li>
+<code><a href="../reference/rs_sc_knn_graph.html">rs_sc_knn_graph()</a></code> replaces <code>rs_sc_snn()</code>. <code><a href="../reference/rs_fast_cluster_sc.html">rs_fast_cluster_sc()</a></code> absorbs <code>rs_fast_cluster_sc_grid()</code>.</li>
+<li>The Symphony vignette is now “Clustering, cell type annotation and reference mapping” (<code>cell_type_annotation</code>). On top of Symphony it covers the graph choice, Leiden vs Louvain, fast clustering and per-cell scType calls.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-8-0">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-8-0"></a></h3>
+<ul><li>
+<code><a href="../reference/transfer_labels_symphony.html">transfer_labels_symphony()</a></code> no longer panics when the reference labels contain <code>NA</code> (e.g. scType Unknown cells). <code>NA</code> is treated as its own class, so query cells can come back <code>NA</code>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="bixverse-070">bixverse 0.7.0<a class="anchor" aria-label="anchor" href="#bixverse-070"></a></h2>
 <div class="section level3">

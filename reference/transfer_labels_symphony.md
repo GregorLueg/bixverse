@@ -37,7 +37,8 @@ transfer_labels_symphony(
 
 - label_column:
 
-  String. Name of a column in the reference's stored labels.
+  String. Name of a column in the reference's stored labels. `NA` labels
+  are treated as their own class, so query cells can come back `NA`.
 
 - knn_params:
 

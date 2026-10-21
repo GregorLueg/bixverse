@@ -233,8 +233,7 @@ sc_object <- find_neighbours_sc(
   )
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ``` r
@@ -253,10 +252,10 @@ head(sc_object)
 #>    outlier leiden_clustering
 #>     <lgcl>             <int>
 #> 1:   FALSE                 0
-#> 2:   FALSE                 6
-#> 3:   FALSE                 5
+#> 2:   FALSE                 5
+#> 3:   FALSE                 0
 #> 4:   FALSE                10
-#> 5:   FALSE                 8
+#> 5:   FALSE                 1
 #> 6:   FALSE                 0
 ```
 
@@ -308,8 +307,7 @@ sc_object <- find_neighbours_sc(
   modality = "adt"
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ``` r
@@ -467,8 +465,7 @@ sc_object <- generate_wnn_graph_sc(
   wnn_params = params_sc_wnn(sd_scale = 1)
 )
 #> Running WNN graph generation.
-#> Generating sNN graph (full: TRUE) from WNN graph.
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ``` r

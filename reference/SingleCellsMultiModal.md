@@ -51,18 +51,19 @@ Returns the `SingleCellsMultiModal` class for further operations.
 - sc_cache:
 
   Class with cached data. Contains less memory-heavy objects such as
-  embeddings, kNN information or sNN graphs for the single cell RNAseq.
+  embeddings, kNN information or neighbour graphs for the single cell
+  RNAseq.
 
 - adt_cache:
 
   Class with cached data. Contains less memory-heavy objects such as
-  embeddings, kNN information or sNN graphs for the single cell
+  embeddings, kNN information or neighbour graphs for the single cell
   Antibody-Derived Tags.
 
 - atac_cache:
 
   Class with cached data. Contains less memory-heavy objects such as
-  embeddings, kNN information or sNN graphs for the single cell
+  embeddings, kNN information or neighbour graphs for the single cell
   chromatin accessability.
 
 - sc_map:
@@ -104,14 +105,14 @@ object
 #>     PCA calculated: FALSE
 #>     Other embeddings: none
 #>     KNN generated: FALSE
-#>     SNN generated: FALSE
+#>     Graph generated: FALSE
 #>   ADT:
 #>     Present: FALSE
 #>     No features: 0
 #>     PCA calculated: FALSE
 #>     Other embeddings: none
 #>     KNN generated: FALSE
-#>     SNN generated: FALSE
+#>     Graph generated: FALSE
 #>   ATAC: not yet implemented
 #>   Stale artefacts: none
 

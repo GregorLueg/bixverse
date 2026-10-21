@@ -7,6 +7,7 @@ articles:
   bulk_coexpression_modules: bulk_coexpression_modules.html
   bulk_dge: bulk_dge.html
   cell_sweep: cell_sweep.html
+  cell_type_annotation: cell_type_annotation.html
   cpca: cpca.html
   design_single_cell: design_single_cell.html
   dialogue: dialogue.html
@@ -29,10 +30,9 @@ articles:
   single_cell_residuals: single_cell_residuals.html
   single_cell_subsets: single_cell_subsets.html
   single_cell_visualisation: single_cell_visualisation.html
-  symphony: symphony.html
   thinking_single_cell: thinking_single_cell.html
   trajectory_inference: trajectory_inference.html
-last_built: 2026-10-14T22:02Z
+last_built: 2026-10-21T08:59Z
 urls:
   reference: https://gregorlueg.github.io/bixverse/reference
   article: https://gregorlueg.github.io/bixverse/articles

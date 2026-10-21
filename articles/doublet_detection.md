@@ -108,7 +108,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -337,13 +337,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7062883
+#> [1] 0.7041825
 #> 
 #> $recall
-#> [1] 0.5907633
+#> [1] 0.5939705
 #> 
 #> $f1
-#> [1] 0.6433811
+#> [1] 0.6443981
 ```
 
 ### scDblFinder
@@ -382,13 +382,13 @@ doublet_metrics(
   actual = scdblfinder_dt$Call
 )
 #> $precision
-#> [1] 0.6112054
+#> [1] 0.6086957
 #> 
 #> $recall
-#> [1] 0.6927518
+#> [1] 0.7363695
 #> 
 #> $f1
-#> [1] 0.6494287
+#> [1] 0.6664731
 ```
 
 We can also extract the other scores from scDblFinder. We can for
@@ -409,8 +409,8 @@ table(
 )
 #>         weighted
 #> lightgbm FALSE  TRUE
-#>    FALSE 11852   909
-#>    TRUE     41  1726
+#>    FALSE 11771   871
+#>    TRUE     57  1829
 ```
 
 Or alternatively, the cxds scores can also be extracted and used. These
@@ -432,8 +432,8 @@ table(
 )
 #>         cxds
 #> lightgbm FALSE  TRUE
-#>    FALSE 12421   340
-#>    TRUE    790   977
+#>    FALSE 12412   230
+#>    TRUE    799  1087
 ```
 
 Should you observe that this is very flat or you only have a few data
@@ -449,13 +449,14 @@ All three methods run their own PCA on the observed and simulated cells.
 You pick the solver via `svd_solver` in the `pca` list. The default here
 is `"randomised"`, a randomised SVD that is approximate in the trailing
 components. `"covariance"` builds the gene x gene cross-product over the
-HVGs and eigendecomposes it, which is exact. It’s the default in
-[`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md),
-but the doublet methods run on more genes and that matrix grows with the
-square of the gene count, so it gets painfully slow here. `"exact"` runs
-Lanczos on the sparse path and a full SVD on the dense one. Scrublet and
-the boosted method also take the HVG method via the `hvg` list,
-including the scran trend:
+HVGs and eigendecomposes it, which is exact, but the doublet methods run
+on more genes and that matrix grows with the square of the gene count,
+so it gets painfully slow here. `"auto"` (the default in
+[`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md))
+runs Lanczos on the sparse path and the covariance solver on the dense
+one. `"exact"` runs Lanczos on the sparse path and a full SVD on the
+dense one. Scrublet and the boosted method also take the HVG method via
+the `hvg` list, including the scran trend:
 
 ``` r
 

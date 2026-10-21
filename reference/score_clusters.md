@@ -43,15 +43,15 @@ scores <- calc_sc_type_scores(
 clusters <- fast_cluster_sc(
   sc,
   resolutions = 1.0,
-  n_centroids = 30L,
+  fc_params = params_sc_fast_cluster(n_centroids = 30L),
   .verbose = FALSE
 )
 head(score_clusters(scores, cluster_labels = get_data(clusters)$res_1))
 #>    cluster_id   cell_type   scores n_cells
 #>         <int>      <char>    <num>   <int>
-#> 1:          0 cell_type_2 456.6014     173
-#> 2:          1 cell_type_3 464.2848     166
-#> 3:          2 cell_type_1 449.7363     161
+#> 1:          0 cell_type_3 465.7503     169
+#> 2:          1 cell_type_2 456.6014     173
+#> 3:          2 cell_type_1 445.1144     158
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

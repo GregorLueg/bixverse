@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-14</p>
+      <p class="date">2026-10-21</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -237,8 +237,7 @@
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
-<span><span class="co">#&gt; Transforming sNN data to igraph.</span></span>
+<span><span class="co">#&gt; Generating the snn graph.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">1.5</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, knn_method <span class="op">=</span> <span class="st">"annoy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
@@ -372,12 +371,12 @@
 <span><span class="co">#&gt; 6:        9 AAACGCTGTAGCCA-1   530     1273    TRUE 0.011783189 0.3794187</span></span>
 <span><span class="co">#&gt;    outlier leiden_clusters     T cell Cytotoxic NK     B cell   Monocyte</span></span>
 <span><span class="co">#&gt;     &lt;lgcl&gt;           &lt;int&gt;      &lt;num&gt;        &lt;num&gt;      &lt;num&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:   FALSE               0  0.3236977   -0.2325926 -0.3144407 -0.7570705</span></span>
-<span><span class="co">#&gt; 2:   FALSE               1  0.2307960   -0.3455873 -0.4134143 -0.6403040</span></span>
+<span><span class="co">#&gt; 1:   FALSE               1  0.3236977   -0.2325926 -0.3144407 -0.7570705</span></span>
+<span><span class="co">#&gt; 2:   FALSE               0  0.2307960   -0.3455873 -0.4134143 -0.6403040</span></span>
 <span><span class="co">#&gt; 3:   FALSE               6 -1.1175209   -0.2854205  0.0692758  1.2887695</span></span>
-<span><span class="co">#&gt; 4:   FALSE               1 -0.1862041   -0.5217526 -0.2286735 -0.7023786</span></span>
+<span><span class="co">#&gt; 4:   FALSE               0 -0.1862041   -0.5217526 -0.2286735 -0.7023786</span></span>
 <span><span class="co">#&gt; 5:   FALSE               5  0.1805688    0.4830460 -0.4746688 -0.6906318</span></span>
-<span><span class="co">#&gt; 6:   FALSE               0 -0.1726186    0.2581931  0.7847812 -0.7003754</span></span></code></pre></div>
+<span><span class="co">#&gt; 6:   FALSE               5 -0.1726186    0.2581931  0.7847812 -0.7003754</span></span></code></pre></div>
 </div>
 <p>As we can appreciate, this has now added the new columns.</p>
 </section><section class="level3"><h3 id="aucell">AUCell<a class="anchor" aria-label="anchor" href="#aucell"></a>
@@ -472,12 +471,12 @@
 <span><span class="co">#&gt;  2: ENSG00000119535 0.2949539  46.16233     0     0       CSF3R</span></span>
 <span><span class="co">#&gt;  3: ENSG00000163131 0.5237189  62.76030     0     0        CTSS</span></span>
 <span><span class="co">#&gt;  4: ENSG00000163191 0.4090217  58.81076     0     0     S100A11</span></span>
-<span><span class="co">#&gt;  5: ENSG00000163220 0.7015914 115.38558     0     0      S100A9</span></span>
+<span><span class="co">#&gt;  5: ENSG00000163220 0.7015916 115.38558     0     0      S100A9</span></span>
 <span><span class="co">#&gt;  6: ENSG00000143546 0.6843269 119.58680     0     0      S100A8</span></span>
-<span><span class="co">#&gt;  7: ENSG00000197956 0.6383640 100.55820     0     0      S100A6</span></span>
+<span><span class="co">#&gt;  7: ENSG00000197956 0.6383641 100.55820     0     0      S100A6</span></span>
 <span><span class="co">#&gt;  8: ENSG00000196154 0.6470327  95.01012     0     0      S100A4</span></span>
 <span><span class="co">#&gt;  9: ENSG00000177954 0.6009150  93.19000     0     0       RPS27</span></span>
-<span><span class="co">#&gt; 10: ENSG00000158869 0.7041770  81.33603     0     0      FCER1G</span></span>
+<span><span class="co">#&gt; 10: ENSG00000158869 0.7041768  81.33603     0     0      FCER1G</span></span>
 <span><span class="co">#&gt; 11: ENSG00000203747 0.6096835  68.59921     0     0      FCGR3A</span></span>
 <span><span class="co">#&gt; 12: ENSG00000198574 0.2173397  41.63903     0     0      SH2D1B</span></span>
 <span><span class="co">#&gt; 13: ENSG00000198821 0.2205831  58.11088     0     0       CD247</span></span>
@@ -1041,33 +1040,33 @@
 <div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                      comp_01      comp_02      comp_03      comp_04</span></span>
-<span><span class="co">#&gt; ENSG00000188976 2.756064e+00 1.516424e-01 9.978821e-11 3.985434e-01</span></span>
-<span><span class="co">#&gt; ENSG00000188290 9.983768e-11 1.001252e-10 9.978821e-11 7.743405e-02</span></span>
-<span><span class="co">#&gt; ENSG00000187608 9.983768e-11 2.746885e+00 1.624503e-01 9.984960e-11</span></span>
-<span><span class="co">#&gt; ENSG00000186827 9.983768e-11 1.001252e-10 7.541644e+00 9.984960e-11</span></span>
-<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.619920e-03 1.844484e-01 9.984960e-11</span></span>
+<span><span class="co">#&gt; ENSG00000188976 2.764388e+00 9.696053e-02 9.978537e-11 3.186329e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 9.983917e-11 1.001151e-10 9.978537e-11 8.042446e-02</span></span>
+<span><span class="co">#&gt; ENSG00000187608 9.983917e-11 2.828242e+00 1.741498e-01 9.985378e-11</span></span>
+<span><span class="co">#&gt; ENSG00000186827 9.983917e-11 1.001151e-10 7.554324e+00 9.985378e-11</span></span>
+<span><span class="co">#&gt; ENSG00000176022 9.096402e-01 8.533373e-06 1.778413e-01 9.985378e-11</span></span>
 <span><span class="co">#&gt;                      comp_05</span></span>
-<span><span class="co">#&gt; ENSG00000188976 3.031671e-01</span></span>
-<span><span class="co">#&gt; ENSG00000188290 1.000227e-10</span></span>
-<span><span class="co">#&gt; ENSG00000187608 1.000227e-10</span></span>
-<span><span class="co">#&gt; ENSG00000186827 1.000227e-10</span></span>
-<span><span class="co">#&gt; ENSG00000176022 1.000227e-10</span></span></code></pre></div>
+<span><span class="co">#&gt; ENSG00000188976 4.423305e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 1.000303e-10</span></span>
+<span><span class="co">#&gt; ENSG00000187608 1.000303e-10</span></span>
+<span><span class="co">#&gt; ENSG00000186827 1.000303e-10</span></span>
+<span><span class="co">#&gt; ENSG00000176022 1.000303e-10</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1</span></span>
-<span><span class="co">#&gt; comp_01      0.029081386      0.028246993     2.750891e-02     2.642107e-02</span></span>
-<span><span class="co">#&gt; comp_02      0.032824777      0.004165623     5.788896e-03     4.682983e-02</span></span>
-<span><span class="co">#&gt; comp_03      0.009732887      0.053273063     5.238242e-02     1.002122e-10</span></span>
-<span><span class="co">#&gt; comp_04      0.064907439      0.017416898     1.001506e-10     3.876414e-02</span></span>
-<span><span class="co">#&gt; comp_05      0.004365111      0.047877796     9.997733e-11     1.034980e-02</span></span>
+<span><span class="co">#&gt; comp_01      0.029059784      0.028260555     2.748889e-02     2.643246e-02</span></span>
+<span><span class="co">#&gt; comp_02      0.033077601      0.004219749     5.954974e-03     4.755848e-02</span></span>
+<span><span class="co">#&gt; comp_03      0.009622693      0.053269371     5.292084e-02     1.002151e-10</span></span>
+<span><span class="co">#&gt; comp_04      0.063866839      0.018152405     1.001464e-10     3.951370e-02</span></span>
+<span><span class="co">#&gt; comp_05      0.004193192      0.048139926     9.996975e-11     9.100338e-03</span></span>
 <span><span class="co">#&gt;         AAACTTGATCCAGA-1</span></span>
-<span><span class="co">#&gt; comp_01      0.032608431</span></span>
-<span><span class="co">#&gt; comp_02      0.002322462</span></span>
-<span><span class="co">#&gt; comp_03      0.007309187</span></span>
-<span><span class="co">#&gt; comp_04      0.018659636</span></span>
-<span><span class="co">#&gt; comp_05      0.049327575</span></span></code></pre></div>
+<span><span class="co">#&gt; comp_01      0.032565624</span></span>
+<span><span class="co">#&gt; comp_02      0.002440553</span></span>
+<span><span class="co">#&gt; comp_03      0.007175695</span></span>
+<span><span class="co">#&gt; comp_04      0.019132691</span></span>
+<span><span class="co">#&gt; comp_05      0.050107095</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="running-multiple-nmf-runs">Running multiple NMF runs<a class="anchor" aria-label="anchor" href="#running-multiple-nmf-runs"></a>
 </h3>
@@ -1261,11 +1260,11 @@
 <span><span class="co">#&gt;      component_id   run component pooled_idx cluster local_density silhouette</span></span>
 <span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;     &lt;int&gt;      &lt;int&gt;   &lt;int&gt;         &lt;num&gt;      &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       5   0.013249557  0.7841961</span></span>
-<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458861  0.8275782</span></span>
-<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821</span></span>
-<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017579218  0.8770334</span></span>
-<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095884  0.6891547</span></span>
-<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731663  0.8714657</span></span>
+<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458980  0.8275782</span></span>
+<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470190  0.9566821</span></span>
+<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017579237  0.8770334</span></span>
+<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095864  0.6891547</span></span>
+<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731703  0.8714657</span></span>
 <span><span class="co">#&gt;      kept</span></span>
 <span><span class="co">#&gt;    &lt;lgcl&gt;</span></span>
 <span><span class="co">#&gt; 1:   TRUE</span></span>

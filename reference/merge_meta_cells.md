@@ -9,9 +9,9 @@ then merge them so that methods like SCENIC, AUCell or NMF can run
 across the full set.
 
 The normalised counts are carried over as generated. They are normalised
-per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, sNN,
-embeddings) are per source and are dropped; recompute them on the merged
-object.
+per meta cell, so row-binding leaves them valid. Caches (PCA, kNN,
+neighbour graph, embeddings) are per source and are dropped; recompute
+them on the merged object.
 
 ## Usage
 
@@ -91,7 +91,7 @@ merged
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   Stale artefacts: none
 
 unlink(c(sc_1@dir_data, sc_2@dir_data), recursive = TRUE, force = TRUE)

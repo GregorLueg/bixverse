@@ -10,7 +10,6 @@ params_sc_wnn(
   knn_range = 200L,
   sigma_method = c("snn_farthest", "sigma_idx"),
   sigma_idx = 19L,
-  snn_type = c("full_connection", "limited"),
   s_nn = 20L,
   sd_scale = 1,
   kernel_power = 1,
@@ -41,12 +40,6 @@ params_sc_wnn(
 
   Integer. `"sigma_idx"` only: 0-based kNN index for bandwidth.e.
   `k_nn - 1`). Defaults to `19L`.
-
-- snn_type:
-
-  String. sNN type. The limited version only considers edges that exist
-  in the kNN. One of `c("full_connection", "limited")`. Defaults to
-  `"full_connection"`.
 
 - s_nn:
 
@@ -97,10 +90,6 @@ A named list with the following elements:
 
 - sigma_idx - Integer. `"sigma_idx"` only: 0-based kNN index for
   bandwidth.e. `k_nn - 1`). Defaults to `19L`.
-
-- snn_type - String. sNN type. The limited version only considers edges
-  that exist in the kNN. One of `c("full_connection", "limited")`.
-  Defaults to `"full_connection"`.
 
 - s_nn - Integer. `"snn_farthest"` only: kNN size used to build the SNN
   graph. Defaults to `20L`.

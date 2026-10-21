@@ -20,7 +20,8 @@ A `data.table` with one row per present artefact and the columns
 
 - modality - The modality the artefact lives in.
 
-- artefact - One of `pca`, `embedding`, `knn`, `snn`, `magic`.
+- artefact - One of `pca`, `embedding`, `knn`, `connectivities`,
+  `magic`.
 
 - name - The embedding name, `NA` for the others.
 

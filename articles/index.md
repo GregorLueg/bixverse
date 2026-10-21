@@ -63,7 +63,7 @@
   bixverse](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.md):
 - [A guide to single-cell plotting
   functions](https://gregorlueg.github.io/bixverse/articles/single_cell_visualisation.md):
-- [Reference mapping with
-  Symphony](https://gregorlueg.github.io/bixverse/articles/symphony.md):
+- [Clustering, cell type annotation and reference
+  mapping](https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.md):
 - [Ligand-receptor analysis with
   bixverse](https://gregorlueg.github.io/bixverse/articles/ligand_receptor.md):

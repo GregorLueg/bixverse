@@ -26,7 +26,7 @@ check_sc_state(x, artefacts, modality = "rna")
 - artefacts:
 
   Character vector. Artefacts to check, either an artefact kind
-  (`"pca"`, `"knn"`, `"snn"`, `"magic"`) or an embedding name
+  (`"pca"`, `"knn"`, `"connectivities"`, `"magic"`) or an embedding name
   (`"umap"`). May be modality qualified (`"adt:pca"`).
 
 - modality:

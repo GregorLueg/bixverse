@@ -93,7 +93,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -115,11 +115,10 @@ stored on the object, and 30 neighbours is what the reference uses. The
 distance metric has to be euclidean, since the diffusion kernel is a
 Gaussian over a metric distance and cosine is not one.
 
-`pruning` has to move with `k`. The default of `1/12` is set for the
-default `k = 15`, and since the threshold is a share of the
-neighbourhood, leaving it alone at `k = 30` prunes twice as hard.
-Nothing errors, you just get cells with too few shared neighbours
-dropping out as one-cell clusters.
+`pruning` does not have to move with `k`. A Jaccard threshold `p` asks
+two cells to share a fraction `2p / (1 + p)` of their neighbourhoods,
+whatever `k` is, so the default `1/16` keeps the same ~12% at `k = 30`
+as at `k = 15`.
 
 ``` r
 
@@ -137,13 +136,11 @@ sc_object <- calculate_pca_sc(
 sc_object <- find_neighbours_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
-    pruning = 1 / 24,
     knn = list(k = 30L, ann_dist = "euclidean")
   )
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 
 sc_object <- find_clusters_sc(
   sc_object,
@@ -247,20 +244,20 @@ when the graph under it moves.
 ``` r
 
 get_sc_cache_status(sc_object)
-#>    modality  artefact   name stamped  stale reason               id
-#>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> 88a72414fdc23880
-#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 3da6b7f9926129a1
-#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 254c3468a623065b
-#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 5ac4a88ef87704fd
-#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> c4b7c73bbf6f1983
+#>    modality       artefact   name stamped  stale reason               id
+#>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 2eb6297969df90ad
+#> 2:      rna      embedding   umap    TRUE  FALSE   <NA> f67314c00a8b005e
+#> 3:      rna            knn   <NA>    TRUE  FALSE   <NA> 0c64e05b2fb2715d
+#> 4:      rna connectivities   <NA>    TRUE  FALSE   <NA> 38845c6f709dcb2f
+#> 5:      rna          magic   <NA>    TRUE  FALSE   <NA> 9b665a2f1b2c9233
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: 88a72414fdc23880,254c3468a623065b
-#> 3:                  88a72414fdc23880
-#> 4:                  254c3468a623065b
-#> 5:                  254c3468a623065b
+#> 2: 2eb6297969df90ad,0c64e05b2fb2715d
+#> 3:                  2eb6297969df90ad
+#> 4:                  0c64e05b2fb2715d
+#> 5:                  0c64e05b2fb2715d
 ```
 
 ## PAGA
@@ -275,7 +272,7 @@ paga_res <- run_paga_sc(
   sc_object,
   cluster_col = "leiden_clusters"
 )
-#> Running PAGA over the rna kNN graph (4142 cells, 7 clusters).
+#> Running PAGA over the rna kNN graph (4142 cells, 9 clusters).
 ```
 
 `connectivities` is the full abstracted graph, `connectivities_tree` its
@@ -287,23 +284,27 @@ cluster, with a zero diagonal.
 paga_res$sizes
 #>    cluster n_cells
 #>     <char>   <int>
-#> 1:       0    1006
-#> 2:       1     823
-#> 3:       2     635
-#> 4:       3     615
-#> 5:       4     528
-#> 6:       5     403
-#> 7:       6     132
+#> 1:       0     691
+#> 2:       1     674
+#> 3:       2     634
+#> 4:       3     523
+#> 5:       4     449
+#> 6:       5     429
+#> 7:       6     413
+#> 8:       7     186
+#> 9:       8     143
 
 round(as.matrix(paga_res$connectivities), 3)
-#>       0     1     2     3     4     5     6
-#> 0 0.000 0.199 0.001 0.003 0.001 0.063 0.423
-#> 1 0.199 0.000 0.088 0.006 0.280 0.227 0.077
-#> 2 0.001 0.088 0.000 0.002 0.456 0.317 0.005
-#> 3 0.003 0.006 0.002 0.000 0.003 0.001 0.402
-#> 4 0.001 0.280 0.456 0.003 0.000 0.043 0.006
-#> 5 0.063 0.227 0.317 0.001 0.043 0.000 0.001
-#> 6 0.423 0.077 0.005 0.402 0.006 0.001 0.000
+#>       0     1     2     3     4     5     6     7     8
+#> 0 0.000 0.474 0.001 0.000 0.001 0.002 0.026 0.001 0.395
+#> 1 0.474 0.000 0.028 0.070 0.599 0.003 0.196 0.000 0.328
+#> 2 0.001 0.028 0.000 0.445 0.121 0.003 0.329 0.001 0.005
+#> 3 0.000 0.070 0.445 0.000 0.431 0.004 0.044 0.000 0.006
+#> 4 0.001 0.599 0.121 0.431 0.000 0.015 0.258 0.000 0.077
+#> 5 0.002 0.003 0.003 0.004 0.015 0.000 0.004 0.701 0.533
+#> 6 0.026 0.196 0.329 0.044 0.258 0.004 0.000 0.000 0.004
+#> 7 0.001 0.000 0.001 0.000 0.000 0.701 0.000 0.000 0.000
+#> 8 0.395 0.328 0.005 0.006 0.077 0.533 0.004 0.000 0.000
 ```
 
 [`paga_plot_sc()`](https://gregorlueg.github.io/bixverse.plots/reference/paga_plot_sc.html)
@@ -673,11 +674,12 @@ Palantir has more moving parts than most methods in this package, and
 several of them fail quietly rather than loudly. In rough order of how
 often they bite:
 
-- **`pruning` left at its default.** Covered above, and the only one on
-  this list that is upstream of Palantir entirely. It costs you
+- **Pruning too hard.** Upstream of Palantir entirely. It costs you
   clusters, not pseudotime, but a one-cell cluster then walks into PAGA
   and comes back out as a fat edge into a dot, because the null model
-  has almost no possible edges to normalise against.
+  has almost no possible edges to normalise against. `rescue = TRUE`
+  (the default) reconnects the small components pruning cuts off, so
+  this mainly bites with it switched off.
 - **The start cell.** Covered above. Set
   `use_early_cell_as_start = FALSE` to get the reference behaviour and
   it can move your root onto a branch tip. If pseudotime comes back

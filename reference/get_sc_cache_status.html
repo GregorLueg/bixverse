@@ -13,7 +13,7 @@ flagged stale, because nothing is known about them either way."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,7 +71,7 @@ flagged stale, because nothing is known about them either way."><meta property="
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -124,7 +124,8 @@ flagged stale, because nothing is known about them either way.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>data.table</code> with the columns</p><ul><li><p>modality - The modality the artefact lives in.</p></li>
-<li><p>artefact - One of <code>pca</code>, <code>embedding</code>, <code>knn</code>, <code>snn</code>, <code>magic</code>.</p></li>
+<li><p>artefact - One of <code>pca</code>, <code>embedding</code>, <code>knn</code>, <code>connectivities</code>,
+<code>magic</code>.</p></li>
 <li><p>name - The embedding name, <code>NA</code> for the others.</p></li>
 <li><p>stamped - Whether the artefact carries a provenance stamp.</p></li>
 <li><p>stale - Whether it disagrees with the current state.</p></li>
@@ -138,16 +139,16 @@ flagged stale, because nothing is known about them either way.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># what the object holds and whether it still agrees with the cells</span></span></span>
 <span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">get_sc_cache_status</span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    modality artefact   name stamped  stale reason               id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;   &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 43e526fdf0d4d9e0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; b07416e286cce64c</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 07a5d093676be397</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    modality       artefact   name stamped  stale reason               id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; a7871821210d14e8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 747b6dd302102112</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; f16ace390c19467f</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                from</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              &lt;list&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1:                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: 43e526fdf0d4d9e0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: b07416e286cce64c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: a7871821210d14e8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: 747b6dd302102112</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

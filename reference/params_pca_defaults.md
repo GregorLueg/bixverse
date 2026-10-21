@@ -17,8 +17,10 @@ A named list with the following elements:
 - svd_solver - String. Which solver to use. `"randomised"` (default) is
   a randomised SVD, approximate in the trailing components.
   `"covariance"` builds the gene x gene cross-product and
-  eigendecomposes it. `"exact"` is Lanczos on the sparse path and a full
-  SVD on the dense one. See
+  eigendecomposes it. `"auto"` takes Lanczos on the sparse path and
+  `"covariance"` on the dense one. `"exact"` is Lanczos on the sparse
+  path and a full SVD on the dense one. See
   [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
-  for the trade-offs. One of `c("randomised", "covariance", "exact")`.
-  Defaults to `"randomised"`.
+  for the trade-offs. One of
+  `c("randomised", "auto", "covariance", "exact")`. Defaults to
+  `"randomised"`.

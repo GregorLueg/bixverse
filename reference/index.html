@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -1429,10 +1429,10 @@
 
         <dt>
 
-          <code><a href="get_snn_graph.html">get_snn_graph()</a></code>
+          <code><a href="get_connectivities.html">get_connectivities()</a></code>
 
         </dt>
-        <dd>Get the sNN graph</dd>
+        <dd>Get the neighbour graph</dd>
 
         <dt>
 
@@ -2307,6 +2307,13 @@
 
         <dt>
 
+          <code><a href="params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code>
+
+        </dt>
+        <dd>Helper function to generate the kNN graph defaults</dd>
+
+        <dt>
+
           <code><a href="params_sc_knn.html">params_sc_knn()</a></code>
 
         </dt>
@@ -2496,14 +2503,14 @@
           <code><a href="fast_cluster_sc.html">fast_cluster_sc()</a></code>
 
         </dt>
-        <dd>Run fast Louvain clustering on a SingleCells object</dd>
+        <dd>Run fast clustering on a SingleCells object</dd>
 
         <dt>
 
           <code><a href="find_clusters_sc.html">find_clusters_sc()</a></code>
 
         </dt>
-        <dd>Graph-based clustering of cells on the sNN graph</dd>
+        <dd>Graph-based clustering of cells on the neighbour graph</dd>
 
         <dt>
 
@@ -4571,10 +4578,10 @@
 
         <dt>
 
-          <code><a href="rs_sc_snn.html">rs_sc_snn()</a></code>
+          <code><a href="rs_sc_knn_graph.html">rs_sc_knn_graph()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Generates the sNN graph for igraph</dd>
+        <dd>Generates the neighbour graph for igraph</dd>
 
         <dt>
 

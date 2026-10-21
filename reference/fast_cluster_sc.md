@@ -1,9 +1,13 @@
-# Run fast Louvain clustering on a SingleCells object
+# Run fast clustering on a SingleCells object
 
-Runs k-means on the chosen embedding, builds a kNN graph on the
-centroids, applies Louvain clustering and propagates memberships back to
-the cells. Optionally runs a grid over multiple seeds and returns
-stability statistics.
+Coarsens the cells with k-means on the chosen embedding, builds a graph
+over the centroids (a kNN graph with one of the symmetrisations of
+[`params_knn_graph_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.md),
+or the cell-mediated graph) and runs Louvain or Leiden on it. The
+community of each centroid is handed back to its cells. With
+`n_seeds > 1`, every resolution is run once per seed, the labels come
+from the seed with the lowest mean conductance and the stability across
+the seeds is returned.
 
 ## Usage
 
@@ -13,13 +17,9 @@ fast_cluster_sc(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   resolutions = c(2, 1, 0.5),
-  km_type = c("kmeans", "minibatch"),
-  n_centroids = NULL,
   fc_params = params_sc_fast_cluster(),
-  snn = TRUE,
+  n_seeds = 1L,
   return_kmeans = FALSE,
-  grid_search = FALSE,
-  no_seeds = 10L,
   seed = 42L,
   .verbose = TRUE
 )
@@ -41,40 +41,21 @@ fast_cluster_sc(
 
 - resolutions:
 
-  Numeric vector. Louvain resolutions.
-
-- km_type:
-
-  String. One of `c("kmeans", "minibatch")`. The former runs standard
-  k-means, the latter a mini-batch version that can be useful for large
-  data sets.
-
-- n_centroids:
-
-  Optional integer. Number of k-means centroids. Defaults to
-  `sqrt(n_cells)` Rust-side if `NULL`.
+  Numeric vector. Modularity resolutions.
 
 - fc_params:
 
   List. Output of
   [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md).
 
-- snn:
+- n_seeds:
 
-  Boolean. Convert kNN to sNN.
+  Integer. Number of seeds per resolution. `1L` runs a single pass
+  without stability statistics.
 
 - return_kmeans:
 
   Boolean. Return k-means assignments and centroids.
-
-- grid_search:
-
-  Boolean. Run multi-seed grid version.
-
-- no_seeds:
-
-  Integer. Number of additional seeds (only used when
-  `grid_search = TRUE`).
 
 - seed:
 
@@ -97,7 +78,9 @@ fast_cluster_sc(
 
 - stats:
 
-  data.table of grid statistics, or `NULL`.
+  data.table with `resolution`, `mean_ari`, `median_ari`,
+  `mean_conductance`, `median_conductance` and `mean_n_comms`, or `NULL`
+  for `n_seeds = 1L`.
 
 - k_means_cluster:
 
@@ -113,6 +96,10 @@ fast_cluster_sc(
 
 with `cell_indices` stored as an attribute (0-indexed).
 
+## References
+
+Wei, et al., PLoS Comput Biol, 2022.
+
 ## Examples
 
 ``` r
@@ -121,18 +108,18 @@ sc <- demo_single_cells()
 res <- fast_cluster_sc(
   sc,
   resolutions = c(1.0, 0.5),
-  n_centroids = 30L,
+  fc_params = params_sc_fast_cluster(n_centroids = 30L),
   .verbose = FALSE
 )
 head(get_data(res))
 #>    cell_idx res_1 res_0.5
 #>       <int> <int>   <int>
-#> 1:        1     2       2
-#> 2:        2     0       0
-#> 3:        3     1       1
-#> 4:        4     2       2
-#> 5:        5     0       0
-#> 6:        6     1       1
+#> 1:        1     2       0
+#> 2:        2     1       0
+#> 3:        3     0       0
+#> 4:        4     2       0
+#> 5:        5     1       0
+#> 6:        6     0       0
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

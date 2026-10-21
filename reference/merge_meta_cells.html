@@ -4,14 +4,14 @@ typical use case is sample-pure meta cells: generate meta cells per patient
 (see meta_cells_per_group()), then merge them so that methods like SCENIC,
 AUCell or NMF can run across the full set.
 The normalised counts are carried over as generated. They are normalised
-per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, sNN,
+per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, neighbour graph,
 embeddings) are per source and are dropped; recompute them on the merged
 object."><meta property="og:description" content="Row-binds several MetaCells() objects into a single one. The
 typical use case is sample-pure meta cells: generate meta cells per patient
 (see meta_cells_per_group()), then merge them so that methods like SCENIC,
 AUCell or NMF can run across the full set.
 The normalised counts are carried over as generated. They are normalised
-per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, sNN,
+per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, neighbour graph,
 embeddings) are per source and are dropped; recompute them on the merged
 object."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -21,7 +21,7 @@ object."><meta property="og:image" content="https://gregorlueg.github.io/bixvers
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,7 @@ object."><meta property="og:image" content="https://gregorlueg.github.io/bixvers
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -114,7 +114,7 @@ typical use case is sample-pure meta cells: generate meta cells per patient
 (see <code><a href="meta_cells_per_group.html">meta_cells_per_group()</a></code>), then merge them so that methods like SCENIC,
 AUCell or NMF can run across the full set.</p>
 <p>The normalised counts are carried over as generated. They are normalised
-per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, sNN,
+per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, neighbour graph,
 embeddings) are per source and are dropped; recompute them on the merged
 object.</p>
     </div>
@@ -196,7 +196,7 @@ the result. <code>other_data</code> holds the source identifiers under <code>sou
 <span class="r-out co"><span class="r-pr">#&gt;</span>   PCA calculated: FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Other embeddings: none</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   KNN generated: FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SNN generated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Graph generated: FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Stale artefacts: none</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">sc_1</span><span class="op">@</span><span class="va">dir_data</span>, <span class="va">sc_2</span><span class="op">@</span><span class="va">dir_data</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>

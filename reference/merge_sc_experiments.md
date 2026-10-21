@@ -18,8 +18,8 @@ library size). In that case set `renormalise = TRUE` to recompute
 Obs columns are intersected across inputs. The result obs gains an
 `exp_id` column. Inputs that already have an `exp_id` column are
 rejected. The `sc_cache` and `sc_map` of the target are populated fresh;
-any PCA, kNN, sNN or HVG state on the inputs is not carried over and
-must be re-run.
+any PCA, kNN, neighbour graph or HVG state on the inputs is not carried
+over and must be re-run.
 
 ## Usage
 

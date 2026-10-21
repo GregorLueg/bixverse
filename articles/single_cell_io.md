@@ -115,7 +115,7 @@ sc_r
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -185,7 +185,7 @@ sc_mtx
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -234,7 +234,7 @@ sc_multi_mtx
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -291,7 +291,7 @@ sc_mtx_swapped
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -342,7 +342,7 @@ sc_h5
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -379,7 +379,7 @@ sc_multi_h5
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -444,7 +444,7 @@ sc_10x
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -510,7 +510,7 @@ sc_multi_10x
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -554,7 +554,7 @@ sc_restored
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none

@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@
     <li><a class="dropdown-item" href="articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -251,9 +251,9 @@
 </tr>
 <tr>
 <td>Single cell, advanced</td>
-<td>Symphony reference mapping, CellPhoneDB and NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories</td>
+<td>Clustering, cell type annotation and Symphony reference mapping, CellPhoneDB and NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories</td>
 <td>
-<a href="https://gregorlueg.github.io/bixverse/articles/symphony.html">Symphony</a>, <a href="https://gregorlueg.github.io/bixverse/articles/ligand_receptor.html">ligand receptor</a>, <a href="https://gregorlueg.github.io/bixverse/articles/dialogue.html">DIALOGUE</a>, <a href="https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html">trajectories</a>
+<a href="https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.html">clustering and annotation</a>, <a href="https://gregorlueg.github.io/bixverse/articles/ligand_receptor.html">ligand receptor</a>, <a href="https://gregorlueg.github.io/bixverse/articles/dialogue.html">DIALOGUE</a>, <a href="https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html">trajectories</a>
 </td>
 </tr>
 <tr>
@@ -341,13 +341,13 @@
 <p><strong>To-do’s:</strong></p>
 <ul class="task-list">
 <li><label><input type="checkbox"><a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a> for trajectory analysis, to sit alongside the Palantir and PAGA implementations that already ship.</label></li>
-<li><label><input type="checkbox">Save data to h5ad for easier interoperability with Python.</label></li>
 <li><label><input type="checkbox">Easy interoperability that chunks of data can be read in for neural network training in the corresponding deep learning frameworks.</label></li>
 <li><label><input type="checkbox">Full support of spatial transcriptomics via a dedicated <code>SpatialSpots</code> class, using the current Rust-based infrastructure for large scale analysis on local compute.</label></li>
 </ul>
 <p><strong>Implemented</strong></p>
 <ul class="task-list">
 <li><label><input type="checkbox" checked>Wire up <a href="https://github.com/GregorLueg/edge-rs" class="external-link">edge-rs</a> to have <a href="https://www.nature.com/articles/s42003-021-02146-6" class="external-link">NEBULA</a> directly integrated into the single cell framework. (Done in <code>"0.4.11"</code>).</label></li>
+<li><label><input type="checkbox" checked>Save data to h5ad for easier interoperability with Python. (Solved thanks to <a href="https://crates.io/crates/scx-core" class="external-link">scx-core</a>)</label></li>
 </ul>
 </div>
 <div class="section level3">

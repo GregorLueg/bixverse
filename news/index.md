@@ -1,5 +1,99 @@
 # Changelog
 
+## bixverse 0.8.0
+
+### Features
+
+- `bixverse-r` 0.8.0 under the hood. `petgraph` is out of the dependency
+  tree.
+- New
+  [`params_knn_graph_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.md).
+  Its `knn_sym` picks the graph the clustering runs on: `"snn"`
+  (bluster/Seurat sNN, the default), `"umap"` (the fuzzy simplicial set
+  ScanPy keeps in `obsp/connectivities`) or `"knn"` (plain kNN union).
+  Pass it via `graph` in
+  [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md)
+  or `graph_params` in
+  [`generate_wnn_graph_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_wnn_graph_sc.md).
+  Resolutions don’t carry over between the graphs, retune them when
+  switching.
+- [`fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_cluster_sc.md)
+  is rewritten. It coarsens the cells with k-means, builds a graph over
+  the centroids (a symmetrised centroid kNN or the Secuer cell-mediated
+  graph) and runs Louvain or Leiden on it. All knobs live in
+  [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md).
+  With `n_seeds > 1` it runs every resolution once per seed, keeps the
+  labels of the seed with the lowest mean conductance and returns ARI
+  and conductance stability stats.
+- [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md)
+  gained `min_gain` and `local_moving` (`"queue"`, or `"coloured"` to
+  move nodes in parallel). A negative `n_iterations` iterates until
+  stable.
+  [`find_clusters_sc()`](https://gregorlueg.github.io/bixverse/reference/find_clusters_sc.md)
+  and
+  [`step_clusters_sc()`](https://gregorlueg.github.io/bixverse/reference/step_clusters_sc.md)
+  pass these on via `...`.
+- [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  has a new `svd_solver = "auto"`, which is now the default. It runs
+  Lanczos on the sparse path and the covariance solver on the dense one.
+  The doublet detection methods
+  ([`params_scrublet()`](https://gregorlueg.github.io/bixverse/reference/params_scrublet.md),
+  [`params_boost()`](https://gregorlueg.github.io/bixverse/reference/params_boost.md),
+  [`params_scdblfinder()`](https://gregorlueg.github.io/bixverse/reference/params_scdblfinder.md))
+  accept it too; their default stays `"randomised"`.
+
+### Changes
+
+- The default `svd_solver` of
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  is `"auto"` rather than `"covariance"`, so on the sparse path the PCs
+  now come from Lanczos. Both are exact, but the trailing PCs can shift
+  slightly.
+- Clustering results shift against 0.7.0: new pruning default, new
+  `n_iterations` defaults and the rewritten fast clustering.
+- [`get_snn_graph()`](https://gregorlueg.github.io/bixverse/reference/snn_graph_deprecated.md),
+  [`set_snn_graph()`](https://gregorlueg.github.io/bixverse/reference/snn_graph_deprecated.md)
+  and
+  [`remove_snn_graph()`](https://gregorlueg.github.io/bixverse/reference/snn_graph_deprecated.md)
+  are now
+  [`get_connectivities()`](https://gregorlueg.github.io/bixverse/reference/get_connectivities.md),
+  [`set_connectivities()`](https://gregorlueg.github.io/bixverse/reference/set_connectivities.md)
+  and
+  [`remove_connectivities()`](https://gregorlueg.github.io/bixverse/reference/remove_connectivities.md),
+  since the graph isn’t always an sNN any more. The old names still work
+  and warn. The cache slot, the state check artefact and `graph` in the
+  ForceAtlas2 layout went from `"snn"` to `"connectivities"`.
+  [`load_existing()`](https://gregorlueg.github.io/bixverse/reference/load_existing.md)
+  migrates objects saved with 0.7.x.
+- Default sNN pruning dropped from `1/12` to `1/16`, i.e. about 2 of 16
+  shared cells at `k = 15`, in line with Seurat’s `1/15`. The WNN graph
+  uses the same default instead of `1/15`.
+- `full_snn` (neighbours) and `snn_type` (WNN) are gone.
+- [`fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_cluster_sc.md)
+  lost `km_type`, `n_centroids`, `snn`, `grid_search` and `no_seeds`.
+  The first two moved into
+  [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md),
+  where `km_type = "kmeans"` is now `"standard"`; `n_seeds` replaces the
+  grid search.
+- `kmeans_iters` in
+  [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
+  (Boost, scDblFinder) is now `k_means_iter`.
+- [`rs_sc_knn_graph()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_graph.md)
+  replaces `rs_sc_snn()`.
+  [`rs_fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/rs_fast_cluster_sc.md)
+  absorbs `rs_fast_cluster_sc_grid()`.
+- The Symphony vignette is now “Clustering, cell type annotation and
+  reference mapping” (`cell_type_annotation`). On top of Symphony it
+  covers the graph choice, Leiden vs Louvain, fast clustering and
+  per-cell scType calls.
+
+### Fixes
+
+- [`transfer_labels_symphony()`](https://gregorlueg.github.io/bixverse/reference/transfer_labels_symphony.md)
+  no longer panics when the reference labels contain `NA` (e.g. scType
+  Unknown cells). `NA` is treated as its own class, so query cells can
+  come back `NA`.
+
 ## bixverse 0.7.0
 
 ### Features

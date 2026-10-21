@@ -21,8 +21,10 @@ large number of neighbours.
 annoy - Approximate nearest neighbours Oh Yeah. Tree-based index,
 used across different R single cell packages (Seurat, SCE). This version
 is purely memory-based.
-Subsequently, the kNN graph will be additionally transformed into a shared
-nearest neighbour graph for clustering methods."><meta property="og:description" content="This function will generate the kNNs based on a given embedding. Available
+Subsequently, the kNN is symmetrised into the neighbour graph the
+clustering methods run on: the shared nearest neighbour graph (default),
+the UMAP fuzzy simplicial set or the kNN union, see
+params_knn_graph_defaults()."><meta property="og:description" content="This function will generate the kNNs based on a given embedding. Available
 algorithms are:
 kmknn - An exact kNN search that leverages k-means clustering under
 the hood to prune out data points. The default setting.
@@ -44,8 +46,10 @@ large number of neighbours.
 annoy - Approximate nearest neighbours Oh Yeah. Tree-based index,
 used across different R single cell packages (Seurat, SCE). This version
 is purely memory-based.
-Subsequently, the kNN graph will be additionally transformed into a shared
-nearest neighbour graph for clustering methods."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+Subsequently, the kNN is symmetrised into the neighbour graph the
+clustering methods run on: the shared nearest neighbour graph (default),
+the UMAP fuzzy simplicial set or the kNN union, see
+params_knn_graph_defaults()."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -53,7 +57,7 @@ nearest neighbour graph for clustering methods."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,7 +115,7 @@ nearest neighbour graph for clustering methods."><meta property="og:image" conte
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -162,8 +166,10 @@ large number of neighbours.</p></li>
 <li><p><code>annoy</code> - Approximate nearest neighbours Oh Yeah. Tree-based index,
 used across different R single cell packages (Seurat, SCE). This version
 is purely memory-based.</p></li>
-</ul><p>Subsequently, the kNN graph will be additionally transformed into a shared
-nearest neighbour graph for clustering methods.</p>
+</ul><p>Subsequently, the kNN is symmetrised into the neighbour graph the
+clustering methods run on: the shared nearest neighbour graph (default),
+the UMAP fuzzy simplicial set or the kNN union, see
+<code><a href="params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code>.</p>
     </div>
 
     <div class="section level2">
@@ -204,17 +210,9 @@ on <code>SingleCellsMultiModal</code> class.</p></dd>
 
 <dt id="arg-neighbours-params">neighbours_params<a class="anchor" aria-label="anchor" href="#arg-neighbours-params"></a></dt>
 <dd><p>List. Output of <code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>.
-A list with the following items:</p><ul><li><p>full_snn - Boolean. Shall the full shared nearest neighbour graph
-be generated that generates edges between all cells instead of between
-only neighbours.</p></li>
-<li><p>pruning - Numeric. Weights below this threshold will be set to 0 in
-the generation of the sNN graph.</p></li>
-<li><p>snn_similarity - String. One of <code>c("rank", "jaccard")</code>. Defines how
-the weight from the SNN graph is calculated. For details, please see
-<code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>.</p></li>
-<li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
-for available parameters and their defaults.</p></li>
-</ul></dd>
+Carries the graph parameters (see
+<code><a href="params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code>) and the kNN parameters (see
+<code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>).</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -229,12 +227,12 @@ verbosity.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The object with added KNN matrix.</p>
+    <p>The object with the added kNN and neighbour graph.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># kNN and the sNN graph on top of the PCA</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># kNN and the neighbour graph on top of the PCA</span></span></span>
 <span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span>prepped <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span><span class="va">sc</span>, hvg_no <span class="op">=</span> <span class="fl">30L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span><span class="va">sc</span>, no_pcs <span class="op">=</span> <span class="fl">10L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>

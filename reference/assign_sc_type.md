@@ -5,9 +5,9 @@ The cluster-level ScType path
 stamps one label on every cell of a cluster, so a minority population
 sharing a Leiden community with a bigger one gets absorbed without
 anything flagging it. This runs the scoring per cell instead: the score
-matrix is smoothed over the sNN graph via label spreading (Zhou et al.),
-then each cell takes its own argmax. Cells whose best score falls below
-`score_floor` come back as `NA`.
+matrix is smoothed over the neighbour graph via label spreading (Zhou et
+al.), then each cell takes its own argmax. Cells whose best score falls
+below `score_floor` come back as `NA`.
 
 Pass `cluster_col` to also get the per-cluster composition (purity,
 entropy, runner-up cell type) and the hybrid assignment, where clusters
@@ -79,7 +79,7 @@ res <- assign_sc_type(sc, sc_type_res = scores, .verbose = FALSE)
 table(res$assignments)
 #> 
 #> cell_type_1 cell_type_2 cell_type_3 
-#>         167         166         167 
+#>         166         167         167 
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

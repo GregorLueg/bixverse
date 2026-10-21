@@ -19,7 +19,7 @@ A named list with the following elements:
 - n_centroids - Integer or `NULL`. The number of centroids to use.
   `NULL` uses `sqrt(N_cells) * 4` centroids. Defaults to `NULL`.
 
-- kmeans_iters - Integer. Number of maximum k-means iterations. Defaults
+- k_means_iter - Integer. Number of maximum k-means iterations. Defaults
   to `100L`.
 
 - batch_size - Integer. Max batch size, capped at `N_cells / 2`

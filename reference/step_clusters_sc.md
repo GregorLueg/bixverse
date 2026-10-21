@@ -12,7 +12,8 @@ step_clusters_sc(
   res = 1,
   name = "leiden_clustering",
   modality = c("rna", "adt", "wnn"),
-  seed = 42L
+  seed = 42L,
+  ...
 )
 ```
 
@@ -40,6 +41,12 @@ step_clusters_sc(
 - seed:
 
   Integer. For reproducibility.
+
+- ...:
+
+  Further parameters for
+  [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md):
+  `n_iterations`, `beta`, `min_gain` and `local_moving`.
 
 ## Value
 

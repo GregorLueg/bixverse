@@ -98,7 +98,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -222,11 +222,11 @@ dlg_res
 #>   Cell types:       4 (CD8+ IELs, CD8+ LP, Macrophages, TA2)
 #>   Shared samples:   30
 #>   Programmes:       3
-#>     mcp_01 - worst pair p: 0.0448 | spans 4 cell type(s)
-#>     mcp_02 - worst pair p: 0.4449 | spans 3 cell type(s)
-#>     mcp_03 - worst pair p: 0.1127 | spans 4 cell type(s)
-#>   Genes with a verdict: 1277
-#>   Signature genes:  1115 permissive | 721 strict
+#>     mcp_01 - worst pair p: 0.6612 | spans 3 cell type(s)
+#>     mcp_02 - worst pair p: 0.0448 | spans 4 cell type(s)
+#>     mcp_03 - worst pair p: 0.08834 | spans 4 cell type(s)
+#>   Genes with a verdict: 1286
+#>   Signature genes:  1127 permissive | 723 strict
 ```
 
 `quality_col = "cell_q"` is the per-cell quality score the original
@@ -246,24 +246,24 @@ two cell types’ sample-level scores.
 get_results(dlg_res)
 #>     programme cell_type_a cell_type_b      emp_p  pair_cor
 #>         <int>      <char>      <char>      <num>     <num>
-#>  1:         1   CD8+ IELs     CD8+ LP 0.04480159 0.9184860
-#>  2:         2   CD8+ IELs     CD8+ LP 0.04480159 0.7578601
-#>  3:         3   CD8+ IELs     CD8+ LP 0.05950722 0.6239857
-#>  4:         1   CD8+ IELs Macrophages 0.04480159 0.8783269
-#>  5:         2   CD8+ IELs Macrophages 0.04480159 0.8086600
-#>  6:         3   CD8+ IELs Macrophages 0.09401581 0.5704093
-#>  7:         1   CD8+ IELs         TA2 0.04480159 0.9216183
-#>  8:         2   CD8+ IELs         TA2 0.19322624 0.5431076
-#>  9:         3   CD8+ IELs         TA2 0.04480159 0.7218704
-#> 10:         1     CD8+ LP Macrophages 0.04480159 0.9437799
-#> 11:         2     CD8+ LP Macrophages 0.04480159 0.8032059
-#> 12:         3     CD8+ LP Macrophages 0.04480159 0.7624379
-#> 13:         1     CD8+ LP         TA2 0.04480159 0.9411470
-#> 14:         2     CD8+ LP         TA2 0.36451074 0.5162318
-#> 15:         3     CD8+ LP         TA2 0.05174027 0.6516344
-#> 16:         1 Macrophages         TA2 0.04480159 0.9127722
-#> 17:         2 Macrophages         TA2 0.44489458 0.4728795
-#> 18:         3 Macrophages         TA2 0.11266125 0.5973414
+#>  1:         1   CD8+ IELs     CD8+ LP 0.04480159 0.7566880
+#>  2:         2   CD8+ IELs     CD8+ LP 0.04480159 0.9187146
+#>  3:         3   CD8+ IELs     CD8+ LP 0.05950722 0.6225727
+#>  4:         1   CD8+ IELs Macrophages 0.04480159 0.8074377
+#>  5:         2   CD8+ IELs Macrophages 0.04480159 0.8783387
+#>  6:         3   CD8+ IELs Macrophages 0.08833696 0.5740282
+#>  7:         1   CD8+ IELs         TA2 0.24420029 0.5441584
+#>  8:         2   CD8+ IELs         TA2 0.04480159 0.9215888
+#>  9:         3   CD8+ IELs         TA2 0.04480159 0.7202389
+#> 10:         1     CD8+ LP Macrophages 0.04480159 0.8044156
+#> 11:         2     CD8+ LP Macrophages 0.04480159 0.9440594
+#> 12:         3     CD8+ LP Macrophages 0.04480159 0.7627769
+#> 13:         1     CD8+ LP         TA2 0.30165683 0.5201556
+#> 14:         2     CD8+ LP         TA2 0.04480159 0.9410904
+#> 15:         3     CD8+ LP         TA2 0.05950722 0.6511167
+#> 16:         1 Macrophages         TA2 0.66118998 0.4759494
+#> 17:         2 Macrophages         TA2 0.04480159 0.9132747
+#> 18:         3 Macrophages         TA2 0.08291775 0.5990781
 ```
 
 A programme is only interesting if it holds up across *every* pair, so
@@ -281,10 +281,10 @@ that passed the mixed model.
 
 round(dlg_res$refit_fidelity, 3)
 #>             mcp_01 mcp_02 mcp_03
-#> CD8+ IELs    0.944  0.546  0.795
-#> CD8+ LP      0.949  0.715  0.757
-#> Macrophages  0.985  0.876  0.877
-#> TA2          0.938  1.000  0.875
+#> CD8+ IELs    0.546  0.944  0.796
+#> CD8+ LP      0.715  0.949  0.755
+#> Macrophages  0.878  0.985  0.876
+#> TA2          1.000  0.938  0.875
 ```
 
 The signatures come in two flavours. `permissive` and `strict` are
@@ -305,17 +305,17 @@ dcast(
 #> Key: <cell_type, programme>
 #>       cell_type programme  down    up
 #>          <char>     <int> <int> <int>
-#>  1:   CD8+ IELs         1    25    70
-#>  2:   CD8+ IELs         2    NA     3
-#>  3:   CD8+ IELs         3     1     6
-#>  4:     CD8+ LP         1    57    73
-#>  5:     CD8+ LP         2     6     6
-#>  6:     CD8+ LP         3     1     7
-#>  7: Macrophages         1   154   181
-#>  8: Macrophages         2     1    20
-#>  9: Macrophages         3     6    29
-#> 10:         TA2         1    33    36
-#> 11:         TA2         3     1     5
+#>  1:   CD8+ IELs         1     3    NA
+#>  2:   CD8+ IELs         2    25    70
+#>  3:   CD8+ IELs         3     6     1
+#>  4:     CD8+ LP         1     6     6
+#>  5:     CD8+ LP         2    57    73
+#>  6:     CD8+ LP         3     7     1
+#>  7: Macrophages         1    20     1
+#>  8: Macrophages         2   155   183
+#>  9: Macrophages         3    28     6
+#> 10:         TA2         2    33    36
+#> 11:         TA2         3     5     1
 ```
 
 ## Does it track the disease?
@@ -345,12 +345,12 @@ per_sample[,
   .(p = signif(wilcox.test(mcp_01 ~ pathology)$p.value, 3)),
   by = cell_type
 ]
-#>      cell_type        p
-#>         <char>    <num>
-#> 1:         TA2 0.000239
-#> 2:     CD8+ LP 0.000658
-#> 3:   CD8+ IELs 0.000296
-#> 4: Macrophages 0.013200
+#>      cell_type     p
+#>         <char> <num>
+#> 1:         TA2 0.602
+#> 2:     CD8+ LP 0.950
+#> 3:   CD8+ IELs 0.134
+#> 4: Macrophages 0.158
 ```
 
 `mcp_01` separates UC donors from healthy ones in all four cell types at
@@ -393,10 +393,10 @@ score_dt[,
 ]
 #>      cell_type    rho
 #>         <char>  <num>
-#> 1:         TA2 -0.591
-#> 2:     CD8+ LP -0.555
-#> 3:   CD8+ IELs -0.445
-#> 4: Macrophages -0.586
+#> 1:         TA2 -0.111
+#> 2:     CD8+ LP  0.081
+#> 3:   CD8+ IELs -0.274
+#> 4: Macrophages -0.105
 ```
 
 That is not a small correlation. `mcp_01` is tracking library size at
@@ -435,10 +435,10 @@ score_lib[,
 ]
 #>      cell_type    rho
 #>         <char>  <num>
-#> 1:         TA2 -0.185
-#> 2:     CD8+ LP -0.242
-#> 3:   CD8+ IELs -0.056
-#> 4: Macrophages -0.274
+#> 1:         TA2 -0.082
+#> 2:     CD8+ LP  0.027
+#> 3:   CD8+ IELs -0.119
+#> 4: Macrophages -0.085
 ```
 
 Much better. Two things to notice about what changed and what did not.
@@ -458,7 +458,7 @@ c(
   lib_size = nrow(dlg_lib$signatures[list == "strict"])
 )
 #>   cell_q lib_size 
-#>      721      328
+#>      723      332
 ```
 
 And the disease association survives.
@@ -473,12 +473,12 @@ score_lib[,
   .(p = signif(wilcox.test(mcp_01 ~ pathology)$p.value, 3)),
   by = cell_type
 ]
-#>      cell_type        p
-#>         <char>    <num>
-#> 1:         TA2 1.01e-02
-#> 2:     CD8+ LP 4.29e-03
-#> 3:   CD8+ IELs 5.99e-05
-#> 4: Macrophages 7.70e-03
+#>      cell_type     p
+#>         <char> <num>
+#> 1:         TA2 0.851
+#> 2:     CD8+ LP 0.983
+#> 3:   CD8+ IELs 0.172
+#> 4: Macrophages 0.267
 ```
 
 So there is a real coordinated programme here, it is just a good deal

@@ -213,8 +213,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ### Cell type labels
@@ -287,7 +286,7 @@ sc_object[["cell_type"]] <- obs$cell_type
 table(obs$cell_type)
 #> 
 #>   B cells        DC Monocytes        NK Platelets   T cells 
-#>       873        70      1020       336        11      3531
+#>       873        69       945       861        88      3005
 ```
 
 ## Comparing the different methods
@@ -357,7 +356,7 @@ metrics_dt <- calculate_integration_metrics_sc(
 metrics_dt[]
 #>    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num> <num>          <num> <num>         <num>
-#> 1:       pca  0.01318267 0.8897316     0             NA     1     0.6783617
+#> 1:       pca  0.01318267 0.8897316     0             NA     1     0.6537424
 #>    graph_connectivity      method
 #>                 <num>      <char>
 #> 1:                  1 Uncorrected
@@ -396,8 +395,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ``` r
@@ -417,10 +415,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "fastMNN"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6578609
+#> 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1      0.636044
 #>    graph_connectivity  method
 #>                 <num>  <char>
-#> 1:          0.9374576 fastMNN
+#> 1:          0.9361725 fastMNN
 ```
 
 We can see clear improvements on the batch side: kBET acceptance, batch
@@ -478,8 +476,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 Let’s calculate the batch correction-related scores
@@ -501,10 +498,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1      0.699389
+#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6687658
 #>    graph_connectivity  method
 #>                 <num>  <char>
-#> 1:                  1 Harmony
+#> 1:          0.9996955 Harmony
 ```
 
 Also here, we observe improvements across the board.
@@ -576,8 +573,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 Let’s calculate the batch correction-related scores
@@ -602,7 +598,7 @@ metrics_dt[method == "Harmony v2"]
 #> 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
-#> 1:     0.6979642                  1 Harmony v2
+#> 1:     0.6677586          0.9993072 Harmony v2
 ```
 
 ``` r
@@ -680,8 +676,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ``` r
@@ -701,10 +696,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat CCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       cca   0.7183701 0.8929769 0.4705881      0.8688658     1      0.704457
+#> 1:       cca   0.7183701 0.8929769 0.4705881      0.8688658     1     0.6711522
 #>    graph_connectivity     method
 #>                 <num>     <char>
-#> 1:                  1 Seurat CCA
+#> 1:          0.9997509 Seurat CCA
 ```
 
 ``` r
@@ -758,8 +753,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ``` r
@@ -779,10 +773,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat rPCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:      rpca   0.7844547  0.907904 0.6423357      0.8138826     1     0.6967958
+#> 1:      rpca   0.7844547 0.9079038 0.6423357      0.8138765     1     0.6619311
 #>    graph_connectivity      method
 #>                 <num>      <char>
-#> 1:                  1 Seurat rPCA
+#> 1:          0.9998064 Seurat rPCA
 ```
 
 ``` r
@@ -869,7 +863,7 @@ metrics_dt[method == "BBKNN"]
 #> 1:      <NA>           1        NA   0.8             NA     1            NA
 #>    graph_connectivity method
 #>                 <num> <char>
-#> 1:                  1  BBKNN
+#> 1:          0.9979125  BBKNN
 ```
 
 ``` r
@@ -915,21 +909,21 @@ metrics_dt[, .(
 #>         method kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1
-#> 2:     fastMNN  0.69251840 0.9413065 0.4705881      0.8861530     1
+#> 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1
 #> 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1
 #> 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1
 #> 5:  Seurat CCA  0.71837014 0.8929769 0.4705881      0.8688658     1
-#> 6: Seurat rPCA  0.78445472 0.9079040 0.6423357      0.8138826     1
+#> 6: Seurat rPCA  0.78445472 0.9079038 0.6423357      0.8138765     1
 #> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
-#> 1:     0.6783617          1.0000000
-#> 2:     0.6578609          0.9374576
-#> 3:     0.6993890          1.0000000
-#> 4:     0.6979642          1.0000000
-#> 5:     0.7044570          1.0000000
-#> 6:     0.6967958          1.0000000
-#> 7:            NA          1.0000000
+#> 1:     0.6537424          1.0000000
+#> 2:     0.6360440          0.9361725
+#> 3:     0.6687658          0.9996955
+#> 4:     0.6677586          0.9993072
+#> 5:     0.6711522          0.9997509
+#> 6:     0.6619311          0.9998064
+#> 7:            NA          0.9979125
 ```
 
 ``` r

@@ -63,7 +63,8 @@ A `SingleCellsSubset` object.
 
 - sc_cache:
 
-  Fresh `ScCache` for subset-specific PCA, kNN, sNN, embeddings.
+  Fresh `ScCache` for subset-specific PCA, kNN, neighbour graph,
+  embeddings.
 
 - sc_map:
 

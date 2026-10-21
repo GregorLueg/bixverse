@@ -11,7 +11,7 @@ params_sc_pca(
   randomised = NULL,
   clr = FALSE,
   size_factor = 10000,
-  svd_solver = c("covariance", "randomised", "exact")
+  svd_solver = c("auto", "covariance", "randomised", "exact")
 )
 ```
 
@@ -43,13 +43,15 @@ params_sc_pca(
 
 - svd_solver:
 
-  String. Which solver to use. `"covariance"` builds the gene x gene
-  cross-product and eigendecomposes it: exact, and the fastest option
-  for a few thousand HVGs, but its cost grows with the square of the
-  gene number in memory and the cube in time. `"randomised"` is a
-  randomised SVD, approximate in the trailing components. `"exact"` is a
-  full SVD on the dense path and Lanczos on the sparse one. One of
-  `c("covariance", "randomised", "exact")`. Defaults to `"covariance"`.
+  String. Which solver to use. `"auto"` takes Lanczos on the sparse path
+  and `"covariance"` on the dense one, the fastest exact option on each.
+  `"covariance"` builds the gene x gene cross-product and
+  eigendecomposes it: its cost grows with the square of the gene number
+  in memory and the cube in time. `"randomised"` is a randomised SVD,
+  approximate in the trailing components. `"exact"` is a full SVD on the
+  dense path and Lanczos on the sparse one. One of
+  `c("auto", "covariance", "randomised", "exact")`. Defaults to
+  `"auto"`.
 
 ## Value
 
@@ -71,11 +73,12 @@ A named list with the following elements:
   the same as during I/O to have correct results when using the
   `PFlogPF` transformation. Defaults to `10000.0`.
 
-- svd_solver - String. Which solver to use. `"covariance"` builds the
-  gene x gene cross-product and eigendecomposes it: exact, and the
-  fastest option for a few thousand HVGs, but its cost grows with the
-  square of the gene number in memory and the cube in time.
-  `"randomised"` is a randomised SVD, approximate in the trailing
-  components. `"exact"` is a full SVD on the dense path and Lanczos on
-  the sparse one. One of `c("covariance", "randomised", "exact")`.
-  Defaults to `"covariance"`.
+- svd_solver - String. Which solver to use. `"auto"` takes Lanczos on
+  the sparse path and `"covariance"` on the dense one, the fastest exact
+  option on each. `"covariance"` builds the gene x gene cross-product
+  and eigendecomposes it: its cost grows with the square of the gene
+  number in memory and the cube in time. `"randomised"` is a randomised
+  SVD, approximate in the trailing components. `"exact"` is a full SVD
+  on the dense path and Lanczos on the sparse one. One of
+  `c("auto", "covariance", "randomised", "exact")`. Defaults to
+  `"auto"`.

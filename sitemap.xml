@@ -6,6 +6,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/articles/bulk_coexpression_modules.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/bulk_dge.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/cell_sweep.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/cpca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/design_single_cell.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/dialogue.html</loc></url>
@@ -29,7 +30,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/articles/single_cell_residuals.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/single_cell_subsets.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/single_cell_visualisation.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/articles/symphony.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/authors.html</loc></url>
@@ -95,6 +95,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertIcaNcompsParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertIcaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertKMeansParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/assertKnnGraphParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertKnnParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertLabelPropParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertLdaParams.html</loc></url>
@@ -246,6 +247,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkIcaNcompsParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkIcaParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkKMeansParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/checkKnnGraphParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkKnnParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkLabelPropParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkLdaParams.html</loc></url>
@@ -379,6 +381,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-confirm_sc_reset.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-counts_to_cell_major.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-data_urls.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-default_community_iters.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-demote_verbosity.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-dialogue_feature_names.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-dialogue_signature_dt.html</loc></url>
@@ -404,6 +407,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-h5ad_frame_length.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-inject_consensus_seed.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-integration_slot.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-knn_to_graph.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-lda_matrix_to_list.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-magic_matrix.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-manifold_from.html</loc></url>
@@ -414,6 +418,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-melt_one_vs_many_res.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-merge_mc_counts.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-merge_mc_obs.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-migrate_other_data.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-migrate_sc_cache.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-migrate_sc_map.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-migrate_sc_state.html</loc></url>
@@ -452,6 +457,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-resolve_tested.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-resolve_tested_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-run_consensus_nmf.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-run_fast_cluster.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-run_per_group.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-sc_artefacts.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-sc_cache_get.html</loc></url>
@@ -571,6 +577,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_cells_to_keep.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_centroids_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_cistarget_res.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/get_connectivities.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_cor_graph.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_cores.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_counts_from_rust.html</loc></url>
@@ -651,7 +658,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_snf_adjcacency_mat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_snf_final_mat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_snf_params.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/get_snn_graph.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_stability.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_symphony_hvg_names.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_symphony_labels.html</loc></url>
@@ -773,6 +779,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_ica_randomisation.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_label_propagation.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_lda.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_ligand_target.html</loc></url>
@@ -889,11 +896,11 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/read_tenx_h5_metadata.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/relayout_bonsai.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/remove_adt_isotypes.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/remove_connectivities.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/remove_knn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/remove_magic.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/remove_residual_fit.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/remove_samples.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/remove_snn_graph.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rescue_cells.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/reset_cells_to_keep.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/resolve_weights.html</loc></url>
@@ -950,7 +957,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_extract_several_genes_plots.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_fast_auc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_fast_cluster_sc.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_fast_cluster_sc_grid.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_fast_ica.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_fdr_adjustment.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_filter_by_expr.html</loc></url>
@@ -1074,6 +1080,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_hvg_batch_aware.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_infer_empty_droplets.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_knn.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_graph.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_w_dist.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_otsu_method.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_pca.html</loc></url>
@@ -1082,7 +1089,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_residual_variance.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_scdblfinder.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_scrublet.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_snn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_type.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_type_assign_cells.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_type_cluster_assignment.html</loc></url>
@@ -1156,6 +1162,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_bonsai_embedding.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_cell_mapping.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/set_connectivities.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_embedding.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_gene_mapping.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_hvg.html</loc></url>
@@ -1168,7 +1175,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_sc_new_obs_col.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_sc_new_obs_col_multiple.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/set_sc_new_var_cols.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/set_snn_graph.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/setnames_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/seurat_cca_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/seurat_rpca_sc.html</loc></url>
@@ -1178,6 +1184,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/snf.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/snf_process_aff_cat_mixed.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/snf_process_aff_continuous.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/snn_graph_deprecated.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/sparse_list_to_mat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/sparse_mat_to_list.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_bulk.html</loc></url>

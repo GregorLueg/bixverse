@@ -1,8 +1,8 @@
 # Save a `SingleCells` object to h5ad
 
 Writes the counts, the DuckDB obs/var tables and whatever is cached in
-memory (PCA, embeddings, sNN graph) to a spec-compliant h5ad file, so
-that the experiment can be handed to ScanPy or shared. The counts are
+memory (PCA, embeddings, neighbour graph) to a spec-compliant h5ad file,
+so that the experiment can be handed to ScanPy or shared. The counts are
 streamed cell batch by cell batch and never fully materialised in R.
 
 Only the cells that are currently kept are written, i.e. the export

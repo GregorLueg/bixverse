@@ -81,7 +81,7 @@ sc
 #>   PCA calculated: TRUE
 #>   Other embeddings: none
 #>   KNN generated: TRUE
-#>   SNN generated: TRUE
+#>   Graph generated: TRUE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none

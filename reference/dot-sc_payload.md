@@ -4,9 +4,8 @@ Raw slot access with no freshness checking and no stamp stripping. This
 is what the provenance machinery reads; user facing code goes through
 the getters.
 
-The `wnn` pseudo modality stores its graph under `snn` and its
-embeddings under `embeddings`, where a real `ScCache` uses `snn_graph`
-and `other_embeddings`, hence the flag.
+The `wnn` pseudo modality stores its embeddings under `embeddings`,
+where a real `ScCache` uses `other_embeddings`, hence the flag.
 
 ## Usage
 
@@ -23,7 +22,7 @@ and `other_embeddings`, hence the flag.
 - artefact:
 
   String. One of
-  `c("pca", "embedding", "knn", "snn", "magic", "residuals")`.
+  `c("pca", "embedding", "knn", "connectivities", "magic", "residuals")`.
 
 - name:
 

@@ -42,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55bb5a65bb80> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55f2c5022b80> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55bb5a65bb80>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55f2c5022b80>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -76,7 +76,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -148,7 +148,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -193,7 +193,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -390,7 +390,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -439,16 +439,16 @@ sc_object <- calculate_pca_sc(sc_object, no_pcs = 10L, .verbose = FALSE)
 sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 
 get_sc_cache_status(sc_object)
-#>    modality artefact   name stamped  stale reason               id
-#>      <char>   <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna      pca   <NA>    TRUE  FALSE   <NA> 06d21dc9b1a401cc
-#> 2:      rna      knn   <NA>    TRUE  FALSE   <NA> fecce16c121946c0
-#> 3:      rna      snn   <NA>    TRUE  FALSE   <NA> 34051bb8ee92c46f
+#>    modality       artefact   name stamped  stale reason               id
+#>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 39a9ceadcfffe61c
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 6cee55d5f85ee0a2
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 7f58c8291fe0217a
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 06d21dc9b1a401cc
-#> 3: fecce16c121946c0
+#> 2: 39a9ceadcfffe61c
+#> 3: 6cee55d5f85ee0a2
 ```
 
 The `from` column is what makes this more than a cell counter. The kNN
@@ -461,21 +461,21 @@ with fewer components, and don’t touch the neighbours:
 sc_object <- calculate_pca_sc(sc_object, no_pcs = 5L, .verbose = FALSE)
 
 get_sc_cache_status(sc_object)
-#>    modality artefact   name stamped  stale
-#>      <char>   <char> <char>  <lgcl> <lgcl>
-#> 1:      rna      pca   <NA>    TRUE  FALSE
-#> 2:      rna      knn   <NA>    TRUE   TRUE
-#> 3:      rna      snn   <NA>    TRUE   TRUE
+#>    modality       artefact   name stamped  stale
+#>      <char>         <char> <char>  <lgcl> <lgcl>
+#> 1:      rna            pca   <NA>    TRUE  FALSE
+#> 2:      rna            knn   <NA>    TRUE   TRUE
+#> 3:      rna connectivities   <NA>    TRUE   TRUE
 #>                                                         reason               id
 #>                                                         <char>           <char>
-#> 1:                                                        <NA> de623cd1bcab31a5
-#> 2: the artefact it was derived from was re-computed or removed fecce16c121946c0
-#> 3:                             its upstream `rna:knn` is stale 34051bb8ee92c46f
+#> 1:                                                        <NA> d3bba19e613f622d
+#> 2: the artefact it was derived from was re-computed or removed 6cee55d5f85ee0a2
+#> 3:                             its upstream `rna:knn` is stale 7f58c8291fe0217a
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 06d21dc9b1a401cc
-#> 3: fecce16c121946c0
+#> 2: 39a9ceadcfffe61c
+#> 3: 6cee55d5f85ee0a2
 ```
 
 The PCA is fine. The kNN is stale because the PCA it points at no longer
@@ -494,10 +494,10 @@ sc_object
 #>   PCA calculated: TRUE
 #>   Other embeddings: none
 #>   KNN generated: TRUE
-#>   SNN generated: TRUE
+#>   Graph generated: TRUE
 #>   MAGIC imputed: none
 #>   Residual model: none
-#>   Stale artefacts: rna:knn, rna:snn
+#>   Stale artefacts: rna:knn, rna:connectivities
 ```
 
 Reading a stale artefact warns. Anything that hands cached indices to
@@ -511,7 +511,7 @@ computing nonsense:
 
 find_clusters_sc(sc_object)
 #> Error in `method(find_clusters_sc, bixverse::SingleCells)`:
-#> ! Assertion on 'object' failed: Cached `rna:snn` is stale: its upstream `rna:knn` is stale. Re-run the step that produces it, or drop it, before using it. See `get_sc_cache_status()`.
+#> ! Assertion on 'object' failed: Cached `rna:connectivities` is stale: its upstream `rna:knn` is stale. Re-run the step that produces it, or drop it, before using it. See `get_sc_cache_status()`.
 ```
 
 Regenerating the neighbours puts the chain back together:
@@ -521,16 +521,16 @@ Regenerating the neighbours puts the chain back together:
 sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 
 get_sc_cache_status(sc_object)
-#>    modality artefact   name stamped  stale reason               id
-#>      <char>   <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna      pca   <NA>    TRUE  FALSE   <NA> de623cd1bcab31a5
-#> 2:      rna      knn   <NA>    TRUE  FALSE   <NA> 16a8ecef8715e409
-#> 3:      rna      snn   <NA>    TRUE  FALSE   <NA> 44ef8a85e0977519
+#>    modality       artefact   name stamped  stale reason               id
+#>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> d3bba19e613f622d
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> bab7414379778681
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 37b7a2343757562f
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: de623cd1bcab31a5
-#> 3: 16a8ecef8715e409
+#> 2: d3bba19e613f622d
+#> 3: bab7414379778681
 ```
 
 [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md)
@@ -630,8 +630,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.344631 1.363816 1.514729 1.398116 1.438045 2.499056    10
-#>  the_incorrect_way 2.351982 2.437181 2.492974 2.497448 2.540383 2.615283    10
+#>    the_correct_way 1.032612 1.063568 1.123547 1.082050 1.124749 1.416512    10
+#>  the_incorrect_way 1.661866 1.720033 1.965255 1.840165 1.950294 3.153559    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this

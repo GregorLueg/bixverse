@@ -1,58 +1,40 @@
-# Runs fast Louvain cluster on the data
+# Runs fast clustering on the data
 
-**\[experimental\]** Runs first k-means clustering, followed by a kNN
-detection on the centroids to then run Louvain clustering on the graph
-and propagate the membership back to the original data.
+**\[experimental\]** Coarsens the cells with k-means, builds a graph
+over the centroids (a kNN graph with one of the symmetrisations, or the
+cell-mediated graph) and runs Louvain or Leiden on it. The community of
+each centroid is propagated back to its cells. With `n_seeds > 1` every
+resolution is run once per seed, the labels come from the seed with the
+lowest mean conductance and stability metrics across the seeds are
+returned.
 
 ## Usage
 
 ``` r
-rs_fast_cluster_sc(
-  embd,
-  km_type,
-  resolutions,
-  n_centroids,
-  fc_params,
-  snn,
-  return_kmeans,
-  seed,
-  verbose
-)
+rs_fast_cluster_sc(embd, resolutions, fc_params, n_seeds, seed, verbose)
 ```
 
 ## Arguments
 
 - embd:
 
-  Numeric matrix. The original embedding.
-
-- km_type:
-
-  String. One of `c("kmeans", "minibatch")` for the type of k means
-  clustering to run.
+  Numeric matrix. The embedding, cells x features.
 
 - resolutions:
 
-  Numeric vector. The Louvain resolutions to iterate through.
-
-- n_centroids:
-
-  Optional integer. The number of k-means centroids. If not provided,
-  defaults to `floor(sqrt(nrow(embd)))`.
+  Numeric vector. The resolutions to iterate through.
 
 - fc_params:
 
-  Named list. The fast clustering parameters.
+  Named list. The fast clustering parameters, see
+  [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md).
+  Also carries the k-means keys (`km_type`, `kmeans_iters`,
+  `batch_size`, `drift_threshold`, `lr_alpha`).
 
-- snn:
+- n_seeds:
 
-  Boolean. Shall the kNN graph be additionally transformed into an sNN
-  graph.
-
-- return_kmeans:
-
-  Boolean. Shall the k-means centroid assignments be returned alongside
-  the memberships.
+  Integer. Number of seeds per resolution. `1L` runs a single pass
+  without stability metrics.
 
 - seed:
 
@@ -67,10 +49,14 @@ rs_fast_cluster_sc(
 
 A list with the following elements:
 
-- membership - List with one integer membership vector per resolution.
+- membership - List with one integer membership vector per resolution
+  (0-indexed).
 
-- k_means_cluster - Integer vector with the k-means cluster per cell if
-  `return_kmeans = TRUE`, otherwise `NULL`.
+- k_means_cluster - Integer vector with the k-means centroid per cell
+  (0-indexed).
 
-- centroids - Numerical matrix with the k-means centroids if
-  `return_kmeans = TRUE`, otherwise `NULL`.
+- centroids - Numerical matrix with the k-means centroids.
+
+- stats - `NULL` for `n_seeds = 1L`, otherwise a list with `mean_ari`,
+  `median_ari`, `mean_conductance`, `median_conductance` and
+  `mean_n_comms`, one value per resolution.

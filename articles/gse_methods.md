@@ -210,7 +210,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.575 sec elapsed
+#> 1.445 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -335,7 +335,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.795 sec elapsed
+#> 1.59 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -555,8 +555,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.902821 3.053743 3.253750 3.287326 3.356619 3.668244     5
-#>   rust 2.143558 2.153033 2.157258 2.153755 2.158957 2.176988     5
+#>  fgsea 2.467291 2.595791 2.770776 2.814874 2.841730 3.134194     5
+#>   rust 1.805561 1.807149 1.820546 1.818616 1.828821 1.842581     5
 ```
 
 ## blitzGSEA
@@ -684,9 +684,9 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>        expr        min         lq       mean     median         uq        max
-#>       fgsea 2126.85564 2130.02535 2136.40666 2133.54923 2139.25829 2152.34482
-#>  blitz_cold  515.27937  516.85697  518.86296  518.46774  519.27946  524.43125
-#>  blitz_warm   12.40383   12.93537   13.36216   12.94463   14.04504   14.48191
+#>       fgsea 1819.74984 1824.24879 1827.98719 1827.50001 1829.03317 1839.40411
+#>  blitz_cold  428.12809  430.16415  430.83467  431.01430  431.45777  433.40902
+#>  blitz_warm   11.22987   11.52784   11.63663   11.54925   11.55706   12.31912
 #>  neval
 #>      5
 #>      5

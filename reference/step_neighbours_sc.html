@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -131,17 +131,9 @@ on <code>SingleCellsMultiModal</code> class.</p></dd>
 
 <dt id="arg-neighbours-params">neighbours_params<a class="anchor" aria-label="anchor" href="#arg-neighbours-params"></a></dt>
 <dd><p>List. Output of <code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>.
-A list with the following items:</p><ul><li><p>full_snn - Boolean. Shall the full shared nearest neighbour graph
-be generated that generates edges between all cells instead of between
-only neighbours.</p></li>
-<li><p>pruning - Numeric. Weights below this threshold will be set to 0 in
-the generation of the sNN graph.</p></li>
-<li><p>snn_similarity - String. One of <code>c("rank", "jaccard")</code>. Defines how
-the weight from the SNN graph is calculated. For details, please see
-<code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>.</p></li>
-<li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
-for available parameters and their defaults.</p></li>
-</ul></dd>
+Carries the graph parameters (see
+<code><a href="params_knn_graph_defaults.html">params_knn_graph_defaults()</a></code>) and the kNN parameters (see
+<code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>).</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

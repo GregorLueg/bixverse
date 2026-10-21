@@ -6,45 +6,20 @@ cell
 ## Usage
 
 ``` r
-params_sc_neighbours(
-  full_snn = TRUE,
-  pruning = 0.0833333333333333,
-  snn_similarity = c("jaccard", "rank"),
-  knn = list()
-)
+params_sc_neighbours(graph = list(), knn = list())
 ```
 
 ## Arguments
 
-- full_snn:
+- graph:
 
-  Boolean. Shall the full shared nearest neighbour graph be generated
-  that generates edges between all cells instead of between only
-  neighbours. Defaults to `TRUE`.
-
-- pruning:
-
-  Numeric. Weights below this threshold will be set to 0 in the
-  generation of the sNN graph. Seurat uses for example `1/15` with
-  `k = 20`. As the default k is set to 15, we set it to `1/12`. Track
-  this against `k` rather than leaving it: the threshold is a share of
-  the neighbourhood, so the same value prunes far harder at a larger
-  `k`. A cell that loses every edge to pruning keeps its strongest kNN
-  edge, so it does not drop out as a one-cell cluster. Over-pruning
-  still fails quietly otherwise: small groups of cells that only share
-  neighbours with each other split off as tiny communities. Defaults to
-  `0.08333333333333333`.
-
-- snn_similarity:
-
-  String. The Jaccard similarity calculates the Jaccard between the
-  neighbours, whereas the rank method calculates edge weights based on
-  the ranking of shared neighbours. For the rank method, the weight is
-  determined by finding the shared neighbour with the lowest combined
-  rank across both cells, where lower-ranked (closer) shared neighbours
-  result in higher edge weights Both methods produce weights normalised
-  to the range `[0, 1]`. One of `c("jaccard", "rank")`. Defaults to
-  `"jaccard"`.
+  List. Optional overrides for how the kNN is turned into the graph. See
+  [`params_knn_graph_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.md)
+  for available parameters: `knn_sym`, `snn_similarity`, `pruning`,
+  `rescue`, `local_connectivity`, `mix_ratio` and `binary`. See
+  [`params_knn_graph_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.md)
+  for the available elements. Defaults to
+  [`list()`](https://rdrr.io/r/base/list.html).
 
 - knn:
 
@@ -62,29 +37,9 @@ params_sc_neighbours(
 
 A named list with the following elements:
 
-- full_snn - Boolean. Shall the full shared nearest neighbour graph be
-  generated that generates edges between all cells instead of between
-  only neighbours. Defaults to `TRUE`.
-
-- pruning - Numeric. Weights below this threshold will be set to 0 in
-  the generation of the sNN graph. Seurat uses for example `1/15` with
-  `k = 20`. As the default k is set to 15, we set it to `1/12`. Track
-  this against `k` rather than leaving it: the threshold is a share of
-  the neighbourhood, so the same value prunes far harder at a larger
-  `k`. A cell that loses every edge to pruning keeps its strongest kNN
-  edge, so it does not drop out as a one-cell cluster. Over-pruning
-  still fails quietly otherwise: small groups of cells that only share
-  neighbours with each other split off as tiny communities. Defaults to
-  `0.08333333333333333`.
-
-- snn_similarity - String. The Jaccard similarity calculates the Jaccard
-  between the neighbours, whereas the rank method calculates edge
-  weights based on the ranking of shared neighbours. For the rank
-  method, the weight is determined by finding the shared neighbour with
-  the lowest combined rank across both cells, where lower-ranked
-  (closer) shared neighbours result in higher edge weights Both methods
-  produce weights normalised to the range `[0, 1]`. One of
-  `c("jaccard", "rank")`. Defaults to `"jaccard"`.
+- The elements of
+  [`params_knn_graph_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.md),
+  overridden by `graph`, spliced in at this position.
 
 - The elements of
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),

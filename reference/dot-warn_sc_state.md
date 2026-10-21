@@ -19,7 +19,7 @@ getters as presence probes on artefacts they are about to overwrite.
 - artefact:
 
   String. One of
-  `c("pca", "embedding", "knn", "snn", "magic", "residuals")`.
+  `c("pca", "embedding", "knn", "connectivities", "magic", "residuals")`.
 
 - name:
 

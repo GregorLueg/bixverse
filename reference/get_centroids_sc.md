@@ -25,7 +25,7 @@ sc <- demo_single_cells()
 res <- fast_cluster_sc(
   sc,
   resolutions = 1.0,
-  n_centroids = 30L,
+  fc_params = params_sc_fast_cluster(n_centroids = 30L),
   return_kmeans = TRUE,
   .verbose = FALSE
 )

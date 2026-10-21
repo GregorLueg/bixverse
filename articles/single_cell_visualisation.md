@@ -247,8 +247,7 @@ sc_object <- find_neighbours_sc(
   )
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 sc_object <- find_clusters_sc(sc_object, res = 0.5, name = "leiden_clusters")
 sc_object <- umap_sc(sc_object)
 #> Running UMAP.
@@ -397,14 +396,14 @@ dt <- extract_embedding_data(
   obs_cols = c("sc_type", "leiden_clusters", "Ribo")
 )
 head(dt)
-#>             cell_id     dim_1       dim_2    sc_type leiden_clusters      Ribo
-#>              <char>     <num>       <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -2.803706 -3.16962457    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -5.272682 -4.65794992    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  2.010388  3.92012954 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.443664  0.06537197         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -4.273110 -3.77306724    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -3.258008 -2.96359968         NK               2 0.4165899
+#>             cell_id     dim_1      dim_2    sc_type leiden_clusters      Ribo
+#>              <char>     <num>      <num>     <char>           <int>     <num>
+#> 1: AAACATACAACCAC-1 -2.812537 -3.1161282    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -5.286569 -4.6104288    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  2.052555  3.9632912 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.611849  0.1051564         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -4.285697 -3.7213485    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -3.275007 -2.9111469         NK               2 0.4165899
 ```
 
 ## Other 2D embeddings
@@ -470,18 +469,18 @@ ForceAtlas2 is a force-directed layout of the neighbour graph: edges
 pull, every pair of cells pushes, gravity keeps the lot together. It is
 what scanpy’s `draw_graph()` does, and a common pick for data with
 continuous transitions (think differentiation). `graph = "knn"` lays out
-the kNN graph the same way scanpy does. `graph = "snn"` lays out the sNN
-graph the Leiden clustering ran on, here started from the UMAP via
-`init_embd`.
+the kNN graph the same way scanpy does. `graph = "connectivities"` lays
+out the neighbour graph the Leiden clustering ran on (the sNN graph by
+default), here started from the UMAP via `init_embd`.
 
 ``` r
 
 sc_object <- forceatlas2_sc(sc_object, .verbose = FALSE)
 sc_object <- forceatlas2_sc(
   sc_object,
-  graph = "snn",
+  graph = "connectivities",
   init_embd = "umap",
-  slot_name = "fa2_snn",
+  slot_name = "fa2_graph",
   .verbose = FALSE
 )
 ```
@@ -489,7 +488,7 @@ sc_object <- forceatlas2_sc(
 ``` r
 
 fa2_plots <- purrr::map(
-  c("fa2", "fa2_snn"),
+  c("fa2", "fa2_graph"),
   \(embd) {
     embedding_plot_sc(
       sc_object,
@@ -506,7 +505,7 @@ patchwork::wrap_plots(fa2_plots, ncol = 2, guides = "collect")
 
 ![](single_cell_visualisation_files/figure-html/fa2-plots-1.png)
 
-ForceAtlas2 on the kNN graph (left) and on the sNN graph (right),
+ForceAtlas2 on the kNN graph (left) and on the neighbour graph (right),
 coloured by cell type.
 
 ## Per-Gene Expression plots\`
@@ -576,14 +575,14 @@ dt <- extract_feature_plot_data(
 )
 
 head(dt)
-#>             cell_id     dim_1       dim_2    sc_type leiden_clusters      Ribo
-#>              <char>     <num>       <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -2.803706 -3.16962457    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -5.272682 -4.65794992    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  2.010388  3.92012954 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.443664  0.06537197         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -4.273110 -3.77306724    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -3.258008 -2.96359968         NK               2 0.4165899
+#>             cell_id     dim_1      dim_2    sc_type leiden_clusters      Ribo
+#>              <char>     <num>      <num>     <char>           <int>     <num>
+#> 1: AAACATACAACCAC-1 -2.812537 -3.1161282    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -5.286569 -4.6104288    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  2.052555  3.9632912 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.611849  0.1051564         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -4.285697 -3.7213485    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -3.275007 -2.9111469         NK               2 0.4165899
 #>               gene expression
 #>             <fctr>      <num>
 #> 1: ENSG00000156738          0
@@ -654,12 +653,12 @@ dt <- extract_dot_plot_data(
 head(dt)
 #>               gene  group   mean_exp   pct_exp scaled_exp
 #>             <fctr> <fctr>      <num>     <num>      <num>
-#> 1: ENSG00000167286      0 2.11945009 87.093943 1.00000000
-#> 2: ENSG00000167286      1 0.14360271  8.606558 0.06775470
-#> 3: ENSG00000167286      2 1.60797930 61.348313 0.75867759
-#> 4: ENSG00000167286      3 0.07070547  3.903904 0.03336029
-#> 5: ENSG00000167286      4 0.09654772  6.756756 0.04555319
-#> 6: ENSG00000167286      5 0.08775746  9.090909 0.04140577
+#> 1: ENSG00000167286      0 2.12263346 87.139106 1.00000000
+#> 2: ENSG00000167286      1 0.14064217  8.593750 0.06625834
+#> 3: ENSG00000167286      2 1.59508967 60.997730 0.75146732
+#> 4: ENSG00000167286      3 0.07070547  3.903904 0.03331026
+#> 5: ENSG00000167286      4 0.09654772  6.756756 0.04548488
+#> 6: ENSG00000167286      5 0.00000000  0.000000 0.00000000
 ```
 
 ## Heatmaps

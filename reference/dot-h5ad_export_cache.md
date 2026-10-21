@@ -1,7 +1,7 @@
 # Collect the cached embeddings and graphs of a `SingleCells` object
 
 PCA factors go to `obsm/X_pca` and the loadings to `varm/PCs`, every
-other embedding to `obsm/X_<name>`, and the sNN graph to
+other embedding to `obsm/X_<name>`, and the neighbour graph to
 `obsp/connectivities` together with the `uns/neighbors` block ScanPy
 looks for. Anything that is not cached, or that no longer matches the
 cells being written, is skipped.

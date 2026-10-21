@@ -19,7 +19,7 @@ a stale artefact that is about to be replaced would be actively wrong.
 - artefact:
 
   String. One of
-  `c("pca", "embedding", "knn", "snn", "magic", "residuals")`.
+  `c("pca", "embedding", "knn", "connectivities", "magic", "residuals")`.
 
 - name:
 

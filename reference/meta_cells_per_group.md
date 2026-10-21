@@ -104,7 +104,7 @@ meta_cells_per_group(
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   Stale artefacts: none
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)

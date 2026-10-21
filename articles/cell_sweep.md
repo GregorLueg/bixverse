@@ -102,7 +102,7 @@ raw_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -241,7 +241,7 @@ cell_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -316,7 +316,7 @@ obs_cells <- get_sc_obs(cell_object)
 table(obs_cells$leiden_clusters)
 #> 
 #>   0   1   2   3   4   5   6   7 
-#> 221 190  95  85  69  37  35  30
+#> 230 189  86  85  70  37  35  30
 ```
 
 762 cells over eight clusters. Good enough to subtract against; you
@@ -348,7 +348,7 @@ raw_object[["sample_id"]] <- rep("pbmc_1k", nrow(obs_raw))
 table(cell_type, useNA = "ifany")
 #> cell_type
 #> cluster_0 cluster_1 cluster_2 cluster_3 cluster_4 cluster_5 cluster_6 cluster_7 
-#>       221       190        95        85        69        37        35        30 
+#>       230       189        86        85        70        37        35        30 
 #>      <NA> 
 #>     97236
 ```
@@ -392,7 +392,7 @@ clean_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -464,7 +464,7 @@ ggplot(obs_clean, aes(x = cellsweep_alpha)) +
 
 summary(obs_clean$cellsweep_alpha)
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> 0.000e+00 8.900e-07 1.002e-04 1.929e-02 7.392e-03 7.126e-01
+#> 0.000e+00 8.300e-07 1.031e-04 1.925e-02 7.948e-03 7.126e-01
 
 obs_clean[,
   .(n = .N, median_alpha = median(cellsweep_alpha)),
@@ -472,14 +472,14 @@ obs_clean[,
 ][order(-median_alpha)]
 #>    cell_type     n median_alpha
 #>       <char> <int>        <num>
-#> 1: cluster_1   190 1.053099e-02
-#> 2: cluster_2    95 1.803141e-04
-#> 3: cluster_0   221 7.800613e-05
-#> 4: cluster_3    85 1.984063e-05
-#> 5: cluster_5    37 8.134891e-06
-#> 6: cluster_7    30 1.845842e-06
-#> 7: cluster_6    35 4.590705e-07
-#> 8: cluster_4    69 3.052839e-07
+#> 1: cluster_1   189 1.051318e-02
+#> 2: cluster_2    86 1.618127e-04
+#> 3: cluster_0   230 1.003124e-04
+#> 4: cluster_3    85 1.979548e-05
+#> 5: cluster_5    37 8.139454e-06
+#> 6: cluster_7    30 1.845323e-06
+#> 7: cluster_6    35 4.584807e-07
+#> 8: cluster_4    70 4.468508e-07
 ```
 
 This run is clean. The median barcode is essentially uncontaminated and
@@ -528,34 +528,34 @@ rates <- rbind(
 
 dcast(rates, gene + cell_type ~ layer, value.var = "detected")
 #> Key: <gene, cell_type>
-#>       gene cell_type  denoised         raw
-#>     <char>    <char>     <num>       <num>
-#>  1:    LYZ cluster_0 0.0000000 0.009049774
-#>  2:    LYZ cluster_1 0.9947368 0.994736842
-#>  3:    LYZ cluster_2 0.0000000 0.000000000
-#>  4:    LYZ cluster_3 0.0000000 0.023529412
-#>  5:    LYZ cluster_4 0.0000000 0.014492754
-#>  6:    LYZ cluster_5 0.0000000 0.027027027
-#>  7:    LYZ cluster_6 0.0000000 0.000000000
-#>  8:    LYZ cluster_7 0.0000000 0.000000000
-#>  9:   PPBP cluster_0 0.0000000 0.000000000
-#> 10:   PPBP cluster_1 0.0000000 0.026315789
-#> 11:   PPBP cluster_2 0.0000000 0.000000000
-#> 12:   PPBP cluster_3 0.0000000 0.000000000
-#> 13:   PPBP cluster_4 0.0000000 0.000000000
-#> 14:   PPBP cluster_5 0.0000000 0.000000000
-#> 15:   PPBP cluster_6 0.0000000 0.000000000
-#> 16:   PPBP cluster_7 0.0000000 0.000000000
-#> 17: S100A8 cluster_0 0.0000000 0.000000000
-#> 18: S100A8 cluster_1 0.9842105 0.984210526
-#> 19: S100A8 cluster_2 0.0000000 0.000000000
-#> 20: S100A8 cluster_3 0.0000000 0.047058824
-#> 21: S100A8 cluster_4 0.0000000 0.043478261
-#> 22: S100A8 cluster_5 0.0000000 0.027027027
-#> 23: S100A8 cluster_6 0.0000000 0.000000000
-#> 24: S100A8 cluster_7 0.0000000 0.033333333
-#>       gene cell_type  denoised         raw
-#>     <char>    <char>     <num>       <num>
+#>       gene cell_type denoised         raw
+#>     <char>    <char>    <num>       <num>
+#>  1:    LYZ cluster_0 0.000000 0.008695652
+#>  2:    LYZ cluster_1 1.000000 1.000000000
+#>  3:    LYZ cluster_2 0.000000 0.000000000
+#>  4:    LYZ cluster_3 0.000000 0.023529412
+#>  5:    LYZ cluster_4 0.000000 0.014285714
+#>  6:    LYZ cluster_5 0.000000 0.027027027
+#>  7:    LYZ cluster_6 0.000000 0.000000000
+#>  8:    LYZ cluster_7 0.000000 0.000000000
+#>  9:   PPBP cluster_0 0.000000 0.000000000
+#> 10:   PPBP cluster_1 0.000000 0.026455026
+#> 11:   PPBP cluster_2 0.000000 0.000000000
+#> 12:   PPBP cluster_3 0.000000 0.000000000
+#> 13:   PPBP cluster_4 0.000000 0.000000000
+#> 14:   PPBP cluster_5 0.000000 0.000000000
+#> 15:   PPBP cluster_6 0.000000 0.000000000
+#> 16:   PPBP cluster_7 0.000000 0.000000000
+#> 17: S100A8 cluster_0 0.000000 0.000000000
+#> 18: S100A8 cluster_1 0.989418 0.989417989
+#> 19: S100A8 cluster_2 0.000000 0.000000000
+#> 20: S100A8 cluster_3 0.000000 0.047058824
+#> 21: S100A8 cluster_4 0.000000 0.042857143
+#> 22: S100A8 cluster_5 0.000000 0.027027027
+#> 23: S100A8 cluster_6 0.000000 0.000000000
+#> 24: S100A8 cluster_7 0.000000 0.033333333
+#>       gene cell_type denoised         raw
+#>     <char>    <char>    <num>       <num>
 ```
 
 ``` r
@@ -612,13 +612,13 @@ clean_object <- umap_sc(clean_object, .verbose = FALSE)
 clean_object
 #> Single cell experiment (Single Cells).
 #>   No cells (original): 762
-#>    To keep n: 754
+#>    To keep n: 755
 #>   No genes: 36601
 #>   HVG calculated: TRUE
 #>   PCA calculated: TRUE
 #>   Other embeddings: umap
 #>   KNN generated: TRUE
-#>   SNN generated: TRUE
+#>   Graph generated: TRUE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none

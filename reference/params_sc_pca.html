@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -106,7 +106,7 @@
 <span>  randomised <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  clr <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  size_factor <span class="op">=</span> <span class="fl">10000</span>,</span>
-<span>  svd_solver <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"covariance"</span>, <span class="st">"randomised"</span>, <span class="st">"exact"</span><span class="op">)</span></span>
+<span>  svd_solver <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"covariance"</span>, <span class="st">"randomised"</span>, <span class="st">"exact"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -141,12 +141,14 @@ transformation. Defaults to <code>10000.0</code>.</p></dd>
 
 
 <dt id="arg-svd-solver">svd_solver<a class="anchor" aria-label="anchor" href="#arg-svd-solver"></a></dt>
-<dd><p>String. Which solver to use. <code>"covariance"</code> builds the gene
-x gene cross-product and eigendecomposes it: exact, and the fastest option
-for a few thousand HVGs, but its cost grows with the square of the gene
-number in memory and the cube in time. <code>"randomised"</code> is a randomised SVD,
-approximate in the trailing components. <code>"exact"</code> is a full SVD on the dense
-path and Lanczos on the sparse one. One of <code>c("covariance", "randomised", "exact")</code>. Defaults to <code>"covariance"</code>.</p></dd>
+<dd><p>String. Which solver to use. <code>"auto"</code> takes Lanczos on the
+sparse path and <code>"covariance"</code> on the dense one, the fastest exact option on
+each. <code>"covariance"</code> builds the gene x gene cross-product and eigendecomposes
+it: its cost grows with the square of the gene number in memory and the cube
+in time. <code>"randomised"</code> is a randomised SVD, approximate in the trailing
+components. <code>"exact"</code> is a full SVD on the dense path and Lanczos on the
+sparse one. One of <code>c("auto", "covariance", "randomised", "exact")</code>. Defaults
+to <code>"auto"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -162,12 +164,13 @@ Booeshaghi, et al. Defaults to <code>FALSE</code>.</p></li>
 <li><p>size_factor - Numeric. The used size factor during I/O. It needs to be
 the same as during I/O to have correct results when using the <code>PFlogPF</code>
 transformation. Defaults to <code>10000.0</code>.</p></li>
-<li><p>svd_solver - String. Which solver to use. <code>"covariance"</code> builds the
-gene x gene cross-product and eigendecomposes it: exact, and the fastest
-option for a few thousand HVGs, but its cost grows with the square of the
-gene number in memory and the cube in time. <code>"randomised"</code> is a randomised
-SVD, approximate in the trailing components. <code>"exact"</code> is a full SVD on the
-dense path and Lanczos on the sparse one. One of <code>c("covariance", "randomised", "exact")</code>. Defaults to <code>"covariance"</code>.</p></li>
+<li><p>svd_solver - String. Which solver to use. <code>"auto"</code> takes Lanczos on
+the sparse path and <code>"covariance"</code> on the dense one, the fastest exact
+option on each. <code>"covariance"</code> builds the gene x gene cross-product and
+eigendecomposes it: its cost grows with the square of the gene number in
+memory and the cube in time. <code>"randomised"</code> is a randomised SVD, approximate
+in the trailing components. <code>"exact"</code> is a full SVD on the dense path and
+Lanczos on the sparse one. One of <code>c("auto", "covariance", "randomised", "exact")</code>. Defaults to <code>"auto"</code>.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

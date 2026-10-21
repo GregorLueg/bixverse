@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Thinking about single cells the bixverse way</h1>
 
       <p class="author">Gregor Lueg and Grant Neilson</p>
-      <p class="date">2026-10-14</p>
+      <p class="date">2026-10-21</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -167,11 +167,11 @@
 <span><span class="co">#&gt;   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...</span></span>
 <span><span class="co">#&gt;   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...</span></span>
 <span><span class="co">#&gt;   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55bb5a65bb80&gt; </span></span>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55f2c5022b80&gt; </span></span>
 <span><span class="co">#&gt;  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:</span></span>
 <span><span class="co">#&gt;   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
 <span><span class="co">#&gt;   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55bb5a65bb80&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55f2c5022b80&gt;</span></span></code></pre></div>
 </div>
 <p>We have a count matrix with pseudo raw counts, an obs table and a var table. Let us load this into a <code>bixverse</code> SingleCell class and explore what’s actually happening.</p>
 </section><section class="level3"><h3 id="loading-in-data">Loading in data<a class="anchor" aria-label="anchor" href="#loading-in-data"></a>
@@ -193,7 +193,7 @@
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
-<span><span class="co">#&gt;   SNN generated: FALSE</span></span>
+<span><span class="co">#&gt;   Graph generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
@@ -248,7 +248,7 @@
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
-<span><span class="co">#&gt;   SNN generated: FALSE</span></span>
+<span><span class="co">#&gt;   Graph generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
@@ -288,7 +288,7 @@
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
-<span><span class="co">#&gt;   SNN generated: FALSE</span></span>
+<span><span class="co">#&gt;   Graph generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
@@ -449,7 +449,7 @@
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
-<span><span class="co">#&gt;   SNN generated: FALSE</span></span>
+<span><span class="co">#&gt;   Graph generated: FALSE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
@@ -481,16 +481,16 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    modality artefact   name stamped  stale reason               id</span></span>
-<span><span class="co">#&gt;      &lt;char&gt;   &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 06d21dc9b1a401cc</span></span>
-<span><span class="co">#&gt; 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; fecce16c121946c0</span></span>
-<span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 34051bb8ee92c46f</span></span>
+<span><span class="co">#&gt;    modality       artefact   name stamped  stale reason               id</span></span>
+<span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 39a9ceadcfffe61c</span></span>
+<span><span class="co">#&gt; 2:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 6cee55d5f85ee0a2</span></span>
+<span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 7f58c8291fe0217a</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: 06d21dc9b1a401cc</span></span>
-<span><span class="co">#&gt; 3: fecce16c121946c0</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 39a9ceadcfffe61c</span></span>
+<span><span class="co">#&gt; 3: 6cee55d5f85ee0a2</span></span></code></pre></div>
 </div>
 <p>The <code>from</code> column is what makes this more than a cell counter. The kNN records the id of the PCA it was built on, and the sNN records the kNN. So watch what happens if we re-run the PCA on the <strong>same</strong> cells, just with fewer components, and don’t touch the neighbours:</p>
 <div class="cell">
@@ -498,21 +498,21 @@
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, no_pcs <span class="op">=</span> <span class="fl">5L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    modality artefact   name stamped  stale</span></span>
-<span><span class="co">#&gt;      &lt;char&gt;   &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE</span></span>
-<span><span class="co">#&gt; 2:      rna      knn   &lt;NA&gt;    TRUE   TRUE</span></span>
-<span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE   TRUE</span></span>
+<span><span class="co">#&gt;    modality       artefact   name stamped  stale</span></span>
+<span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt;</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE</span></span>
+<span><span class="co">#&gt; 2:      rna            knn   &lt;NA&gt;    TRUE   TRUE</span></span>
+<span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE   TRUE</span></span>
 <span><span class="co">#&gt;                                                         reason               id</span></span>
 <span><span class="co">#&gt;                                                         &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                        &lt;NA&gt; de623cd1bcab31a5</span></span>
-<span><span class="co">#&gt; 2: the artefact it was derived from was re-computed or removed fecce16c121946c0</span></span>
-<span><span class="co">#&gt; 3:                             its upstream `rna:knn` is stale 34051bb8ee92c46f</span></span>
+<span><span class="co">#&gt; 1:                                                        &lt;NA&gt; d3bba19e613f622d</span></span>
+<span><span class="co">#&gt; 2: the artefact it was derived from was re-computed or removed 6cee55d5f85ee0a2</span></span>
+<span><span class="co">#&gt; 3:                             its upstream `rna:knn` is stale 7f58c8291fe0217a</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: 06d21dc9b1a401cc</span></span>
-<span><span class="co">#&gt; 3: fecce16c121946c0</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 39a9ceadcfffe61c</span></span>
+<span><span class="co">#&gt; 3: 6cee55d5f85ee0a2</span></span></code></pre></div>
 </div>
 <p>The PCA is fine. The kNN is stale because the PCA it points at no longer exists, and the sNN is stale through the kNN, even though its own cell set never moved. A row-count check would have waved both of those through. The print says so too:</p>
 <div class="cell">
@@ -526,17 +526,17 @@
 <span><span class="co">#&gt;   PCA calculated: TRUE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: TRUE</span></span>
-<span><span class="co">#&gt;   SNN generated: TRUE</span></span>
+<span><span class="co">#&gt;   Graph generated: TRUE</span></span>
 <span><span class="co">#&gt;   MAGIC imputed: none</span></span>
 <span><span class="co">#&gt;   Residual model: none</span></span>
-<span><span class="co">#&gt;   Stale artefacts: rna:knn, rna:snn</span></span></code></pre></div>
+<span><span class="co">#&gt;   Stale artefacts: rna:knn, rna:connectivities</span></span></code></pre></div>
 </div>
 <p>Reading a stale artefact warns. Anything that hands cached indices to Rust or writes a result back onto the object, <code><a href="../reference/find_neighbours_sc.html">find_neighbours_sc()</a></code>, <code><a href="../reference/find_clusters_sc.html">find_clusters_sc()</a></code>, the meta cell generators, PAGA, Palantir, errors outright rather than computing nonsense:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Error in `method(find_clusters_sc, bixverse::SingleCells)`:</span></span>
-<span><span class="co">#&gt; ! Assertion on 'object' failed: Cached `rna:snn` is stale: its upstream `rna:knn` is stale. Re-run the step that produces it, or drop it, before using it. See `get_sc_cache_status()`.</span></span></code></pre></div>
+<span><span class="co">#&gt; ! Assertion on 'object' failed: Cached `rna:connectivities` is stale: its upstream `rna:knn` is stale. Re-run the step that produces it, or drop it, before using it. See `get_sc_cache_status()`.</span></span></code></pre></div>
 </div>
 <p>Regenerating the neighbours puts the chain back together:</p>
 <div class="cell">
@@ -544,16 +544,16 @@
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    modality artefact   name stamped  stale reason               id</span></span>
-<span><span class="co">#&gt;      &lt;char&gt;   &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; de623cd1bcab31a5</span></span>
-<span><span class="co">#&gt; 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 16a8ecef8715e409</span></span>
-<span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 44ef8a85e0977519</span></span>
+<span><span class="co">#&gt;    modality       artefact   name stamped  stale reason               id</span></span>
+<span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; d3bba19e613f622d</span></span>
+<span><span class="co">#&gt; 2:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; bab7414379778681</span></span>
+<span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 37b7a2343757562f</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: de623cd1bcab31a5</span></span>
-<span><span class="co">#&gt; 3: 16a8ecef8715e409</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: d3bba19e613f622d</span></span>
+<span><span class="co">#&gt; 3: bab7414379778681</span></span></code></pre></div>
 </div>
 <p><code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> warns about exactly the same thing, listing what it just invalidated. If you want everything to be an error, set <code>options(bixverse.cache_check = "error")</code>; <code>"none"</code> turns the lot off, at your own risk.</p>
 <p>Two things it deliberately does not do. Artefacts computed before this existed carry no stamp, so they report as <code>unknown</code> and pass, because nothing is known about them either way. And the stamp tracks provenance, not parameters: a kNN built on the first 5 PCs and one built on all 15 of the same PCA look identical to it. Neither of those can produce an index mismatch, which is what this is here to stop.</p>
@@ -617,8 +617,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;               expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;    the_correct_way 1.344631 1.363816 1.514729 1.398116 1.438045 2.499056    10</span></span>
-<span><span class="co">#&gt;  the_incorrect_way 2.351982 2.437181 2.492974 2.497448 2.540383 2.615283    10</span></span></code></pre></div>
+<span><span class="co">#&gt;    the_correct_way 1.032612 1.063568 1.123547 1.082050 1.124749 1.416512    10</span></span>
+<span><span class="co">#&gt;  the_incorrect_way 1.661866 1.720033 1.965255 1.840165 1.950294 3.153559    10</span></span></code></pre></div>
 </div>
 <p>The difference seems marginal here, but it WILL bite you if you do this on large data sets. Also, the memory advantages this approach gives you usually will disappear if you force the wrong format. Also, another thing to REALLY consider… The indices you supply in R should match what the Rust files have and again you need to THINK about the cells to keep. A nasty example here:</p>
 <div class="cell">

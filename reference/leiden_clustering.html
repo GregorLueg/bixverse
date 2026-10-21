@@ -15,7 +15,7 @@ Communities are numbered by size, 1 being the largest.'><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@ Communities are numbered by size, 1 being the largest.'><meta property="og:image
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -117,7 +117,9 @@ Communities are numbered by size, <code>1</code> being the largest.</p>
 <span>  resolution <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  algorithm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leiden"</span>, <span class="st">"louvain"</span><span class="op">)</span>,</span>
 <span>  beta <span class="op">=</span> <span class="fl">0.01</span>,</span>
-<span>  n_iterations <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  n_iterations <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  min_gain <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  local_moving <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"queue"</span>, <span class="st">"coloured"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -146,8 +148,21 @@ Louvain.</p></dd>
 
 
 <dt id="arg-n-iterations">n_iterations<a class="anchor" aria-label="anchor" href="#arg-n-iterations"></a></dt>
-<dd><p>Integer. Number of full iterations, each starting from
-the previous partition.</p></dd>
+<dd><p>Optional integer. Number of full iterations, each
+starting from the previous partition. A negative value iterates until the
+partition is stable. If <code>NULL</code>, <code>5L</code> for Leiden and <code>2L</code> for Louvain, which
+gave the best modularity across synthetic graphs.</p></dd>
+
+
+<dt id="arg-min-gain">min_gain<a class="anchor" aria-label="anchor" href="#arg-min-gain"></a></dt>
+<dd><p>Numeric. With a negative <code>n_iterations</code>, also stop once an
+iteration gains no more than this in modularity.</p></dd>
+
+
+<dt id="arg-local-moving">local_moving<a class="anchor" aria-label="anchor" href="#arg-local-moving"></a></dt>
+<dd><p>String. One of <code>c("queue", "coloured")</code>. <code>"queue"</code> is
+Traag's sequential queue. <code>"coloured"</code> moves the nodes of one colour class
+in parallel, which only kicks in on larger levels of the graph.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

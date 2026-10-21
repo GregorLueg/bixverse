@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
     <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
-    <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
@@ -105,7 +105,6 @@
 <span>  knn_range <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  sigma_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snn_farthest"</span>, <span class="st">"sigma_idx"</span><span class="op">)</span>,</span>
 <span>  sigma_idx <span class="op">=</span> <span class="fl">19L</span>,</span>
-<span>  snn_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"full_connection"</span>, <span class="st">"limited"</span><span class="op">)</span>,</span>
 <span>  s_nn <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  sd_scale <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  kernel_power <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -136,12 +135,6 @@ input must contain at least this many neighbours. Defaults to <code>200L</code>.
 <dt id="arg-sigma-idx">sigma_idx<a class="anchor" aria-label="anchor" href="#arg-sigma-idx"></a></dt>
 <dd><p>Integer. <code>"sigma_idx"</code> only: 0-based kNN index for
 bandwidth.e. <code>k_nn - 1</code>). Defaults to <code>19L</code>.</p></dd>
-
-
-<dt id="arg-snn-type">snn_type<a class="anchor" aria-label="anchor" href="#arg-snn-type"></a></dt>
-<dd><p>String. sNN type. The limited version only considers edges
-that exist in the kNN. One of <code>c("full_connection", "limited")</code>. Defaults to
-<code>"full_connection"</code>.</p></dd>
 
 
 <dt id="arg-s-nn">s_nn<a class="anchor" aria-label="anchor" href="#arg-s-nn"></a></dt>
@@ -185,9 +178,6 @@ input must contain at least this many neighbours. Defaults to <code>200L</code>.
 <li><p>sigma_method - String. Bandwidth method. One of <code>c("snn_farthest", "sigma_idx")</code>. Defaults to <code>"snn_farthest"</code>.</p></li>
 <li><p>sigma_idx - Integer. <code>"sigma_idx"</code> only: 0-based kNN index for
 bandwidth.e. <code>k_nn - 1</code>). Defaults to <code>19L</code>.</p></li>
-<li><p>snn_type - String. sNN type. The limited version only considers edges
-that exist in the kNN. One of <code>c("full_connection", "limited")</code>. Defaults to
-<code>"full_connection"</code>.</p></li>
 <li><p>s_nn - Integer. <code>"snn_farthest"</code> only: kNN size used to build the SNN
 graph. Defaults to <code>20L</code>.</p></li>
 <li><p>sd_scale - Numeric. Multiplier on sigma. Defaults to <code>1.0</code>.</p></li>

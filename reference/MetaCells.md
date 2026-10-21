@@ -74,7 +74,7 @@ Returns the `MetaCells` class for further operations.
 
 - sc_cache:
 
-  Class with embeddings, kNN/sNN graphs, etc. Shared with
+  Class with embeddings, kNN/neighbour graphs, etc. Shared with
   [`SingleCells()`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md).
 
 - original_assignment:
@@ -118,7 +118,7 @@ mc
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   Stale artefacts: none
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)

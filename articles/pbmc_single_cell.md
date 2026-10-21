@@ -58,7 +58,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -219,7 +219,7 @@ sc_object
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
 #>   KNN generated: FALSE
-#>   SNN generated: FALSE
+#>   Graph generated: FALSE
 #>   MAGIC imputed: none
 #>   Residual model: none
 #>   Stale artefacts: none
@@ -254,8 +254,7 @@ sc_object <- find_neighbours_sc(
   )
 )
 #> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
+#> Generating the snn graph.
 ```
 
 ## Clustering and marker detection
@@ -281,54 +280,52 @@ all_markers[, gene_symbol := ensembl_to_symbol[gene_id]]
 head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 #>      grp         gene_id      lfc     prop1     prop2 z_scores      p_values
 #>    <int>          <char>    <num>     <num>     <num>    <num>         <num>
-#> 1:     2 ENSG00000163220 4.194227 0.9884726 0.2042952 34.46479 1.352011e-260
-#> 2:     4 ENSG00000105374 4.132186 1.0000000 0.2117769 30.34837 1.319945e-202
-#> 3:     2 ENSG00000090382 4.083348 1.0000000 0.5126652 30.45956 4.474529e-204
-#> 4:     2 ENSG00000143546 3.677881 0.9711816 0.1189427 36.95369 3.177281e-299
-#> 5:     2 ENSG00000101439 3.430261 1.0000000 0.2411894 32.46707 1.555225e-231
-#> 6:     3 ENSG00000204287 3.274704 1.0000000 0.4668083 27.17719 6.043250e-163
+#> 1:     3 ENSG00000163220 4.176245 0.9886364 0.2020983 34.64955 2.268976e-263
+#> 2:     3 ENSG00000090382 4.078846 1.0000000 0.5113197 30.61158 4.291750e-206
+#> 3:     2 ENSG00000105374 3.766745 0.9837399 0.1527313 36.69036 5.201808e-295
+#> 4:     3 ENSG00000143546 3.671004 0.9715909 0.1165102 37.20496 2.836448e-303
+#> 5:     3 ENSG00000101439 3.427894 0.9971591 0.2396466 32.62923 7.896325e-234
+#> 6:     4 ENSG00000204287 3.274704 1.0000000 0.4668083 27.17719 6.043250e-163
 #>              fdr gene_symbol
 #>            <num>      <char>
-#> 1: 1.218703e-257      S100A9
-#> 2: 9.642196e-200        NKG7
-#> 3: 1.680558e-201         LYZ
-#> 4: 7.160003e-296      S100A8
-#> 5: 1.001343e-228        CST3
+#> 1: 2.051154e-260      S100A9
+#> 2: 1.616559e-203         LYZ
+#> 3: 7.390035e-292        NKG7
+#> 4: 6.410372e-300      S100A8
+#> 5: 5.098770e-231        CST3
 #> 6: 2.871215e-160     HLA-DRA
 ```
 
 ### Fast clustering
 
 In the case of large data sets there is an option to run an accelerated
-form of clustering. This runs first k-means clustering (with default
-`sqrt(N)` cells), then kNN on the centroids, followed by Louvain (Leiden
-is not yet supported, but on the to-do list) across a set of
-resolutions. There is also an option to run this across several seeds to
-check for stability of the clustering. If you ran the grid search, the
-membership
+form of clustering: k-means first (default `sqrt(N)` centroids), then
+Louvain or Leiden on a graph over the centroids, across a set of
+resolutions. The centroid graph options, seed stability statistics and
+how the result compares against the full graph clustering are covered in
+the [clustering and annotation
+vignette](https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.html).
 
 ``` r
 
 fast_cluster_res <- fast_cluster_sc(
   object = sc_object,
-  resolutions = c(5, 3, 2, 1.5, 1, 0.5),
+  resolutions = c(2, 1, 0.5),
   # also return the k-mean clustering
-  return_kmeans = TRUE,
-  no_seeds = 25L,
-  grid_search = TRUE
+  return_kmeans = TRUE
 )
 
 fast_clusted_dt <- get_data(fast_cluster_res)
 
 head(fast_clusted_dt)
-#>    cell_idx res_5 res_3 res_2 res_1.5 res_1 res_0.5
-#>       <int> <int> <int> <int>   <int> <int>   <int>
-#> 1:        1     2     2     0       0     0       0
-#> 2:        3     2     2     0       0     0       0
-#> 3:        4     1     4     4       4     4       3
-#> 4:        6    11     2     0       0     0       0
-#> 5:        8     2     2     0       0     0       0
-#> 6:        9     3     5     0       0     0       0
+#>    cell_idx res_2 res_1 res_0.5
+#>       <int> <int> <int>   <int>
+#> 1:        1     3     0       0
+#> 2:        3     2     0       0
+#> 3:        4     6     1       1
+#> 4:        6     2     0       0
+#> 5:        8     3     2       2
+#> 6:        9     3     0       0
 ```
 
 If you want to explore the k-means memberships or centroids, there are
@@ -359,14 +356,14 @@ head(sc_object)
 #> 4:        6 AAACGCACTGGTAC-1   779     2154    TRUE 0.016713092 0.3635097
 #> 5:        8 AAACGCTGGTTCTT-1   785     2255    TRUE 0.031042129 0.3844789
 #> 6:        9 AAACGCTGTAGCCA-1   530     1273    TRUE 0.011783189 0.3794187
-#>    outlier leiden_clusters res_5 res_3 res_2 res_1.5 res_1 res_0.5
-#>     <lgcl>           <int> <int> <int> <int>   <int> <int>   <int>
-#> 1:   FALSE               0     2     2     0       0     0       0
-#> 2:   FALSE               1     2     2     0       0     0       0
-#> 3:   FALSE               6     1     4     4       4     4       3
-#> 4:   FALSE               1    11     2     0       0     0       0
-#> 5:   FALSE               5     2     2     0       0     0       0
-#> 6:   FALSE               0     3     5     0       0     0       0
+#>    outlier leiden_clusters res_2 res_1 res_0.5
+#>     <lgcl>           <int> <int> <int>   <int>
+#> 1:   FALSE               1     3     0       0
+#> 2:   FALSE               0     2     0       0
+#> 3:   FALSE               5     6     1       1
+#> 4:   FALSE               0     2     0       0
+#> 5:   FALSE               0     3     2       2
+#> 6:   FALSE               1     3     0       0
 ```
 
 ### Dimensionality reduction
