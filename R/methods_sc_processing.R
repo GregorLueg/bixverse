@@ -1793,7 +1793,8 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (is.null(fc_params$n_centroids)) {
-    fc_params$n_centroids <- as.integer(floor(sqrt(nrow(embd))))
+    # default to 4 x sqrt(n); faiss standard for IVF
+    fc_params$n_centroids <- as.integer(floor(4 * sqrt(nrow(embd))))
   }
   if (is.null(fc_params$n_iterations)) {
     fc_params$n_iterations <- .default_community_iters(fc_params$algorithm)

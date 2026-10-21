@@ -31,7 +31,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-r = { version = "0.8.0", default-features = false, features = [
+bixverse-r = { version = "0.8.1", default-features = false, features = [
     "single-cell",
     "multi-modal",
     "dge",
@@ -62,13 +62,3 @@ bixverse-r = { version = "0.8.0", default-features = false, features = [
 [[bin]]
 name = "document"
 path = "document.rs"
-
-[patch.crates-io]
-bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
-bixverse-core = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
-bixverse-gpu = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
-bixverse-methods = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
-bixverse-sc = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
-bixverse-sc-data = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
-bixverse-sc-gpu = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-lanczos-single-cell" }
