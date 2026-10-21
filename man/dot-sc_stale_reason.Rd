@@ -23,6 +23,6 @@ Walks the provenance chain. An artefact is stale when the cell set moved
 under it, when a parent it was built on no longer exists (i.e. was
 recomputed and minted a new id), or when a parent is itself stale. The last
 case is why this recurses: without it, re-running the PCA marks the kNN
-stale but the sNN still resolves its untouched parent and passes.
+stale but the graph still resolves its untouched parent and passes.
 }
 \keyword{internal}

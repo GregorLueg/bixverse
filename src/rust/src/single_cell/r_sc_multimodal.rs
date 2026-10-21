@@ -1,6 +1,6 @@
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::multi_modal::wnn::*;
-use bixverse_rs::single_cell::sc_batch_correction::batch_utils::cosine_normalise;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::multi_modal::wnn::*;
+use bixverse_r::single_cell::sc_batch_correction::batch_utils::cosine_normalise;
 use extendr_api::*;
 use faer::Mat;
 

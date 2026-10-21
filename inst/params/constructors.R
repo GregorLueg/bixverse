@@ -26,8 +26,8 @@ spec_scrublet <- param_spec(
     "stdev_doublet_rate must be in [0, 1]; loess_span and",
     "sim_doublet_ratio must be > 0; target_size must be >= 0;",
     "log_transform, mean_center and normalise_variance must be",
-    "booleans; svd_solver must be one of covariance, randomised or",
-    "exact; clip_max and manual_threshold must be NULL or positive",
+    "booleans; svd_solver must be one of auto, covariance, randomised",
+    "or exact; clip_max and manual_threshold must be NULL or positive",
     "numerics."
   ),
   fields = list(
@@ -139,8 +139,8 @@ spec_boost <- param_spec(
     "resolution and p_thresh must be > 0; target_size must be >",
     "0; log_transform, mean_center, normalise_variance, replace",
     "and fast_cluster must be booleans; svd_solver must be one of",
-    "covariance, randomised or exact; clip_max must be NULL or a",
-    "positive numeric."
+    "auto, covariance, randomised or exact; clip_max must be NULL or",
+    "a positive numeric."
   ),
   fields = list(
     boost_rate = p_dbl(
@@ -230,7 +230,7 @@ spec_boost <- param_spec(
         "Optional overrides for the fast clustering parameters. Only",
         "relevant if `fast_cluster = TRUE`. See",
         "[params_fast_cluster_default()] for available parameters:",
-        "`km_type`, `n_centroids`, `kmeans_iters` and `batch_size`."
+        "`km_type`, `n_centroids`, `k_means_iter` and `batch_size`."
       )
     )
   )
@@ -426,7 +426,7 @@ spec_scdblfinder <- param_spec(
         "Optional overrides for the fast clustering parameters. Only",
         "relevant if `fast_cluster = TRUE`. See",
         "[params_fast_cluster_default()] for available parameters:",
-        "`km_type`, `n_centroids`, `kmeans_iters` and `batch_size`."
+        "`km_type`, `n_centroids`, `k_means_iter` and `batch_size`."
       )
     )
   )
@@ -440,44 +440,15 @@ spec_sc_neighbours <- param_spec(
   ),
   checker = "ScNeighbours",
   label = "neighbour params",
-  hint = "full_snn must be a boolean; pruning must be in [0, 1].",
+  hint = "graph and knn must be lists of their respective parameters.",
   fields = list(
-    full_snn = p_lgl(
-      TRUE,
+    graph = p_merge(
+      "knn_graph_defaults",
       doc = paste(
-        "Shall the full shared nearest neighbour graph be generated",
-        "that generates edges between all cells instead of between",
-        "only neighbours."
-      )
-    ),
-    pruning = p_dbl(
-      1 / 12,
-      range = "[0, 1]",
-      doc = paste(
-        "Weights below this threshold will be set to 0 in the",
-        "generation of the sNN graph. Seurat uses for example `1/15`",
-        "with `k = 20`. As the default k is set to 15, we set it to",
-        "`1/12`. Track this against `k` rather than leaving it: the",
-        "threshold is a share of the neighbourhood, so the same value",
-        "prunes far harder at a larger `k`. A cell that loses every",
-        "edge to pruning keeps its strongest kNN edge, so it does not",
-        "drop out as a one-cell cluster. Over-pruning still fails",
-        "quietly otherwise: small groups of cells that only share",
-        "neighbours with each other split off as tiny communities."
-      )
-    ),
-    snn_similarity = p_choice(
-      "jaccard",
-      c("rank", "jaccard"),
-      doc = paste(
-        "The Jaccard similarity calculates the Jaccard between the",
-        "neighbours, whereas the rank method calculates edge weights",
-        "based on the ranking of shared neighbours. For the rank",
-        "method, the weight is determined by finding the shared",
-        "neighbour with the lowest combined rank across both cells,",
-        "where lower-ranked (closer) shared neighbours result in",
-        "higher edge weights Both methods produce weights normalised",
-        "to the range `[0, 1]`."
+        "Optional overrides for how the kNN is turned into the graph.",
+        "See [bixverse::params_knn_graph_defaults()] for available",
+        "parameters: `knn_sym`, `snn_similarity`, `pruning`, `rescue`,",
+        "`local_connectivity`, `mix_ratio` and `binary`."
       )
     ),
     knn = p_merge(
@@ -496,97 +467,89 @@ spec_sc_neighbours <- param_spec(
 spec_sc_fast_cluster <- param_spec(
   name = "sc_fast_cluster",
   title = "Fast single cell clustering parameters",
+  description = paste(
+    "Fast clustering coarsens the cells with k-means, builds a graph over",
+    "the centroids and runs Louvain or Leiden on it. The community of each",
+    "centroid is handed back to its cells."
+  ),
+  references = "Wei, et al., PLoS Comput Biol, 2022.",
   return_order = c(
-    "kmeans_iters",
+    "n_centroids",
+    "km_type",
+    "k_means_iter",
     "batch_size",
     "drift_threshold",
     "lr_alpha",
-    "louvain_iters",
-    "full_snn",
-    "pruning",
-    "snn_similarity",
+    "dist",
     "cell_mediated",
     "n_anchors",
-    "knn"
+    "centroid_k",
+    "centroid_graph",
+    "algorithm",
+    "n_iterations",
+    "beta",
+    "min_gain",
+    "local_moving",
+    "multi_level",
+    "max_evals"
   ),
   checker = "ScFastCluster",
   label = "fast clustering params",
   hint = paste(
-    "kmeans_iters, batch_size, louvain_iters and n_anchors must be",
-    "integers >= 1; drift_threshold and lr_alpha must be single",
-    "numerics; full_snn and cell_mediated must be booleans; pruning",
-    "must be NULL or a single numeric."
+    "n_centroids must be NULL or an integer >= 2; k_means_iter, batch_size,",
+    "n_anchors, centroid_k and max_evals must be integers >= 1;",
+    "n_iterations must be NULL or a non-zero integer; cell_mediated and",
+    "multi_level must be booleans."
   ),
   fields = list(
-    kmeans_iters = p_int(
+    n_centroids = p_int(
+      NULL,
+      range = "[2,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Number of k-means centroids. If `NULL`, defaults to",
+        "`floor(sqrt(n_cells))`."
+      )
+    ),
+    km_type = p_choice(
+      "standard",
+      c("standard", "minibatch"),
+      doc = "Which k-means to run for the coarsening."
+    ),
+    k_means_iter = p_int(
       100L,
       range = "[1,)",
-      doc = "Number of iterations for k-means clustering."
+      doc = "Number of k-means iterations."
     ),
     batch_size = p_int(
       4096L,
       range = "[1,)",
-      doc = "Batch size for mini batch k-means clustering."
+      doc = "`km_type = \"minibatch\"` only. Batch size."
     ),
     drift_threshold = p_dbl(
       1e-04,
       doc = paste(
-        "The drift for the mini batch k-means clustering. If the",
-        "centroid drift is below this, the mini batch k-means",
-        "terminates."
+        "`km_type = \"minibatch\"` only. The mini batch k-means stops",
+        "once the centroid drift falls below this."
       )
     ),
     lr_alpha = p_dbl(
       1,
-      doc = "Learning rate alpha parameter for mini batch k-means."
+      doc = "`km_type = \"minibatch\"` only. Learning rate alpha."
     ),
-    full_snn = p_lgl(
-      FALSE,
-      doc = paste(
-        "Shall the full shared nearest neighbour graph be generated",
-        "that generates edges between all cells instead of between",
-        "only neighbours."
-      )
-    ),
-    pruning = p_dbl(
-      NULL,
-      null_ok = TRUE,
-      doc = paste(
-        "Weights below this threshold will be set to 0 in the",
-        "generation of the sNN graph. A node that loses every edge",
-        "keeps its strongest kNN edge. If not provided, defaults to",
-        "`1 / ceil(k * 0.8)`."
-      )
-    ),
-    snn_similarity = p_choice(
-      "jaccard",
-      c("jaccard", "rank"),
-      doc = paste(
-        "The Jaccard similarity calculates the Jaccard between the",
-        "neighbours, whereas the rank method calculates edge weights",
-        "based on the ranking of shared neighbours. For the rank",
-        "method, the weight is determined by finding the shared",
-        "neighbour with the lowest combined rank across both cells,",
-        "where lower-ranked (closer) shared neighbours result in",
-        "higher edge weights Both methods produce weights normalised",
-        "to the range `[0, 1]`."
-      )
-    ),
-    louvain_iters = p_int(
-      10L,
-      range = "[1,)",
-      doc = "Number of iterations for Louvain clustering."
+    dist = p_choice(
+      "euclidean",
+      c("euclidean", "cosine"),
+      doc = "Distance for the k-means and the centroid graph."
     ),
     cell_mediated = p_lgl(
       FALSE,
       doc = paste(
         "Shall the cell-mediated centroid graph from Secuer be built",
-        "instead of the kNN/sNN graph on the centroids. Centroids are",
-        "then linked by the cells that sit near both, so two centroids",
-        "that are close in space but have no cells between them stay",
-        "apart. If `TRUE`, `snn`, `full_snn`, `pruning` and",
-        "`snn_similarity` are ignored. See Wei, et al., PLoS Comput",
-        "Biol, 2022."
+        "instead of the kNN graph on the centroids. Centroids are then",
+        "linked by the cells that sit near both, so two centroids that are",
+        "close in space but have no cells between them stay apart. If",
+        "`TRUE`, `centroid_k` and `centroid_graph` are ignored."
       )
     ),
     n_anchors = p_int(
@@ -597,16 +560,68 @@ spec_sc_fast_cluster <- param_spec(
         "cell-mediated graph. Only used if `cell_mediated = TRUE`."
       )
     ),
-    knn = p_merge(
-      "knn_defaults",
-      default = list(k = 5L),
+    centroid_k = p_int(
+      15L,
+      range = "[1,)",
       doc = paste(
-        "Optional overrides for kNN parameters. See",
-        "[bixverse::params_knn_defaults()] for available parameters:",
-        "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
-        "`ef_construction`, `ef_search`, `n_list` and `n_probe`. Sets",
-        "the default `k = 5L`."
+        "Neighbours per centroid in the exact centroid kNN. Only used if",
+        "`cell_mediated = FALSE`."
+      )
+    ),
+    centroid_graph = p_merge(
+      "knn_graph_defaults",
+      doc = paste(
+        "Optional overrides for how the centroid kNN is turned into a",
+        "graph. See [bixverse::params_knn_graph_defaults()]. Only used if",
+        "`cell_mediated = FALSE`."
+      )
+    ),
+    algorithm = p_choice(
+      "louvain",
+      c("louvain", "leiden"),
+      doc = "Community detection on the centroid graph."
+    ),
+    n_iterations = p_int(
+      NULL,
+      null_ok = TRUE,
+      doc = paste(
+        "Number of iterations of the community detection. A negative value",
+        "iterates until stable. If `NULL`, `2L` for Louvain and `5L` for",
+        "Leiden, which gave the best modularity across synthetic graphs."
+      )
+    ),
+    beta = p_dbl(
+      0.01,
+      range = "(0,)",
+      doc = "Leiden only. Randomness of the refinement step."
+    ),
+    min_gain = p_dbl(
+      0,
+      range = "[0,)",
+      doc = paste(
+        "With a negative `n_iterations`, also stop once an iteration gains",
+        "no more than this in modularity."
+      )
+    ),
+    local_moving = p_choice(
+      "queue",
+      c("queue", "coloured"),
+      doc = paste(
+        "`\"queue\"` is Traag's sequential queue. `\"coloured\"` moves the",
+        "nodes of one colour class in parallel, which only kicks in on",
+        "larger levels of the graph."
+      )
+    ),
+    multi_level = p_lgl(
+      TRUE,
+      doc = "Shall the communities be aggregated and refined in levels."
+    ),
+    max_evals = p_int(
+      10L,
+      range = "[1,)",
+      doc = paste(
+        "Cap on the node evaluations per local moving phase, in units of",
+        "the number of nodes."
       )
     )
   )
@@ -1372,7 +1387,7 @@ spec_sc_fastmnn <- param_spec(
   hint = paste(
     "no_pcs must be an integer >= 1; ndist must be a positive",
     "numeric; size_factor must be numeric; svd_solver must be one of",
-    "covariance, randomised or exact; cos_norm, sparse_svd,",
+    "auto, covariance, randomised or exact; cos_norm, sparse_svd,",
     "mean_center, normalise_variance and clr must be booleans."
   ),
   fields = list(
@@ -2181,14 +2196,6 @@ spec_sc_wnn <- param_spec(
       doc = paste(
         "`\"sigma_idx\"` only: 0-based kNN index for bandwidth.e.",
         "`k_nn - 1`)."
-      )
-    ),
-    snn_type = p_choice(
-      "full_connection",
-      c("full_connection", "limited"),
-      doc = paste(
-        "sNN type. The limited version only considers edges that",
-        "exist in the kNN."
       )
     ),
     s_nn = p_int(

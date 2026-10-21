@@ -1,10 +1,10 @@
-use bixverse_rs::core::base::cors_similarity::*;
-use bixverse_rs::core::math::rbf::rbf_gaussian_mat;
-use bixverse_rs::graph::graph_clustering::*;
-use bixverse_rs::graph::graph_structures::edge_pairs_to_sparse_graph;
-use bixverse_rs::graph::leiden::{LeidenParams, leiden_sparse_graph};
-use bixverse_rs::ml::clustering::k_means::KMeansParamsWrappers;
-use bixverse_rs::prelude::*;
+use bixverse_r::core::base::cors_similarity::*;
+use bixverse_r::core::math::rbf::rbf_gaussian_mat;
+use bixverse_r::graph::graph_clustering::*;
+use bixverse_r::graph::graph_structures::edge_pairs_to_sparse_graph;
+use bixverse_r::graph::leiden::{LeidenParams, leiden_sparse_graph};
+use bixverse_r::ml::clustering::k_means::KMeansParamsWrappers;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////
@@ -171,7 +171,7 @@ fn rs_spectral_clustering(
         DistanceType::Cosine => column_pairwise_cosine_dist(data),
         DistanceType::Canberra => column_pairwise_canberra_dist(data),
         DistanceType::Correlation => {
-            let cor = bixverse_rs::core::base::cors_similarity::column_pairwise_cor(data, false);
+            let cor = bixverse_r::core::base::cors_similarity::column_pairwise_cor(data, false);
             faer::Mat::from_fn(cor.nrows(), cor.ncols(), |i, j| 1.0 - cor[(i, j)])
         }
     };

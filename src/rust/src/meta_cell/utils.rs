@@ -11,7 +11,7 @@
 //! taking the `List` rather than an already-parsed matrix is what makes that
 //! decision unrepresentable at the call sites.
 
-use bixverse_rs::prelude::*;
+use bixverse_r::prelude::*;
 use extendr_api::*;
 
 /// Read the meta cell counts into raw `u32` counts and an `f32` second layer

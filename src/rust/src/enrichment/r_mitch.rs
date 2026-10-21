@@ -1,8 +1,8 @@
-use bixverse_rs::core::math::stats::p_adjust_fdr;
-use bixverse_rs::enrichment::enrichment_r_wrapper::prepare_mitch_pathways;
-use bixverse_rs::enrichment::mitch::*;
-use bixverse_rs::prelude::*;
-use bixverse_rs::utils::vec_utils::flatten_vector;
+use bixverse_r::core::math::stats::p_adjust_fdr;
+use bixverse_r::enrichment_r_wrapper::prepare_mitch_pathways;
+use bixverse_r::enrichment::mitch::*;
+use bixverse_r::prelude::*;
+use bixverse_r::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 

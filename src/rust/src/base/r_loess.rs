@@ -1,6 +1,6 @@
 use extendr_api::*;
 
-use bixverse_rs::core::base::loess::*;
+use bixverse_r::core::base::loess::*;
 
 ////////////////////
 // extendr Module //

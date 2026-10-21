@@ -660,10 +660,11 @@ set_knn <- function(x, knn, ...) {
   UseMethod("set_knn")
 }
 
-#' Set/add KNN
+#' Set/add the neighbour graph
 #'
-#' @param x An object to add the KNN data to.
-#' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#' @param x An object to add the neighbour graph to.
+#' @param connectivities Igraph. The neighbour graph for subsequent
+#' clustering, see [bixverse::find_neighbours_sc()].
 #' @param ... Other parameters.
 #'
 #' @export
@@ -671,15 +672,15 @@ set_knn <- function(x, knn, ...) {
 #' @keywords internal
 #'
 #' @examples
-#' # the sNN graph taken out and put back
+#' # the neighbour graph taken out and put back
 #' sc <- demo_single_cells()
-#' snn <- get_snn_graph(sc)
-#' sc <- set_snn_graph(remove_snn_graph(sc), snn)
-#' igraph::vcount(get_snn_graph(sc))
+#' g <- get_connectivities(sc)
+#' sc <- set_connectivities(remove_connectivities(sc), g)
+#' igraph::vcount(get_connectivities(sc))
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
-set_snn_graph <- function(x, snn_graph, ...) {
-  UseMethod("set_snn_graph")
+set_connectivities <- function(x, connectivities, ...) {
+  UseMethod("set_connectivities")
 }
 
 #' Remove the KNN data
@@ -702,9 +703,9 @@ remove_knn <- function(x, ...) {
   UseMethod("remove_knn")
 }
 
-#' Remove the sNN graph
+#' Remove the neighbour graph
 #'
-#' @param x An object from which to remove the sNN graph
+#' @param x An object from which to remove the neighbour graph.
 #' @param ... Other parameters.
 #'
 #' @export
@@ -712,14 +713,14 @@ remove_knn <- function(x, ...) {
 #' @keywords internal
 #'
 #' @examples
-#' # drop the cached sNN graph
+#' # drop the cached neighbour graph
 #' sc <- demo_single_cells()
-#' sc <- remove_snn_graph(sc)
-#' is.null(get_snn_graph(sc))
+#' sc <- remove_connectivities(sc)
+#' is.null(get_connectivities(sc))
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
-remove_snn_graph <- function(x, ...) {
-  UseMethod("remove_snn_graph")
+remove_connectivities <- function(x, ...) {
+  UseMethod("remove_connectivities")
 }
 
 #' Set/add the MAGIC imputed layer
@@ -932,27 +933,29 @@ get_available_embeddings <- function(x, ...) {
   UseMethod("get_available_embeddings")
 }
 
-#' Get the sNN graph
+#' Get the neighbour graph
 #'
 #' @description
-#' Returns the shared nearest neighbour graph from the object. This function is
-#' used for the single cell-related classes and methods.
+#' Returns the neighbour graph the clustering runs on. Depending on the
+#' `knn_sym` it was built with, see [bixverse::params_knn_graph_defaults()],
+#' this is the shared nearest neighbour graph, the UMAP fuzzy simplicial set
+#' or the kNN union. The method is stored in the `method` graph attribute.
 #'
-#' @param x An object to get the sNN graph from.
+#' @param x An object to get the neighbour graph from.
 #' @param ... Other parameters.
 #'
-#' @returns The igraph that has the shared nearest neighbours.
+#' @returns The undirected, weighted igraph.
 #'
 #' @export
 #'
 #' @examples
-#' # the sNN graph the clustering methods run on
+#' # the neighbour graph the clustering methods run on
 #' sc <- demo_single_cells()
-#' igraph::vcount(get_snn_graph(sc))
+#' igraph::vcount(get_connectivities(sc))
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
-get_snn_graph <- function(x, ...) {
-  UseMethod("get_snn_graph")
+get_connectivities <- function(x, ...) {
+  UseMethod("get_connectivities")
 }
 
 #' Get the KNN object
@@ -1351,9 +1354,9 @@ get_hvg_data_sc <- S7::new_generic(
 #'
 #' @description
 #' This function will run PCA on the detected highly variable genes. The
-#' solver is set via `svd_solver` in [params_sc_pca()]; the default builds the
-#' gene x gene cross-product from the sparse data, which is exact and the
-#' fastest option for a few thousand HVGs.
+#' solver is set via `svd_solver` in [params_sc_pca()]; the default `"auto"`
+#' runs Lanczos on the sparse path and the gene x gene cross-product on the
+#' dense one, the fastest exact option on each.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
@@ -1375,7 +1378,7 @@ get_hvg_data_sc <- S7::new_generic(
 #' layer. Needs `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since
 #' the residuals already carry the signal as variance, and does not support
 #' `sparse_svd`: a residual column is dense even where the counts are not.
-#' On this dense path the default `svd_solver = "covariance"` pays for a full
+#' On this dense path the default `svd_solver = "auto"` pays for a full
 #' gene x gene cross-product and is slower than `svd_solver = "randomised"`,
 #' so pick the latter in [params_sc_pca()] when speed matters. Not supported
 #' for `MetaCells`.
@@ -1442,8 +1445,10 @@ calculate_pca_sc <- S7::new_generic(
 #'   used across different R single cell packages (Seurat, SCE). This version
 #'   is purely memory-based.
 #' }
-#' Subsequently, the kNN graph will be additionally transformed into a shared
-#' nearest neighbour graph for clustering methods.
+#' Subsequently, the kNN is symmetrised into the neighbour graph the
+#' clustering methods run on: the shared nearest neighbour graph (default),
+#' the UMAP fuzzy simplicial set or the kNN union, see
+#' [bixverse::params_knn_graph_defaults()].
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
@@ -1453,30 +1458,20 @@ calculate_pca_sc <- S7::new_generic(
 #' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
 #' on `SingleCellsMultiModal` class.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
-#' A list with the following items:
-#' \itemize{
-#'   \item full_snn - Boolean. Shall the full shared nearest neighbour graph
-#'   be generated that generates edges between all cells instead of between
-#'   only neighbours.
-#'   \item pruning - Numeric. Weights below this threshold will be set to 0 in
-#'   the generation of the sNN graph.
-#'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
-#'   the weight from the SNN graph is calculated. For details, please see
-#'   [bixverse::params_sc_neighbours()].
-#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
-#'   for available parameters and their defaults.
-#' }
+#' Carries the graph parameters (see
+#' [bixverse::params_knn_graph_defaults()]) and the kNN parameters (see
+#' [bixverse::params_knn_defaults()]).
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @returns The object with added KNN matrix.
+#' @returns The object with the added kNN and neighbour graph.
 #'
 #' @export
 #'
 #' @examples
-#' # kNN and the sNN graph on top of the PCA
+#' # kNN and the neighbour graph on top of the PCA
 #' sc <- demo_single_cells(prepped = FALSE)
 #' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
 #' sc <- calculate_pca_sc(sc, no_pcs = 10L, .verbose = FALSE)
@@ -1506,10 +1501,10 @@ find_neighbours_sc <- S7::new_generic(
 
 #### clustering ----------------------------------------------------------------
 
-#' Graph-based clustering of cells on the sNN graph
+#' Graph-based clustering of cells on the neighbour graph
 #'
 #' @description
-#' This function will apply Leiden clustering on the sNN graph with the
+#' This function will apply Leiden or Louvain on the neighbour graph with the
 #' given resolution and add a column to the obs table. Runs in Rust via
 #' [leiden_clustering()]; the labels depend on `seed` only, `0` is the
 #' largest cluster.
@@ -1523,13 +1518,15 @@ find_neighbours_sc <- S7::new_generic(
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param seed Integer. For reproducibility.
+#' @param ... Further parameters for [leiden_clustering()]: `n_iterations`,
+#' `beta`, `min_gain` and `local_moving`.
 #'
 #' @returns The object with added clustering in the obs table.
 #'
 #' @export
 #'
 #' @examples
-#' # Leiden on the cached sNN graph
+#' # Leiden on the cached neighbour graph
 #' sc <- demo_single_cells()
 #' sc <- find_clusters_sc(sc, res = 1.0, name = "clusters")
 #' table(get_sc_obs(sc)$clusters)
@@ -1544,7 +1541,8 @@ find_clusters_sc <- S7::new_generic(
     res = 1.0,
     name = "leiden_clustering",
     modality = c("rna", "adt", "wnn"),
-    seed = 42L
+    seed = 42L,
+    ...
   ) {
     S7::S7_dispatch()
   }

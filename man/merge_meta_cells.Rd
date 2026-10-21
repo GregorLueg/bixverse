@@ -44,7 +44,7 @@ typical use case is sample-pure meta cells: generate meta cells per patient
 AUCell or NMF can run across the full set.
 
 The normalised counts are carried over as generated. They are normalised
-per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, sNN,
+per meta cell, so row-binding leaves them valid. Caches (PCA, kNN, neighbour graph,
 embeddings) are per source and are dropped; recompute them on the merged
 object.
 }

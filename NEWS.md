@@ -1,3 +1,63 @@
+# bixverse 0.8.0
+
+## Features
+
+* `bixverse-r` 0.8.0 under the hood. `petgraph` is out of the dependency tree.
+* New `params_knn_graph_defaults()`. Its `knn_sym` picks the graph the
+  clustering runs on: `"snn"` (bluster/Seurat sNN, the default), `"umap"` (the
+  fuzzy simplicial set ScanPy keeps in `obsp/connectivities`) or `"knn"` (plain
+  kNN union). Pass it via `graph` in `params_sc_neighbours()` or `graph_params`
+  in `generate_wnn_graph_sc()`. Resolutions don't carry over between the
+  graphs, retune them when switching.
+* `fast_cluster_sc()` is rewritten. It coarsens the cells with k-means, builds
+  a graph over the centroids (a symmetrised centroid kNN or the Secuer
+  cell-mediated graph) and runs Louvain or Leiden on it. All knobs live in
+  `params_sc_fast_cluster()`. With `n_seeds > 1` it runs every resolution once
+  per seed, keeps the labels of the seed with the lowest mean conductance and
+  returns ARI and conductance stability stats.
+* `leiden_clustering()` gained `min_gain` and `local_moving` (`"queue"`, or
+  `"coloured"` to move nodes in parallel). A negative `n_iterations` iterates
+  until stable. `find_clusters_sc()` and `step_clusters_sc()` pass these on via
+  `...`.
+* `params_sc_pca()` has a new `svd_solver = "auto"`, which is now the default.
+  It runs Lanczos on the sparse path and the covariance solver on the dense
+  one. The doublet detection methods (`params_scrublet()`, `params_boost()`,
+  `params_scdblfinder()`) accept it too; their default stays `"randomised"`.
+
+## Changes
+
+* The default `svd_solver` of `params_sc_pca()` is `"auto"` rather than
+  `"covariance"`, so on the sparse path the PCs now come from Lanczos. Both are
+  exact, but the trailing PCs can shift slightly.
+* Clustering results shift against 0.7.0: new pruning default, new
+  `n_iterations` defaults and the rewritten fast clustering.
+* `get_snn_graph()`, `set_snn_graph()` and `remove_snn_graph()` are now
+  `get_connectivities()`, `set_connectivities()` and `remove_connectivities()`,
+  since the graph isn't always an sNN any more. The old names still work and
+  warn. The cache slot, the state check artefact and `graph` in the ForceAtlas2
+  layout went from `"snn"` to `"connectivities"`. `load_existing()` migrates
+  objects saved with 0.7.x.
+* Default sNN pruning dropped from `1/12` to `1/16`, i.e. about 2 of 16 shared
+  cells at `k = 15`, in line with Seurat's `1/15`. The WNN graph uses the same
+  default instead of `1/15`.
+* `full_snn` (neighbours) and `snn_type` (WNN) are gone.
+* `fast_cluster_sc()` lost `km_type`, `n_centroids`, `snn`, `grid_search` and
+  `no_seeds`. The first two moved into `params_sc_fast_cluster()`, where
+  `km_type = "kmeans"` is now `"standard"`; `n_seeds` replaces the grid search.
+* `kmeans_iters` in `params_fast_cluster_default()` (Boost, scDblFinder) is now
+  `k_means_iter`.
+* `rs_sc_knn_graph()` replaces `rs_sc_snn()`. `rs_fast_cluster_sc()` absorbs
+  `rs_fast_cluster_sc_grid()`.
+* The Symphony vignette is now "Clustering, cell type annotation and reference
+  mapping" (`cell_type_annotation`). On top of Symphony it covers the graph
+  choice, Leiden vs Louvain, fast clustering and per-cell scType calls.
+
+## Fixes
+
+* `transfer_labels_symphony()` no longer panics when the reference labels
+  contain `NA` (e.g. scType Unknown cells). `NA` is treated as its own class,
+  so query cells can come back `NA`.
+
 # bixverse 0.7.0
 
 ## Features

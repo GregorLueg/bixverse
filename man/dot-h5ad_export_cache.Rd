@@ -18,7 +18,7 @@ A list with \code{obsm} and \code{varm} (named lists of double matrices),
 }
 \description{
 PCA factors go to \code{obsm/X_pca} and the loadings to
-\code{varm/PCs}, every other embedding to \verb{obsm/X_<name>}, and the sNN graph to
+\code{varm/PCs}, every other embedding to \verb{obsm/X_<name>}, and the neighbour graph to
 \code{obsp/connectivities} together with the \code{uns/neighbors} block ScanPy looks
 for. Anything that is not cached, or that no longer matches the cells being
 written, is skipped.

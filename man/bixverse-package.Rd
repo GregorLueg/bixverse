@@ -14,7 +14,7 @@ Your favourite methods used in bioinformatics and computational biology made VER
 
 \describe{
 \item{\code{bixverse.cache_check}}{Controls how strictly the single cell
-classes police stale cached artefacts (PCA, embeddings, kNN, sNN) against
+classes police stale cached artefacts (PCA, embeddings, kNN, neighbour graph) against
 the current cell set. Unset, the default, is two tier: the getters warn,
 while \code{\link[=assert_sc_state]{assert_sc_state()}} errors inside the functions that hand cached
 indices to Rust. \code{"error"} promotes the getter warnings to errors too,

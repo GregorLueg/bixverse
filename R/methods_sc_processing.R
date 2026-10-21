@@ -1306,7 +1306,7 @@ S7::method(get_hvg_data_sc, SingleCells) <- function(
   )
 }
 
-## dimension reduction and knn/snn ---------------------------------------------
+## dimension reduction and neighbours -------------------------------------------
 
 ### pca ------------------------------------------------------------------------
 
@@ -1524,41 +1524,57 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     from = embd_to_use
   )
 
-  if (.verbose) {
-    message(sprintf(
-      "Generating sNN graph (full: %s).",
-      neighbours_params$full_snn
-    ))
-  }
-  snn_graph_rs <- with(
-    neighbours_params,
-    rs_sc_snn(
-      knn_mat = get_knn_mat(knn_data),
-      snn_method = snn_similarity,
-      pruning = pruning,
-      limited_graph = !full_snn,
-      verbose = parse_verbosity(.verbose)
-    )
-  )
-
-  if (.verbose) {
-    message("Transforming sNN data to igraph.")
-  }
-  snn_g <- igraph::make_empty_graph(n = nrow(embd), directed = FALSE)
-  snn_g <- igraph::add_edges(
-    snn_g,
-    snn_graph_rs$edges,
-    attr = list(weight = snn_graph_rs$weights)
-  )
-
-  object <- set_snn_graph(
+  object <- set_connectivities(
     object,
-    snn_graph = snn_g,
+    connectivities = .knn_to_graph(
+      knn = knn_data,
+      graph_params = neighbours_params,
+      .verbose = .verbose
+    ),
     modality = modality,
     from = "knn"
   )
 
   return(object)
+}
+
+#' Symmetrise a kNN into the neighbour graph
+#'
+#' @param knn `SingleCellNearestNeighbour`. The kNN to symmetrise.
+#' @param graph_params List. Carries the keys of
+#' [params_knn_graph_defaults()].
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @returns Undirected, weighted igraph with the method in the `method` graph
+#' attribute.
+#'
+#' @keywords internal
+.knn_to_graph <- function(knn, graph_params, .verbose = TRUE) {
+  checkmate::assertClass(knn, "SingleCellNearestNeighbour")
+  checkmate::assertChoice(graph_params$knn_sym, c("snn", "umap", "knn"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  if (.verbose) {
+    message(sprintf("Generating the %s graph.", graph_params$knn_sym))
+  }
+
+  knn_mat <- get_knn_mat(knn)
+  graph_rs <- rs_sc_knn_graph(
+    knn_mat = knn_mat,
+    knn_dist = if (graph_params$knn_sym == "umap") get_knn_dist(knn) else NULL,
+    graph_params = graph_params,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  g <- igraph::make_empty_graph(n = nrow(knn_mat), directed = FALSE)
+  g <- igraph::add_edges(
+    g,
+    graph_rs$edges,
+    attr = list(weight = graph_rs$weights)
+  )
+  igraph::graph_attr(g, "method") <- graph_params$knn_sym
+
+  g
 }
 
 ### clustering -----------------------------------------------------------------
@@ -1572,7 +1588,8 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   res = 1.0,
   name = "leiden_clustering",
   modality = c("rna", "adt", "wnn"),
-  seed = 42L
+  seed = 42L,
+  ...
 ) {
   cluster_algorithm <- match.arg(cluster_algorithm)
   modality <- match.arg(modality)
@@ -1596,13 +1613,13 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 
   # hard tier: the cluster labels are written back aligned to the kept cells,
   # so a graph over a different cell set silently mislabels
-  assert_sc_state(object, artefacts = "snn", modality = modality)
+  assert_sc_state(object, artefacts = "connectivities", modality = modality)
 
-  snn_graph <- get_snn_graph(object, modality = modality)
-  if (is.null(snn_graph)) {
+  connectivities <- get_connectivities(object, modality = modality)
+  if (is.null(connectivities)) {
     warning(
       paste(
-        "No sNN graph found. Did you run find_neighbours_sc().",
+        "No neighbour graph found. Did you run find_neighbours_sc().",
         "Returning class as is."
       )
     )
@@ -1610,10 +1627,11 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   }
 
   clusters <- leiden_clustering(
-    graph = snn_graph,
+    graph = connectivities,
     resolution = res,
     algorithm = cluster_algorithm,
-    seed = seed
+    seed = seed,
+    ...
   )
 
   # Rust returns 1-based labels ordered by size; the column is 0-based
@@ -1624,28 +1642,25 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 
 ### fast clustering ------------------------------------------------------------
 
-#' Run fast Louvain clustering on a SingleCells object
+#' Run fast clustering on a SingleCells object
 #'
 #' @description
-#' Runs k-means on the chosen embedding, builds a kNN graph on the centroids,
-#' applies Louvain clustering and propagates memberships back to the cells.
-#' Optionally runs a grid over multiple seeds and returns stability statistics.
+#' Coarsens the cells with k-means on the chosen embedding, builds a graph over
+#' the centroids (a kNN graph with one of the symmetrisations of
+#' [params_knn_graph_defaults()], or the cell-mediated graph) and runs Louvain
+#' or Leiden on it. The community of each centroid is handed back to its cells.
+#' With `n_seeds > 1`, every resolution is run once per seed, the labels come
+#' from the seed with the lowest mean conductance and the stability across the
+#' seeds is returned.
 #'
 #' @param object `SingleCells` class.
 #' @param embd_to_use String. Embedding name. Defaults to `"pca"`.
 #' @param no_embd_to_use Optional integer. Number of dimensions to keep.
-#' @param resolutions Numeric vector. Louvain resolutions.
-#' @param km_type String. One of `c("kmeans", "minibatch")`. The former runs
-#' standard k-means, the latter a mini-batch version that can be useful for
-#' large data sets.
-#' @param n_centroids Optional integer. Number of k-means centroids. Defaults
-#' to `sqrt(n_cells)` Rust-side if `NULL`.
+#' @param resolutions Numeric vector. Modularity resolutions.
 #' @param fc_params List. Output of [params_sc_fast_cluster()].
-#' @param snn Boolean. Convert kNN to sNN.
+#' @param n_seeds Integer. Number of seeds per resolution. `1L` runs a single
+#' pass without stability statistics.
 #' @param return_kmeans Boolean. Return k-means assignments and centroids.
-#' @param grid_search Boolean. Run multi-seed grid version.
-#' @param no_seeds Integer. Number of additional seeds (only used when
-#' `grid_search = TRUE`).
 #' @param seed Integer. Reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -1655,7 +1670,9 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 #' \describe{
 #'   \item{memberships}{data.table with `cell_idx` and one column per
 #'   resolution (`res_<value>`).}
-#'   \item{stats}{data.table of grid statistics, or `NULL`.}
+#'   \item{stats}{data.table with `resolution`, `mean_ari`, `median_ari`,
+#'   `mean_conductance`, `median_conductance` and `mean_n_comms`, or `NULL`
+#'   for `n_seeds = 1L`.}
 #'   \item{k_means_cluster}{Integer vector of k-means assignments, or `NULL`.}
 #'   \item{centroids}{Numeric matrix of centroids, or `NULL`.}
 #'   \item{resolutions}{Resolutions used.}
@@ -1664,13 +1681,15 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 #'
 #' @export
 #'
+#' @references Wei, et al., PLoS Comput Biol, 2022.
+#'
 #' @examples
 #' # k-means centroids, Louvain on top, memberships back to the cells
 #' sc <- demo_single_cells()
 #' res <- fast_cluster_sc(
 #'   sc,
 #'   resolutions = c(1.0, 0.5),
-#'   n_centroids = 30L,
+#'   fc_params = params_sc_fast_cluster(n_centroids = 30L),
 #'   .verbose = FALSE
 #' )
 #' head(get_data(res))
@@ -1684,13 +1703,9 @@ fast_cluster_sc <- S7::new_generic(
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     resolutions = c(2.0, 1.0, 0.5),
-    km_type = c("kmeans", "minibatch"),
-    n_centroids = NULL,
     fc_params = params_sc_fast_cluster(),
-    snn = TRUE,
+    n_seeds = 1L,
     return_kmeans = FALSE,
-    grid_search = FALSE,
-    no_seeds = 10L,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -1706,27 +1721,19 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   resolutions = c(2.0, 1.0, 0.5),
-  km_type = c("kmeans", "minibatch"),
-  n_centroids = NULL,
   fc_params = params_sc_fast_cluster(),
-  snn = TRUE,
+  n_seeds = 1L,
   return_kmeans = FALSE,
-  grid_search = FALSE,
-  no_seeds = 10L,
   seed = 42L,
   .verbose = TRUE
 ) {
-  km_type <- match.arg(km_type)
-
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(resolutions, "N+")
-  checkmate::qassert(n_centroids, c("I1", "0"))
-  checkmate::qassert(snn, "B1")
+  assertScFastClusterParams(fc_params)
+  checkmate::qassert(n_seeds, "I1[1,)")
   checkmate::qassert(return_kmeans, "B1")
-  checkmate::qassert(grid_search, "B1")
-  checkmate::qassert(no_seeds, "I1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -1739,50 +1746,85 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
     embd <- embd[, 1:min(no_embd_to_use, ncol(embd))]
   }
 
-  cells_to_use <- get_cells_to_keep(object)
+  .run_fast_cluster(
+    embd = embd,
+    cells_to_use = get_cells_to_keep(object),
+    resolutions = resolutions,
+    fc_params = fc_params,
+    n_seeds = n_seeds,
+    return_kmeans = return_kmeans,
+    seed = seed,
+    .verbose = .verbose
+  )
+}
 
-  if (grid_search) {
-    res <- rs_fast_cluster_sc_grid(
-      embd = embd,
-      km_type = km_type,
-      resolutions = resolutions,
-      n_centroids = n_centroids,
-      fc_params = fc_params,
-      snn = snn,
-      return_kmeans = return_kmeans,
-      no_seeds = no_seeds,
-      seed = seed,
-      verbose = parse_verbosity(.verbose)
-    )
-    memberships <- res$membership$memberships
-    stats <- data.table::as.data.table(res$membership$stats)
-    stats[, resolution := resolutions]
-    data.table::setcolorder(stats, "resolution")
-  } else {
-    res <- rs_fast_cluster_sc(
-      embd = embd,
-      km_type = km_type,
-      resolutions = resolutions,
-      n_centroids = n_centroids,
-      fc_params = fc_params,
-      snn = snn,
-      return_kmeans = return_kmeans,
-      seed = seed,
-      verbose = parse_verbosity(.verbose)
-    )
-    memberships <- res$membership
-    stats <- NULL
+#' Run the fast clustering on an embedding and wrap the results
+#'
+#' @description
+#' Shared by the `SingleCells` and `SingleCellsSubset` methods of
+#' [fast_cluster_sc()]. Resolves the `NULL` defaults of
+#' [params_sc_fast_cluster()] before handing over to Rust.
+#'
+#' @param embd Numeric matrix. Cells x features.
+#' @param cells_to_use Integer vector. 0-indexed cell indices of the rows of
+#' `embd`.
+#' @inheritParams fast_cluster_sc
+#'
+#' @returns `SingleCellFastClusters` S3 object, see [fast_cluster_sc()].
+#'
+#' @keywords internal
+.run_fast_cluster <- function(
+  embd,
+  cells_to_use,
+  resolutions,
+  fc_params,
+  n_seeds,
+  return_kmeans,
+  seed,
+  .verbose
+) {
+  checkmate::assertMatrix(embd, mode = "numeric")
+  checkmate::qassert(cells_to_use, "I+")
+  checkmate::qassert(resolutions, "N+")
+  assertScFastClusterParams(fc_params)
+  checkmate::qassert(n_seeds, "I1[1,)")
+  checkmate::qassert(return_kmeans, "B1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  if (is.null(fc_params$n_centroids)) {
+    # default to 4 x sqrt(n); faiss standard for IVF
+    fc_params$n_centroids <- as.integer(floor(4 * sqrt(nrow(embd))))
+  }
+  if (is.null(fc_params$n_iterations)) {
+    fc_params$n_iterations <- .default_community_iters(fc_params$algorithm)
   }
 
+  res <- rs_fast_cluster_sc(
+    embd = embd,
+    resolutions = resolutions,
+    fc_params = fc_params,
+    n_seeds = n_seeds,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
   membership_dt <- data.table::data.table(cell_idx = cells_to_use + 1L)
-  membership_dt[, (paste0("res_", resolutions)) := memberships]
+  membership_dt[, (paste0("res_", resolutions)) := res$membership]
+
+  stats <- NULL
+  if (!is.null(res$stats)) {
+    stats <- data.table::as.data.table(res$stats)
+    stats[, resolution := resolutions]
+    data.table::setcolorder(stats, "resolution")
+  }
 
   structure(
     list(
       memberships = membership_dt,
       stats = stats,
-      k_means_cluster = res$k_means_cluster,
-      centroids = res$centroids,
+      k_means_cluster = if (return_kmeans) res$k_means_cluster else NULL,
+      centroids = if (return_kmeans) res$centroids else NULL,
       resolutions = resolutions
     ),
     cell_indices = cells_to_use,

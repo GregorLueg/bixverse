@@ -1036,7 +1036,8 @@ S7::method(phate_sc, ScOrMc) <- function(
 #'   \item `"knn"` - The kNN graph (cached if `use_knn = TRUE`, otherwise built
 #'   from the chosen embedding), turned into the UMAP fuzzy union graph first.
 #'   This matches scanpy.
-#'   \item `"snn"` - The sNN graph from [bixverse::find_neighbours_sc()], i.e.
+#'   \item `"connectivities"` - The neighbour graph from
+#'   [bixverse::find_neighbours_sc()], i.e.
 #'   the same graph the Leiden/Louvain clustering runs on. `use_knn`,
 #'   `embd_to_use`, `no_embd_to_use`, `k`, `knn_method` and `nn_params` do not
 #'   apply here, and neither do the graph and initialisation knobs in
@@ -1045,7 +1046,8 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' }
 #'
 #' @param object `SingleCells`, `MetaCells` class.
-#' @param graph String. Which graph to lay out. One of `c("knn", "snn")`.
+#' @param graph String. Which graph to lay out. One of
+#' `c("knn", "connectivities")`.
 #' Defaults to `"knn"`.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
 #' `TRUE`. If not available, will default to the embedding. `"knn"` only.
@@ -1056,7 +1058,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used. `"knn"` only.
 #' @param init_embd Optional string. Name of a stored 2D embedding, e.g.
-#' `"umap"`, to initialise the layout with. `"snn"` only. Defaults to `NULL`.
+#' `"umap"`, to initialise the layout with. `"connectivities"` only. Defaults to `NULL`.
 #' @param modality String. On which modality to run ForceAtlas2. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
@@ -1079,16 +1081,16 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @references Jacomy, et al., PLoS ONE, 2014
 #'
 #' @examples
-#' # ForceAtlas2 on the cached kNN graph, then on the sNN graph
+#' # ForceAtlas2 on the cached kNN graph, then on the neighbour graph
 #' sc <- demo_single_cells()
 #' sc <- forceatlas2_sc(sc, .verbose = FALSE)
 #' sc <- forceatlas2_sc(
 #'   sc,
-#'   graph = "snn",
-#'   slot_name = "fa2_snn",
+#'   graph = "connectivities",
+#'   slot_name = "fa2_graph",
 #'   .verbose = FALSE
 #' )
-#' dim(get_embedding(sc, "fa2_snn"))
+#' dim(get_embedding(sc, "fa2_graph"))
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 forceatlas2_sc <- S7::new_generic(
@@ -1096,7 +1098,7 @@ forceatlas2_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    graph = c("knn", "snn"),
+    graph = c("knn", "connectivities"),
     use_knn = TRUE,
     embd_to_use = "pca",
     slot_name = "fa2",
@@ -1124,7 +1126,7 @@ forceatlas2_sc <- S7::new_generic(
 
 S7::method(forceatlas2_sc, ScOrMc) <- function(
   object,
-  graph = c("knn", "snn"),
+  graph = c("knn", "connectivities"),
   use_knn = TRUE,
   embd_to_use = "pca",
   slot_name = "fa2",
@@ -1159,7 +1161,9 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
 
   if (graph == "knn") {
     if (!is.null(init_embd)) {
-      warning("`init_embd` only applies to graph = 'snn'. Ignoring it.")
+      warning(
+        "`init_embd` only applies to graph = 'connectivities'. Ignoring it."
+      )
     }
 
     inputs <- .manifold_inputs(
@@ -1205,10 +1209,10 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     }
 
     # the graph and the init both live under the write modality, wnn included
-    assert_sc_state(object, artefacts = "snn", modality = modality)
-    snn_graph <- get_snn_graph(object, modality = modality)
-    if (is.null(snn_graph)) {
-      stop("No sNN graph found. Run find_neighbours_sc() first.")
+    assert_sc_state(object, artefacts = "connectivities", modality = modality)
+    connectivities <- get_connectivities(object, modality = modality)
+    if (is.null(connectivities)) {
+      stop("No neighbour graph found. Run find_neighbours_sc() first.")
     }
 
     init <- NULL
@@ -1222,11 +1226,11 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     }
 
     if (.verbose) {
-      message("Running ForceAtlas2 on the sNN graph.")
+      message("Running ForceAtlas2 on the neighbour graph.")
     }
 
     fa2_embd <- manifoldsR::forceatlas2_from_graph(
-      graph = snn_graph,
+      graph = connectivities,
       init = init,
       fa2_params = fa2_params,
       seed = seed,
@@ -1234,7 +1238,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     )
 
     from <- c(
-      sprintf("%s:snn", modality),
+      sprintf("%s:connectivities", modality),
       if (!is.null(init_embd)) sprintf("%s:%s", modality, init_embd) else NULL
     )
   }

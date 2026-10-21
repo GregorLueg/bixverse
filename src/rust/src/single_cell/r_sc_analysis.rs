@@ -1,9 +1,10 @@
-use bixverse_rs::core::math::stats::p_adjust_fdr;
-use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
-use bixverse_rs::methods::nmf_hals::HalsOpts;
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
-use bixverse_rs::single_cell::sc_analysis::{
+use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
+use bixverse_r::core::math::stats::p_adjust_fdr;
+use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
+use bixverse_r::methods::nmf_hals::HalsOpts;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
+use bixverse_r::single_cell::sc_analysis::{
     cellphonedb::*,
     dge_pathway_scores::*,
     dialogue::{dialogue_run, DialogueParams},
@@ -1951,7 +1952,7 @@ fn rs_nmf_single_sc(
 ) -> Result<List> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let nmf_res = nmf_single_run_sc(
         &reader,
@@ -2027,7 +2028,7 @@ fn rs_nmf_multi_sc(
 ) -> Result<List> {
     let gene_indices = gene_indices.r_int_convert();
     let cell_indices = cell_indices.r_int_convert();
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let nmf_res = nmf_multiple_run_sc(
         &reader,
@@ -2125,7 +2126,7 @@ fn rs_nmf_consensus_sc(
 ) -> Result<List> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let nmf_res = nmf_consensus_run_sc(
@@ -2209,7 +2210,7 @@ fn rs_nmf_k_sweep_sc(
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let k_range = k_range.r_int_convert();
-    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_hals_opt: HalsOpts<f32> = hals_opts_from_r_list(nmf_hals_params, seed)?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let sweep_res = nmf_k_sweep_run_sc(

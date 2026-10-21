@@ -21,7 +21,7 @@
 #'   \item{var_table}{Variable/feature table (unchanged from parent).}
 #'   \item{grouping_column}{Column in obs used to define the subset.}
 #'   \item{group}{Value of `grouping_column` represented by this subset.}
-#'   \item{sc_cache}{Fresh `ScCache` for subset-specific PCA, kNN, sNN,
+#'   \item{sc_cache}{Fresh `ScCache` for subset-specific PCA, kNN, neighbour graph,
 #'   embeddings.}
 #'   \item{sc_map}{`ScMap` restricted to the subset cells. `cell_mapping`
 #'   stays 1-indexed and `cells_to_keep_idx` stays 0-indexed, both in the
@@ -140,7 +140,7 @@ S7::method(print, SingleCellsSubset) <- function(x, ...) {
   hvg_calculated <- !is.null(sc_map[["hvg_gene_indices"]])
   pca_calculated <- !is.null(sc_cache[["pca_factors"]])
   knn_generated <- !is.null(sc_cache[["knn"]])
-  snn_generated <- !is.null(sc_cache[["snn_graph"]])
+  graph_generated <- !is.null(sc_cache[["connectivities"]])
   other_embeddings <- names(sc_cache[["other_embeddings"]])
   other_embeddings_str <- if (length(other_embeddings) > 0) {
     paste(other_embeddings, collapse = ", ")
@@ -157,7 +157,7 @@ S7::method(print, SingleCellsSubset) <- function(x, ...) {
     sprintf("  PCA calculated: %s\n", pca_calculated),
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
     sprintf("  KNN generated: %s\n", knn_generated),
-    sprintf("  SNN generated: %s\n", snn_generated),
+    sprintf("  Graph generated: %s\n", graph_generated),
     sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )
@@ -744,19 +744,23 @@ S7::method(set_knn, SingleCellsSubset) <- function(x, knn, ...) {
   .stamp_artefact(x, artefact = "knn", from = .stamp_from(...))
 }
 
-#' @name set_snn_graph.SingleCellsSubset
+#' @name set_connectivities.SingleCellsSubset
 #'
-#' @rdname set_snn_graph
+#' @rdname set_connectivities
 #'
-#' @method set_snn_graph SingleCellsSubset
-S7::method(set_snn_graph, SingleCellsSubset) <- function(x, snn_graph, ...) {
+#' @method set_connectivities SingleCellsSubset
+S7::method(set_connectivities, SingleCellsSubset) <- function(
+  x,
+  connectivities,
+  ...
+) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  checkmate::assertClass(snn_graph, "igraph")
-  S7::prop(x, "sc_cache") <- set_snn_graph(
+  checkmate::assertClass(connectivities, "igraph")
+  S7::prop(x, "sc_cache") <- set_connectivities(
     x = S7::prop(x, "sc_cache"),
-    snn_graph = snn_graph
+    connectivities = connectivities
   )
-  .stamp_artefact(x, artefact = "snn", from = .stamp_from(...))
+  .stamp_artefact(x, artefact = "connectivities", from = .stamp_from(...))
 }
 
 #' @name remove_knn.SingleCellsSubset
@@ -770,14 +774,14 @@ S7::method(remove_knn, SingleCellsSubset) <- function(x, ...) {
   x
 }
 
-#' @name remove_snn_graph.SingleCellsSubset
+#' @name remove_connectivities.SingleCellsSubset
 #'
-#' @rdname remove_snn_graph
+#' @rdname remove_connectivities
 #'
-#' @method remove_snn_graph SingleCellsSubset
-S7::method(remove_snn_graph, SingleCellsSubset) <- function(x, ...) {
+#' @method remove_connectivities SingleCellsSubset
+S7::method(remove_connectivities, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  S7::prop(x, "sc_cache") <- remove_snn_graph(x = S7::prop(x, "sc_cache"))
+  S7::prop(x, "sc_cache") <- remove_connectivities(x = S7::prop(x, "sc_cache"))
   x
 }
 
@@ -951,15 +955,15 @@ S7::method(get_knn_obj, SingleCellsSubset) <- function(x, ...) {
   .drop_stamp(res)
 }
 
-#' @name get_snn_graph.SingleCellsSubset
+#' @name get_connectivities.SingleCellsSubset
 #'
-#' @rdname get_snn_graph
+#' @rdname get_connectivities
 #'
-#' @method get_snn_graph SingleCellsSubset
-S7::method(get_snn_graph, SingleCellsSubset) <- function(x, ...) {
+#' @method get_connectivities SingleCellsSubset
+S7::method(get_connectivities, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  res <- get_snn_graph(x = S7::prop(x, "sc_cache"))
-  .warn_sc_state(x, artefact = "snn")
+  res <- get_connectivities(x = S7::prop(x, "sc_cache"))
+  .warn_sc_state(x, artefact = "connectivities")
   .drop_stamp(res)
 }
 

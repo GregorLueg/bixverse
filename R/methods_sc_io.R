@@ -1507,7 +1507,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 #'
 #' @description
 #' Writes the counts, the DuckDB obs/var tables and whatever is cached in
-#' memory (PCA, embeddings, sNN graph) to a spec-compliant h5ad file, so that
+#' memory (PCA, embeddings, neighbour graph) to a spec-compliant h5ad file, so that
 #' the experiment can be handed to ScanPy or shared. The counts are streamed
 #' cell batch by cell batch and never fully materialised in R.
 #'
@@ -1735,7 +1735,7 @@ S7::method(save_h5ad, SingleCells) <- function(
 #' Collect the cached embeddings and graphs of a `SingleCells` object
 #'
 #' @description PCA factors go to `obsm/X_pca` and the loadings to
-#' `varm/PCs`, every other embedding to `obsm/X_<name>`, and the sNN graph to
+#' `varm/PCs`, every other embedding to `obsm/X_<name>`, and the neighbour graph to
 #' `obsp/connectivities` together with the `uns/neighbors` block ScanPy looks
 #' for. Anything that is not cached, or that no longer matches the cells being
 #' written, is skipped.
@@ -1818,18 +1818,21 @@ S7::method(save_h5ad, SingleCells) <- function(
     }
   }
 
-  snn_graph <- .drop_stamp(get_snn_graph(sc_cache))
-  if (inherits(snn_graph, "igraph") && igraph::vcount(snn_graph) == no_cells) {
+  connectivities <- .drop_stamp(get_connectivities(sc_cache))
+  if (
+    inherits(connectivities, "igraph") &&
+      igraph::vcount(connectivities) == no_cells
+  ) {
     if (.verbose) {
-      message("Adding the sNN graph as obsp/connectivities.")
+      message("Adding the neighbour graph as obsp/connectivities.")
     }
-    attr_name <- if ("weight" %in% igraph::edge_attr_names(snn_graph)) {
+    attr_name <- if ("weight" %in% igraph::edge_attr_names(connectivities)) {
       "weight"
     } else {
       NULL
     }
     adj <- igraph::as_adjacency_matrix(
-      snn_graph,
+      connectivities,
       attr = attr_name,
       sparse = TRUE
     )
@@ -2826,10 +2829,12 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
     # objects saved before a slot was added come back without it
     S7::prop(object, "sc_map") <- .migrate_sc_map(saved_data$sc_map)
     S7::prop(object, "sc_cache") <- .migrate_sc_cache(saved_data$sc_cache)
-    S7::prop(object, "adt_cache") <- saved_data$adt_cache
-    S7::prop(object, "atac_cache") <- saved_data$atac_cache
+    S7::prop(object, "adt_cache") <- .migrate_sc_cache(saved_data$adt_cache)
+    S7::prop(object, "atac_cache") <- .migrate_sc_cache(saved_data$atac_cache)
     S7::prop(object, "adt_counts") <- saved_data$adt_counts
-    S7::prop(object, "other_data") <- saved_data$other_data
+    S7::prop(object, "other_data") <- .migrate_other_data(
+      saved_data$other_data
+    )
 
     if (
       (length(get_cell_names(object)) != rust_con$get_shape()[1]) |

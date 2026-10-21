@@ -1,6 +1,6 @@
-use bixverse_rs::core::base::cors_similarity::column_pairwise_cor;
-use bixverse_rs::methods::diffcor::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::core::base::cors_similarity::column_pairwise_cor;
+use bixverse_r::methods::diffcor::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////

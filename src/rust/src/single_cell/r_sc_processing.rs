@@ -1,14 +1,17 @@
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_analysis::fast_clusters::*;
-use bixverse_rs::single_cell::sc_processing::magic::{
+use bixverse_r::graph::graph_structures::SparseGraph;
+use bixverse_r::graph::knn_graph::{build_knn_graph, KnnSymmetrisation};
+use bixverse_r::prelude::*;
+use bixverse_r::sc_r_wrappers::cpu_kmeans_from_r_list;
+use bixverse_r::single_cell::sc_analysis::fast_clusters::*;
+use bixverse_r::single_cell::sc_processing::magic::{
     magic_impute_genes, MagicOperator, MagicParams,
 };
-use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
-use bixverse_rs::single_cell::sc_processing::{
+use bixverse_r::single_cell::sc_processing::metrics::pairwise_gene_correlations;
+use bixverse_r::single_cell::sc_processing::{
     cellsweep::infer_empty_droplets, doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*,
-    scrublet::*, snn::*, utils_doublets::find_threshold_otsu,
+    scrublet::*, utils_doublets::find_threshold_otsu,
 };
-use bixverse_rs::single_cell::sc_r_wrappers::empty_droplet_call_from_r_list;
+use bixverse_r::sc_r_wrappers::empty_droplet_call_from_r_list;
 use extendr_api::prelude::*;
 use faer::Mat;
 use rustc_hash::FxHashSet;
@@ -40,11 +43,10 @@ extendr_module! {
     // knn and snn
     fn rs_sc_knn;
     fn rs_sc_knn_w_dist;
-    fn rs_sc_snn;
+    fn rs_sc_knn_graph;
     fn rs_compare_knn;
     // clustering
     fn rs_fast_cluster_sc;
-    fn rs_fast_cluster_sc_grid;
     // imputation
     fn rs_magic_impute;
     // denoising
@@ -1362,70 +1364,79 @@ fn rs_sc_knn_w_dist(
     ))
 }
 
-/// Generates the sNN graph for igraph
+/// Generates the neighbour graph for igraph
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function takes a kNN matrix and generates the inputs for an SNN
-/// graph based on it.
+/// Symmetrises a kNN matrix into an undirected, weighted graph. Three options:
+/// the bluster/Seurat shared nearest neighbour graph (`"snn"`), the ScanPy/UMAP
+/// fuzzy simplicial set (`"umap"`) or the plain kNN union (`"knn"`).
 ///
 /// @param knn_mat Integer matrix. Rows represent cells and the columns
-/// represent the neighbours (0-indexed!).
-/// @param snn_method String. Which method to use to calculate the similarity.
-/// Choice of `c("jaccard", "rank")`; anything else errors.
-/// @param limited_graph Boolean. Shall the sNNs only be calculated between
-/// direct neighbours in the graph, or between all possible combinations.
-/// @param pruning Float. Below which similarity value to prune the weight
-/// to 0. A cell that loses every edge keeps its strongest kNN edge.
+/// represent the neighbours (0-indexed!), self excluded and sorted by
+/// distance.
+/// @param knn_dist Optional numeric matrix of the same shape with the
+/// distances. Required for `knn_sym = "umap"`.
+/// @param graph_params Named list. Recognised keys: `knn_sym` (one of
+/// `c("snn", "umap", "knn")`); for `"snn"`: `snn_similarity` (one of
+/// `c("jaccard", "rank")`), `pruning` and `rescue`; for `"umap"`:
+/// `local_connectivity` and `mix_ratio`; for `"knn"`: `binary`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
 /// @returns A list with the following items:
 /// \itemize{
-///  \item edges - Integer vector with the flattened sNN edge pairs
-///  (1-indexed!), ready for `igraph::add_edges()`.
-///  \item weights - sNN weights of the pairs above.
+///  \item edges - Integer vector with the flattened edge pairs (1-indexed!),
+///  each undirected edge once, ready for `igraph::add_edges()`.
+///  \item weights - Edge weights of the pairs above.
 /// }
 ///
 /// @export
 #[extendr]
-fn rs_sc_snn(
+fn rs_sc_knn_graph(
     knn_mat: RMatrix<i32>,
-    snn_method: String,
-    limited_graph: bool,
-    pruning: f64,
+    knn_dist: Nullable<RMatrix<f64>>,
+    graph_params: List,
     verbose: usize,
 ) -> extendr_api::Result<List> {
-    let n_neighbours = knn_mat.ncols();
-    let data = knn_mat.data().r_int_convert();
+    let (n, k) = (knn_mat.nrows(), knn_mat.ncols());
+    let sym = KnnSymmetrisation::from_r_list(graph_params)?;
 
-    let snn_method = parse_snn_similiarity_method(&snn_method)
-        .ok_or_else(|| format!("Invalid SNN similarity method: {}", snn_method))?;
-
-    let snn_data = if limited_graph {
-        generate_snn_limited(
-            &data,
-            n_neighbours,
-            knn_mat.nrows(),
-            pruning as f32,
-            snn_method,
-            verbose,
-        )
-    } else {
-        generate_snn_full(
-            &data,
-            n_neighbours,
-            knn_mat.nrows(),
-            pruning as f32,
-            snn_method,
-            verbose,
-        )
+    // R matrices are column-major; the graph builder wants k neighbours per
+    // row, contiguous.
+    let col_major = knn_mat.data();
+    let idx: Vec<u32> = (0..n)
+        .flat_map(|i| (0..k).map(move |j| col_major[j * n + i] as u32))
+        .collect();
+    let dist: Option<Vec<f32>> = match knn_dist {
+        Nullable::NotNull(d) => {
+            let d = d.data();
+            Some(
+                (0..n)
+                    .flat_map(|i| (0..k).map(move |j| d[j * n + i] as f32))
+                    .collect(),
+            )
+        }
+        Nullable::Null => None,
     };
 
-    Ok(list!(
-        edges = snn_data.0.r_int_convert_shift(),
-        weights = snn_data.1
-    ))
+    let graph: SparseGraph<f32> =
+        build_knn_graph(&idx, dist.as_deref(), k, n, &sym, verbose).to_extendr()?;
+
+    let mut edges: Vec<i32> = Vec::new();
+    let mut weights: Vec<f64> = Vec::new();
+    for i in 0..n {
+        let (nbrs, ws) = graph.get_neighbours_raw(i);
+        for (&j, &w) in nbrs.iter().zip(ws) {
+            if j as usize > i {
+                edges.push(i as i32 + 1);
+                edges.push(j as i32 + 1);
+                weights.push(w as f64);
+            }
+        }
+    }
+
+    Ok(list!(edges = edges, weights = weights))
 }
 
 /// Helper to compare kNN graphs
@@ -1517,26 +1528,24 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 // Fast cluster //
 //////////////////
 
-/// Runs fast Louvain cluster on the data
+/// Runs fast clustering on the data
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Runs first k-means clustering, followed by a kNN detection on the centroids
-/// to then run Louvain clustering on the graph and propagate the membership
-/// back to the original data.
+/// Coarsens the cells with k-means, builds a graph over the centroids (a
+/// kNN graph with one of the symmetrisations, or the cell-mediated graph) and
+/// runs Louvain or Leiden on it. The community of each centroid is propagated
+/// back to its cells. With `n_seeds > 1` every resolution is run once per
+/// seed, the labels come from the seed with the lowest mean conductance and
+/// stability metrics across the seeds are returned.
 ///
-/// @param embd Numeric matrix. The original embedding.
-/// @param km_type String. One of `c("kmeans", "minibatch")` for the type of
-/// k means clustering to run.
-/// @param resolutions Numeric vector. The Louvain resolutions to iterate
-/// through.
-/// @param n_centroids Optional integer. The number of k-means centroids. If
-/// not provided, defaults to `floor(sqrt(nrow(embd)))`.
-/// @param fc_params Named list. The fast clustering parameters.
-/// @param snn Boolean. Shall the kNN graph be additionally transformed into
-/// an sNN graph.
-/// @param return_kmeans Boolean. Shall the k-means centroid assignments be
-/// returned alongside the memberships.
+/// @param embd Numeric matrix. The embedding, cells x features.
+/// @param resolutions Numeric vector. The resolutions to iterate through.
+/// @param fc_params Named list. The fast clustering parameters, see
+/// [params_sc_fast_cluster()]. Also carries the k-means keys (`km_type`,
+/// `kmeans_iters`, `batch_size`, `drift_threshold`, `lr_alpha`).
+/// @param n_seeds Integer. Number of seeds per resolution. `1L` runs a single
+/// pass without stability metrics.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -1544,158 +1553,72 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 /// @returns A list with the following elements:
 /// \itemize{
 ///  \item membership - List with one integer membership vector per
-///  resolution.
-///  \item k_means_cluster - Integer vector with the k-means cluster per cell
-///  if `return_kmeans = TRUE`, otherwise `NULL`.
-///  \item centroids - Numerical matrix with the k-means centroids if
-///  `return_kmeans = TRUE`, otherwise `NULL`.
+///  resolution (0-indexed).
+///  \item k_means_cluster - Integer vector with the k-means centroid per cell
+///  (0-indexed).
+///  \item centroids - Numerical matrix with the k-means centroids.
+///  \item stats - `NULL` for `n_seeds = 1L`, otherwise a list with
+///  `mean_ari`, `median_ari`, `mean_conductance`, `median_conductance` and
+///  `mean_n_comms`, one value per resolution.
 /// }
 ///
 /// @export
 ///
 /// @keywords internal
 #[extendr]
-#[allow(clippy::too_many_arguments)]
 fn rs_fast_cluster_sc(
     embd: RMatrix<f64>,
-    km_type: String,
     resolutions: &[f64],
-    n_centroids: Option<usize>,
     fc_params: List,
-    snn: bool,
-    return_kmeans: bool,
+    n_seeds: usize,
     seed: usize,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
     let embd = r_matrix_to_faer_fp32(&embd);
-    let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);
-    let resolutions = resolutions.r_float_convert();
+    let resolutions: Vec<f32> = resolutions.iter().map(|&r| r as f32).collect();
 
-    let mut params: FastLouvainParams<f32> = FastLouvainParams::from_r_list(fc_params)?;
+    let params = FastClusterParams::from_r_list(fc_params.clone())?;
+    let coarsener = cpu_kmeans_from_r_list(fc_params, "standard")?;
 
-    params.n_centroids = n_clusters;
-
-    let fc_results = fast_louvain_clusters(
+    let res = fast_clusters(
         embd.as_ref(),
-        &km_type,
-        &resolutions,
+        &coarsener,
         &params,
-        snn,
-        return_kmeans,
+        &resolutions,
+        n_seeds,
         seed,
         verbose,
     )
     .to_extendr()?;
 
-    let (memberships, k_means_cluster, centroids) =
-        fast_cluster_unwrap_single(fc_results, return_kmeans)?;
-
-    let mut memberships_ls = List::new(memberships.len());
-
-    for (index, membership) in memberships.iter().enumerate() {
-        let membership = membership.clone().r_int_convert();
-        memberships_ls.set_elt(index, Robj::from(membership))?;
+    let mut membership = List::new(res.per_resolution.len());
+    for (i, r) in res.per_resolution.iter().enumerate() {
+        membership.set_elt(i, Robj::from(r.labels.clone().r_int_convert()))?;
     }
 
-    let k_means_cluster = k_means_cluster.map_or_else(|| r!(NULL), |v| r!(v));
-    let centroids = centroids.map_or_else(|| r!(NULL), |m| r!(m));
+    let stats = if n_seeds > 1 {
+        let get = |f: fn(&GridStats) -> f32| -> Vec<f64> {
+            res.per_resolution
+                .iter()
+                .map(|r| r.stability.as_ref().map_or(f64::NAN, |s| f(s) as f64))
+                .collect()
+        };
+        r!(list!(
+            mean_ari = get(|s| s.mean_ari),
+            median_ari = get(|s| s.median_ari),
+            mean_conductance = get(|s| s.mean_conductance),
+            median_conductance = get(|s| s.median_conductance),
+            mean_n_comms = get(|s| s.mean_n_communities)
+        ))
+    } else {
+        r!(NULL)
+    };
 
     Ok(list!(
-        membership = memberships_ls,
-        k_means_cluster = r!(k_means_cluster),
-        centroids = r!(centroids),
-    ))
-}
-
-/// Runs fast Louvain cluster on the data (with multiple seeds)
-///
-/// @description
-/// `r lifecycle::badge("experimental")`
-/// Runs first k-means clustering, followed by a kNN detection on the centroids
-/// to then run Louvain clustering with several seeds (based on the original
-/// one) on the graph and propagate the membership back to the original data.
-/// Returns additional metrics around cluster stability and community
-/// conductance.
-///
-/// @param embd Numeric matrix. The original embedding.
-/// @param km_type String. One of `c("kmeans", "minibatch")` for the type of
-/// k means clustering to run.
-/// @param resolutions Numeric vector. The Louvain resolutions to iterate
-/// through.
-/// @param n_centroids Optional integer. The number of k-means centroids. If
-/// not provided, defaults to `floor(sqrt(nrow(embd)))`.
-/// @param fc_params Named list. The fast clustering parameters.
-/// @param snn Boolean. Shall the kNN graph be additionally transformed into
-/// an sNN graph.
-/// @param return_kmeans Boolean. Shall the k-means centroid assignments be
-/// returned alongside the memberships.
-/// @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
-/// @param seed Integer. For reproducibility.
-/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
-/// detailed verbosity.
-///
-/// @returns A list with the following elements:
-/// \itemize{
-///  \item membership - A list with `memberships` (one integer vector per
-///  resolution, from the seed with the best conductance) and `stats` (list
-///  with `mean_ari`, `median_ari`, `mean_conductance`, `median_conductance`
-///  and `mean_n_comms`, one value per resolution).
-///  \item k_means_cluster - Integer vector with the k-means cluster per cell
-///  if `return_kmeans = TRUE`, otherwise `NULL`.
-///  \item centroids - Numerical matrix with the k-means centroids if
-///  `return_kmeans = TRUE`, otherwise `NULL`.
-/// }
-///
-/// @export
-///
-/// @keywords internal
-#[extendr]
-#[allow(clippy::too_many_arguments)]
-fn rs_fast_cluster_sc_grid(
-    embd: RMatrix<f64>,
-    km_type: String,
-    resolutions: &[f64],
-    n_centroids: Option<usize>,
-    fc_params: List,
-    snn: bool,
-    return_kmeans: bool,
-    no_seeds: usize,
-    seed: usize,
-    verbose: usize,
-) -> Result<List, extendr_api::Error> {
-    let embd = r_matrix_to_faer_fp32(&embd);
-    let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);
-    let resolutions = resolutions.r_float_convert();
-
-    let mut params: FastLouvainParams<f32> = FastLouvainParams::from_r_list(fc_params)?;
-
-    params.n_centroids = n_clusters;
-
-    let fc_results = fast_louvain_clusters_grid(
-        embd.as_ref(),
-        &km_type,
-        &resolutions,
-        &params,
-        snn,
-        true,
-        seed,
-        no_seeds,
-        verbose,
-    )
-    .to_extendr()?;
-
-    let (memberships, k_means_cluster, centroids) =
-        fast_cluster_unwrap_multiple(fc_results, return_kmeans)?;
-
-    let membership_ls = process_fc_louvain_results(memberships)?;
-
-    let k_means_cluster = k_means_cluster.map_or_else(|| r!(NULL), |v| r!(v));
-    let centroids = centroids.map_or_else(|| r!(NULL), |m| r!(m));
-
-    Ok(list!(
-        membership = membership_ls,
-        k_means_cluster = r!(k_means_cluster),
-        centroids = r!(centroids),
+        membership = membership,
+        k_means_cluster = res.assignments.r_int_convert(),
+        centroids = faer_to_r_matrix(res.centroids.as_ref()),
+        stats = stats
     ))
 }
 

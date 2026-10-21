@@ -1,15 +1,15 @@
-use bixverse_rs::single_cell::sc_batch_correction::harmony_v2::harmony_v2;
-use bixverse_rs::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
+use bixverse_r::single_cell::sc_batch_correction::harmony_v2::harmony_v2;
+use bixverse_r::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
 use extendr_api::*;
 use faer::Mat;
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_batch_correction::bbknn::*;
-use bixverse_rs::single_cell::sc_batch_correction::fast_mnn::*;
-use bixverse_rs::single_cell::sc_batch_correction::harmony::*;
-use bixverse_rs::single_cell::sc_batch_correction::seurat_cca::*;
-use bixverse_rs::single_cell::sc_batch_correction::seurat_rpca::*;
-use bixverse_rs::single_cell::sc_processing::metrics::*;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_batch_correction::bbknn::*;
+use bixverse_r::single_cell::sc_batch_correction::fast_mnn::*;
+use bixverse_r::single_cell::sc_batch_correction::harmony::*;
+use bixverse_r::single_cell::sc_batch_correction::seurat_cca::*;
+use bixverse_r::single_cell::sc_batch_correction::seurat_rpca::*;
+use bixverse_r::single_cell::sc_processing::metrics::*;
 
 ////////////////////
 // extendr Module //

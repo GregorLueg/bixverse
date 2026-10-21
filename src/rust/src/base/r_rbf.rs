@@ -1,8 +1,8 @@
-use bixverse_rs::prelude::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 use faer::Mat;
 
-use bixverse_rs::core::math::rbf::*;
+use bixverse_r::core::math::rbf::*;
 
 ////////////////////
 // extendr Module //

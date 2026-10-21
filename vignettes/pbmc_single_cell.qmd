@@ -214,7 +214,8 @@ sc_object <- find_neighbours_sc(
 
 Leiden clustering followed by differential gene expression across all clusters.
 You can also run Louvain if you want, but Leiden is thought of to have better
-properties, see [Traag, et al.](https://www.nature.com/articles/s41598-019-41695-z).
+properties, see 
+[Traag, et al.](https://www.nature.com/articles/s41598-019-41695-z).
 
 ```{r}
 #| label: clustering and markers
@@ -233,21 +234,19 @@ head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 ### Fast clustering
 
 In the case of large data sets there is an option to run an accelerated form
-of clustering. This runs first k-means clustering (with default `sqrt(N)` 
-cells), then kNN on the centroids, followed by Louvain (Leiden is not yet
-supported, but on the to-do list) across a set of resolutions. There is also an 
-option to run this across several seeds to check for stability of the 
-clustering. If you ran the grid search, the membership
+of clustering: k-means first (default `sqrt(N)` centroids), then Louvain or
+Leiden on a graph over the centroids, across a set of resolutions. The centroid
+graph options, seed stability statistics and how the result compares against
+the full graph clustering are covered in the
+[clustering and annotation vignette](https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.html).
 
 ```{r}
 #| label: fast clustering
 fast_cluster_res <- fast_cluster_sc(
   object = sc_object,
-  resolutions = c(5, 3, 2, 1.5, 1, 0.5),
+  resolutions = c(2, 1, 0.5),
   # also return the k-mean clustering
-  return_kmeans = TRUE,
-  no_seeds = 25L,
-  grid_search = TRUE
+  return_kmeans = TRUE
 )
 
 fast_clusted_dt <- get_data(fast_cluster_res)

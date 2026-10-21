@@ -9,7 +9,9 @@ leiden_clustering(
   resolution = 1,
   algorithm = c("leiden", "louvain"),
   beta = 0.01,
-  n_iterations = 2L,
+  n_iterations = NULL,
+  min_gain = 0,
+  local_moving = c("queue", "coloured"),
   seed = 42L
 )
 }
@@ -25,8 +27,17 @@ give more communities.}
 \item{beta}{Numeric. Randomness of the Leiden refinement merges. Ignored for
 Louvain.}
 
-\item{n_iterations}{Integer. Number of full iterations, each starting from
-the previous partition.}
+\item{n_iterations}{Optional integer. Number of full iterations, each
+starting from the previous partition. A negative value iterates until the
+partition is stable. If \code{NULL}, \code{5L} for Leiden and \code{2L} for Louvain, which
+gave the best modularity across synthetic graphs.}
+
+\item{min_gain}{Numeric. With a negative \code{n_iterations}, also stop once an
+iteration gains no more than this in modularity.}
+
+\item{local_moving}{String. One of \code{c("queue", "coloured")}. \code{"queue"} is
+Traag's sequential queue. \code{"coloured"} moves the nodes of one colour class
+in parallel, which only kicks in on larger levels of the graph.}
 
 \item{seed}{Integer. Random seed.}
 }

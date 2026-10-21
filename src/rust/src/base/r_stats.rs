@@ -1,7 +1,7 @@
-use bixverse_rs::core::math::matrix_helpers::{col_means, col_sds};
-use bixverse_rs::core::math::stats::*;
-use bixverse_rs::prelude::*;
-use bixverse_rs::utils::vec_utils::split_vector_randomly;
+use bixverse_r::core::math::matrix_helpers::{col_means, col_sds};
+use bixverse_r::core::math::stats::*;
+use bixverse_r::prelude::*;
+use bixverse_r::utils::vec_utils::split_vector_randomly;
 use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;

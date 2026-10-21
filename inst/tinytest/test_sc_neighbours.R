@@ -435,62 +435,97 @@ sc_object <- find_neighbours_sc(
 
 sc_knn_euclidean <- get_knn_mat(sc_object)
 
-bixverse_snn_euclidean_rank <- rs_sc_snn(
-  sc_knn_euclidean,
-  snn_method = "rank",
-  limited_graph = FALSE,
-  pruning = 0,
-  verbose = 0L
+snn_params <- function(similarity) {
+  list(
+    knn_sym = "snn",
+    snn_similarity = similarity,
+    pruning = 0,
+    rescue = FALSE
+  )
+}
+
+# both sides as a sorted (from, to, weight) table, edge order is not part of
+# the contract
+edge_table <- function(edges, weights) {
+  pairs <- matrix(edges, ncol = 2L, byrow = TRUE)
+  dt <- data.table::data.table(
+    from = pmin(pairs[, 1], pairs[, 2]),
+    to = pmax(pairs[, 1], pairs[, 2]),
+    weight = weights
+  )
+  data.table::setorder(dt, from, to)
+  dt
+}
+
+bixverse_snn_euclidean_rank <- with(
+  rs_sc_knn_graph(
+    sc_knn_euclidean,
+    knn_dist = NULL,
+    graph_params = snn_params("rank"),
+    verbose = 0L
+  ),
+  edge_table(edges, weights)
 )
 
-bixverse_snn_euclidean_jaccard <- rs_sc_snn(
-  sc_knn_euclidean,
-  snn_method = "jaccard",
-  limited_graph = FALSE,
-  pruning = 0,
-  verbose = 0L
+bixverse_snn_euclidean_jaccard <- with(
+  rs_sc_knn_graph(
+    sc_knn_euclidean,
+    knn_dist = NULL,
+    graph_params = snn_params("jaccard"),
+    verbose = 0L
+  ),
+  edge_table(edges, weights)
+)
+
+bluster_rank <- with(
+  bluster_snn_euclidean_rank,
+  edge_table(edges, weights)
+)
+bluster_jaccard <- with(
+  bluster_snn_euclidean_jaccard,
+  edge_table(edges, weights)
 )
 
 # rank version
 expect_equal(
-  current = bixverse_snn_euclidean_rank$edges,
-  target = bluster_snn_euclidean_rank$edges,
+  current = bixverse_snn_euclidean_rank[, .(from, to)],
+  target = bluster_rank[, .(from, to)],
   info = paste(
-    "sNN full generation (euclidean; rank)",
+    "sNN generation (euclidean; rank)",
     "between bluster and bixverse - edges"
   )
 )
 
 expect_true(
   current = cor(
-    bixverse_snn_euclidean_rank$weights,
-    bluster_snn_euclidean_rank$weights
+    bixverse_snn_euclidean_rank$weight,
+    bluster_rank$weight
   ) >=
     0.95,
   info = paste(
-    "sNN full generation (euclidean; rank)",
+    "sNN generation (euclidean; rank)",
     "between bluster and bixverse - weights"
   )
 )
 
 # jaccard
 expect_equal(
-  current = bixverse_snn_euclidean_jaccard$edges,
-  target = bluster_snn_euclidean_jaccard$edges,
+  current = bixverse_snn_euclidean_jaccard[, .(from, to)],
+  target = bluster_jaccard[, .(from, to)],
   info = paste(
-    "sNN full generation (euclidean; jaccard)",
+    "sNN generation (euclidean; jaccard)",
     "between bluster and bixverse - edges"
   )
 )
 
 expect_true(
   current = cor(
-    bixverse_snn_euclidean_jaccard$weights,
-    bluster_snn_euclidean_jaccard$weights
+    bixverse_snn_euclidean_jaccard$weight,
+    bluster_jaccard$weight
   ) >=
     0.95,
   info = paste(
-    "sNN full generation (euclidean; jaccard)",
+    "sNN generation (euclidean; jaccard)",
     "between bluster and bixverse - weights"
   )
 )

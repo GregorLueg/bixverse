@@ -135,7 +135,8 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
 #'
 #' The result is stored in the object's `other_data` under `"wnn"`, containing
 #' the fused kNN graph as a `SingleCellNearestNeighbour` (with a kernelised
-#' pseudo-distance metric), the sNN graph as an igraph and a table of per-cell
+#' pseudo-distance metric), the neighbour graph as an igraph and a table of
+#' per-cell
 #' modality weights. This graph can subsequently be used for clustering and 2D
 #' embedding via the `"wnn"` modality.
 #'
@@ -152,18 +153,8 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
 #' use for `embd_to_use_2`. If `NULL`, all will be used.
 #' @param wnn_params Named list. Controls the parameters for the WNN generation,
 #' see [params_sc_wnn()].
-#' @param full_snn Boolean. Shall the full shared nearest neighbour graph be
-#' generated that generates edges between all cells instead of between only
-#' neighbours.
-#' @param pruning Numeric. Weights below this threshold will be set to 0 in the
-#' generation of the sNN graph. Seurat uses for example 1/15 with k = 20.
-#' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
-#' similarity calculates the Jaccard between the neighbours, whereas the rank
-#' method calculates edge weights based on the ranking of shared neighbours. For
-#' the rank method, the weight is determined by finding the shared neighbour
-#' with the lowest combined rank across both cells, where lower-ranked (closer)
-#' shared neighbours result in higher edge weights Both methods produce weights
-#' normalised to the range `⁠[0, 1]`⁠.
+#' @param graph_params Named list. How the fused kNN is turned into the
+#' neighbour graph, see [params_knn_graph_defaults()].
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -195,7 +186,7 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
 #' object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
 #' object <- calculate_pca_adt_sc(object, no_pcs = 10L)
 #' object <- generate_wnn_graph_sc(object, .verbose = FALSE)
-#' get_snn_graph(object, modality = "wnn")
+#' get_connectivities(object, modality = "wnn")
 #'
 #' unlink(dir, recursive = TRUE, force = TRUE)
 generate_wnn_graph_sc <- S7::new_generic(
@@ -210,9 +201,7 @@ generate_wnn_graph_sc <- S7::new_generic(
     no_embd_to_use_1 = NULL,
     no_embd_to_use_2 = NULL,
     wnn_params = params_sc_wnn(),
-    full_snn = TRUE,
-    pruning = 1 / 15,
-    snn_similarity = "jaccard",
+    graph_params = params_knn_graph_defaults(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -230,9 +219,7 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
   no_embd_to_use_1 = NULL,
   no_embd_to_use_2 = NULL,
   wnn_params = params_sc_wnn(),
-  full_snn = TRUE,
-  pruning = 1 / 15,
-  snn_similarity = "jaccard",
+  graph_params = params_knn_graph_defaults(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -245,6 +232,7 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
   checkmate::qassert(no_embd_to_use_1, c("I1", "0"))
   checkmate::qassert(no_embd_to_use_2, c("I1", "0"))
   assertScWnnParams(wnn_params)
+  assertKnnGraphParams(graph_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -303,35 +291,17 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
     weight_modality_2 = wnn_res$modality_two_weights
   )
 
-  if (.verbose) {
-    message(sprintf(
-      "Generating sNN graph (full: %s) from WNN graph.",
-      full_snn
-    ))
-  }
-  snn_graph_rs <- rs_sc_snn(
-    knn_mat = get_knn_mat(wnn_knn),
-    snn_method = snn_similarity,
-    pruning = pruning,
-    limited_graph = !full_snn,
-    verbose = parse_verbosity(.verbose)
-  )
-
-  if (.verbose) {
-    message("Transforming sNN data to igraph.")
-  }
-  snn_g <- igraph::make_empty_graph(n = nrow(embd_1), directed = FALSE)
-  snn_g <- igraph::add_edges(
-    snn_g,
-    snn_graph_rs$edges,
-    attr = list(weight = snn_graph_rs$weights)
+  wnn_graph <- .knn_to_graph(
+    knn = wnn_knn,
+    graph_params = graph_params,
+    .verbose = .verbose
   )
 
   other_data <- S7::prop(object, "other_data")
   other_data[["wnn"]] <- list(
     embeddings = list(),
     knn = wnn_knn,
-    snn = snn_g,
+    connectivities = wnn_graph,
     weights = wnn_weights,
     modality_1 = modality_1,
     modality_2 = modality_2
@@ -352,7 +322,7 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
   )
   object <- .stamp_artefact(
     object,
-    artefact = "snn",
+    artefact = "connectivities",
     modality = "wnn",
     from = "wnn:knn"
   )

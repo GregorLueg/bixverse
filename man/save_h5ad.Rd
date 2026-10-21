@@ -34,7 +34,7 @@ Returns the path to the written file, invisibly.
 }
 \description{
 Writes the counts, the DuckDB obs/var tables and whatever is cached in
-memory (PCA, embeddings, sNN graph) to a spec-compliant h5ad file, so that
+memory (PCA, embeddings, neighbour graph) to a spec-compliant h5ad file, so that
 the experiment can be handed to ScanPy or shared. The counts are streamed
 cell batch by cell batch and never fully materialised in R.
 

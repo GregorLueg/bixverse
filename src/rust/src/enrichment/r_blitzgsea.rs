@@ -1,8 +1,8 @@
-use bixverse_rs::enrichment::blitzgsea::{BlitzGseaParams, blitzgsea_score, calibrate_null};
-use bixverse_rs::enrichment::enrichment_r_wrapper::{
+use bixverse_r::enrichment::blitzgsea::{BlitzGseaParams, blitzgsea_score, calibrate_null};
+use bixverse_r::enrichment_r_wrapper::{
     blitzgsea_null_from_list, blitzgsea_null_to_list,
 };
-use bixverse_rs::prelude::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////

@@ -42,7 +42,7 @@ fitted with \code{\link[=fit_residuals_sc]{fit_residuals_sc()}} instead of the s
 layer. Needs \code{params_sc_pca(normalise_variance = FALSE, clr = FALSE)}, since
 the residuals already carry the signal as variance, and does not support
 \code{sparse_svd}: a residual column is dense even where the counts are not.
-On this dense path the default \code{svd_solver = "covariance"} pays for a full
+On this dense path the default \code{svd_solver = "auto"} pays for a full
 gene x gene cross-product and is slower than \code{svd_solver = "randomised"},
 so pick the latter in \code{\link[=params_sc_pca]{params_sc_pca()}} when speed matters. Not supported
 for \code{MetaCells}.}
@@ -57,9 +57,9 @@ to the object cache in memory.
 }
 \description{
 This function will run PCA on the detected highly variable genes. The
-solver is set via \code{svd_solver} in \code{\link[=params_sc_pca]{params_sc_pca()}}; the default builds the
-gene x gene cross-product from the sparse data, which is exact and the
-fastest option for a few thousand HVGs.
+solver is set via \code{svd_solver} in \code{\link[=params_sc_pca]{params_sc_pca()}}; the default \code{"auto"}
+runs Lanczos on the sparse path and the gene x gene cross-product on the
+dense one, the fastest exact option on each.
 }
 \examples{
 # PCA on the highly variable genes

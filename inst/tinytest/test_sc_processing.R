@@ -1116,7 +1116,7 @@ expect_equal(
 )
 
 expect_true(
-  current = class(get_snn_graph(sc_object)) == "igraph",
+  current = class(get_connectivities(sc_object)) == "igraph",
   info = "igraph correctly returned"
 )
 
@@ -1167,7 +1167,7 @@ expect_warning(
 fast_cluster_res <- fast_cluster_sc(
   object = sc_object,
   return_kmeans = TRUE,
-  n_centroids = 30L,
+  fc_params = params_sc_fast_cluster(n_centroids = 30L),
   .verbose = FALSE
 )
 

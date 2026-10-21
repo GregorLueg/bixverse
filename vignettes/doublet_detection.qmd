@@ -362,10 +362,12 @@ All three methods run their own PCA on the observed and simulated cells. You
 pick the solver via `svd_solver` in the `pca` list. The default here is
 `"randomised"`, a randomised SVD that is approximate in the trailing
 components. `"covariance"` builds the gene x gene cross-product over the HVGs
-and eigendecomposes it, which is exact. It's the default in
-`params_sc_pca()`, but the doublet methods run on more genes and that matrix
-grows with the square of the gene count, so it gets painfully slow here.
-`"exact"` runs Lanczos on the sparse path and a full SVD on the dense one.
+and eigendecomposes it, which is exact, but the doublet
+methods run on more genes and that matrix grows with the square of the gene
+count, so it gets painfully slow here. `"auto"` (the default in
+`params_sc_pca()`) runs Lanczos on the sparse path and the covariance solver on
+the dense one. `"exact"` runs Lanczos on the sparse path and a full SVD on the
+dense one.
 Scrublet and the boosted method also take the HVG method via the `hvg` list,
 including the scran trend:
 

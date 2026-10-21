@@ -295,3 +295,62 @@ meta_cells <- function(meta_cell_data, var_data, meta_cell_method) {
     meta_cell_method = meta_cell_method
   )
 }
+
+## sNN graph accessors ---------------------------------------------------------
+
+#' sNN graph accessors (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Renamed to [bixverse::get_connectivities()],
+#' [bixverse::set_connectivities()] and [bixverse::remove_connectivities()].
+#' The cached graph can be the sNN, the UMAP fuzzy simplicial set or the kNN
+#' union, see [bixverse::params_knn_graph_defaults()].
+#'
+#' @param x The object holding the graph.
+#' @param snn_graph Igraph. The graph to set.
+#' @param ... Passed on to the replacement.
+#'
+#' @returns See the replacements.
+#'
+#' @name snn_graph_deprecated
+#'
+#' @keywords internal
+NULL
+
+#' @rdname snn_graph_deprecated
+#'
+#' @export
+get_snn_graph <- function(x, ...) {
+  lifecycle::deprecate_warn(
+    when = "0.8.0",
+    what = "get_snn_graph()",
+    with = "get_connectivities()"
+  )
+  get_connectivities(x, ...)
+}
+
+#' @rdname snn_graph_deprecated
+#'
+#' @export
+set_snn_graph <- function(x, snn_graph, ...) {
+  lifecycle::deprecate_warn(
+    when = "0.8.0",
+    what = "set_snn_graph()",
+    with = "set_connectivities()"
+  )
+  set_connectivities(x, snn_graph, ...)
+}
+
+#' @rdname snn_graph_deprecated
+#'
+#' @export
+remove_snn_graph <- function(x, ...) {
+  lifecycle::deprecate_warn(
+    when = "0.8.0",
+    what = "remove_snn_graph()",
+    with = "remove_connectivities()"
+  )
+  remove_connectivities(x, ...)
+}

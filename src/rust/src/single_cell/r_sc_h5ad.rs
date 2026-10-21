@@ -2,7 +2,7 @@ use extendr_api::*;
 use std::collections::HashMap;
 use std::path::Path;
 
-use bixverse_rs::prelude::*;
+use bixverse_r::prelude::*;
 use scx_core::api::write::{H5AdBuilder, H5AdOptions};
 use scx_core::ir::{
     Column, ColumnData, DenseMatrix, Embeddings, ObsTable, UnsTable, VarTable, Varm,

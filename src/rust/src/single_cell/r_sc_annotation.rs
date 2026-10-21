@@ -1,12 +1,12 @@
 //! Functions related to cell type label transfer or cell type annotations
 
-use bixverse_rs::graph::graph_label_propagations::{KnnLabPropGraph, SymmetryWeightStrategy};
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_annotation::sc_type::*;
-use bixverse_rs::single_cell::sc_annotation::symphony::*;
-use bixverse_rs::single_cell::sc_batch_correction::harmony::HarmonyParams;
-use bixverse_rs::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
-use bixverse_rs::single_cell::sc_processing::pca::SingleCellPcaParams;
+use bixverse_r::graph::graph_label_propagations::{KnnLabPropGraph, SymmetryWeightStrategy};
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_annotation::sc_type::*;
+use bixverse_r::single_cell::sc_annotation::symphony::*;
+use bixverse_r::single_cell::sc_batch_correction::harmony::HarmonyParams;
+use bixverse_r::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
+use bixverse_r::single_cell::sc_processing::pca::SingleCellPcaParams;
 use extendr_api::*;
 
 use crate::single_cell::utils::process_cell_markers;

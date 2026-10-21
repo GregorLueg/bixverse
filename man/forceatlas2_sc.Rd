@@ -6,7 +6,7 @@
 \usage{
 forceatlas2_sc(
   object,
-  graph = c("knn", "snn"),
+  graph = c("knn", "connectivities"),
   use_knn = TRUE,
   embd_to_use = "pca",
   slot_name = "fa2",
@@ -24,7 +24,8 @@ forceatlas2_sc(
 \arguments{
 \item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
-\item{graph}{String. Which graph to lay out. One of \code{c("knn", "snn")}.
+\item{graph}{String. Which graph to lay out. One of
+\code{c("knn", "connectivities")}.
 Defaults to \code{"knn"}.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
@@ -40,7 +41,7 @@ Defaults to \code{"fa2"}.}
 use. If \code{NULL} all will be used. \code{"knn"} only.}
 
 \item{init_embd}{Optional string. Name of a stored 2D embedding, e.g.
-\code{"umap"}, to initialise the layout with. \code{"snn"} only. Defaults to \code{NULL}.}
+\code{"umap"}, to initialise the layout with. \code{"connectivities"} only. Defaults to \code{NULL}.}
 
 \item{modality}{String. On which modality to run ForceAtlas2. One of
 \code{c("rna", "adt", "wnn")}. The two latter options are only available for
@@ -77,7 +78,8 @@ drifting off. It is what scanpy's \code{draw_graph} does.
 \item \code{"knn"} - The kNN graph (cached if \code{use_knn = TRUE}, otherwise built
 from the chosen embedding), turned into the UMAP fuzzy union graph first.
 This matches scanpy.
-\item \code{"snn"} - The sNN graph from \code{\link[=find_neighbours_sc]{find_neighbours_sc()}}, i.e.
+\item \code{"connectivities"} - The neighbour graph from
+\code{\link[=find_neighbours_sc]{find_neighbours_sc()}}, i.e.
 the same graph the Leiden/Louvain clustering runs on. \code{use_knn},
 \code{embd_to_use}, \code{no_embd_to_use}, \code{k}, \code{knn_method} and \code{nn_params} do not
 apply here, and neither do the graph and initialisation knobs in
@@ -86,16 +88,16 @@ otherwise the layout starts from random positions.
 }
 }
 \examples{
-# ForceAtlas2 on the cached kNN graph, then on the sNN graph
+# ForceAtlas2 on the cached kNN graph, then on the neighbour graph
 sc <- demo_single_cells()
 sc <- forceatlas2_sc(sc, .verbose = FALSE)
 sc <- forceatlas2_sc(
   sc,
-  graph = "snn",
-  slot_name = "fa2_snn",
+  graph = "connectivities",
+  slot_name = "fa2_graph",
   .verbose = FALSE
 )
-dim(get_embedding(sc, "fa2_snn"))
+dim(get_embedding(sc, "fa2_graph"))
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }

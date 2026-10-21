@@ -1,6 +1,6 @@
-use bixverse_rs::methods::cis_target::*;
-use bixverse_rs::methods::methods_r_wrapper::motif_enrichments_to_r_list;
-use bixverse_rs::prelude::*;
+use bixverse_r::methods::cis_target::*;
+use bixverse_r::methods_r_wrapper::motif_enrichments_to_r_list;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 use rayon::prelude::*;

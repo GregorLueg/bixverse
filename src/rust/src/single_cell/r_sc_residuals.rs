@@ -10,24 +10,24 @@
 //! against `ResidualSource`, so the variance, PCA and correction bindings take
 //! whichever model the list carries.
 
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_data::bin_merge_io::gene_store_to_cell_store;
-use bixverse_rs::single_cell::sc_data::data_io::{ParallelSparseReader, SingleCellReading};
-use bixverse_rs::single_cell::sc_processing::analytic_pearson::model::{AprParams, AprResiduals};
-use bixverse_rs::single_cell::sc_processing::analytic_pearson::stream::{
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::sc_data::bin_merge_io::gene_store_to_cell_store;
+use bixverse_r::single_cell::sc_data::data_io::{ParallelSparseReader, SingleCellReading};
+use bixverse_r::single_cell::sc_processing::analytic_pearson::model::{AprParams, AprResiduals};
+use bixverse_r::single_cell::sc_processing::analytic_pearson::stream::{
     apr_gene_pass, build_apr_model, cell_totals_over_genes, fit_analytic_pearson_grouped,
     AprGroupedFit,
 };
-use bixverse_rs::single_cell::sc_processing::hvg::select_residual_hvg;
-use bixverse_rs::single_cell::sc_processing::pca::{pca_on_sc_residuals, SingleCellPcaParams};
-use bixverse_rs::single_cell::sc_processing::residuals::{
+use bixverse_r::single_cell::sc_processing::hvg::select_residual_hvg;
+use bixverse_r::single_cell::sc_processing::pca::{pca_on_sc_residuals, SingleCellPcaParams};
+use bixverse_r::single_cell::sc_processing::residuals::{
     intersect_gene_sets, residual_variance, ResidualSource,
 };
-use bixverse_rs::single_cell::sc_processing::sctransform::model::{
+use bixverse_r::single_cell::sc_processing::sctransform::model::{
     SctCellContext, SctCovariates, SctParams,
 };
-use bixverse_rs::single_cell::sc_processing::sctransform::residuals::SctResiduals;
-use bixverse_rs::single_cell::sc_processing::sctransform::stream::{
+use bixverse_r::single_cell::sc_processing::sctransform::residuals::SctResiduals;
+use bixverse_r::single_cell::sc_processing::sctransform::stream::{
     fit_sctransform, fit_sctransform_grouped, sct_corrected_counts, SctGroupedFit, SctStreamOpts,
 };
 use extendr_api::prelude::*;
@@ -288,7 +288,7 @@ pub(crate) fn parse_residual_fit(
 /// Whatever the closure returned, or the first error either side raised.
 pub(crate) fn with_residual_source<R>(
     fit: &RResidualFit,
-    f: impl FnOnce(&dyn ResidualSource) -> std::result::Result<R, BixverseErrors>,
+    f: impl FnOnce(&dyn ResidualSource) -> std::result::Result<R, ScErrors>,
 ) -> Result<R, extendr_api::Error> {
     match fit {
         RResidualFit::Sct {
@@ -553,7 +553,7 @@ fn fit_sct_on_reader<S: SingleCellReading>(
     covariates: &SctCovariates,
     params: &SctParams,
     opts: SctStreamOpts,
-) -> std::result::Result<SctGroupedFit, BixverseErrors> {
+) -> std::result::Result<SctGroupedFit, ScErrors> {
     match groups {
         // A single fit is not the one-group case of the grouped fit: it
         // subsamples for step 1 over the whole selection.
@@ -610,7 +610,7 @@ fn fit_apr_on_readers<G: SingleCellReading, C: SingleCellReading>(
     groups: Option<&[u32]>,
     params: &AprParams,
     opts: SctStreamOpts,
-) -> std::result::Result<AprGroupedFit, BixverseErrors> {
+) -> std::result::Result<AprGroupedFit, ScErrors> {
     match groups {
         None => {
             let pass = apr_gene_pass(gene_reader, cell_set, params, opts)?;

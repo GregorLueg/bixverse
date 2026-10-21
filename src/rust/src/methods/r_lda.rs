@@ -1,6 +1,7 @@
-use bixverse_rs::methods::lda::{LdaParams, lda_fit, lda_k_sweep};
-use bixverse_rs::methods::methods_r_wrapper::{lda_result_to_r_list, lda_sweep_to_r_list};
-use bixverse_rs::prelude::*;
+use bixverse_r::methods_r_wrapper::lda_params_from_r_list;
+use bixverse_r::methods::lda::{LdaParams, lda_fit, lda_k_sweep};
+use bixverse_r::methods_r_wrapper::{lda_result_to_r_list, lda_sweep_to_r_list};
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////
@@ -58,7 +59,7 @@ fn rs_lda(
 ) -> Result<List, extendr_api::Error> {
     let sparse: CompressedSparseData2<f64, f64> =
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let lda_opt: LdaParams<f64> = LdaParams::from_r_list(lda_params, seed)?;
+    let lda_opt: LdaParams<f64> = lda_params_from_r_list(lda_params, seed)?;
     let model = lda_fit(&sparse, k, Some(lda_opt), verbose).to_extendr()?;
 
     lda_result_to_r_list(&model)
@@ -114,7 +115,7 @@ fn rs_lda_k_sweep(
     let k_range = k_range.r_int_convert();
     let sparse: CompressedSparseData2<f64, f64> =
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let lda_opt: LdaParams<f64> = LdaParams::from_r_list(lda_params, seed)?;
+    let lda_opt: LdaParams<f64> = lda_params_from_r_list(lda_params, seed)?;
     let sweep = lda_k_sweep(&sparse, &k_range, Some(lda_opt), top_topics_coh, verbose)
         .to_extendr()?;
 

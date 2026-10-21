@@ -393,17 +393,18 @@ ForceAtlas2 is a force-directed layout of the neighbour graph: edges pull,
 every pair of cells pushes, gravity keeps the lot together. It is what scanpy's
 `draw_graph()` does, and a common pick for data with continuous transitions
 (think differentiation). `graph = "knn"` lays out the kNN graph the same
-way scanpy does. `graph = "snn"` lays out the sNN graph the Leiden clustering
-ran on, here started from the UMAP via `init_embd`.
+way scanpy does. `graph = "connectivities"` lays out the neighbour graph the
+Leiden clustering ran on (the sNN graph by default), here started from the UMAP
+via `init_embd`.
 
 ```{r}
 #| label: fa2-embeddings
 sc_object <- forceatlas2_sc(sc_object, .verbose = FALSE)
 sc_object <- forceatlas2_sc(
   sc_object,
-  graph = "snn",
+  graph = "connectivities",
   init_embd = "umap",
-  slot_name = "fa2_snn",
+  slot_name = "fa2_graph",
   .verbose = FALSE
 )
 ```
@@ -412,9 +413,9 @@ sc_object <- forceatlas2_sc(
 #| label: fa2-plots
 #| fig-width: 10
 #| fig-height: 4.5
-#| fig-cap: "ForceAtlas2 on the kNN graph (left) and on the sNN graph (right), coloured by cell type."
+#| fig-cap: "ForceAtlas2 on the kNN graph (left) and on the neighbour graph (right), coloured by cell type."
 fa2_plots <- purrr::map(
-  c("fa2", "fa2_snn"),
+  c("fa2", "fa2_graph"),
   \(embd) {
     embedding_plot_sc(
       sc_object,

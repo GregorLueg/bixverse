@@ -872,7 +872,7 @@ solver_runs <- list(
 )
 
 for (method in names(solver_runs)) {
-  for (solver in c("covariance", "randomised", "exact")) {
+  for (solver in c("auto", "covariance", "randomised", "exact")) {
     predicted <- solver_runs[[method]](solver)
     metrics <- metrics_helper(cm = table(new_obs$doublet, predicted))
     expect_true(

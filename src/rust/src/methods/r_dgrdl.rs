@@ -1,5 +1,5 @@
-use bixverse_rs::methods::dgrdl::*;
-use bixverse_rs::prelude::*;
+use bixverse_r::methods::dgrdl::*;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////

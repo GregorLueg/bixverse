@@ -8,8 +8,8 @@
 //! bind the pieces together, the same way `new_nmf_result()` does for the
 //! single-run fits.
 
-use bixverse_rs::methods::nmf_hals::consensus::{ConsensusNmfResult, KSweepEntry};
-use bixverse_rs::prelude::*;
+use bixverse_r::methods::nmf_hals::consensus::{ConsensusNmfResult, KSweepEntry};
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////////

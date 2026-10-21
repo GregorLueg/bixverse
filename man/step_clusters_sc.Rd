@@ -9,7 +9,8 @@ step_clusters_sc(
   res = 1,
   name = "leiden_clustering",
   modality = c("rna", "adt", "wnn"),
-  seed = 42L
+  seed = 42L,
+  ...
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ step_clusters_sc(
 multi-modal versions with the added data.}
 
 \item{seed}{Integer. For reproducibility.}
+
+\item{...}{Further parameters for \code{\link[=leiden_clustering]{leiden_clustering()}}: \code{n_iterations},
+\code{beta}, \code{min_gain} and \code{local_moving}.}
 }
 \value{
 An \code{ScStep}.

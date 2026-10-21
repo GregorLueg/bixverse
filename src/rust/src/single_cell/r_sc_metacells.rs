@@ -1,10 +1,10 @@
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::mc_analysis::metacell_density::*;
-use bixverse_rs::single_cell::mc_generation::cell_aggregation_utils::*;
-use bixverse_rs::single_cell::mc_generation::hdwgcna_meta_cells::*;
-use bixverse_rs::single_cell::mc_generation::seacells::*;
-use bixverse_rs::single_cell::mc_generation::super_cells::*;
-use bixverse_rs::single_cell::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::mc_analysis::metacell_density::*;
+use bixverse_r::single_cell::mc_generation::cell_aggregation_utils::*;
+use bixverse_r::single_cell::mc_generation::hdwgcna_meta_cells::*;
+use bixverse_r::single_cell::mc_generation::seacells::*;
+use bixverse_r::single_cell::mc_generation::super_cells::*;
+use bixverse_r::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
 use extendr_api::*;
 use faer::Mat;
 use rustc_hash::FxHashMap;
@@ -856,7 +856,8 @@ fn rs_supercell(
         &supercell_params,
         n_meta_cells,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
     let assignments_subset_opt: Vec<Option<usize>> =
         membership_subset.iter().map(|&x| Some(x)).collect();

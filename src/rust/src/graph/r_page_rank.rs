@@ -1,12 +1,9 @@
-use bixverse_rs::graph::graph_structures::{
-    graph_from_strings, graph_from_strings_with_attributes,
-};
-use bixverse_rs::graph::page_rank::*;
-use bixverse_rs::methods::graph_diffusions::tied_diffusion_parallel;
-use bixverse_rs::prelude::*;
+use bixverse_r::graph::graph_structures::graph_from_strings_with_attributes;
+use bixverse_r::graph::page_rank::*;
+use bixverse_r::methods::graph_diffusions::tied_diffusion_parallel;
+use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 
-use petgraph::Graph;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::sync::Arc;
@@ -51,6 +48,7 @@ extendr_module! {
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_page_rank(
     node_names: Vec<String>,
     from: Vec<String>,
@@ -61,10 +59,9 @@ fn rs_page_rank(
     damping_factor: f64,
     tol: f64,
 ) -> Vec<f64> {
-    let graph = graph_from_strings(&node_names, &from, &to, weights, undirected);
+    let graph = PageRankGraph::from_strings(&node_names, &from, &to, weights, undirected);
 
-    // Arc version not needed here, as single run
-    personalised_page_rank(graph, damping_factor, personalised, 1000, Some(tol))
+    personalised_page_rank(&graph, damping_factor, personalised, 1000, Some(tol))
 }
 
 /// Calculate massively parallelised personalised page rank scores
@@ -95,6 +92,7 @@ fn rs_page_rank(
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_page_rank_parallel(
     node_names: Vec<String>,
     from: Vec<String>,
@@ -105,10 +103,13 @@ fn rs_page_rank_parallel(
     damping_factor: f64,
     tol: f64,
 ) -> extendr_api::Result<RArray<f64, 2>> {
-    let graph = graph_from_strings(&node_names, &from, &to, weights, undirected);
-
-    // Pre-process graph once
-    let pagerank_graph = Arc::new(PageRankGraph::from_petgraph(graph));
+    let pagerank_graph = Arc::new(PageRankGraph::from_strings(
+        &node_names,
+        &from,
+        &to,
+        weights,
+        undirected,
+    ));
 
     let mut personalise_vecs: Vec<Vec<f64>> = Vec::with_capacity(diffusion_scores.len());
     for i in 0..diffusion_scores.len() {
@@ -254,7 +255,7 @@ fn rs_constrained_page_rank(
     sink_nodes: Option<Vec<String>>,
     sink_edges: Option<Vec<String>>,
 ) -> Vec<f64> {
-    let graph: Graph<NodeData, EdgeData<f64>> = graph_from_strings_with_attributes(
+    let graph = graph_from_strings_with_attributes(
         &node_names,
         &node_types,
         &from,
@@ -331,7 +332,7 @@ fn rs_constrained_page_rank_list(
         personalisation_vectors.push(num_data);
     }
 
-    let graph: Graph<NodeData, EdgeData<f64>> = graph_from_strings_with_attributes(
+    let graph = graph_from_strings_with_attributes(
         &node_names,
         &node_types,
         &from,

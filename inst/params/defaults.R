@@ -3,6 +3,97 @@
 # These are merged into the single cell constructors via p_merge(), so their
 # rules are also the rules the merged elements are checked against.
 
+spec_knn_graph_defaults <- param_defaults(
+  name = "knn_graph_defaults",
+  title = "Helper function to generate the kNN graph defaults",
+  description = paste(
+    "Controls how a kNN is turned into the undirected, weighted graph that",
+    "the clustering runs on. `\"snn\"` is the shared nearest neighbour graph",
+    "of bluster/Seurat, `\"umap\"` the fuzzy simplicial set ScanPy builds",
+    "(its `obsp/connectivities`) and `\"knn\"` the plain kNN union. Each",
+    "method only reads its own parameters."
+  ),
+  references = paste(
+    "Xu & Su, Bioinformatics, 2015; McInnes, et al., arXiv, 2018."
+  ),
+  checker = "KnnGraph",
+  label = "kNN graph params",
+  hint = paste(
+    "pruning must be in [0, 1]; local_connectivity must be >= 0; mix_ratio",
+    "must be in [0, 1]; rescue and binary must be single booleans."
+  ),
+  fields = list(
+    knn_sym = p_choice(
+      "snn",
+      c("snn", "umap", "knn"),
+      doc = paste(
+        "How to symmetrise the kNN into a graph. Clustering resolutions do",
+        "not carry over between the methods: the `\"umap\"` and `\"knn\"`",
+        "graphs only hold kNN pairs, the sNN graph also links cells that",
+        "share neighbours and prunes weak edges. The same resolution can",
+        "give more or fewer communities depending on the data, so retune it",
+        "when switching."
+      )
+    ),
+    snn_similarity = p_choice(
+      "jaccard",
+      c("jaccard", "rank"),
+      doc = paste(
+        "`\"snn\"` only. `\"jaccard\"` weighs an edge by the Jaccard index",
+        "of the two (self-inclusive) neighbour sets. `\"rank\"` takes the",
+        "shared neighbour with the lowest combined rank, so closer shared",
+        "neighbours give heavier edges. Both are scaled to `[0, 1]`."
+      )
+    ),
+    pruning = p_dbl(
+      1 / 16,
+      range = "[0, 1]",
+      doc = paste(
+        "`\"snn\"` only. Edges below this weight are dropped. For the",
+        "Jaccard weight a threshold `p` keeps pairs that share at least a",
+        "fraction `2p / (1 + p)` of their (self-inclusive) neighbourhoods,",
+        "rounded up to whole cells, so the same value means the same thing",
+        "at any `k`. The default asks for about 12%, i.e. 2 of 16 shared",
+        "cells at `k = 15`, in line with Seurat's `1/15`. Avoid a threshold",
+        "that equals one of the discrete weights exactly, or float rounding",
+        "decides whether the edge survives."
+      )
+    ),
+    rescue = p_lgl(
+      TRUE,
+      doc = paste(
+        "`\"snn\"` only. Reconnect the small components that pruning cuts",
+        "off via their strongest sNN edge, so they do not turn up as tiny",
+        "clusters."
+      )
+    ),
+    local_connectivity = p_dbl(
+      1,
+      range = "[0,)",
+      doc = paste(
+        "`\"umap\"` only. Number of nearest neighbours assumed to be fully",
+        "connected, as in umap-learn."
+      )
+    ),
+    mix_ratio = p_dbl(
+      1,
+      range = "[0, 1]",
+      doc = paste(
+        "`\"umap\"` only. `1` is the fuzzy union of the directed kNN",
+        "memberships, `0` the fuzzy intersection (umap-learn's",
+        "`set_op_mix_ratio`)."
+      )
+    ),
+    binary = p_lgl(
+      FALSE,
+      doc = paste(
+        "`\"knn\"` only. If `TRUE`, every edge weighs 1. Otherwise mutual",
+        "neighbours weigh 2 and one-sided ones 1."
+      )
+    )
+  )
+)
+
 spec_knn_defaults <- param_defaults(
   name = "knn_defaults",
   title = "Helper function to generate kNN defaults",
@@ -251,13 +342,15 @@ spec_pca_defaults <- param_defaults(
     no_pcs = p_int(30L, range = "[1,)", doc = "Number of PCs to consider."),
     svd_solver = p_choice(
       "randomised",
-      c("randomised", "covariance", "exact"),
+      c("randomised", "auto", "covariance", "exact"),
       doc = paste(
         "Which solver to use. `\"randomised\"` (default) is a randomised",
         "SVD, approximate in the trailing components. `\"covariance\"`",
         "builds the gene x gene cross-product and eigendecomposes it.",
-        "`\"exact\"` is Lanczos on the sparse path and a full SVD on the",
-        "dense one. See [params_sc_pca()] for the trade-offs."
+        "`\"auto\"` takes Lanczos on the sparse path and `\"covariance\"`",
+        "on the dense one. `\"exact\"` is Lanczos on the sparse path and a",
+        "full SVD on the dense one. See [params_sc_pca()] for the",
+        "trade-offs."
       )
     )
   )
@@ -272,7 +365,7 @@ spec_fast_cluster_default <- param_defaults(
   checker = "FastClusterDefault",
   label = "FastCluster params",
   hint = paste(
-    "batch_size and kmeans_iters must be integers; n_centroids must be an",
+    "batch_size and k_means_iter must be integers; n_centroids must be an",
     "integer or NULL."
   ),
   fields = list(
@@ -289,7 +382,7 @@ spec_fast_cluster_default <- param_defaults(
         "`sqrt(N_cells) * 4` centroids."
       )
     ),
-    kmeans_iters = p_int(
+    k_means_iter = p_int(
       100L,
       doc = "Number of maximum k-means iterations."
     ),

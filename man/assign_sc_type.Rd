@@ -32,7 +32,7 @@ An \code{ScTypeCellResults} results class.
 The cluster-level ScType path (\code{\link[=score_clusters]{score_clusters()}}) stamps one label on every
 cell of a cluster, so a minority population sharing a Leiden community with a
 bigger one gets absorbed without anything flagging it. This runs the scoring
-per cell instead: the score matrix is smoothed over the sNN graph via label
+per cell instead: the score matrix is smoothed over the neighbour graph via label
 spreading (Zhou et al.), then each cell takes its own argmax. Cells whose best
 score falls below \code{score_floor} come back as \code{NA}.
 

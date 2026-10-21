@@ -204,7 +204,14 @@ checkScMiloR <- function(x) {
     list(
       refinement_strategy = c("approximate", "bruteforce", "index"),
       index_type = c("nndescent", "ivf", "hnsw", "annoy", "exhaustive"),
-      knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
+      knn_method = c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "ivf",
+        "exhaustive"
+      ),
       ann_dist = c("euclidean", "cosine")
     ),
     label = "MiloR params"

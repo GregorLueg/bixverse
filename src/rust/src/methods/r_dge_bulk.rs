@@ -4,13 +4,12 @@
 //! voom and `removeBatchEffect`.
 //!
 //! The numerics are `edge-rs`, the two chains assembled in
-//! [`bixverse_rs::methods::dge_bulk`]. Anything with a counts matrix of the
+//! [`bixverse_r::methods::dge_bulk`]. Anything with a counts matrix of the
 //! tested axis by samples goes through here, so both plain bulk and Milo's
 //! neighbourhood counts use `rs_edger_ql`.
 
-use bixverse_rs::methods::dge_bulk::{run_edger_ql, run_limma_dge, EdgeRQlParams, LimmaParams};
-use bixverse_rs::methods::methods_r_wrapper::TestedFromR;
-use bixverse_rs::prelude::*;
+use bixverse_r::methods::dge_bulk::{run_edger_ql, run_limma_dge, EdgeRQlParams, LimmaParams};
+use bixverse_r::prelude::*;
 use edge_rs::core::expression::cpm;
 use edge_rs::core::filtering::{filter_by_expr, FilterParams};
 use edge_rs::core::normalisation::{calc_norm_factors, parse_norm_method};

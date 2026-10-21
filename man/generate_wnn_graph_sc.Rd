@@ -13,9 +13,7 @@ generate_wnn_graph_sc(
   no_embd_to_use_1 = NULL,
   no_embd_to_use_2 = NULL,
   wnn_params = params_sc_wnn(),
-  full_snn = TRUE,
-  pruning = 1/15,
-  snn_similarity = "jaccard",
+  graph_params = params_knn_graph_defaults(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -42,20 +40,8 @@ use for \code{embd_to_use_2}. If \code{NULL}, all will be used.}
 \item{wnn_params}{Named list. Controls the parameters for the WNN generation,
 see \code{\link[=params_sc_wnn]{params_sc_wnn()}}.}
 
-\item{full_snn}{Boolean. Shall the full shared nearest neighbour graph be
-generated that generates edges between all cells instead of between only
-neighbours.}
-
-\item{pruning}{Numeric. Weights below this threshold will be set to 0 in the
-generation of the sNN graph. Seurat uses for example 1/15 with k = 20.}
-
-\item{snn_similarity}{String. One of \code{c("rank", "jaccard")}. The Jaccard
-similarity calculates the Jaccard between the neighbours, whereas the rank
-method calculates edge weights based on the ranking of shared neighbours. For
-the rank method, the weight is determined by finding the shared neighbour
-with the lowest combined rank across both cells, where lower-ranked (closer)
-shared neighbours result in higher edge weights Both methods produce weights
-normalised to the range \verb{⁠[0, 1]}⁠.}
+\item{graph_params}{Named list. How the fused kNN is turned into the
+neighbour graph, see \code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}}.}
 
 \item{seed}{Integer. For reproducibility.}
 
@@ -82,7 +68,8 @@ search.
 
 The result is stored in the object's \code{other_data} under \code{"wnn"}, containing
 the fused kNN graph as a \code{SingleCellNearestNeighbour} (with a kernelised
-pseudo-distance metric), the sNN graph as an igraph and a table of per-cell
+pseudo-distance metric), the neighbour graph as an igraph and a table of
+per-cell
 modality weights. This graph can subsequently be used for clustering and 2D
 embedding via the \code{"wnn"} modality.
 }
@@ -105,7 +92,7 @@ object <- find_hvg_sc(object, hvg_no = 30L, .verbose = FALSE)
 object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
 object <- calculate_pca_adt_sc(object, no_pcs = 10L)
 object <- generate_wnn_graph_sc(object, .verbose = FALSE)
-get_snn_graph(object, modality = "wnn")
+get_connectivities(object, modality = "wnn")
 
 unlink(dir, recursive = TRUE, force = TRUE)
 }

@@ -99,10 +99,9 @@ object, and 30 neighbours is what the reference uses. The distance metric has to
 be euclidean, since the diffusion kernel is a Gaussian over a metric distance
 and cosine is not one.
 
-`pruning` has to move with `k`. The default of `1/12` is set for the default
-`k = 15`, and since the threshold is a share of the neighbourhood, leaving it
-alone at `k = 30` prunes twice as hard. Nothing errors, you just get cells with
-too few shared neighbours dropping out as one-cell clusters.
+`pruning` does not have to move with `k`. A Jaccard threshold `p` asks two
+cells to share a fraction `2p / (1 + p)` of their neighbourhoods, whatever `k`
+is, so the default `1/16` keeps the same ~12% at `k = 30` as at `k = 15`.
 
 ```{r}
 #| label: hvg pca neighbours
@@ -119,7 +118,6 @@ sc_object <- calculate_pca_sc(
 sc_object <- find_neighbours_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
-    pruning = 1 / 24,
     knn = list(k = 30L, ann_dist = "euclidean")
   )
 )
@@ -571,11 +569,11 @@ ggplot(
 Palantir has more moving parts than most methods in this package, and several of
 them fail quietly rather than loudly. In rough order of how often they bite:
 
-- **`pruning` left at its default.** Covered above, and the only one on this
-  list that is upstream of Palantir entirely. It costs you clusters, not
-  pseudotime, but a one-cell cluster then walks into PAGA and comes back out as
-  a fat edge into a dot, because the null model has almost no possible edges to
-  normalise against.
+- **Pruning too hard.** Upstream of Palantir entirely. It costs you clusters,
+  not pseudotime, but a one-cell cluster then walks into PAGA and comes back
+  out as a fat edge into a dot, because the null model has almost no possible
+  edges to normalise against. `rescue = TRUE` (the default) reconnects the
+  small components pruning cuts off, so this mainly bites with it switched off.
 - **The start cell.** Covered above. Set `use_early_cell_as_start = FALSE` to
   get the reference behaviour and it can move your root onto a branch tip. If
   pseudotime comes back anti-correlated with what you expect, check `start_cell`
