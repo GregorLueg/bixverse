@@ -41,7 +41,7 @@ bixverse-r = { version = "0.9.0", default-features = false, features = [
 ] }
 edge-rs = "0.3.0"
 extendr-api = "0.9.0"
-faer = { version = '0.24.4' }
+faer = { version = "0.24.4", default-features = false, features = ["std", "rayon", "sparse-linalg", "rand"] }
 half = { version = "2.7.1", features = ["serde"] }
 rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
@@ -58,14 +58,6 @@ thousands = "*"
 bixverse-r = { version = "0.9.0", default-features = false, features = [
     "hdf5-filters",
 ] }
-
-# Branch of bixverse-rs in flight; back to the released crates once it ships
-[patch.crates-io]
-bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-sc-data-improv" }
-bixverse-core = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-sc-data-improv" }
-bixverse-methods = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-sc-data-improv" }
-bixverse-sc-data = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-sc-data-improv" }
-bixverse-sc = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-sc-data-improv" }
 
 [[bin]]
 name = "document"

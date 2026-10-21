@@ -496,7 +496,8 @@ dependencies = [
 [[package]]
 name = "bixverse-core"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efe3c29b064068dd54ac25e4b90e49eaa6464587a41ec090cef5352cfcc8713c"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -518,7 +519,8 @@ dependencies = [
 [[package]]
 name = "bixverse-gpu"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "342debbb2b6363d1aea84ca01c8949c3a6dde139720ed7846e6885f8d3266c7e"
 dependencies = [
  "ann-search-rs",
  "bixverse-core",
@@ -538,7 +540,8 @@ dependencies = [
 [[package]]
 name = "bixverse-methods"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "646ad31d3e660697185ffc71cce4d1e066fdd4013d245c3d65a9ac673c472517"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -559,7 +562,8 @@ dependencies = [
 [[package]]
 name = "bixverse-r"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c419ea0194770fe21bf8f8dd62fedd557d824300908a3c3a1a121ae44692781"
 dependencies = [
  "ann-search-rs",
  "bixverse-rs",
@@ -578,7 +582,8 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cb79e5f7f4d97279c893698fffcb8d4b501c71ceb8386a512f3ee89b2db2b97"
 dependencies = [
  "bixverse-core",
  "bixverse-methods",
@@ -592,7 +597,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sc"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e418cbf438f87ec1d1b495037426f13994a6893c28a62b64c9cfc74f36dd2b6a"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -617,7 +623,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sc-data"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6e0fedb493d05b990146d23672cebfbb62e97626bd054071f2f684f74b838d1"
 dependencies = [
  "approx 0.5.1",
  "bincode",
@@ -645,7 +652,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sc-gpu"
 version = "0.9.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-sc-data-improv#466fe2190a4b5f240695c17154e7815d81cf0672"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d361c8edb76708a83a92be961dd0252e9c6f07d1ab7fb9906069d2adb5e32f15"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -2085,9 +2093,9 @@ checksum = "e1d926b4d407d372f141f93bb444696142c29d32962ccbd3531117cf3aa0bfa9"
 
 [[package]]
 name = "edge-rs"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb51650f7bbdf1b886d87aedc89b1147b746415ed41e87a6189755188812634c"
+checksum = "5ac5cec71fa5becf0d6321ffd85a2e78152acbb724248a317cf6901b57ce8fbd"
 dependencies = [
  "cubecl",
  "cubecl-utils-rs",
@@ -2343,7 +2351,6 @@ dependencies = [
  "generativity",
  "libm",
  "nano-gemm",
- "npyz",
  "num-complex 0.4.6",
  "num-traits",
  "private-gemm-x86",
@@ -3891,17 +3898,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "npyz"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f0e759e014e630f90af745101b614f761306ddc541681e546649068e25ec1b9"
-dependencies = [
- "byteorder",
- "num-bigint",
- "py_literal",
-]
-
-[[package]]
 name = "ntapi"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4259,48 +4255,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
-name = "pest"
-version = "2.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45d3aca230fad2e6f6317ca0a72724338c4960cb97168a85cdee66df4a9a21a8"
-dependencies = [
- "memchr",
- "ucd-trie",
-]
-
-[[package]]
-name = "pest_derive"
-version = "2.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "284b60557f2c4a2e72ad3f2d34d42685a2fa4a6a61d0d2a10c0ae2a5e916c2cf"
-dependencies = [
- "pest",
- "pest_generator",
-]
-
-[[package]]
-name = "pest_generator"
-version = "2.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d9d1f08a115309ee99268cf85e5228e0e56aa9caf8841ec12866b6be07c3109"
-dependencies = [
- "pest",
- "pest_meta",
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "pest_meta"
-version = "2.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed93ba1a9ffcca32130a5188701c81c0c49cf00d4b7c5007d5148951d743adcb"
-dependencies = [
- "pest",
-]
-
-[[package]]
 name = "pin-project-lite"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4603,19 +4557,6 @@ name = "pulp-wasm-simd-flag"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d8f70e07b9c3962945a74e59ca1c511bba65b6419468acc217c457d93f3c740"
-
-[[package]]
-name = "py_literal"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "102df7a3d46db9d3891f178dcc826dc270a6746277a9ae6436f8d29fd490a8e1"
-dependencies = [
- "num-bigint",
- "num-complex 0.4.6",
- "num-traits",
- "pest",
- "pest_derive",
-]
 
 [[package]]
 name = "qd"
@@ -6101,12 +6042,6 @@ name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
-
-[[package]]
-name = "ucd-trie"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2896d95c02a80c6d6a5d6e953d479f5ddf2dfdb6a244441010e373ac0fb88971"
 
 [[package]]
 name = "uncased"
