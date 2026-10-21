@@ -363,6 +363,39 @@ Invisible \code{NULL}.
 }
 }
 
+\subsection{Method \code{get_file_versions}}{
+Read the file format versions of both binaries
+
+\subsection{description}{
+Only reads the 64 byte header of each file, so it is cheap on large
+stores.
+
+}
+\subsection{returns}{
+An integer vector \code{c(cells, genes)} with the file versions.
+}
+}
+
+\subsection{Method \code{upgrade_to_v4}}{
+Convert both binaries to the v4 file format in place
+
+\subsection{Arguments}{
+\describe{
+\item{\code{codec}}{(\code{character})\cr One of \code{"lz4"}, \code{"zstd"} or \code{"none"}.}
+\item{\code{keep_backup}}{(\code{logical})\cr Keep the original files as \verb{<path>.v3.bak}.}
+\item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
+}}
+\subsection{description}{
+Converts into temporary files, checks the result opens and matches,
+then swaps it in. A failure leaves the store untouched. Must not run
+while anything else holds the files open.
+
+}
+\subsection{returns}{
+Invisible \code{NULL}.
+}
+}
+
 \subsection{Method \code{get_genes_by_indices}}{
 Return genes by index positions
 

@@ -5,8 +5,9 @@ use std::time::Instant;
 
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::sc_data::{
-    archive_io::*, bin_merge_io::*, gene_file_io::*, h5_10x_io::*, h5_10x_multifile_io::*,
-    h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
+    archive_io::*, bin_merge_io::*, data_io::peek_file_version, gene_file_io::*, h5_10x_io::*,
+    h5_10x_multifile_io::*, h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*,
+    r_obj_io::*, v4_io::{upgrade_store_to_v4, ChunkCodec},
 };
 use bixverse_r::single_cell::sc_processing::cellsweep::{
     run_cellsweep, CellSweepParams, CellSweepSample,
@@ -1144,6 +1145,66 @@ impl SingleCellCountData {
             &self.f_path_cells,
             &self.f_path_genes,
             max_nnz,
+            verbose,
+        )
+        .to_extendr()
+    }
+
+    /////////////////
+    // File format //
+    /////////////////
+
+    /// Read the file format versions of both binaries
+    ///
+    /// @description
+    /// Only reads the 64 byte header of each file, so it is cheap on large
+    /// stores.
+    ///
+    /// @returns An integer vector `c(cells, genes)` with the file versions.
+    pub fn get_file_versions(&self) -> Result<Vec<i32>, extendr_api::Error> {
+        let cells = peek_file_version(&self.f_path_cells).to_extendr()?;
+        let genes = peek_file_version(&self.f_path_genes).to_extendr()?;
+
+        Ok(vec![cells as i32, genes as i32])
+    }
+
+    /// Convert both binaries to the v4 file format in place
+    ///
+    /// @description
+    /// Converts into temporary files, checks the result opens and matches,
+    /// then swaps it in. A failure leaves the store untouched. Must not run
+    /// while anything else holds the files open.
+    ///
+    /// @param codec (`character`)\cr
+    /// One of `"lz4"`, `"zstd"` or `"none"`.
+    /// @param keep_backup (`logical`)\cr
+    /// Keep the original files as `<path>.v3.bak`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @returns Invisible `NULL`.
+    pub fn upgrade_to_v4(
+        &self,
+        codec: &str,
+        keep_backup: bool,
+        verbose: bool,
+    ) -> Result<(), extendr_api::Error> {
+        let codec = match codec {
+            "lz4" => ChunkCodec::Lz4,
+            "zstd" => ChunkCodec::Zstd,
+            "none" => ChunkCodec::None,
+            _ => {
+                return Err(extendr_api::Error::Other(format!(
+                    "Unknown codec '{codec}'. Use one of 'lz4', 'zstd' or 'none'."
+                )))
+            }
+        };
+
+        upgrade_store_to_v4(
+            &self.f_path_cells,
+            Some(&self.f_path_genes),
+            codec,
+            keep_backup,
             verbose,
         )
         .to_extendr()

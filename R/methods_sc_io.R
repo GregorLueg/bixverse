@@ -2633,9 +2633,73 @@ S7::method(archive_sc_exp, SingleCells) <- function(
   invisible(stats)
 }
 
+### upgrade --------------------------------------------------------------------
+
+# generic in base_generics_sc.R
+
+#' @method upgrade_sc_store SingleCells
+#'
+#' @export
+S7::method(upgrade_sc_store, SingleCells) <- function(
+  object,
+  codec = c("lz4", "zstd", "none"),
+  keep_backup = TRUE,
+  .verbose = TRUE
+) {
+  codec <- match.arg(codec)
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertChoice(codec, c("lz4", "zstd", "none"))
+  checkmate::qassert(keep_backup, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  dir_data <- S7::prop(object, "dir_data")
+  checkmate::assertFileExists(file.path(dir_data, "counts_cells.bin"))
+  checkmate::assertFileExists(file.path(dir_data, "counts_genes.bin"))
+
+  # function body
+  rust_con <- get_sc_rust_ptr(object)
+
+  if (all(rust_con$get_file_versions() >= 4L)) {
+    if (.verbose) {
+      message("The store is already in the v4 format. Nothing to do.")
+    }
+    return(invisible(object))
+  }
+
+  rust_con$upgrade_to_v4(
+    codec = codec,
+    keep_backup = keep_backup,
+    verbose = .verbose
+  )
+
+  invisible(object)
+}
+
 ### from disk ------------------------------------------------------------------
 
 # generic in base_generics_sc.R
+
+#' Warn when a store uses the old v3 binary format
+#'
+#' @param rust_con The `SingleCellCountData` Rust connection.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @keywords internal
+.warn_if_v3_store <- function(rust_con) {
+  if (any(rust_con$get_file_versions() < 4L)) {
+    warning(
+      paste(
+        "This store uses the old v3 file format. It still works, but the",
+        "v4 format is smaller and faster. Convert it with upgrade_sc_store()."
+      ),
+      call. = FALSE
+    )
+  }
+
+  invisible(NULL)
+}
 
 #' @method load_existing SingleCells
 #'
@@ -2670,6 +2734,7 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
   checkmate::assertFileExists(file.path(dir_data, "sc_duckdb.db"))
 
   # function body
+  .warn_if_v3_store(rust_con)
   rust_con$set_from_file()
 
   duckdb_con <- get_sc_duckdb(object)
@@ -2804,6 +2869,7 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
 
   # function body
   rust_con <- get_sc_rust_ptr(object)
+  .warn_if_v3_store(rust_con)
   rust_con$set_from_file()
 
   duckdb_con <- get_sc_duckdb(object)
