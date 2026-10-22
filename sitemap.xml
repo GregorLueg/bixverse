@@ -494,6 +494,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-validate_group_sizes.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-verbose_level.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-warn_consensus_target_w.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-warn_if_v3_store.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-warn_sc_state.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-within_bounds.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/doublet_detection_boost_sc.html</loc></url>
@@ -1215,6 +1216,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/tsne_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/umap_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/update_metadata_values.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/upgrade_sc_store.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/upper_triangle_to_sparse.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/validate_pipeline.html</loc></url>

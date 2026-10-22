@@ -701,6 +701,9 @@ Rust and the DuckDB supporting the metadata.
 - [`archive_sc_exp()`](https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.md)
   : Archive the on-disk counts for cold storage
 
+- [`upgrade_sc_store()`](https://gregorlueg.github.io/bixverse/reference/upgrade_sc_store.md)
+  : Upgrade the on-disk counts to the v4 file format
+
 - [`merge_sc_experiments()`](https://gregorlueg.github.io/bixverse/reference/merge_sc_experiments.md)
   :
 

@@ -42,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55f2c5022b80> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55c2fd5ddb80> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55f2c5022b80>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55c2fd5ddb80>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -441,14 +441,14 @@ sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 get_sc_cache_status(sc_object)
 #>    modality       artefact   name stamped  stale reason               id
 #>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 39a9ceadcfffe61c
-#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 6cee55d5f85ee0a2
-#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 7f58c8291fe0217a
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 044135330aedea2c
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 372a73139b472891
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> d9e37549969d5737
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 39a9ceadcfffe61c
-#> 3: 6cee55d5f85ee0a2
+#> 2: 044135330aedea2c
+#> 3: 372a73139b472891
 ```
 
 The `from` column is what makes this more than a cell counter. The kNN
@@ -468,14 +468,14 @@ get_sc_cache_status(sc_object)
 #> 3:      rna connectivities   <NA>    TRUE   TRUE
 #>                                                         reason               id
 #>                                                         <char>           <char>
-#> 1:                                                        <NA> d3bba19e613f622d
-#> 2: the artefact it was derived from was re-computed or removed 6cee55d5f85ee0a2
-#> 3:                             its upstream `rna:knn` is stale 7f58c8291fe0217a
+#> 1:                                                        <NA> 8cbc480d5f9f25db
+#> 2: the artefact it was derived from was re-computed or removed 372a73139b472891
+#> 3:                             its upstream `rna:knn` is stale d9e37549969d5737
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 39a9ceadcfffe61c
-#> 3: 6cee55d5f85ee0a2
+#> 2: 044135330aedea2c
+#> 3: 372a73139b472891
 ```
 
 The PCA is fine. The kNN is stale because the PCA it points at no longer
@@ -523,14 +523,14 @@ sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 get_sc_cache_status(sc_object)
 #>    modality       artefact   name stamped  stale reason               id
 #>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> d3bba19e613f622d
-#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> bab7414379778681
-#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 37b7a2343757562f
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 8cbc480d5f9f25db
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 1623bbfe488db40e
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 975cd9e30920e477
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: d3bba19e613f622d
-#> 3: bab7414379778681
+#> 2: 8cbc480d5f9f25db
+#> 3: 1623bbfe488db40e
 ```
 
 [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md)
@@ -630,8 +630,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.032612 1.063568 1.123547 1.082050 1.124749 1.416512    10
-#>  the_incorrect_way 1.661866 1.720033 1.965255 1.840165 1.950294 3.153559    10
+#>    the_correct_way 1.349386 1.421049 1.471135 1.469089 1.497421 1.651418    10
+#>  the_incorrect_way 2.602641 2.729949 2.933105 2.891465 2.994302 3.717230    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this

@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Batch correction with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-10-21</p>
+      <p class="date">2026-10-22</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -462,7 +462,7 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"fastMNN"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1      0.636044</span></span>
+<span><span class="co">#&gt; 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6360495</span></span>
 <span><span class="co">#&gt;    graph_connectivity  method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:          0.9361725 fastMNN</span></span></code></pre></div>
@@ -616,7 +616,7 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony v2"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1</span></span>
+<span><span class="co">#&gt; 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576871     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity     method</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;     &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:     0.6677586          0.9993072 Harmony v2</span></span></code></pre></div>
@@ -766,7 +766,7 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Seurat rPCA"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:      rpca   0.7844547 0.9079038 0.6423357      0.8138765     1     0.6619311</span></span>
+<span><span class="co">#&gt; 1:      rpca   0.7844547  0.907904 0.6423357      0.8138826     1     0.6619299</span></span>
 <span><span class="co">#&gt;    graph_connectivity      method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:          0.9998064 Seurat rPCA</span></span></code></pre></div>
@@ -885,20 +885,20 @@
 <span><span class="co">#&gt;         method kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1</span></span>
-<span><span class="co">#&gt; 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1</span></span>
+<span><span class="co">#&gt; 2:     fastMNN  0.69251840 0.9413065 0.4705881      0.8861530     1</span></span>
 <span><span class="co">#&gt; 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1</span></span>
-<span><span class="co">#&gt; 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1</span></span>
+<span><span class="co">#&gt; 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576871     1</span></span>
 <span><span class="co">#&gt; 5:  Seurat CCA  0.71837014 0.8929769 0.4705881      0.8688658     1</span></span>
-<span><span class="co">#&gt; 6: Seurat rPCA  0.78445472 0.9079038 0.6423357      0.8138765     1</span></span>
+<span><span class="co">#&gt; 6: Seurat rPCA  0.78445472 0.9079040 0.6423357      0.8138826     1</span></span>
 <span><span class="co">#&gt; 7:       BBKNN  1.00000000        NA 0.8000000             NA     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:     0.6537424          1.0000000</span></span>
-<span><span class="co">#&gt; 2:     0.6360440          0.9361725</span></span>
+<span><span class="co">#&gt; 2:     0.6360495          0.9361725</span></span>
 <span><span class="co">#&gt; 3:     0.6687658          0.9996955</span></span>
 <span><span class="co">#&gt; 4:     0.6677586          0.9993072</span></span>
 <span><span class="co">#&gt; 5:     0.6711522          0.9997509</span></span>
-<span><span class="co">#&gt; 6:     0.6619311          0.9998064</span></span>
+<span><span class="co">#&gt; 6:     0.6619299          0.9998064</span></span>
 <span><span class="co">#&gt; 7:            NA          0.9979125</span></span></code></pre></div>
 </div>
 <div class="cell">

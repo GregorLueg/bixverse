@@ -432,10 +432,10 @@ fc_stats
 #> 2:        1.5 0.9983571  1.0000000       0.16825064         0.12789977
 #> 3:        1.0 1.0000000  1.0000000       0.05629790         0.05841886
 #> 4:        0.5 1.0000000  1.0000000       0.05629790         0.05841886
-#> 5:        2.0 0.9417329  0.9548605       0.23689620         0.16795240
+#> 5:        2.0 0.9417329  0.9548605       0.23689623         0.16795237
 #> 6:        1.5 0.9839155  0.9742814       0.14333197         0.13201106
 #> 7:        1.0 0.9924321  0.9858101       0.13193539         0.11055093
-#> 8:        0.5 0.9716038  0.9646231       0.07283172         0.07558614
+#> 8:        0.5 0.9716038  0.9646231       0.07283171         0.07558614
 #>    mean_n_comms         graph
 #>           <num>        <char>
 #> 1:         11.0  centroid kNN
@@ -1055,7 +1055,7 @@ ggplot(conf_dt, aes(x = predicted_sc_type, y = sc_type_confidence)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
   ylim(0, 1.025)
-#> Warning: Removed 84 rows containing missing values or values outside the scale range
+#> Warning: Removed 94 rows containing missing values or values outside the scale range
 #> (`geom_point()`).
 ```
 

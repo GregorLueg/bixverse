@@ -644,6 +644,50 @@ from it.
 
 Invisible `NULL`.
 
+### Method `get_file_versions`
+
+Read the file format versions of both binaries
+
+#### description
+
+Only reads the 64 byte header of each file, so it is cheap on large
+stores.
+
+#### returns
+
+An integer vector `c(cells, genes)` with the file versions.
+
+### Method `upgrade_to_v4`
+
+Convert both binaries to the v4 file format in place
+
+#### Arguments
+
+- `codec`:
+
+  (`character`)  
+  One of `"lz4"`, `"zstd"` or `"none"`.
+
+- `keep_backup`:
+
+  (`logical`)  
+  Keep the original files as `<path>.v3.bak`.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### description
+
+Converts into temporary files, checks the result opens and matches, then
+swaps it in. A failure leaves the store untouched. Must not run while
+anything else holds the files open.
+
+#### returns
+
+Invisible `NULL`.
+
 ### Method `get_genes_by_indices`
 
 Return genes by index positions

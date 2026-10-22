@@ -415,7 +415,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "fastMNN"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1      0.636044
+#> 1:       mnn   0.6925184 0.9413065 0.4705881       0.886153     1     0.6360495
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:          0.9361725 fastMNN
@@ -595,7 +595,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v2"]
 #>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1
+#> 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576871     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
 #> 1:     0.6677586          0.9993072 Harmony v2
@@ -773,7 +773,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat rPCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:      rpca   0.7844547 0.9079038 0.6423357      0.8138765     1     0.6619311
+#> 1:      rpca   0.7844547  0.907904 0.6423357      0.8138826     1     0.6619299
 #>    graph_connectivity      method
 #>                 <num>      <char>
 #> 1:          0.9998064 Seurat rPCA
@@ -909,20 +909,20 @@ metrics_dt[, .(
 #>         method kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1
-#> 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1
+#> 2:     fastMNN  0.69251840 0.9413065 0.4705881      0.8861530     1
 #> 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1
-#> 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1
+#> 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576871     1
 #> 5:  Seurat CCA  0.71837014 0.8929769 0.4705881      0.8688658     1
-#> 6: Seurat rPCA  0.78445472 0.9079038 0.6423357      0.8138765     1
+#> 6: Seurat rPCA  0.78445472 0.9079040 0.6423357      0.8138826     1
 #> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
 #> 1:     0.6537424          1.0000000
-#> 2:     0.6360440          0.9361725
+#> 2:     0.6360495          0.9361725
 #> 3:     0.6687658          0.9996955
 #> 4:     0.6677586          0.9993072
 #> 5:     0.6711522          0.9997509
-#> 6:     0.6619311          0.9998064
+#> 6:     0.6619299          0.9998064
 #> 7:            NA          0.9979125
 ```
 
