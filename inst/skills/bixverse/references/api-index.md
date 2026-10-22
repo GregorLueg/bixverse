@@ -317,6 +317,7 @@ I/O functions for single cell. Load in h5ad, mtx, Seurat or R data into Rust and
 - `read_h5ad_metadata`: Read obs and var tables and metadata from an h5ad file
 - `read_h5ad_x_summary`: Read summary statistics from the X slot of an h5ad file
 - `save_sc_exp_to_disk`: Save memory-bound data to disk
+- `upgrade_sc_store`: Upgrade the on-disk counts to the v4 file format
 - `merge_sc_experiments`: Merge multiple SingleCells experiments into one
 - `params_sc_min_quality`: Wrapper function to generate QC metric params for single cell
 - `params_sc_mtx_io`: Wrapper function to provide data for mtx-based loading

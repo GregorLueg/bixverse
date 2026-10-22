@@ -1,3 +1,10 @@
+# bixverse 0.8.1
+
+* Single cell stores are now written in the v4 file format (`bixverse-r`
+  0.9.0), several times smaller on disk and faster to scan. v3 stores still
+  work, `load_existing()` warns on them and the new `upgrade_sc_store()`
+  converts them in place.
+
 # bixverse 0.8.0
 
 ## Features

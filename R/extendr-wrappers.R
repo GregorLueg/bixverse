@@ -7407,6 +7407,39 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'}
 #'
+#'\subsection{Method `get_file_versions`}{
+#'Read the file format versions of both binaries
+#'
+#' \subsection{description}{
+#'Only reads the 64 byte header of each file, so it is cheap on large
+#'stores.
+#'
+#'}
+#' \subsection{returns}{
+#'An integer vector `c(cells, genes)` with the file versions.
+#'}
+#'}
+#'
+#'\subsection{Method `upgrade_to_v4`}{
+#'Convert both binaries to the v4 file format in place
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`codec`}{(`character`)\cr One of `"lz4"`, `"zstd"` or `"none"`.}
+#'\item{`keep_backup`}{(`logical`)\cr Keep the original files as `<path>.v3.bak`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Converts into temporary files, checks the result opens and matches,
+#'then swaps it in. A failure leaves the store untouched. Must not run
+#'while anything else holds the files open.
+#'
+#'}
+#' \subsection{returns}{
+#'Invisible `NULL`.
+#'}
+#'}
+#'
 #'\subsection{Method `get_genes_by_indices`}{
 #'Return genes by index positions
 #'
@@ -7520,6 +7553,10 @@ SingleCellCountData$generate_gene_based_data <- function(max_mem_gb, verbose) .C
 SingleCellCountData$archive <- function(f_path_archive, level, verbose) .Call(wrap__SingleCellCountData__archive, self, f_path_archive, level, verbose)
 
 SingleCellCountData$restore_archive <- function(f_path_archive, max_mem_gb, verbose) .Call(wrap__SingleCellCountData__restore_archive, self, f_path_archive, max_mem_gb, verbose)
+
+SingleCellCountData$get_file_versions <- function() .Call(wrap__SingleCellCountData__get_file_versions, self)
+
+SingleCellCountData$upgrade_to_v4 <- function(codec, keep_backup, verbose) .Call(wrap__SingleCellCountData__upgrade_to_v4, self, codec, keep_backup, verbose)
 
 SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_genes_by_indices, self, indices, assay)
 

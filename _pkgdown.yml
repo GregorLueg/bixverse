@@ -486,6 +486,7 @@ reference:
       - save_h5ad
       - save_sc_exp_to_disk
       - archive_sc_exp
+      - upgrade_sc_store
       - merge_sc_experiments
       - params_sc_min_quality
       - params_sc_mtx_io

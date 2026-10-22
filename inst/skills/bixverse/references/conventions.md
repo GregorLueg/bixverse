@@ -53,7 +53,7 @@ Not uniform. These take plain arguments, no bundle:
 `umap_sc()` / `tsne_sc()` / `phate_sc()` (they take `manifoldsR::params_umap()`
 and friends instead), `run_cell_qc()`, `set_cells_to_keep()`,
 `gene_set_proportions_sc()`, `top_genes_perc_sc()`, `get_pseudobulked_sc()`,
-`save_sc_exp_to_disk()`, `load_existing()`.
+`save_sc_exp_to_disk()`, `load_existing()`, `upgrade_sc_store()`.
 
 Nearly everything else takes one. When unsure, read `?fn`.
 
