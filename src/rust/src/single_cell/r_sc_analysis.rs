@@ -1,3 +1,5 @@
+use bixverse_r::enrichment::lm_activity::LmActivityParams;
+use bixverse_r::enrichment_r_wrapper::r_list_to_feature_set_weights;
 use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
 use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
@@ -9,6 +11,7 @@ use bixverse_r::single_cell::sc_analysis::{
     dge_pathway_scores::*,
     dialogue::{dialogue_run, DialogueParams},
     hotspot::*,
+    lm_activity::calculate_lm_activity,
     meld::*,
     milo_r::*,
     module_scoring::*,
@@ -62,6 +65,8 @@ extendr_module! {
     // vision
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
+    // lm activity
+    fn rs_lm_activity_sc;
     // scenic
     fn rs_scenic_gene_filter;
     fn rs_scenic_grn;
@@ -695,6 +700,66 @@ fn rs_vision(
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
 
     Ok(faer_to_r_matrix(vision_mat.as_ref()))
+}
+
+/// ULM / MLM activity scores per cell (decoupler-style)
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Fits a univariate (ULM) or multivariate (MLM) linear model per cell of the
+/// feature weights of each set against the normalised counts over all genes of
+/// the store. Cells are read and scored in chunks, so there is no streaming
+/// switch.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param gs_list List. One element per set, each a list with `idx` (integer,
+/// 0-indexed gene positions) and optionally `weight` (numeric, aligned with
+/// `idx`; absent means weight 1).
+/// @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+/// score.
+/// @param lm_params List. With `method` (`"ulm"` or `"mlm"`), `stat` (`"t"` or
+/// `"coef"`) and `p_values` (boolean).
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following elements
+/// \itemize{
+///   \item es - Numerical matrix of cells x sets with the scores.
+///   \item p_values - Numerical matrix of cells x sets with the two-sided
+///   p-values, or `NULL` if not requested.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+///
+/// @references Badia-i-Mompel, et al., Bioinform. Adv., 2022.
+#[extendr]
+fn rs_lm_activity_sc(
+    f_path: String,
+    gs_list: List,
+    cells_to_keep: Vec<i32>,
+    lm_params: List,
+    verbose: usize,
+) -> Result<List> {
+    let cells_to_keep = cells_to_keep.r_int_convert();
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+    let net = r_list_to_feature_set_weights(gs_list, reader.get_header().total_genes)?;
+    let params = LmActivityParams::from_r_list(lm_params)?;
+
+    let res = calculate_lm_activity(&reader, &net, &cells_to_keep, Some(params), verbose)
+        .to_extendr()?;
+
+    let to_r = |m: &Mat<f32>| {
+        let m = Mat::from_fn(m.nrows(), m.ncols(), |i, j| m[(i, j)] as f64);
+        faer_to_r_matrix(m.as_ref())
+    };
+    let p_values = match res.p_values {
+        Some(p) => to_r(&p).into_robj(),
+        None => NULL.into_robj(),
+    };
+
+    Ok(list!(es = to_r(&res.es), p_values = p_values))
 }
 
 /// Calculate VISION pathway scores in Rust with auto-correlation

@@ -1989,6 +1989,58 @@ params_limma_voom <- function(
   )
 }
 
+#' Wrapper function to generate ULM / MLM activity parameters
+#'
+#' @param method String. Univariate (one model per set) or multivariate (all
+#' sets in one model) linear model. One of `c("ulm", "mlm")`. Defaults to
+#' `"ulm"`.
+#' @param stat String. Return the t-value or the coefficient as the activity
+#' score. One of `c("t", "coef")`. Defaults to `"t"`.
+#' @param p_values Boolean. Shall the two-sided p-values be computed. Defaults
+#' to `FALSE`.
+#' @param tmin Integer. Minimum number of targets per source after removing
+#' targets absent from the data. Defaults to `5L`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item method - String. Univariate (one model per set) or multivariate (all
+#'  sets in one model) linear model. One of `c("ulm", "mlm")`. Defaults to
+#'  `"ulm"`.
+#'  \item stat - String. Return the t-value or the coefficient as the activity
+#'  score. One of `c("t", "coef")`. Defaults to `"t"`.
+#'  \item p_values - Boolean. Shall the two-sided p-values be computed. Defaults
+#'  to `FALSE`.
+#'  \item tmin - Integer. Minimum number of targets per source after removing
+#'  targets absent from the data. Defaults to `5L`.
+#' }
+#'
+#' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022
+#'
+#' @export
+params_lm_activity <- function(
+  method = c("ulm", "mlm"),
+  stat = c("t", "coef"),
+  p_values = FALSE,
+  tmin = 5L
+) {
+  method <- match.arg(method)
+  stat <- match.arg(stat)
+
+  # Checks
+  checkmate::assertChoice(method, c("ulm", "mlm"))
+  checkmate::assertChoice(stat, c("t", "coef"))
+  checkmate::qassert(p_values, "B1")
+  checkmate::qassert(tmin, "I1[1,)")
+
+  # Return
+  list(
+    method = method,
+    stat = stat,
+    p_values = p_values,
+    tmin = tmin
+  )
+}
+
 #' Constructor for MELD parameters
 #'
 #' @param beta Numeric. Smoothing strength; larger values produce smoother
@@ -4361,6 +4413,298 @@ params_sc_magic <- function(
     gene_batch_size = gene_batch_size,
     layer = layer,
     allow_large = allow_large
+  )
+}
+
+#' Wrapper function for the MetaCells2 per-pile parameters
+#'
+#' @param target_metacell_size Integer. Target number of cells per meta cell.
+#' Defaults to `48L`.
+#' @param min_metacell_size Integer. Candidate meta cells below this size are
+#' dissolved into outliers. Defaults to `12L`.
+#' @param target_metacell_umis Numeric. Target total UMIs per meta cell. Drives
+#' the number of seeds and the size of the kNN graph. Defaults to `160000.0`.
+#' @param similarity_method String. Cell-cell similarity on the selected genes.
+#' One of `c("abs_pearson", "pearson")`. Defaults to `"abs_pearson"`.
+#' @param log_data Boolean. Correlate `log2(x + value_regularisation)` instead
+#' of `x`. Defaults to `TRUE`.
+#' @param value_regularisation Numeric. Constant added before the optional log
+#' transform. Defaults to `0.14285714285714285`.
+#' @param min_genes Integer. Floor on the number of selected genes per pile. The
+#' relative variance threshold is relaxed until it is met. Defaults to `100L`.
+#' @param min_gene_total Integer. Minimum total UMIs (downsampled) for a gene to
+#' be selected. Defaults to `50L`.
+#' @param min_gene_top3 Integer. Minimum third-highest UMI count of a gene to be
+#' selected. Defaults to `4L`.
+#' @param min_gene_relative_variance Numeric. Minimum windowed relative variance
+#' for a gene to be selected. Defaults to `0.1`.
+#' @param downsample_min_samples Integer. Floor for the per-pile downsampling
+#' target. Defaults to `750L`.
+#' @param knn_k_override Integer or `NULL`. Fixed k for the balanced kNN graph.
+#' `NULL` derives it from `target_metacell_umis` and the library sizes. Defaults
+#' to `NULL`.
+#' @param min_knn_k Integer. Floor on the derived k. Defaults to `30L`.
+#' @param min_gene_fold_factor Numeric. Minimum log2 fold gap within a candidate
+#' meta cell for a gene to mark cells as deviant. Defaults to `3.0`.
+#' @param max_cell_fraction Numeric. Upper bound on the fraction of cells marked
+#' as deviants. Defaults to `0.25`.
+#' @param gap_skip_cells Integer. Cells skipped over when measuring a gap.
+#' Defaults to `1L`.
+#' @param min_robust_size_factor Numeric. Multiplier on the target size (and
+#' UMIs) above which a meta cell is kept unconditionally. Defaults to `0.5`.
+#' @param min_convincing_gene_fold_factor Numeric. Minimum log2 fold of any gene
+#' for a meta cell below the robust size to be kept anyway. Defaults to `3.0`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item target_metacell_size - Integer. Target number of cells per meta cell.
+#'  Defaults to `48L`.
+#'  \item min_metacell_size - Integer. Candidate meta cells below this size are
+#'  dissolved into outliers. Defaults to `12L`.
+#'  \item target_metacell_umis - Numeric. Target total UMIs per meta cell.
+#'  Drives the number of seeds and the size of the kNN graph. Defaults to
+#'  `160000.0`.
+#'  \item similarity_method - String. Cell-cell similarity on the selected
+#'  genes. One of `c("abs_pearson", "pearson")`. Defaults to `"abs_pearson"`.
+#'  \item log_data - Boolean. Correlate `log2(x + value_regularisation)` instead
+#'  of `x`. Defaults to `TRUE`.
+#'  \item value_regularisation - Numeric. Constant added before the optional log
+#'  transform. Defaults to `0.14285714285714285`.
+#'  \item min_genes - Integer. Floor on the number of selected genes per pile.
+#'  The relative variance threshold is relaxed until it is met. Defaults to
+#'  `100L`.
+#'  \item min_gene_total - Integer. Minimum total UMIs (downsampled) for a gene
+#'  to be selected. Defaults to `50L`.
+#'  \item min_gene_top3 - Integer. Minimum third-highest UMI count of a gene to
+#'  be selected. Defaults to `4L`.
+#'  \item min_gene_relative_variance - Numeric. Minimum windowed relative
+#'  variance for a gene to be selected. Defaults to `0.1`.
+#'  \item downsample_min_samples - Integer. Floor for the per-pile downsampling
+#'  target. Defaults to `750L`.
+#'  \item knn_k_override - Integer or `NULL`. Fixed k for the balanced kNN
+#'  graph. `NULL` derives it from `target_metacell_umis` and the library sizes.
+#'  Defaults to `NULL`.
+#'  \item min_knn_k - Integer. Floor on the derived k. Defaults to `30L`.
+#'  \item min_gene_fold_factor - Numeric. Minimum log2 fold gap within a
+#'  candidate meta cell for a gene to mark cells as deviant. Defaults to `3.0`.
+#'  \item max_cell_fraction - Numeric. Upper bound on the fraction of cells
+#'  marked as deviants. Defaults to `0.25`.
+#'  \item gap_skip_cells - Integer. Cells skipped over when measuring a gap.
+#'  Defaults to `1L`.
+#'  \item min_robust_size_factor - Numeric. Multiplier on the target size (and
+#'  UMIs) above which a meta cell is kept unconditionally. Defaults to `0.5`.
+#'  \item min_convincing_gene_fold_factor - Numeric. Minimum log2 fold of any
+#'  gene for a meta cell below the robust size to be kept anyway. Defaults to
+#'  `3.0`.
+#' }
+#'
+#' @references Ben-Kiki, et al., Genome Biol., 2022
+#'
+#' @export
+params_sc_metacells2 <- function(
+  target_metacell_size = 48L,
+  min_metacell_size = 12L,
+  target_metacell_umis = 160000.0,
+  similarity_method = c("abs_pearson", "pearson"),
+  log_data = TRUE,
+  value_regularisation = 0.14285714285714285,
+  min_genes = 100L,
+  min_gene_total = 50L,
+  min_gene_top3 = 4L,
+  min_gene_relative_variance = 0.1,
+  downsample_min_samples = 750L,
+  knn_k_override = NULL,
+  min_knn_k = 30L,
+  min_gene_fold_factor = 3.0,
+  max_cell_fraction = 0.25,
+  gap_skip_cells = 1L,
+  min_robust_size_factor = 0.5,
+  min_convincing_gene_fold_factor = 3.0
+) {
+  similarity_method <- match.arg(similarity_method)
+
+  # Checks
+  checkmate::qassert(target_metacell_size, "I1[2,)")
+  checkmate::qassert(min_metacell_size, "I1[1,)")
+  checkmate::qassert(target_metacell_umis, "R1(0,)")
+  checkmate::assertChoice(similarity_method, c("abs_pearson", "pearson"))
+  checkmate::qassert(log_data, "B1")
+  checkmate::qassert(value_regularisation, "R1(0,)")
+  checkmate::qassert(min_genes, "I1[1,)")
+  checkmate::qassert(min_gene_total, "I1[0,)")
+  checkmate::qassert(min_gene_top3, "I1[0,)")
+  checkmate::qassert(min_gene_relative_variance, "R1")
+  checkmate::qassert(downsample_min_samples, "I1[1,)")
+  checkmate::qassert(knn_k_override, c("I1[1,)", "0"))
+  checkmate::qassert(min_knn_k, "I1[1,)")
+  checkmate::qassert(min_gene_fold_factor, "R1(0,)")
+  checkmate::qassert(max_cell_fraction, "R1(0,1)")
+  checkmate::qassert(gap_skip_cells, "I1[0,2]")
+  checkmate::qassert(min_robust_size_factor, "R1(0,)")
+  checkmate::qassert(min_convincing_gene_fold_factor, "R1(0,)")
+
+  # Return
+  list(
+    target_metacell_size = target_metacell_size,
+    min_metacell_size = min_metacell_size,
+    target_metacell_umis = target_metacell_umis,
+    similarity_method = similarity_method,
+    log_data = log_data,
+    value_regularisation = value_regularisation,
+    min_genes = min_genes,
+    min_gene_total = min_gene_total,
+    min_gene_top3 = min_gene_top3,
+    min_gene_relative_variance = min_gene_relative_variance,
+    downsample_min_samples = downsample_min_samples,
+    knn_k_override = knn_k_override,
+    min_knn_k = min_knn_k,
+    min_gene_fold_factor = min_gene_fold_factor,
+    max_cell_fraction = max_cell_fraction,
+    gap_skip_cells = gap_skip_cells,
+    min_robust_size_factor = min_robust_size_factor,
+    min_convincing_gene_fold_factor = min_convincing_gene_fold_factor
+  )
+}
+
+#' Wrapper function for the MetaCells2 divide and conquer parameters
+#'
+#' @param min_target_pile_size Integer. Lower clamp on the derived pile size.
+#' Defaults to `8000L`.
+#' @param max_target_pile_size Integer. Upper clamp on the derived pile size.
+#' Defaults to `24000L`.
+#' @param target_metacells_in_pile Integer. Meta cells wanted per pile, used to
+#' derive the pile size. Defaults to `100L`.
+#' @param target_pile_size Integer or `NULL`. Fixed pile size. `NULL` derives it
+#' from the data and clamps it to `[min_target_pile_size,
+#' max_target_pile_size]`. Defaults to `NULL`.
+#' @param quick_and_dirty Boolean. Stop after the final phase instead of
+#' regrouping the outliers. Defaults to `FALSE`.
+#' @param max_parallel_piles Integer. Piles computed concurrently. Each pile
+#' holds two dense `pile_size x pile_size` matrices, so this trades memory for
+#' speed. Defaults to `1L`.
+#' @param groups_similarity_method String. Similarity used when grouping meta
+#' cells into piles. One of `c("abs_pearson", "pearson")`. Defaults to
+#' `"abs_pearson"`.
+#' @param rare_gene_modules Boolean. Detect rare gene modules first and pile
+#' their cells separately. Defaults to `TRUE`.
+#' @param rare_max_gene_cell_fraction Numeric. Largest fraction of cells a gene
+#' may be expressed in to be a rare gene candidate. Defaults to `0.001`.
+#' @param rare_max_genes Integer. Most rare gene candidates kept. Defaults to
+#' `500L`.
+#' @param rare_min_genes_of_modules Integer. Fewest genes in a rare gene module.
+#' Defaults to `4L`.
+#' @param rare_min_cells_of_modules Integer. Fewest cells in a rare gene module.
+#' Defaults to `12L`.
+#' @param rare_genes_similarity_method String. Gene-gene similarity of the rare
+#' candidates. One of `c("repeated_pearson", "repeated_abs_pearson", "pearson",
+#' "abs_pearson")`. Defaults to `"repeated_pearson"`.
+#' @param rare_genes_cluster_method String. Linkage for the hierarchical
+#' clustering of the rare candidates. One of `c("ward", "complete", "average",
+#' "weighted")`. Defaults to `"ward"`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item min_target_pile_size - Integer. Lower clamp on the derived pile size.
+#'  Defaults to `8000L`.
+#'  \item max_target_pile_size - Integer. Upper clamp on the derived pile size.
+#'  Defaults to `24000L`.
+#'  \item target_metacells_in_pile - Integer. Meta cells wanted per pile, used
+#'  to derive the pile size. Defaults to `100L`.
+#'  \item target_pile_size - Integer or `NULL`. Fixed pile size. `NULL` derives
+#'  it from the data and clamps it to `[min_target_pile_size,
+#'  max_target_pile_size]`. Defaults to `NULL`.
+#'  \item quick_and_dirty - Boolean. Stop after the final phase instead of
+#'  regrouping the outliers. Defaults to `FALSE`.
+#'  \item max_parallel_piles - Integer. Piles computed concurrently. Each pile
+#'  holds two dense `pile_size x pile_size` matrices, so this trades memory for
+#'  speed. Defaults to `1L`.
+#'  \item groups_similarity_method - String. Similarity used when grouping meta
+#'  cells into piles. One of `c("abs_pearson", "pearson")`. Defaults to
+#'  `"abs_pearson"`.
+#'  \item rare_gene_modules - Boolean. Detect rare gene modules first and pile
+#'  their cells separately. Defaults to `TRUE`.
+#'  \item rare_max_gene_cell_fraction - Numeric. Largest fraction of cells a
+#'  gene may be expressed in to be a rare gene candidate. Defaults to `0.001`.
+#'  \item rare_max_genes - Integer. Most rare gene candidates kept. Defaults to
+#'  `500L`.
+#'  \item rare_min_genes_of_modules - Integer. Fewest genes in a rare gene
+#'  module. Defaults to `4L`.
+#'  \item rare_min_cells_of_modules - Integer. Fewest cells in a rare gene
+#'  module. Defaults to `12L`.
+#'  \item rare_genes_similarity_method - String. Gene-gene similarity of the
+#'  rare candidates. One of `c("repeated_pearson", "repeated_abs_pearson",
+#'  "pearson", "abs_pearson")`. Defaults to `"repeated_pearson"`.
+#'  \item rare_genes_cluster_method - String. Linkage for the hierarchical
+#'  clustering of the rare candidates. One of `c("ward", "complete", "average",
+#'  "weighted")`. Defaults to `"ward"`.
+#' }
+#'
+#' @references Ben-Kiki, et al., Genome Biol., 2022
+#'
+#' @export
+params_sc_metacells2_dac <- function(
+  min_target_pile_size = 8000L,
+  max_target_pile_size = 24000L,
+  target_metacells_in_pile = 100L,
+  target_pile_size = NULL,
+  quick_and_dirty = FALSE,
+  max_parallel_piles = 1L,
+  groups_similarity_method = c("abs_pearson", "pearson"),
+  rare_gene_modules = TRUE,
+  rare_max_gene_cell_fraction = 0.001,
+  rare_max_genes = 500L,
+  rare_min_genes_of_modules = 4L,
+  rare_min_cells_of_modules = 12L,
+  rare_genes_similarity_method = c(
+    "repeated_pearson",
+    "repeated_abs_pearson",
+    "pearson",
+    "abs_pearson"
+  ),
+  rare_genes_cluster_method = c("ward", "complete", "average", "weighted")
+) {
+  groups_similarity_method <- match.arg(groups_similarity_method)
+  rare_genes_similarity_method <- match.arg(rare_genes_similarity_method)
+  rare_genes_cluster_method <- match.arg(rare_genes_cluster_method)
+
+  # Checks
+  checkmate::qassert(min_target_pile_size, "I1[1,)")
+  checkmate::qassert(max_target_pile_size, "I1[1,)")
+  checkmate::qassert(target_metacells_in_pile, "I1[1,)")
+  checkmate::qassert(target_pile_size, c("I1[1,)", "0"))
+  checkmate::qassert(quick_and_dirty, "B1")
+  checkmate::qassert(max_parallel_piles, "I1[1,)")
+  checkmate::assertChoice(groups_similarity_method, c("abs_pearson", "pearson"))
+  checkmate::qassert(rare_gene_modules, "B1")
+  checkmate::qassert(rare_max_gene_cell_fraction, "R1(0,1)")
+  checkmate::qassert(rare_max_genes, "I1[1,)")
+  checkmate::qassert(rare_min_genes_of_modules, "I1[1,)")
+  checkmate::qassert(rare_min_cells_of_modules, "I1[1,)")
+  checkmate::assertChoice(
+    rare_genes_similarity_method,
+    c("repeated_pearson", "repeated_abs_pearson", "pearson", "abs_pearson")
+  )
+  checkmate::assertChoice(
+    rare_genes_cluster_method,
+    c("ward", "complete", "average", "weighted")
+  )
+
+  # Return
+  list(
+    min_target_pile_size = min_target_pile_size,
+    max_target_pile_size = max_target_pile_size,
+    target_metacells_in_pile = target_metacells_in_pile,
+    target_pile_size = target_pile_size,
+    quick_and_dirty = quick_and_dirty,
+    max_parallel_piles = max_parallel_piles,
+    groups_similarity_method = groups_similarity_method,
+    rare_gene_modules = rare_gene_modules,
+    rare_max_gene_cell_fraction = rare_max_gene_cell_fraction,
+    rare_max_genes = rare_max_genes,
+    rare_min_genes_of_modules = rare_min_genes_of_modules,
+    rare_min_cells_of_modules = rare_min_cells_of_modules,
+    rare_genes_similarity_method = rare_genes_similarity_method,
+    rare_genes_cluster_method = rare_genes_cluster_method
   )
 }
 

@@ -336,6 +336,45 @@ spec_blitzgsea <- param_spec(
   )
 )
 
+spec_lm_activity <- param_spec(
+  name = "lm_activity",
+  title = "Wrapper function to generate ULM / MLM activity parameters",
+  references = "Badia-i-Mompel, et al., Bioinform. Adv., 2022",
+  checker = "LmActivity",
+  label = "ULM / MLM params",
+  hint = paste(
+    "method must be one of 'ulm' or 'mlm'; stat one of 't' or 'coef';",
+    "p_values must be a boolean; tmin must be an integer >= 1."
+  ),
+  fields = list(
+    method = p_choice(
+      "ulm",
+      c("ulm", "mlm"),
+      doc = paste(
+        "Univariate (one model per set) or multivariate (all sets in one",
+        "model) linear model."
+      )
+    ),
+    stat = p_choice(
+      "t",
+      c("t", "coef"),
+      doc = "Return the t-value or the coefficient as the activity score."
+    ),
+    p_values = p_lgl(
+      FALSE,
+      doc = "Shall the two-sided p-values be computed."
+    ),
+    tmin = p_int(
+      5L,
+      range = "[1,)",
+      doc = paste(
+        "Minimum number of targets per source after removing targets absent",
+        "from the data."
+      )
+    )
+  )
+)
+
 spec_gsva <- param_spec(
   name = "gsva",
   title = "Wrapper function to generate GSVA parameters",

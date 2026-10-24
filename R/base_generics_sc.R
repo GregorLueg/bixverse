@@ -2466,6 +2466,70 @@ vision_sc <- S7::new_generic(
   }
 )
 
+#' Calculate ULM / MLM activity scores per cell
+#'
+#' @description
+#' Rust implementation of decoupler's univariate (ULM) and multivariate (MLM)
+#' linear model activity scores, per cell on the normalised counts. See
+#' [bixverse::calc_lm_activity()] for the model. Cells are read and scored in
+#' chunks, so memory stays bounded on large data.
+#'
+#' Differences to decoupler and things to know:
+#' \itemize{
+#'  \item Every gene of the store enters the model, including genes that are
+#'  zero in every cell. decoupler drops those, so scores differ slightly where
+#'  targets were never detected.
+#'  \item Empty cells score 0 with a p-value of 1.
+#'  \item MLM errors on collinear sources.
+#'  \item The p-values treat genes as independent, which they are not in a
+#'  single cell. Read them as descriptive.
+#' }
+#'
+#' @param object `SingleCells` class.
+#' @param net data.frame. The network in long format with the columns `source`,
+#' `target` and optionally `weight`. Targets need to be gene identifiers of the
+#' object.
+#' @param lm_params List. The parameters, see
+#' [bixverse::params_lm_activity()].
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns An `ScMatrixRes` of cells x sources with the activities if
+#' `p_values = FALSE`. Otherwise a list with the `ScMatrixRes` elements `es`,
+#' `pvals` and `fdr` (BH per cell across sources). `NULL` with a warning if no
+#' source has at least `tmin` targets in the object.
+#'
+#' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022
+#'
+#' @export
+#'
+#' @examples
+#' # score two made-up regulons on the demo data
+#' sc <- demo_single_cells()
+#' genes <- get_gene_names(sc)
+#' net <- data.frame(
+#'   source = rep(c("tf_a", "tf_b"), each = 10L),
+#'   target = genes[1:20],
+#'   weight = 1
+#' )
+#' res <- lm_activity_sc(sc, net = net, .verbose = FALSE)
+#' dim(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+lm_activity_sc <- S7::new_generic(
+  name = "lm_activity_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    net,
+    lm_params = params_lm_activity(),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
 #' Calculate VISION scores (with auto-correlation scores)
 #'
 #' @description

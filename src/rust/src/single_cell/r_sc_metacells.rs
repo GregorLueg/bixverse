@@ -2,6 +2,7 @@ use bixverse_r::prelude::*;
 use bixverse_r::single_cell::mc_analysis::metacell_density::*;
 use bixverse_r::single_cell::mc_generation::cell_aggregation_utils::*;
 use bixverse_r::single_cell::mc_generation::hdwgcna_meta_cells::*;
+use bixverse_r::single_cell::mc_generation::metacells2::{compute_dac_metacells, DacParams, MetacellsParams};
 use bixverse_r::single_cell::mc_generation::seacells::*;
 use bixverse_r::single_cell::mc_generation::super_cells::*;
 use bixverse_r::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
@@ -169,6 +170,7 @@ extendr_module! {
     fn rs_get_metacells_bootstrapped;
     fn rs_get_seacells;
     fn rs_supercell;
+    fn rs_metacells2;
     // meta cell metrics
     fn rs_metacell_density;
     fn rs_metacell_compactness;
@@ -905,6 +907,119 @@ fn rs_supercell(
 ////////////////
 // MetaCells2 //
 ////////////////
+
+/// Generate meta cells via MetaCells2 (divide and conquer)
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Rust port of the metacells divide and conquer pipeline. Works on the raw
+/// counts directly, so no embedding or kNN graph is needed. Cells are split
+/// into piles, each pile gets its own feature selection, similarity graph and
+/// partition, and outliers are re-run in further rounds. Cells sharing a rare
+/// gene module are piled together first unless switched off in `dac_params`.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param cells_to_keep Integer vector. 0-indexed positions in the count file
+/// of the cells to include.
+/// @param mc2_params List. The per-pile parameters, see
+/// [params_sc_metacells2()].
+/// @param dac_params List. The divide and conquer parameters, see
+/// [params_sc_metacells2_dac()].
+/// @param target_size Numeric. Library size to normalise the aggregated counts
+/// to.
+/// @param seed Integer. For reproducibility.
+/// @param verbose Boolean. Controls verbosity.
+///
+/// @returns A list with the following elements
+/// \itemize{
+///   \item assignments - The meta cell assignments in the original cell space.
+///   \item aggregated - The aggregated raw and normalised counts in CSR form.
+///   \item dissolved - Logical per included cell. Was the cell's candidate
+///   dissolved in its last pile.
+///   \item level - Integer per included cell. Outlier round that placed it.
+///   \item rare_module_of_cell - Integer per included cell. 0-indexed rare
+///   gene module, `-1` for none.
+///   \item rare_module_of_gene - Integer per gene. 0-indexed rare gene module,
+///   `-1` for none.
+///   \item selected_genes - Integer. 1-indexed genes selected in any pile plus
+///   the rare module genes.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+///
+/// @references Ben-Kiki, et al., Genome Biol., 2022.
+#[extendr]
+fn rs_metacells2(
+    f_path: String,
+    cells_to_keep: Vec<i32>,
+    mc2_params: List,
+    dac_params: List,
+    target_size: f64,
+    seed: usize,
+    verbose: bool,
+) -> extendr_api::Result<List> {
+    let cell_indices = cells_to_keep.r_int_convert();
+    let mc2_params = MetacellsParams::from_r_list(mc2_params)?;
+    let dac_params = DacParams::from_r_list(dac_params)?;
+
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+    let header = reader.get_header();
+    let n_total_cells = header.total_cells;
+    let n_genes = header.total_genes;
+
+    let res = compute_dac_metacells(
+        &reader,
+        &cell_indices,
+        None,
+        &mc2_params,
+        &dac_params,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let mut metacells: Vec<Vec<usize>> = vec![Vec::new(); res.n_metacells];
+    let assignments_subset: Vec<Option<usize>> = res
+        .metacell_of_cell
+        .iter()
+        .zip(&cell_indices)
+        .map(|(&mc, &cell)| {
+            let mc = usize::try_from(mc).ok()?;
+            metacells[mc].push(cell);
+            Some(mc)
+        })
+        .collect();
+
+    let assignments_full =
+        remap_assignments_to_original(&assignments_subset, &cell_indices, n_total_cells);
+    let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
+
+    let metacells_refs: Vec<&[usize]> = metacells.iter().map(|v| v.as_slice()).collect();
+    let aggregated: CompressedSparseData2<u32, f32> =
+        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes)
+            .to_extendr()?;
+
+    let selected_genes: Vec<i32> = res.selected_genes.iter().map(|&g| g as i32 + 1).collect();
+
+    Ok(list!(
+        assignments = assignment_list,
+        aggregated = list!(
+            indptr = aggregated.indptr.r_int_convert(),
+            indices = aggregated.indices.r_int_convert(),
+            raw_counts = aggregated.data.r_int_convert(),
+            norm_counts = aggregated.data_2.unwrap().r_float_convert(),
+            nrow = aggregated.shape.0,
+            ncol = aggregated.shape.1
+        ),
+        dissolved = res.dissolved_of_cell,
+        level = res.level_of_cell,
+        rare_module_of_cell = res.rare_module_of_cell,
+        rare_module_of_gene = res.rare_module_of_gene,
+        selected_genes = selected_genes
+    ))
+}
 
 //////////////////////
 // MetaCell density //

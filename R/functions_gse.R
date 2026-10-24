@@ -1363,6 +1363,244 @@ calc_blitzgsea <- function(
   return(results)
 }
 
+## ulm / mlm -------------------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
+
+#' Prepare a source/target network for the ULM / MLM activity scores
+#'
+#' @description
+#' Mirrors decoupler's network pruning: targets absent from the features are
+#' dropped, then sources with fewer than `tmin` remaining targets. Unlike
+#' decoupler, duplicated `(source, target)` pairs are not an error; the first
+#' one is kept with a warning.
+#'
+#' @param net data.frame. Must have the columns `source` and `target` and
+#' optionally a numeric `weight` column. Absent weights are set to 1.
+#' @param features Character vector. The feature identifiers; the position of
+#' a feature is its (1-indexed) index in the data.
+#' @param tmin Integer. Minimum number of targets per source after the
+#' intersection with `features`.
+#'
+#' @returns A named list with one element per surviving source, each a list
+#' with `idx` (0-indexed feature positions) and `weight`. `NULL` with a warning
+#' if no source survives.
+#'
+#' @keywords internal
+prep_lm_network <- function(net, features, tmin) {
+  # Globals scope check
+  . <- `:=` <- source <- target <- weight <- idx <- .N <- .SD <- NULL
+
+  # Checks
+  checkmate::assertDataFrame(net, min.rows = 1L)
+  checkmate::assertNames(names(net), must.include = c("source", "target"))
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(tmin, "I1[1,)")
+
+  net <- data.table::as.data.table(net)
+  if (!"weight" %in% names(net)) {
+    net[, weight := 1]
+  }
+  checkmate::assertNumeric(net$weight, finite = TRUE, any.missing = FALSE)
+
+  net <- net[, .(
+    source = as.character(source),
+    target = as.character(target),
+    weight = as.numeric(weight)
+  )]
+
+  dups <- duplicated(net, by = c("source", "target"))
+  if (any(dups)) {
+    warning(sprintf(
+      "%i duplicated source-target pairs found. Keeping the first of each.",
+      sum(dups)
+    ))
+    net <- net[!dups]
+  }
+
+  net[, idx := match(target, features) - 1L]
+  net <- net[!is.na(idx)][, if (.N >= tmin) .SD, by = source]
+
+  if (nrow(net) == 0L) {
+    warning(sprintf(
+      paste(
+        "No source has at least tmin = %i targets in the data.",
+        "Returning NULL."
+      ),
+      tmin
+    ))
+    return(NULL)
+  }
+
+  split(net, by = "source", keep.by = FALSE, sorted = TRUE) %>%
+    purrr::map(\(dt) list(idx = dt$idx, weight = dt$weight))
+}
+
+#' Benjamini-Hochberg adjustment per observation across sources
+#'
+#' @description
+#' decoupler's scheme: every row (observation) is adjusted on its own across
+#' the sources.
+#'
+#' @param p_values Numerical matrix. Observations x sources.
+#'
+#' @returns Numerical matrix of the same shape with the adjusted p-values.
+#'
+#' @keywords internal
+lm_padj_per_obs <- function(p_values) {
+  checkmate::assertMatrix(p_values, mode = "numeric")
+
+  # apply() drops to a vector with a single source; t() of either shape
+  # flattens in the right order for matrix()
+  matrix(
+    t(apply(p_values, 1L, stats::p.adjust, method = "BH")),
+    nrow = nrow(p_values),
+    dimnames = dimnames(p_values)
+  )
+}
+
+### scoring --------------------------------------------------------------------
+
+#' ULM / MLM activity scores (decoupler-style)
+#'
+#' @description
+#' Rust implementation of decoupler's univariate (ULM) and multivariate (MLM)
+#' linear model activity scores. Per observation, the observed values of the
+#' features are regressed on the weights of each source's targets (ULM: one
+#' model per source; MLM: all sources in one model), and the t-value (or the
+#' coefficient) of the slope is the activity. Positive means the targets move
+#' in the direction of their weights.
+#'
+#' Behaviour worth knowing:
+#' \itemize{
+#'  \item Rows with non-finite values are dropped (with a warning) before
+#'  scoring.
+#'  \item Constant observations score 0 with a p-value of 1.
+#'  \item MLM errors on collinear sources (duplicated or proportional target
+#'  sets, or a set covering every feature with one weight).
+#'  \item The p-values treat the features as independent.
+#'  \item `fdr` is the Benjamini-Hochberg adjustment per observation across
+#'  sources, decoupler's scheme. decoupler only adjusts ULM; here both methods
+#'  get it, so compare `pvals` against decoupler's MLM output.
+#' }
+#'
+#' @param mat Numerical matrix of features x samples with row names, or a named
+#' numeric vector (e.g., a contrast's t statistics), treated as one sample.
+#' Should be roughly normal: normalised and log-transformed counts, or
+#' contrast-level statistics.
+#' @param net data.frame. The network in long format with the columns `source`,
+#' `target` and optionally `weight` (decoupler / CollecTRI layout). Absent
+#' weights are set to 1.
+#' @param lm_params List. The parameters, see [bixverse::params_lm_activity()].
+#' This function generates a list containing:
+#' \itemize{
+#'  \item method - String. `"ulm"` or `"mlm"`.
+#'  \item stat - String. `"t"` or `"coef"`.
+#'  \item p_values - Boolean. Shall p-values be computed.
+#'  \item tmin - Integer. Minimum number of targets per source in the data.
+#' }
+#'
+#' @returns For a matrix input, a list with the following elements:
+#' \itemize{
+#'  \item es - Numerical matrix of samples x sources with the activities.
+#'  \item pvals - Numerical matrix of samples x sources with the two-sided
+#'  p-values, or `NULL` if `p_values = FALSE`.
+#'  \item fdr - Numerical matrix of the BH-adjusted p-values (per sample across
+#'  sources), or `NULL` if `p_values = FALSE`.
+#' }
+#' For a vector input, a data.table with the columns `source`, `es`, and, if
+#' requested, `pvals` and `fdr`.
+#' `NULL` with a warning if no source has at least `tmin` targets in the data.
+#'
+#' @export
+#'
+#' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022
+#'
+#' @examples
+#' # two regulators, one with its targets shifted up in the second sample
+#' set.seed(42L)
+#' genes <- sprintf("gene_%03i", 1:200)
+#' mat <- matrix(
+#'   rnorm(400),
+#'   ncol = 2L,
+#'   dimnames = list(genes, c("ctrl", "treated"))
+#' )
+#' mat[1:15, "treated"] <- mat[1:15, "treated"] + 2
+#' net <- data.frame(
+#'   source = rep(c("tf_a", "tf_b"), each = 15L),
+#'   target = genes[c(1:15, 101:115)],
+#'   weight = 1
+#' )
+#' res <- calc_lm_activity(
+#'   mat,
+#'   net,
+#'   lm_params = params_lm_activity(p_values = TRUE)
+#' )
+#' res$es
+calc_lm_activity <- function(
+  mat,
+  net,
+  lm_params = params_lm_activity()
+) {
+  # Globals scope check
+  `:=` <- NULL
+
+  # Checks
+  checkmate::assert(
+    checkmate::checkMatrix(mat, mode = "numeric", row.names = "named"),
+    checkmate::checkNumeric(mat, names = "named")
+  )
+  checkmate::assertDataFrame(net)
+  assertLmActivityParams(lm_params)
+
+  is_vector <- !is.matrix(mat)
+  if (is_vector) {
+    mat <- matrix(mat, ncol = 1L, dimnames = list(names(mat), "stat"))
+  }
+
+  finite_rows <- rowSums(!is.finite(mat)) == 0L
+  if (!all(finite_rows)) {
+    warning(sprintf(
+      "Dropping %i features with non-finite values.",
+      sum(!finite_rows)
+    ))
+    mat <- mat[finite_rows, , drop = FALSE]
+  }
+
+  gs_list <- prep_lm_network(
+    net = net,
+    features = rownames(mat),
+    tmin = lm_params$tmin
+  )
+  if (is.null(gs_list)) {
+    return(NULL)
+  }
+
+  res <- rs_lm_activity(
+    mat = mat,
+    gs_list = gs_list,
+    lm_params = lm_params
+  )
+
+  dim_names <- list(colnames(mat), names(gs_list))
+  dimnames(res$es) <- dim_names
+  fdr <- NULL
+  if (!is.null(res$p_values)) {
+    dimnames(res$p_values) <- dim_names
+    fdr <- lm_padj_per_obs(res$p_values)
+  }
+
+  if (is_vector) {
+    res_dt <- data.table::data.table(source = names(gs_list), es = res$es[1L, ])
+    if (!is.null(fdr)) {
+      res_dt[, `:=`(pvals = res$p_values[1L, ], fdr = fdr[1L, ])]
+    }
+    return(res_dt)
+  }
+
+  list(es = res$es, pvals = res$p_values, fdr = fdr)
+}
+
 ## mitch -----------------------------------------------------------------------
 
 #' Calculate a mitch gene set enrichments on contrast
