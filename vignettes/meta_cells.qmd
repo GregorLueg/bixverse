@@ -24,7 +24,7 @@ Aggregating into meta cells reduces sparsity while preserving the heterogeneity
 that bulk pseudo-replicates would average out. Secondly, they reduce the
 computational burden substantially.
 
-`bixverse` provides three meta cell algorithms with different underlying ideas:
+`bixverse` provides four meta cell algorithms with different underlying ideas:
 
 - **hdWGCNA-style meta cells** ([Morabito, et al., 2023](https://doi.org/10.1016/j.crmeth.2023.100498))
 iterate over a kNN graph, picking seed cells and aggregating their neighbours,
@@ -41,6 +41,11 @@ computationally expensive of the three.
 applies the walktrap community detection algorithm to the kNN graph and treats
 each community as a meta cell. Granularity is controlled indirectly through a
 graining factor (the average number of cells per meta cell).
+
+- **MetaCells2** ([Ben-Kiki, et al., 2022](https://doi.org/10.1186/s13059-022-02667-1))
+works on the raw counts and builds its own similarity graph, no embedding or
+kNN needed. It aims for meta cells of a target size and UMI count, splits the
+cells into piles, and leaves cells it cannot place convincingly unassigned.
 
 One implementation detail worth flagging upfront. In `bixverse`, the
 `SingleCells` class keeps counts on disk in DuckDB and binary Rust-based files 
@@ -353,6 +358,92 @@ supercells_large <- generate_supercells_sc(
 )
 ```
 
+### MetaCells2
+
+MetaCells2 is the odd one out. It never touches the PCA or the kNN graph from
+above: it downsamples the raw counts per pile, picks its own feature genes,
+builds a balanced kNN graph on their correlations and partitions that with
+simulated annealing. Cells that look deviant within their candidate meta cell
+get pulled out and re-run, and whatever still does not fit is left unassigned.
+The size knobs are `target_metacell_size` (cells) and `target_metacell_umis`;
+the defaults (48 cells, 160k UMIs) are upstream's.
+
+```{r}
+#| label: metacells2
+metacells2 <- generate_metacells2_sc(
+  object = sc_object,
+  .verbose = TRUE
+)
+
+metacells2
+```
+
+```{r}
+#| label: metacells2 - cells per meta cell
+no_cells_metacells2 <- purrr::map_dbl(
+  metacells2[[]]$original_cell_idx,
+  length
+)
+
+hist(
+  no_cells_metacells2,
+  xlab = "No cells per meta cell",
+  main = "Cells per MetaCells2 meta cell",
+  breaks = 25L
+)
+```
+
+The outliers and a few per-cell details sit in `other_data`: whether the
+cell's candidate got dissolved, in which outlier round it was placed and, if
+any, its rare gene module.
+
+```{r}
+#| label: metacells2 - cell info
+mc2_cell_info <- metacells2@other_data$cell_info
+
+mc2_cell_info[, .N, by = .(level, dissolved)]
+
+metacells2@original_assignment$n_unassigned
+```
+
+```{r}
+#| label: metacells2 - add diffusion coordinates
+metacells2 <- calc_diffusion_coordinates(
+  object = metacells2,
+  knn_data = knn_object
+)
+```
+
+#### MetaCells2 on large data
+
+The divide and conquer part is what makes this scale. Cells get split into
+piles of 8k to 24k cells (`params_sc_metacells2_dac()`), every pile is
+processed on its own, and the resulting meta cells are grouped into piles of
+similar meta cells for a second pass, so rare states that got spread across
+random piles end up together. Each pile holds two dense `pile x pile`
+matrices, so memory is bounded by the pile size, not the data size.
+
+Before any of that, rare gene modules are detected: genes expressed in at most
+0.1% of the cells that co-occur. Their cells get piled separately, so a rare
+population of a few dozen cells does not get diluted across piles. On small
+data like this the step finds nothing, which is what upstream does too. Switch
+it off with `rare_gene_modules = FALSE`.
+
+`max_parallel_piles` trades memory for speed. Each extra pile in flight costs
+another two dense matrices.
+
+```{r}
+#| label: metacells2 - large data
+#| eval: false
+metacells2_large <- generate_metacells2_sc(
+  object = sc_object,
+  dac_params = params_sc_metacells2_dac(
+    max_parallel_piles = 4L
+  ),
+  .verbose = TRUE
+)
+```
+
 ## Metrics
 
 ### Purity
@@ -375,11 +466,16 @@ supercells <- calc_meta_cell_purity(
   supercells,
   original_cell_type = cell_labels
 )
+metacells2 <- calc_meta_cell_purity(
+  metacells2,
+  original_cell_type = cell_labels
+)
 
 purity_dt <- rbind(
   data.table(method = "hdWGCNA", purity = hdwgcna[[]]$mc_purity),
   data.table(method = "SEACells", purity = seacells[[]]$mc_purity),
-  data.table(method = "SuperCells", purity = supercells[[]]$mc_purity)
+  data.table(method = "SuperCells", purity = supercells[[]]$mc_purity),
+  data.table(method = "MetaCells2", purity = metacells2[[]]$mc_purity)
 )
 
 purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
@@ -420,11 +516,15 @@ seacells_regions <- as.data.table(
 supercells_regions <- as.data.table(
   table(supercells[[]]$density_region) / nrow(supercells[[]])
 )[, method := "SuperCells"]
+metacells2_regions <- as.data.table(
+  table(metacells2[[]]$density_region) / nrow(metacells2[[]])
+)[, method := "MetaCells2"]
 
 region_dt <- rbind(
   hdwgcna_regions,
   seacells_regions,
-  supercells_regions
+  supercells_regions,
+  metacells2_regions
 )[, V1 := factor(V1, levels = c("high", "mid", "low"))]
 setnames(region_dt, old = c("V1", "N"), new = c("region", "proportion"))
 ```
@@ -464,6 +564,7 @@ can do this trivially via:
 hdwgcna <- calc_manifold_metrics(hdwgcna)
 seacells <- calc_manifold_metrics(seacells)
 supercells <- calc_manifold_metrics(supercells)
+metacells2 <- calc_manifold_metrics(metacells2)
 ```
 
 Let's generate a plotting data.table
@@ -488,6 +589,12 @@ metrics_dt <- rbind(
     separation = supercells[[]]$separation,
     compactness = supercells[[]]$compactness,
     region = supercells[[]]$density_region
+  ),
+  data.table(
+    method = "MetaCells2",
+    separation = metacells2[[]]$separation,
+    compactness = metacells2[[]]$compactness,
+    region = metacells2[[]]$density_region
   )
 )[, region := factor(region, levels = c("high", "mid", "low"))]
 
@@ -504,10 +611,13 @@ metrics_dt[,
 
 Some differences are visible here. hdWGCNA has the worst separation and best
 compactness (not unexpected given the bootstrapping method only sampling direct 
-neighbours). SEACells has the worst compactness across the three methods (not
+neighbours). Of the three kNN-based methods, SEACells has the worst compactness (not
 unsurprising as the meta cells here capture more sparse regions of the
-manifold) and middling separation; SuperCells (version 2.0, the default setting 
-here) is in the middle. 
+manifold) and middling separation; SuperCells (version 2.0, the default setting
+here) is in the middle. MetaCells2 comes out least compact, mostly in the low
+density regions. Keep in mind that it is judged on someone else's turf here:
+the diffusion map sits on the PCA kNN graph, while MetaCells2 never saw it and
+built its own graph from the raw counts of the genes it selected per pile.
 
 ```{r}
 #| label: check metrics per region
