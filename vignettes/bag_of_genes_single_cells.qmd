@@ -533,15 +533,14 @@ length(scenic_genes)
 ### Transcription factor list
 
 We need a list of known TFs. The Aerts lab provides a curated list for human
-which we can download and map to Ensembl IDs.
+(`allTFs_hg38.txt` from their
+[cisTarget resources](https://resources.aertslab.org/cistarget/tf_lists/)).
+A copy ships with `bixverse`, so `load_scenic_tfs_hg38()` works offline; we
+map it to Ensembl IDs.
 
 ```{r}
 #| label: scenic-tfs
-tf_dt <- data.table::fread(
-  "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
-  header = FALSE,
-  col.names = "tf"
-)
+tf_dt <- data.table::data.table(tf = load_scenic_tfs_hg38())
 tf_dt[, gene_id := symbol_to_ensembl[tf]]
 tf_dt <- tf_dt[!is.na(gene_id)]
 

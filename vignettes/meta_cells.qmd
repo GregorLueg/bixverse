@@ -852,11 +852,7 @@ Let's run this quickly...
 
 ```{r}
 #| label: run SCENIC on meta cells
-tf_dt <- data.table::fread(
-  "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
-  header = FALSE,
-  col.names = "tf"
-)
+tf_dt <- data.table::data.table(tf = load_scenic_tfs_hg38())
 
 scenic_res <- scenic_grn_sc(
   object = seacells,
