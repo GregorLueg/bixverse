@@ -175,6 +175,7 @@ reference:
       - calc_fgsea_simple
       - calc_blitzgsea
       - blitzgsea_calibrate
+      - calc_lm_activity
       - calc_gsea_traditional
       - calc_mitch
       - calc_gsva
@@ -185,6 +186,7 @@ reference:
       - params_blitzgsea
       - params_gsea
       - params_gsva
+      - params_lm_activity
       - params_ssgsea
   # Gene Ontology-related functions
   - title: Gene Ontology-related gene set enrichment helpers
@@ -207,6 +209,7 @@ reference:
       Functions related to CisTarget enrichment.
     contents:
       - download_cistarget_hg38
+      - load_scenic_tfs_hg38
       - read_motif_annotation_file
       - read_motif_ranking
       - run_cistarget
@@ -452,11 +455,14 @@ reference:
       - generate_supercells_sc
       - generate_bt_meta_cells_sc
       - generate_seacells_sc
+      - generate_metacells2_sc
       - merge_meta_cells
       - nebula_mc
       - params_sc_supercell
       - params_sc_bt_metacells
       - params_sc_seacells
+      - params_sc_metacells2
+      - params_sc_metacells2_dac
   # Single cell data I/O
   - title: Single cell i/o
     desc: 
@@ -599,6 +605,7 @@ reference:
       - test_nhoods
       - vision_sc
       - vision_w_autocor_sc
+      - lm_activity_sc
       - identify_tf_to_genes
       - scenic_gene_filter_sc
       - scenic_grn_sc
@@ -873,6 +880,7 @@ reference:
       - rs_knn_label_propagation
       - rs_knn_mat_to_edge_list
       - rs_leiden_clustering
+      - rs_lm_activity
       - rs_generate_ligand_target_influence
       - rs_ligand_activity_scores
       - rs_limma_voom
@@ -885,6 +893,7 @@ reference:
       - rs_mc_hotspot_gene_cor
       - rs_mc_fit_residuals
       - rs_mc_hvg
+      - rs_mc_lm_activity
       - rs_mc_pca
       - rs_mc_pca_residuals
       - rs_mc_residual_variance

@@ -1596,6 +1596,116 @@ expect_error(
   info = "nmf_k_sweep_sc: a k range reaching below 2 is refused"
 )
 
+## ulm / mlm -------------------------------------------------------------------
+
+lm_net <- data.frame(
+  source = rep(
+    c("markers_cell_type_1", "markers_cell_type_2", "markers_cell_type_3"),
+    each = 10L
+  ),
+  target = sprintf("gene_%03d", 1:30),
+  weight = 1
+)
+
+ulm_sc <- lm_activity_sc(
+  object = sc_object,
+  net = lm_net,
+  lm_params = params_lm_activity(p_values = TRUE),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(ulm_sc),
+    identical.to = c("es", "pvals", "fdr")
+  ),
+  info = "lm_activity_sc: es, pvals and fdr with p_values = TRUE"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    ulm_sc$es,
+    ncols = 3L,
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = "lm_activity_sc: cells x sources"
+)
+
+expect_true(
+  current = inherits(ulm_sc$es, "ScMatrixRes"),
+  info = "lm_activity_sc: wrapped as ScMatrixRes"
+)
+
+# every marker set scores highest in its own cell type
+ulm_cell_grp <- obs_table_red$cell_grp[match(
+  rownames(ulm_sc$es),
+  obs_table_red$cell_id
+)]
+for (ct in sprintf("cell_type_%i", 1:3)) {
+  marker_col <- sprintf("markers_%s", ct)
+  mean_by_grp <- tapply(ulm_sc$es[, marker_col], ulm_cell_grp, mean)
+  expect_equal(
+    current = names(which.max(mean_by_grp)),
+    target = ct,
+    info = sprintf("lm_activity_sc: %s scores highest in its cell type", ct)
+  )
+}
+
+# the sc path on the store equals the bulk path on the same normalised counts
+norm_counts <- as.matrix(
+  sc_object[,, assay = "norm", return_format = "cell"]
+)
+
+for (method in c("ulm", "mlm")) {
+  lm_params <- params_lm_activity(method = method, p_values = TRUE)
+  sc_res <- lm_activity_sc(
+    object = sc_object,
+    net = lm_net,
+    lm_params = lm_params,
+    .verbose = FALSE
+  )
+  bulk_res <- calc_lm_activity(
+    mat = t(norm_counts),
+    net = lm_net,
+    lm_params = lm_params
+  )
+  expect_equal(
+    current = unclass(sc_res$es)[rownames(bulk_res$es), ],
+    target = bulk_res$es,
+    tolerance = 1e-4,
+    check.attributes = FALSE,
+    info = sprintf("lm_activity_sc (%s): matches the bulk path", method)
+  )
+  expect_equal(
+    current = unclass(sc_res$pvals)[rownames(bulk_res$es), ],
+    target = bulk_res$pvals,
+    tolerance = 1e-4,
+    check.attributes = FALSE,
+    info = sprintf("lm_activity_sc (%s): p-values match the bulk path", method)
+  )
+}
+
+expect_true(
+  current = inherits(
+    lm_activity_sc(object = sc_object, net = lm_net, .verbose = FALSE),
+    "ScMatrixRes"
+  ),
+  info = "lm_activity_sc: a single ScMatrixRes without p-values"
+)
+
+expect_warning(
+  current = lm_activity_sc(
+    object = sc_object,
+    net = lm_net,
+    lm_params = params_lm_activity(tmin = 50L),
+    .verbose = FALSE
+  ),
+  pattern = "tmin",
+  info = "lm_activity_sc: warns if no source survives tmin"
+)
+
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)

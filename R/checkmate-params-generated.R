@@ -2018,6 +2018,72 @@ checkLimmaVoomParams <- function(x) {
 #' @keywords internal
 assertLimmaVoomParams <- checkmate::makeAssertionFunction(checkLimmaVoomParams)
 
+#' Check ULM / MLM params
+#'
+#' @description Checkmate extension for the output of [params_lm_activity()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkLmActivityParams <- function(x) {
+  res <- check_list_shape(x, c("method", "stat", "p_values", "tmin"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      p_values = "B1",
+      tmin = "I1[1,)"
+    ),
+    label = "ULM / MLM params",
+    hint = paste(
+      "method must be one of 'ulm' or 'mlm'; stat one of 't' or 'coef';",
+      "p_values must be a boolean; tmin must be an integer >= 1."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      method = c("ulm", "mlm"),
+      stat = c("t", "coef")
+    ),
+    label = "ULM / MLM params",
+    hint = paste(
+      "method must be one of 'ulm' or 'mlm'; stat one of 't' or 'coef';",
+      "p_values must be a boolean; tmin must be an integer >= 1."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert ULM / MLM params
+#'
+#' @inheritParams checkLmActivityParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertLmActivityParams <- checkmate::makeAssertionFunction(
+  checkLmActivityParams
+)
+
 #' Check MELD params
 #'
 #' @description Checkmate extension for the output of [params_meld()].
@@ -4174,6 +4240,216 @@ checkScMagicParams <- function(x) {
 #'
 #' @keywords internal
 assertScMagicParams <- checkmate::makeAssertionFunction(checkScMagicParams)
+
+#' Check MetaCells2 params
+#'
+#' @description Checkmate extension for the output of [params_sc_metacells2()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkScMetacells2Params <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "target_metacell_size",
+      "min_metacell_size",
+      "target_metacell_umis",
+      "similarity_method",
+      "log_data",
+      "value_regularisation",
+      "min_genes",
+      "min_gene_total",
+      "min_gene_top3",
+      "min_gene_relative_variance",
+      "downsample_min_samples",
+      "knn_k_override",
+      "min_knn_k",
+      "min_gene_fold_factor",
+      "max_cell_fraction",
+      "gap_skip_cells",
+      "min_robust_size_factor",
+      "min_convincing_gene_fold_factor"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      target_metacell_size = "I1[2,)",
+      min_metacell_size = "I1[1,)",
+      target_metacell_umis = "R1(0,)",
+      log_data = "B1",
+      value_regularisation = "R1(0,)",
+      min_genes = "I1[1,)",
+      min_gene_total = "I1[0,)",
+      min_gene_top3 = "I1[0,)",
+      min_gene_relative_variance = "R1",
+      downsample_min_samples = "I1[1,)",
+      knn_k_override = c("I1[1,)", "0"),
+      min_knn_k = "I1[1,)",
+      min_gene_fold_factor = "R1(0,)",
+      max_cell_fraction = "R1(0,1)",
+      gap_skip_cells = "I1[0,2]",
+      min_robust_size_factor = "R1(0,)",
+      min_convincing_gene_fold_factor = "R1(0,)"
+    ),
+    label = "MetaCells2 params",
+    hint = paste(
+      "Size, count and gene fields must be integers; factors, quantiles",
+      "and fractions must be doubles (not integers); similarity_method",
+      "must be one of 'abs_pearson' or 'pearson'; log_data must be a",
+      "boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      similarity_method = c("abs_pearson", "pearson")
+    ),
+    label = "MetaCells2 params",
+    hint = paste(
+      "Size, count and gene fields must be integers; factors, quantiles",
+      "and fractions must be doubles (not integers); similarity_method",
+      "must be one of 'abs_pearson' or 'pearson'; log_data must be a",
+      "boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert MetaCells2 params
+#'
+#' @inheritParams checkScMetacells2Params
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertScMetacells2Params <- checkmate::makeAssertionFunction(
+  checkScMetacells2Params
+)
+
+#' Check MetaCells2 divide and conquer params
+#'
+#' @description Checkmate extension for the output of
+#' [params_sc_metacells2_dac()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkScMetacells2DacParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "min_target_pile_size",
+      "max_target_pile_size",
+      "target_metacells_in_pile",
+      "target_pile_size",
+      "quick_and_dirty",
+      "max_parallel_piles",
+      "groups_similarity_method",
+      "rare_gene_modules",
+      "rare_max_gene_cell_fraction",
+      "rare_max_genes",
+      "rare_min_genes_of_modules",
+      "rare_min_cells_of_modules",
+      "rare_genes_similarity_method",
+      "rare_genes_cluster_method"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      min_target_pile_size = "I1[1,)",
+      max_target_pile_size = "I1[1,)",
+      target_metacells_in_pile = "I1[1,)",
+      target_pile_size = c("I1[1,)", "0"),
+      quick_and_dirty = "B1",
+      max_parallel_piles = "I1[1,)",
+      rare_gene_modules = "B1",
+      rare_max_gene_cell_fraction = "R1(0,1)",
+      rare_max_genes = "I1[1,)",
+      rare_min_genes_of_modules = "I1[1,)",
+      rare_min_cells_of_modules = "I1[1,)"
+    ),
+    label = "MetaCells2 divide and conquer params",
+    hint = paste(
+      "Pile sizes and counts must be integers (target_pile_size may be",
+      "NULL); quick_and_dirty and rare_gene_modules must be booleans;",
+      "rare_max_gene_cell_fraction must be a double in (0, 1); the",
+      "method fields must be one of their allowed strings."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      groups_similarity_method = c("abs_pearson", "pearson"),
+      rare_genes_similarity_method = c(
+        "repeated_pearson",
+        "repeated_abs_pearson",
+        "pearson",
+        "abs_pearson"
+      ),
+      rare_genes_cluster_method = c("ward", "complete", "average", "weighted")
+    ),
+    label = "MetaCells2 divide and conquer params",
+    hint = paste(
+      "Pile sizes and counts must be integers (target_pile_size may be",
+      "NULL); quick_and_dirty and rare_gene_modules must be booleans;",
+      "rare_max_gene_cell_fraction must be a double in (0, 1); the",
+      "method fields must be one of their allowed strings."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert MetaCells2 divide and conquer params
+#'
+#' @inheritParams checkScMetacells2DacParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertScMetacells2DacParams <- checkmate::makeAssertionFunction(
+  checkScMetacells2DacParams
+)
 
 #' Check single cell QC params
 #'

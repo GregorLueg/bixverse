@@ -2,6 +2,34 @@
 
 ## data ------------------------------------------------------------------------
 
+#' Load the human (hg38) transcription factor list used by SCENIC
+#'
+#' @description
+#' Returns the human transcription factor list from the Aerts lab
+#' (`allTFs_hg38.txt`), the candidate regulator list pySCENIC uses for GRN
+#' inference. A copy ships with the package because the original server is
+#' not always reachable. All credit to the Aerts lab; the original lives at
+#' `https://resources.aertslab.org/cistarget/tf_lists/`.
+#'
+#' @returns Character vector of transcription factor gene symbols.
+#'
+#' @export
+#'
+#' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @examples
+#' # the candidate regulators for SCENIC
+#' tfs <- load_scenic_tfs_hg38()
+#' head(tfs)
+load_scenic_tfs_hg38 <- function() {
+  path <- system.file("extdata", "allTFs_hg38.txt", package = "bixverse")
+  if (path == "") {
+    stop("The expected extdata was not found for allTFs_hg38.txt")
+  }
+
+  readLines(path)
+}
+
 #' Download CisTarget reference files for human (hg38)
 #'
 #' @param cache_dir String. Directory to cache the files. Defaults to a

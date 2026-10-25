@@ -130,6 +130,8 @@ MetaCells <- S7::new_class(
         rss = meta_cell_data$rss,
         archetypes = meta_cell_data$archetypes
       )
+    } else if (meta_cell_method == "metacells2") {
+      meta_cell_data[c("cell_info", "rare_gene_modules", "selected_genes")]
     } else {
       list()
     }

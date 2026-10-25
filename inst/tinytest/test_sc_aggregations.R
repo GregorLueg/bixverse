@@ -463,6 +463,150 @@ expect_true(
   info = "no unexpected cell types in subsetted version - supercell"
 )
 
+### metacells2 -----------------------------------------------------------------
+
+# the synthetic cells carry ~500 UMIs, so the defaults (160k UMIs per meta cell)
+# would only give a handful of meta cells
+mc2_params <- params_sc_metacells2(
+  target_metacell_size = 20L,
+  target_metacell_umis = 20000
+)
+
+metacells2 <- generate_metacells2_sc(
+  sc_object,
+  mc2_params = mc2_params,
+  .verbose = FALSE
+)
+
+n_mc2 <- metacells2@original_assignment$n_metacells
+
+expect_true(
+  current = checkmate::testDataTable(metacells2[[]], nrows = n_mc2),
+  info = "metacells2 obs correct - one row per meta cell"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(metacells2[[]]),
+    must.include = c(
+      "meta_cell_idx",
+      "meta_cell_id",
+      "no_originating_cells",
+      "original_cell_idx"
+    )
+  ),
+  info = "metacells2 obs correct - correct columns"
+)
+
+mc2_assignments <- metacells2@original_assignment$assignments
+
+expect_equal(
+  current = sort(unique(mc2_assignments[mc2_assignments > 0L])),
+  target = seq_len(n_mc2),
+  info = "metacells2 - dense meta cell ids"
+)
+
+expect_true(
+  current = all(metacells2[[]]$no_originating_cells > 0),
+  info = "metacells2 - no empty meta cells"
+)
+
+metacells2 <- calc_meta_cell_purity(
+  metacells2,
+  original_cell_type = original_cell_type
+)
+
+expect_true(
+  current = mean(metacells2[[]]$mc_purity) > 0.85,
+  info = "metacells2 - similar cell types are being pulled together"
+)
+
+expect_equal(
+  current = dim(metacells2[]),
+  target = c(n_mc2, 81),
+  info = "metacells2 - correct return dimensions for the raw counts"
+)
+
+mc2_cell_info <- metacells2@other_data$cell_info
+
+expect_true(
+  current = checkmate::testDataTable(
+    mc2_cell_info,
+    nrows = length(get_cells_to_keep(sc_object))
+  ),
+  info = "metacells2 - cell info for every included cell"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(metacells2@other_data),
+    identical.to = c("cell_info", "rare_gene_modules", "selected_genes")
+  ),
+  info = "metacells2 - other data holds the MC2 extras"
+)
+
+expect_true(
+  current = checkmate::testSubset(
+    metacells2@other_data$selected_genes,
+    get_gene_names(sc_object)
+  ),
+  info = "metacells2 - selected genes are gene ids of the object"
+)
+
+metacells2_rep <- generate_metacells2_sc(
+  sc_object,
+  mc2_params = mc2_params,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = metacells2_rep@original_assignment$assignments,
+  target = mc2_assignments,
+  info = "metacells2 - same seed, same assignments"
+)
+
+metacells2_no_rare <- generate_metacells2_sc(
+  sc_object,
+  mc2_params = mc2_params,
+  dac_params = params_sc_metacells2_dac(rare_gene_modules = FALSE),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(is.na(metacells2_no_rare@other_data$cell_info$rare_module)),
+  info = "metacells2 - no rare modules when switched off"
+)
+
+expect_error(
+  current = params_sc_metacells2(target_metacell_umis = 20000L),
+  pattern = "target_metacell_umis",
+  info = "metacells2 - integer for a double field is refused"
+)
+
+#### smaller subset ------------------------------------------------------------
+
+metacells2_small <- generate_metacells2_sc(
+  sc_object,
+  mc2_params = mc2_params,
+  cells_to_use = cells_to_use,
+  .verbose = FALSE
+)
+
+mc2_small_types <- original_cell_type[
+  unlist(metacells2_small[[]]$original_cell_idx)
+]
+
+expect_true(
+  current = !any(mc2_small_types == "cell_type_3"),
+  info = "no unexpected cell types in subsetted version - metacells2"
+)
+
+expect_equal(
+  current = nrow(metacells2_small@other_data$cell_info),
+  target = length(cells_to_use),
+  info = "metacells2 - cell info only for the subsetted cells"
+)
+
 ## non-contiguous cells to keep -------------------------------------------------
 
 # The tests above load with QC parameters, which drops failing cells at write

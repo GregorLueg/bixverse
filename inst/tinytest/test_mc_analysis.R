@@ -1168,6 +1168,83 @@ expect_error(
   info = "mc nmf_k_sweep_sc: a k range reaching below 2 is refused"
 )
 
+## ulm / mlm -------------------------------------------------------------------
+
+mc_lm_net <- data.frame(
+  source = rep(
+    c("markers_cell_type_1", "markers_cell_type_2", "markers_cell_type_3"),
+    each = 10L
+  ),
+  target = sprintf("gene_%03d", 1:30),
+  weight = 1
+)
+
+mc_norm_dense <- as.matrix(mc_object[NULL, NULL, assay = "norm"])
+
+for (method in c("ulm", "mlm")) {
+  lm_params <- params_lm_activity(method = method, p_values = TRUE)
+
+  mc_lm_res <- lm_activity_sc(
+    object = mc_object,
+    net = mc_lm_net,
+    lm_params = lm_params,
+    .verbose = FALSE
+  )
+
+  expect_true(
+    current = checkmate::testMatrix(
+      mc_lm_res$es,
+      mode = "numeric",
+      nrows = target_n_metacells,
+      ncols = 3L,
+      row.names = "named",
+      col.names = "named"
+    ),
+    info = sprintf("mc lm activity (%s) - meta cells x sources", method)
+  )
+
+  bulk_res <- calc_lm_activity(
+    mat = t(mc_norm_dense),
+    net = mc_lm_net,
+    lm_params = lm_params
+  )
+
+  expect_equal(
+    current = mc_lm_res$es[rownames(bulk_res$es), ],
+    target = bulk_res$es,
+    tolerance = 1e-4,
+    info = sprintf("mc lm activity (%s) - matches the bulk path", method)
+  )
+
+  expect_equal(
+    current = mc_lm_res$pvals[rownames(bulk_res$es), ],
+    target = bulk_res$pvals,
+    tolerance = 1e-4,
+    info = sprintf("mc lm activity (%s) - p-values match the bulk path", method)
+  )
+}
+
+mc_ulm <- lm_activity_sc(
+  object = mc_object,
+  net = mc_lm_net,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = is.matrix(mc_ulm) && !inherits(mc_ulm, "ScMatrixRes"),
+  info = "mc lm activity - plain matrix without p-values"
+)
+
+# bootstrapped meta cells can mix cell types, so not every single one agrees
+for (ct in c("cell_type_1", "cell_type_2", "cell_type_3")) {
+  marker_col <- sprintf("markers_%s", ct)
+  expect_true(
+    current = mean(mc_ulm[mc_dominant_type == ct, marker_col]) >
+      mean(mc_ulm[mc_dominant_type != ct, marker_col]),
+    info = sprintf("mc lm activity - %s scores higher in its meta cells", ct)
+  )
+}
+
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)

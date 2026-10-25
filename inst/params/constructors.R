@@ -1326,6 +1326,236 @@ spec_sc_supercell <- param_spec(
   )
 )
 
+# Rust reads the double fields with `as_real()`, which returns nothing on an
+# integer and silently falls back to the default, hence `strict = TRUE`.
+spec_sc_metacells2 <- param_spec(
+  name = "sc_metacells2",
+  title = "Wrapper function for the MetaCells2 per-pile parameters",
+  references = "Ben-Kiki, et al., Genome Biol., 2022",
+  checker = "ScMetacells2",
+  label = "MetaCells2 params",
+  hint = paste(
+    "Size, count and gene fields must be integers; factors, quantiles and",
+    "fractions must be doubles (not integers); similarity_method must be",
+    "one of 'abs_pearson' or 'pearson'; log_data must be a boolean."
+  ),
+  fields = list(
+    target_metacell_size = p_int(
+      48L,
+      range = "[2,)",
+      doc = "Target number of cells per meta cell."
+    ),
+    min_metacell_size = p_int(
+      12L,
+      range = "[1,)",
+      doc = paste(
+        "Candidate meta cells below this size are dissolved into outliers."
+      )
+    ),
+    target_metacell_umis = p_dbl(
+      160000,
+      range = "(0,)",
+      strict = TRUE,
+      doc = paste(
+        "Target total UMIs per meta cell. Drives the number of seeds and the",
+        "size of the kNN graph."
+      )
+    ),
+    similarity_method = p_choice(
+      "abs_pearson",
+      c("abs_pearson", "pearson"),
+      doc = "Cell-cell similarity on the selected genes."
+    ),
+    log_data = p_lgl(
+      TRUE,
+      doc = "Correlate `log2(x + value_regularisation)` instead of `x`."
+    ),
+    value_regularisation = p_dbl(
+      1 / 7,
+      range = "(0,)",
+      strict = TRUE,
+      doc = "Constant added before the optional log transform."
+    ),
+    min_genes = p_int(
+      100L,
+      range = "[1,)",
+      doc = paste(
+        "Floor on the number of selected genes per pile. The relative",
+        "variance threshold is relaxed until it is met."
+      )
+    ),
+    min_gene_total = p_int(
+      50L,
+      range = "[0,)",
+      doc = "Minimum total UMIs (downsampled) for a gene to be selected."
+    ),
+    min_gene_top3 = p_int(
+      4L,
+      range = "[0,)",
+      doc = "Minimum third-highest UMI count of a gene to be selected."
+    ),
+    min_gene_relative_variance = p_dbl(
+      0.1,
+      strict = TRUE,
+      doc = "Minimum windowed relative variance for a gene to be selected."
+    ),
+    downsample_min_samples = p_int(
+      750L,
+      range = "[1,)",
+      doc = "Floor for the per-pile downsampling target."
+    ),
+    knn_k_override = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Fixed k for the balanced kNN graph. `NULL` derives it from",
+        "`target_metacell_umis` and the library sizes."
+      )
+    ),
+    min_knn_k = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Floor on the derived k."
+    ),
+    min_gene_fold_factor = p_dbl(
+      3,
+      range = "(0,)",
+      strict = TRUE,
+      doc = paste(
+        "Minimum log2 fold gap within a candidate meta cell for a gene to mark",
+        "cells as deviant."
+      )
+    ),
+    max_cell_fraction = p_dbl(
+      0.25,
+      range = "(0,1)",
+      strict = TRUE,
+      doc = "Upper bound on the fraction of cells marked as deviants."
+    ),
+    gap_skip_cells = p_int(
+      1L,
+      range = "[0,2]",
+      doc = "Cells skipped over when measuring a gap."
+    ),
+    min_robust_size_factor = p_dbl(
+      0.5,
+      range = "(0,)",
+      strict = TRUE,
+      doc = paste(
+        "Multiplier on the target size (and UMIs) above which a meta cell is",
+        "kept unconditionally."
+      )
+    ),
+    min_convincing_gene_fold_factor = p_dbl(
+      3,
+      range = "(0,)",
+      strict = TRUE,
+      doc = paste(
+        "Minimum log2 fold of any gene for a meta cell below the robust size",
+        "to be kept anyway."
+      )
+    )
+  )
+)
+
+spec_sc_metacells2_dac <- param_spec(
+  name = "sc_metacells2_dac",
+  title = "Wrapper function for the MetaCells2 divide and conquer parameters",
+  references = "Ben-Kiki, et al., Genome Biol., 2022",
+  checker = "ScMetacells2Dac",
+  label = "MetaCells2 divide and conquer params",
+  hint = paste(
+    "Pile sizes and counts must be integers (target_pile_size may be NULL);",
+    "quick_and_dirty and rare_gene_modules must be booleans;",
+    "rare_max_gene_cell_fraction must be a double in (0, 1); the method",
+    "fields must be one of their allowed strings."
+  ),
+  fields = list(
+    min_target_pile_size = p_int(
+      8000L,
+      range = "[1,)",
+      doc = "Lower clamp on the derived pile size."
+    ),
+    max_target_pile_size = p_int(
+      24000L,
+      range = "[1,)",
+      doc = "Upper clamp on the derived pile size."
+    ),
+    target_metacells_in_pile = p_int(
+      100L,
+      range = "[1,)",
+      doc = "Meta cells wanted per pile, used to derive the pile size."
+    ),
+    target_pile_size = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Fixed pile size. `NULL` derives it from the data and clamps it to",
+        "`[min_target_pile_size, max_target_pile_size]`."
+      )
+    ),
+    quick_and_dirty = p_lgl(
+      FALSE,
+      doc = "Stop after the final phase instead of regrouping the outliers."
+    ),
+    max_parallel_piles = p_int(
+      1L,
+      range = "[1,)",
+      doc = paste(
+        "Piles computed concurrently. Each pile holds two dense",
+        "`pile_size x pile_size` matrices, so this trades memory for speed."
+      )
+    ),
+    groups_similarity_method = p_choice(
+      "abs_pearson",
+      c("abs_pearson", "pearson"),
+      doc = "Similarity used when grouping meta cells into piles."
+    ),
+    rare_gene_modules = p_lgl(
+      TRUE,
+      doc = paste(
+        "Detect rare gene modules first and pile their cells separately."
+      )
+    ),
+    rare_max_gene_cell_fraction = p_dbl(
+      1e-3,
+      range = "(0,1)",
+      strict = TRUE,
+      doc = paste(
+        "Largest fraction of cells a gene may be expressed in to be a rare",
+        "gene candidate."
+      )
+    ),
+    rare_max_genes = p_int(
+      500L,
+      range = "[1,)",
+      doc = "Most rare gene candidates kept."
+    ),
+    rare_min_genes_of_modules = p_int(
+      4L,
+      range = "[1,)",
+      doc = "Fewest genes in a rare gene module."
+    ),
+    rare_min_cells_of_modules = p_int(
+      12L,
+      range = "[1,)",
+      doc = "Fewest cells in a rare gene module."
+    ),
+    rare_genes_similarity_method = p_choice(
+      "repeated_pearson",
+      c("repeated_pearson", "repeated_abs_pearson", "pearson", "abs_pearson"),
+      doc = "Gene-gene similarity of the rare candidates."
+    ),
+    rare_genes_cluster_method = p_choice(
+      "ward",
+      c("ward", "complete", "average", "weighted"),
+      doc = "Linkage for the hierarchical clustering of the rare candidates."
+    )
+  )
+)
+
 spec_sc_bbknn <- param_spec(
   name = "sc_bbknn",
   title = "Wrapper function for the BBKNN parameters",

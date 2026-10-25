@@ -1,6 +1,8 @@
 //! Analysis methods for meta cells specifically: SCENIC, AUCell, HotSpot,
-//! VISION, NMF and DIALOGUE.
+//! VISION, ULM / MLM, NMF and DIALOGUE.
 
+use bixverse_r::enrichment::lm_activity::LmActivityParams;
+use bixverse_r::enrichment_r_wrapper::r_list_to_feature_set_weights;
 use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
 use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
@@ -9,6 +11,7 @@ use bixverse_r::prelude::*;
 use bixverse_r::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
 use bixverse_r::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
 use bixverse_r::single_cell::mc_analysis::hotspot_mc::*;
+use bixverse_r::single_cell::mc_analysis::lm_activity_mc::calculate_lm_activity_metacells;
 use bixverse_r::single_cell::mc_analysis::nebula_mc::nebula_metacells;
 use bixverse_r::single_cell::mc_analysis::nmf_mc::*;
 use bixverse_r::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
@@ -46,6 +49,8 @@ extendr_module! {
     // vision
     fn rs_mc_vision;
     fn rs_mc_vision_with_autocorrelation;
+    // lm activity
+    fn rs_mc_lm_activity;
     // dialogue
     fn rs_mc_dialogue;
     // nebula
@@ -265,6 +270,63 @@ fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArr
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
 
     Ok(faer_to_r_matrix(vision_mat.as_ref()))
+}
+
+/// ULM / MLM activity scores (for meta cells)
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// decoupler-style univariate (ULM) or multivariate (MLM) linear model
+/// activity scores per meta cell on the normalised counts, over all genes.
+/// This version works on MetaCell counts which are stored in memory directly.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and the
+/// data need to be the **normalised** counts.
+/// @param gs_list List. One element per set, each a list with `idx` (integer,
+/// 0-indexed gene positions) and optionally `weight` (numeric, aligned with
+/// `idx`; absent means weight 1).
+/// @param lm_params List. With `method` (`"ulm"` or `"mlm"`), `stat` (`"t"` or
+/// `"coef"`) and `p_values` (boolean).
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following elements
+/// \itemize{
+///   \item es - Numerical matrix of meta cells x sets with the scores.
+///   \item p_values - Numerical matrix of meta cells x sets with the
+///   two-sided p-values, or `NULL` if not requested.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+///
+/// @references Badia-i-Mompel, et al., Bioinform. Adv., 2022.
+#[extendr]
+fn rs_mc_lm_activity(
+    sparse_data: List,
+    gs_list: List,
+    lm_params: List,
+    verbose: usize,
+) -> Result<List> {
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
+    let net = r_list_to_feature_set_weights(gs_list, sparse.shape.1)?;
+    let params = LmActivityParams::from_r_list(lm_params)?;
+
+    let res =
+        calculate_lm_activity_metacells(&sparse, &net, Some(params), verbose).to_extendr()?;
+
+    let to_r = |m: &Mat<f32>| {
+        let m = Mat::from_fn(m.nrows(), m.ncols(), |i, j| m[(i, j)] as f64);
+        faer_to_r_matrix(m.as_ref())
+    };
+    let p_values = match res.p_values {
+        Some(p) => to_r(&p).into_robj(),
+        None => NULL.into_robj(),
+    };
+
+    Ok(list!(es = to_r(&res.es), p_values = p_values))
 }
 
 /// Calculate VISION pathway scores with auto-correlation (for meta cells)

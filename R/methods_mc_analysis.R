@@ -78,6 +78,59 @@ S7::method(vision_sc, MetaCells) <- function(
   return(vision_res)
 }
 
+### ulm / mlm ------------------------------------------------------------------
+
+# generics found in base_generics_sc.R
+
+#' @method lm_activity_sc MetaCells
+#'
+#' @export
+S7::method(lm_activity_sc, MetaCells) <- function(
+  object,
+  net,
+  lm_params = params_lm_activity(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::assertDataFrame(net)
+  assertLmActivityParams(lm_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  gs_list <- prep_lm_network(
+    net = net,
+    features = S7::prop(object, "var_table")$gene_id,
+    tmin = lm_params$tmin
+  )
+  if (is.null(gs_list)) {
+    return(NULL)
+  }
+
+  res <- rs_mc_lm_activity(
+    sparse_data = mc_counts_to_list(object, assay = "norm"),
+    gs_list = gs_list,
+    lm_params = lm_params,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  dim_names <- list(
+    S7::prop(object, "obs_table")$meta_cell_id,
+    names(gs_list)
+  )
+  dimnames(res$es) <- dim_names
+
+  if (is.null(res$p_values)) {
+    return(res$es)
+  }
+
+  dimnames(res$p_values) <- dim_names
+  list(
+    es = res$es,
+    pvals = res$p_values,
+    fdr = lm_padj_per_obs(res$p_values)
+  )
+}
+
 ### vision with auto-correlation -----------------------------------------------
 
 # generics found in base_generics_sc.R

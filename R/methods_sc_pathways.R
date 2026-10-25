@@ -329,6 +329,59 @@ S7::method(vision_sc, SingleCells) <- function(
   return(vision_res)
 }
 
+### ulm / mlm ------------------------------------------------------------------
+
+# generics found in base_generics_sc.R
+
+#' @method lm_activity_sc SingleCells
+#'
+#' @export
+S7::method(lm_activity_sc, SingleCells) <- function(
+  object,
+  net,
+  lm_params = params_lm_activity(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertDataFrame(net)
+  assertLmActivityParams(lm_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  gs_list <- prep_lm_network(
+    net = net,
+    features = get_gene_names(object),
+    tmin = lm_params$tmin
+  )
+  if (is.null(gs_list)) {
+    return(NULL)
+  }
+
+  res <- rs_lm_activity_sc(
+    f_path = get_rust_count_cell_f_path(object),
+    gs_list = gs_list,
+    cells_to_keep = get_cells_to_keep(object),
+    lm_params = lm_params,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  dim_names <- list(get_cell_names(object, filtered = TRUE), names(gs_list))
+  to_sc_matrix <- \(m) {
+    dimnames(m) <- dim_names
+    new_sc_matrix(res = m, cell_indices = get_cells_to_keep(object))
+  }
+
+  if (is.null(res$p_values)) {
+    return(to_sc_matrix(res$es))
+  }
+
+  list(
+    es = to_sc_matrix(res$es),
+    pvals = to_sc_matrix(res$p_values),
+    fdr = to_sc_matrix(lm_padj_per_obs(res$p_values))
+  )
+}
+
 ### vision with auto-correlation -----------------------------------------------
 
 # generics found in base_generics_sc.R

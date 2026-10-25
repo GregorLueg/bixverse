@@ -1408,6 +1408,37 @@ rs_gsva <- function(exp, gs_list, tau, kernel, max_diff, abs_rank, timings) .Cal
 #' @export
 rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ssgsea, exp, gs_list, alpha, normalise, timings)
 
+#' ULM / MLM activity scores (decoupler-style)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits a univariate (ULM) or multivariate (MLM) linear model per observation
+#' of the feature weights of each set against the observed values, and returns
+#' the t-value or the coefficient as the activity score. Observations are the
+#' columns of `mat`.
+#'
+#' @param mat Numerical matrix. Features x observations. Must not contain
+#' non-finite values.
+#' @param gs_list List. One element per set, each a list with `idx` (integer,
+#' 0-indexed feature positions) and optionally `weight` (numeric, aligned with
+#' `idx`; absent means weight 1).
+#' @param lm_params List. With `method` (`"ulm"` or `"mlm"`), `stat` (`"t"` or
+#' `"coef"`) and `p_values` (boolean).
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item es - Numerical matrix of observations x sets with the scores.
+#'   \item p_values - Numerical matrix of observations x sets with the
+#'   two-sided p-values, or `NULL` if not requested.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+#'
+#' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022.
+rs_lm_activity <- function(mat, gs_list, lm_params) .Call(wrap__rs_lm_activity, mat, gs_list, lm_params)
+
 #' Calculate mitch enrichment leveraging Rust under the hood
 #'
 #' @description
@@ -5238,6 +5269,40 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' @keywords internal
 rs_vision_with_autocorrelation <- function(f_path, embd, knn_data, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, knn_data, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
 
+#' ULM / MLM activity scores per cell (decoupler-style)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits a univariate (ULM) or multivariate (MLM) linear model per cell of the
+#' feature weights of each set against the normalised counts over all genes of
+#' the store. Cells are read and scored in chunks, so there is no streaming
+#' switch.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param gs_list List. One element per set, each a list with `idx` (integer,
+#' 0-indexed gene positions) and optionally `weight` (numeric, aligned with
+#' `idx`; absent means weight 1).
+#' @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+#' score.
+#' @param lm_params List. With `method` (`"ulm"` or `"mlm"`), `stat` (`"t"` or
+#' `"coef"`) and `p_values` (boolean).
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item es - Numerical matrix of cells x sets with the scores.
+#'   \item p_values - Numerical matrix of cells x sets with the two-sided
+#'   p-values, or `NULL` if not requested.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+#'
+#' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022.
+rs_lm_activity_sc <- function(f_path, gs_list, cells_to_keep, lm_params, verbose) .Call(wrap__rs_lm_activity_sc, f_path, gs_list, cells_to_keep, lm_params, verbose)
+
 #' Identifies genes to include into a SCENIC analysis
 #'
 #' @description
@@ -5875,6 +5940,50 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data,
 #'
 #' @keywords internal
 rs_supercell <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, embd, cells_to_keep, cells_to_use, knn_data, supercell_params, target_size, seed, verbose)
+
+#' Generate meta cells via MetaCells2 (divide and conquer)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Rust port of the metacells divide and conquer pipeline. Works on the raw
+#' counts directly, so no embedding or kNN graph is needed. Cells are split
+#' into piles, each pile gets its own feature selection, similarity graph and
+#' partition, and outliers are re-run in further rounds. Cells sharing a rare
+#' gene module are piled together first unless switched off in `dac_params`.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cells_to_keep Integer vector. 0-indexed positions in the count file
+#' of the cells to include.
+#' @param mc2_params List. The per-pile parameters, see
+#' [params_sc_metacells2()].
+#' @param dac_params List. The divide and conquer parameters, see
+#' [params_sc_metacells2_dac()].
+#' @param target_size Numeric. Library size to normalise the aggregated counts
+#' to.
+#' @param seed Integer. For reproducibility.
+#' @param verbose Boolean. Controls verbosity.
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item assignments - The meta cell assignments in the original cell space.
+#'   \item aggregated - The aggregated raw and normalised counts in CSR form.
+#'   \item dissolved - Logical per included cell. Was the cell's candidate
+#'   dissolved in its last pile.
+#'   \item level - Integer per included cell. Outlier round that placed it.
+#'   \item rare_module_of_cell - Integer per included cell. 0-indexed rare
+#'   gene module, `-1` for none.
+#'   \item rare_module_of_gene - Integer per gene. 0-indexed rare gene module,
+#'   `-1` for none.
+#'   \item selected_genes - Integer. 1-indexed genes selected in any pile plus
+#'   the rare module genes.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+#'
+#' @references Ben-Kiki, et al., Genome Biol., 2022.
+rs_metacells2 <- function(f_path, cells_to_keep, mc2_params, dac_params, target_size, seed, verbose) .Call(wrap__rs_metacells2, f_path, cells_to_keep, mc2_params, dac_params, target_size, seed, verbose)
 
 #' Calculates diffusion maps for density calculations for meta cells
 #'
@@ -6646,6 +6755,39 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #'
 #' @references DeTomaso, et al., Nat. Commun., 2019
 rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed) .Call(wrap__rs_mc_vision_with_autocorrelation, sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed)
+
+#' ULM / MLM activity scores (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' decoupler-style univariate (ULM) or multivariate (MLM) linear model
+#' activity scores per meta cell on the normalised counts, over all genes.
+#' This version works on MetaCell counts which are stored in memory directly.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and the
+#' data need to be the **normalised** counts.
+#' @param gs_list List. One element per set, each a list with `idx` (integer,
+#' 0-indexed gene positions) and optionally `weight` (numeric, aligned with
+#' `idx`; absent means weight 1).
+#' @param lm_params List. With `method` (`"ulm"` or `"mlm"`), `stat` (`"t"` or
+#' `"coef"`) and `p_values` (boolean).
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item es - Numerical matrix of meta cells x sets with the scores.
+#'   \item p_values - Numerical matrix of meta cells x sets with the
+#'   two-sided p-values, or `NULL` if not requested.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+#'
+#' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022.
+rs_mc_lm_activity <- function(sparse_data, gs_list, lm_params, verbose) .Call(wrap__rs_mc_lm_activity, sparse_data, gs_list, lm_params, verbose)
 
 #' Run DIALOGUE over meta cells
 #'

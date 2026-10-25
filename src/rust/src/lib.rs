@@ -30,6 +30,7 @@ pub use data::r_synthetic;
 pub use enrichment::r_blitzgsea;
 pub use enrichment::r_gsea;
 pub use enrichment::r_gsva;
+pub use enrichment::r_lm_activity;
 pub use enrichment::r_mitch;
 pub use enrichment::r_oea;
 pub use enrichment::r_singscore;
@@ -97,6 +98,7 @@ extendr_module! {
     use r_blitzgsea;
     use r_gsea;
     use r_gsva;
+    use r_lm_activity;
     use r_mitch;
     use r_oea;
     use r_singscore;

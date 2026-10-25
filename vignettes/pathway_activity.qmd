@@ -376,6 +376,134 @@ microbenchmark::microbenchmark(
 )
 ```
 
+## ULM and MLM
+
+The rank-based scores above treat a gene set as a bag of genes. Transcription
+factor regulons (think [CollecTRI](https://academic.oup.com/nar/article/52/D1/D1029/7386439)
+or [DoRothEA](https://genome.cshlp.org/content/29/8/1363)) carry a sign as
+well: some targets get activated, others repressed.
+[decoupler](https://academic.oup.com/bioinformaticsadvances/article/2/1/vbac016/6544613)
+handles that with a linear model per sample: regress the expression of all
+genes on the weights of a source's targets, and take the t-value of the slope
+as the activity. The univariate version (ULM) fits one model per source; the
+multivariate one (MLM) puts all sources into one model, so overlapping
+regulons compete for the signal. `calc_lm_activity()` is the Rust version of
+both.
+
+The network comes in decoupler's long format: `source`, `target` and an
+optional `weight`. We turn the random gene sets into signed regulons and plant
+an activation of the first one in the first ten samples.
+
+```{r}
+#| label: lm-net
+net <- data.table::rbindlist(
+  purrr::imap(gs[1:50], \(targets, source) {
+    data.table::data.table(
+      source = source,
+      target = targets,
+      weight = sample(c(-1, 1), length(targets), replace = TRUE)
+    )
+  })
+)
+
+X_lm <- X
+gs1_net <- net[source == "gs1"]
+X_lm[gs1_net$target, 1:10] <- X_lm[gs1_net$target, 1:10] + gs1_net$weight
+```
+
+```{r}
+#| label: bixverse-ulm
+ulm_res <- calc_lm_activity(
+  mat = X_lm,
+  net = net,
+  lm_params = params_lm_activity(method = "ulm", p_values = TRUE)
+)
+
+# planted samples first, the rest after
+round(ulm_res$es[c(1:3, 11:13), 1:4], 2)
+```
+
+`es` holds the t-values (`stat = "coef"` gives you the slope instead), `pvals`
+the two-sided p-values and `fdr` the Benjamini-Hochberg adjustment per sample
+across sources, which is what decoupler does. Sources with fewer than `tmin`
+targets in the data (default 5) are dropped, same as decoupler.
+
+```{r}
+#| label: bixverse-mlm
+mlm_res <- calc_lm_activity(
+  mat = X_lm,
+  net = net,
+  lm_params = params_lm_activity(method = "mlm", p_values = TRUE)
+)
+
+cor(ulm_res$es[, "gs1"], mlm_res$es[, "gs1"])
+```
+
+A few things to be aware of:
+
+- MLM throws an error on collinear sources, i.e., duplicated or proportional
+  regulons. Merge or drop them first.
+- Rows with `NA` are dropped (with a warning) before scoring.
+- The p-values treat genes as independent. They are not, so read them as a
+  ranking aid rather than gospel.
+- A named vector (say the t statistics of a contrast) works as well and gives
+  you a `data.table` back.
+
+### Comparison with decoupleR
+
+```{r}
+#| label: decoupler-comparison
+#| eval: !expr requireNamespace("decoupleR", quietly = TRUE)
+dc_ulm <- decoupleR::run_ulm(
+  mat = X_lm,
+  network = net,
+  .source = "source",
+  .target = "target",
+  .mor = "weight",
+  minsize = 5L
+)
+
+dc_ulm_wide <- data.table::dcast(
+  data.table::as.data.table(dc_ulm),
+  condition ~ source,
+  value.var = "score"
+)
+dc_ulm_mat <- as.matrix(dc_ulm_wide[, -1])
+rownames(dc_ulm_mat) <- dc_ulm_wide$condition
+
+max(abs(dc_ulm_mat[rownames(ulm_res$es), colnames(ulm_res$es)] - ulm_res$es))
+```
+
+And the speed difference:
+
+```{r}
+#| label: decoupler-speed
+#| eval: !expr all(vapply(c("decoupleR", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
+microbenchmark::microbenchmark(
+  decoupleR_ulm = decoupleR::run_ulm(
+    mat = X_lm,
+    network = net,
+    .source = "source",
+    .target = "target",
+    .mor = "weight"
+  ),
+  bixverse_ulm = calc_lm_activity(mat = X_lm, net = net),
+  decoupleR_mlm = decoupleR::run_mlm(
+    mat = X_lm,
+    network = net,
+    .source = "source",
+    .target = "target",
+    .mor = "weight"
+  ),
+  bixverse_mlm = calc_lm_activity(
+    mat = X_lm,
+    net = net,
+    lm_params = params_lm_activity(method = "mlm")
+  ),
+  times = 5L
+)
+```
+
 ## Multi-contrast enrichment (mitch)
 
 When you have multiple contrasts - say, differential expression results from

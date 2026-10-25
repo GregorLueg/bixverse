@@ -29,7 +29,8 @@ please do so first.
 The methods fall into four broad categories:
 
 - The first, module scores, AUCell, and VISION, takes *pre-defined* gene sets
-  and scores them per cell.
+  and scores them per cell. ULM and MLM do the same for signed networks and
+  show up after SCENIC, scoring its TF-to-gene links.
 - The second, Hotspot and SCENIC, *discovers* gene programmes and regulatory
   relationships from the data itself.
 - The third, NMF, also *discovers* gene programmes and regulatory relationships
@@ -532,15 +533,14 @@ length(scenic_genes)
 ### Transcription factor list
 
 We need a list of known TFs. The Aerts lab provides a curated list for human
-which we can download and map to Ensembl IDs.
+(`allTFs_hg38.txt` from their
+[cisTarget resources](https://resources.aertslab.org/cistarget/tf_lists/)).
+A copy ships with `bixverse`, so `load_scenic_tfs_hg38()` works offline; we
+map it to Ensembl IDs.
 
 ```{r}
 #| label: scenic-tfs
-tf_dt <- data.table::fread(
-  "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
-  header = FALSE,
-  col.names = "tf"
-)
+tf_dt <- data.table::data.table(tf = load_scenic_tfs_hg38())
 tf_dt[, gene_id := symbol_to_ensembl[tf]]
 tf_dt <- tf_dt[!is.na(gene_id)]
 
@@ -744,6 +744,71 @@ plot_binary_heatmap(
 With the cells grouped by cluster the lineage regulons come out as blocks that
 sit in a few clusters only, while the housekeeping-like ones run across the
 whole width.
+
+### ULM and MLM on the TF-to-gene links
+
+AUCell only looks at whether the targets rank high in a cell. The TF-to-gene
+table carries more than that: `tf_to_genes_correlations()` gave every link a
+sign. `lm_activity_sc()` uses it. It is the
+[decoupler](https://academic.oup.com/bioinformaticsadvances/article/2/1/vbac016/6544613)
+ULM/MLM: per cell, regress the normalised counts of all genes on the weights
+of a TF's targets and take the t-value as the activity. Activated targets up
+and repressed ones down gives a positive score. Normally you would use a
+curated network like [CollecTRI](https://academic.oup.com/nar/article/52/D1/D1029/7386439)
+here; the inferred links do for the demo and keep the vignette offline.
+
+```{r}
+#| label: lm-activity-net
+lm_net <- tf_gene_dt[
+  cor_sign != 0L,
+  .(source = tf_symbol, target = gene, weight = cor_sign)
+]
+
+head(lm_net)
+```
+
+```{r}
+#| label: lm-activity-ulm
+ulm_scores <- lm_activity_sc(
+  object = sc_object,
+  net = lm_net,
+  lm_params = params_lm_activity(method = "ulm")
+)
+
+dim(ulm_scores)
+```
+
+```{r}
+#| label: lm-activity-plot
+#| fig-cap: "ULM activity of SPI1 on the UMAP"
+sc_object[["SPI1_ulm"]] <- ulm_scores[, "SPI1"]
+
+embedding_plot_sc(
+  object = sc_object,
+  embedding = "umap",
+  colour_by = "SPI1_ulm",
+  palette = "viridis"
+)
+```
+
+`method = "mlm"` fits all TFs in one model, so TFs sharing many targets
+compete for the signal instead of both lighting up. It errors on collinear
+TFs, i.e., two regulons with identical or proportional target sets. Unlike
+decoupler, genes that are zero in every cell stay in the model; on real data
+that shifts the scores a little. `p_values = TRUE` adds
+p-values and an FDR per cell, but with thousands of correlated genes in each
+fit treat them as descriptive.
+
+```{r}
+#| label: lm-activity-mlm
+mlm_scores <- lm_activity_sc(
+  object = sc_object,
+  net = lm_net,
+  lm_params = params_lm_activity(method = "mlm")
+)
+
+cor(ulm_scores[, "SPI1"], mlm_scores[, "SPI1"])
+```
 
 This is how you work with all types of `"bag of genes"` analyses for single
 cell in `bixverse`.
