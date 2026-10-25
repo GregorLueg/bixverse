@@ -347,33 +347,33 @@ A few tricks make it fast:
   problem becomes something closer to 10 GB.
 
 - Of course there is also a library for everyone's favourite 2D embedding 
-generation: [manifoldsR](https://github.com/GregorLueg/manifoldsR). Same 
-philosophy: parallelise what can be parallelised, use CPU-friendly memory 
-layouts, avoid round trips to the interpreter. Million-cell UMAP? Done in 
-minutes on a laptop. Even good old tSNE, infamous for being slow has two 
-different FFT-accelerated versions (see 
-[Linderman, et al.](https://www.nature.com/articles/s41592-018-0308-4) for the
-OG variant). Also the "quick and dirty" Barnes-Hut approximation is provided.
+  generation: [manifoldsR](https://github.com/GregorLueg/manifoldsR). Same 
+  philosophy: parallelise what can be parallelised, use CPU-friendly memory 
+  layouts, avoid round trips to the interpreter. Million-cell UMAP? Done in 
+  minutes on a laptop. Even good old tSNE, infamous for being slow has two 
+  different FFT-accelerated versions (see 
+  [Linderman, et al.](https://www.nature.com/articles/s41592-018-0308-4) for the
+  OG variant). Also the "quick and dirty" Barnes-Hut approximation is provided.
 
 - [SCENIC](https://pubmed.ncbi.nlm.nih.gov/32561888/) infers gene regulatory 
-networks by asking, for each target gene: which transcription factors best 
-predict its expression? It does this by training a tree ensemble per gene, 
-using the importance scores from those trees as a proxy for regulatory 
-influence. The trees themselves are then thrown away. Only the importance 
-scores matter. That means we can optimise purely for speed, without caring about 
-prediction quality at all. A few tricks compound here:
+  networks by asking, for each target gene: which transcription factors best 
+  predict its expression? It does this by training a tree ensemble per gene, 
+  using the importance scores from those trees as a proxy for regulatory 
+  influence. The trees themselves are then thrown away. Only the importance 
+  scores matter. That means we can optimise purely for speed, without caring 
+  about prediction quality at all. A few tricks compound here:
 
   * Rather than training one ensemble per gene independently, we share the same 
-  tree structure across a batch of genes simultaneously: the splits are chosen 
-  to reduce prediction error across all targets in the batch at once, and each 
-  gene contributes its own importance scores as a side effect. This amortises 
-  most of the cost.
+    tree structure across a batch of genes simultaneously: the splits are chosen 
+    to reduce prediction error across all targets in the batch at once, and each 
+    gene contributes its own importance scores as a side effect. This amortises 
+    most of the cost.
   * Transcription factor expression data is quantised down to 256 bins (one byte 
-  per cell), which makes histogram construction and split evaluation very fast 
-  and cache-friendly.
+    per cell), which makes histogram construction and split evaluation very fast 
+    and cache-friendly.
   * Single cell data is sparse, most genes are zero in most cells, so rather 
-  than densifying the target matrix (which would be enormous), we exploit that 
-  sparsity directly during tree building.
+    than densifying the target matrix (which would be enormous), we exploit that 
+    sparsity directly during tree building.
 
   The net result is GRN inference that runs in Rust end-to-end, with no data 
   leaving low-level code until results are ready.
@@ -402,7 +402,8 @@ about this).
 - What is stored in DuckDB as metadata. This can get tricky once you start 
 selecting subgroups of cells. In a standard workflow you might:
 
-  1. Filter a first wave of cells/spots based on library size and number of features.
+  1. Filter a first wave of cells/spots based on library size and number of 
+     features.
   2. Run doublet detection to remove doublets.
   3. Recheck library sizes, feature counts, transcriptional complexity, 
   mitochondrial counts, and only then finalise your cell selection, flagged 
@@ -500,11 +501,11 @@ rather than a CUDA-only path. (A native CUDA backend is aspirational. I do not
 own an Nvidia GPU to test it on.) It all lives in the
 [sister package](https://github.com/GregorLueg/bixverse.gpu), and there is a
 fair amount of it now: block Lanczos (or randomised SVD) for the PCA, Harmony
-v2 with the arrowhead inversion, kNN across exhaustive, IVF and NNDescent-into-CAGRA,
-k-means coarsened fast clustering, the UMAP Adam optimiser, SEACells (both
-Frank-Wolfe solves), Scrublet, the NMF HALS family, BBKNN and fastMNN with 
-GPU-accelerated kNN searches, SCENIC's ExtraTrees and RandomForest learners, and 
-Pearson/Spearman correlation.
+v2 with the arrowhead inversion, kNN across exhaustive, IVF and 
+NNDescent-into-CAGRA, k-means coarsened fast clustering, the UMAP Adam 
+optimiser, SEACells (both Frank-Wolfe solves), Scrublet, the NMF HALS family, 
+BBKNN and fastMNN with GPU-accelerated kNN searches, SCENIC's ExtraTrees and 
+RandomForest learners, and Pearson/Spearman correlation.
 
 - **Deep learning integration:** I like R as a bit of a quirky underdog stats
 language, but it cannot compete with the Deep Learning support in Python. 
