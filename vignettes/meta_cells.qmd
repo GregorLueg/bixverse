@@ -962,14 +962,14 @@ The usual rule is to take the last `k` before stability falls away, while the
 error curve is still coming down. Here it does not fall away so much as bounce:
 stability stays high across the whole range and dips and recovers, which says
 the meta cells support several plausible ranks rather than one obvious answer.
-It peaks at 6 and the error is still coming down there, so that is where we
-fit.
+It peaks at 7 and 10 here. We will go with the smaller rank for this vignette,
+but in reality it might be worth exploring both.
 
 ```{r}
 #| label: consensus nmf on meta cells
 mc_nmf <- consensus_nmf_sc(
   object = seacells,
-  k = 6L,
+  k = 7L,
   n_runs = 10L,
   nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
 )
