@@ -508,6 +508,16 @@ BBKNN and fastMNN with GPU-accelerated kNN searches, SCENIC's ExtraTrees and
 RandomForest learners, and Pearson/Spearman correlation.
 
 - **Deep learning integration:** I like R as a bit of a quirky underdog stats
-language, but it cannot compete with the Deep Learning support in Python. 
-An interface into the binary files to quickly load in counts into your favourite
-neural net architectures is on the roadmap. 
+language, but it cannot compete with the Deep Learning support in Python. So
+there is now a first stab at a Python package,
+[`bixverse`](https://gregorlueg.github.io/bixverse-rs/), living in the
+`bixverse-rs` repo. It opens the same binary files the R package writes and
+streams shuffled minibatches out of them, raw, normalised or both, sparse by
+default. Decoding never leaves Rust and the GIL is released while it happens,
+so the loader keeps a GPU training loop fed without ever materialising the
+experiment in memory. The first consumer is a barebone scVI on torch or MLX,
+with the scvi-tools 1.5.1 defaults: load a trained scvi-tools module into it
+and you get the same loss back. On two PBMC batches (5k cells, M1 Max), the MLX
+version trains in about 30 seconds against just under three minutes for
+scvi-tools on MPS, at the same held-out ELBO. Toy-sized, sure, and the
+million-cell runs are still to come. Watch this space. 
