@@ -329,15 +329,22 @@ lot of downstream methods, speeding this up has a wide impact.
 and, perhaps embarrassingly, [still beats fancy foundation models](https://arxiv.org/abs/2410.13956). 
 A few tricks make it fast:
 
-  * [Randomised SVD](https://arxiv.org/abs/0909.4061) to approximate PCA much 
-  faster. Instead of decomposing a matrix of millions of cells × HVGs, we 
-  reduce the problem to a few hundred cells × HVGs. Alternatively, 
-  Eigendecompostion on a dense `n HVG x n HVG` matrix that can be easily 
-  streamed in.
-  * Smart scaling without ever densifying the matrix. As shown in the numbers 
-  above, densifying with 2k HVGs means holding a 16 GB matrix in memory for a 
-  million cells, 80 GB for five million. With smart matrix algebra, you never 
-  have to densify at all. An 80 GB problem becomes something closer to 10 GB.
+  * [Lanczos](https://en.wikipedia.org/wiki/Lanczos_algorithm) on the sparse
+  matrix. We only want the top 30 to 50 components, so there is no point in
+  decomposing the whole thing. Lanczos runs on the `n HVG x n HVG` Gram matrix
+  without ever building it: all it needs are sparse matrix-vector products,
+  which is exactly what CSR and CSC storage is good at. It is thick-restarted,
+  so the trailing components converge too, even on the flat spectrum single
+  cell data likes to produce. And it is exact, not an approximation. This is
+  the default now. [Randomised SVD](https://arxiv.org/abs/0909.4061) is still
+  there if you want it, but it is approximate and the trailing components
+  suffer the most. On the dense path, the default eigendecomposes the
+  `n HVG x n HVG` cross-product instead.
+  * Smart scaling without ever densifying the matrix. As shown in the numbers
+  above, densifying with 2k HVGs means holding a 16 GB matrix in memory for a
+  million cells, 80 GB for five million. Centring and scaling get folded into
+  the matrix-vector products, so you never have to densify at all. An 80 GB
+  problem becomes something closer to 10 GB.
 
 - Of course there is also a library for everyone's favourite 2D embedding 
 generation: [manifoldsR](https://github.com/GregorLueg/manifoldsR). Same 
@@ -492,8 +499,8 @@ Metal on macOS, Vulkan on Linux and DX12 on Windows off one set of kernels
 rather than a CUDA-only path. (A native CUDA backend is aspirational. I do not
 own an Nvidia GPU to test it on.) It all lives in the
 [sister package](https://github.com/GregorLueg/bixverse.gpu), and there is a
-fair amount of it now: sparse randomised SVD for the PCA, Harmony v2 with the
-arrowhead inversion, kNN across exhaustive, IVF and NNDescent-into-CAGRA,
+fair amount of it now: block Lanczos (or randomised SVD) for the PCA, Harmony
+v2 with the arrowhead inversion, kNN across exhaustive, IVF and NNDescent-into-CAGRA,
 k-means coarsened fast clustering, the UMAP Adam optimiser, SEACells (both
 Frank-Wolfe solves), Scrublet, the NMF HALS family, BBKNN and fastMNN with 
 GPU-accelerated kNN searches, SCENIC's ExtraTrees and RandomForest learners, and 
