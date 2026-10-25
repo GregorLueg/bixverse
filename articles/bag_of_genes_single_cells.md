@@ -17,7 +17,8 @@ please do so first.
 The methods fall into four broad categories:
 
 - The first, module scores, AUCell, and VISION, takes *pre-defined* gene
-  sets and scores them per cell.
+  sets and scores them per cell. ULM and MLM do the same for signed
+  networks and show up after SCENIC, scoring its TF-to-gene links.
 - The second, Hotspot and SCENIC, *discovers* gene programmes and
   regulatory relationships from the data itself.
 - The third, NMF, also *discovers* gene programmes and regulatory
@@ -410,12 +411,12 @@ head(hotspot_autocor[order(fdr)], 25L)
 #>  2: ENSG00000119535 0.2949539  46.16233     0     0       CSF3R
 #>  3: ENSG00000163131 0.5237189  62.76030     0     0        CTSS
 #>  4: ENSG00000163191 0.4090217  58.81076     0     0     S100A11
-#>  5: ENSG00000163220 0.7015914 115.38558     0     0      S100A9
+#>  5: ENSG00000163220 0.7015916 115.38558     0     0      S100A9
 #>  6: ENSG00000143546 0.6843269 119.58680     0     0      S100A8
-#>  7: ENSG00000197956 0.6383640 100.55820     0     0      S100A6
+#>  7: ENSG00000197956 0.6383641 100.55820     0     0      S100A6
 #>  8: ENSG00000196154 0.6470327  95.01012     0     0      S100A4
 #>  9: ENSG00000177954 0.6009150  93.19000     0     0       RPS27
-#> 10: ENSG00000158869 0.7041770  81.33603     0     0      FCER1G
+#> 10: ENSG00000158869 0.7041768  81.33603     0     0      FCER1G
 #> 11: ENSG00000203747 0.6096835  68.59921     0     0      FCGR3A
 #> 12: ENSG00000198574 0.2173397  41.63903     0     0      SH2D1B
 #> 13: ENSG00000198821 0.2205831  58.11088     0     0       CD247
@@ -632,15 +633,15 @@ length(scenic_genes)
 ### Transcription factor list
 
 We need a list of known TFs. The Aerts lab provides a curated list for
-human which we can download and map to Ensembl IDs.
+human (`allTFs_hg38.txt` from their [cisTarget
+resources](https://resources.aertslab.org/cistarget/tf_lists/)). A copy
+ships with `bixverse`, so
+[`load_scenic_tfs_hg38()`](https://gregorlueg.github.io/bixverse/reference/load_scenic_tfs_hg38.md)
+works offline; we map it to Ensembl IDs.
 
 ``` r
 
-tf_dt <- data.table::fread(
-  "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
-  header = FALSE,
-  col.names = "tf"
-)
+tf_dt <- data.table::data.table(tf = load_scenic_tfs_hg38())
 tf_dt[, gene_id := symbol_to_ensembl[tf]]
 tf_dt <- tf_dt[!is.na(gene_id)]
 
@@ -896,6 +897,88 @@ Regulon on/off calls per cell, grouped by Leiden cluster.
 With the cells grouped by cluster the lineage regulons come out as
 blocks that sit in a few clusters only, while the housekeeping-like ones
 run across the whole width.
+
+### ULM and MLM on the TF-to-gene links
+
+AUCell only looks at whether the targets rank high in a cell. The
+TF-to-gene table carries more than that:
+[`tf_to_genes_correlations()`](https://gregorlueg.github.io/bixverse/reference/tf_to_genes_correlations.md)
+gave every link a sign.
+[`lm_activity_sc()`](https://gregorlueg.github.io/bixverse/reference/lm_activity_sc.md)
+uses it. It is the
+[decoupler](https://academic.oup.com/bioinformaticsadvances/article/2/1/vbac016/6544613)
+ULM/MLM: per cell, regress the normalised counts of all genes on the
+weights of a TF’s targets and take the t-value as the activity.
+Activated targets up and repressed ones down gives a positive score.
+Normally you would use a curated network like
+[CollecTRI](https://academic.oup.com/nar/article/52/D1/D1029/7386439)
+here; the inferred links do for the demo and keep the vignette offline.
+
+``` r
+
+lm_net <- tf_gene_dt[
+  cor_sign != 0L,
+  .(source = tf_symbol, target = gene, weight = cor_sign)
+]
+
+head(lm_net)
+#>    source          target weight
+#>    <char>          <char>  <int>
+#> 1:  CEBPB ENSG00000188290      1
+#> 2:   SPI1 ENSG00000188290      1
+#> 3:  CEBPB ENSG00000187608      1
+#> 4:  CEBPD ENSG00000187608      1
+#> 5:   SPI1 ENSG00000187608      1
+#> 6:   IRF7 ENSG00000187608      1
+```
+
+``` r
+
+ulm_scores <- lm_activity_sc(
+  object = sc_object,
+  net = lm_net,
+  lm_params = params_lm_activity(method = "ulm")
+)
+
+dim(ulm_scores)
+#> [1] 2163  305
+```
+
+``` r
+
+sc_object[["SPI1_ulm"]] <- ulm_scores[, "SPI1"]
+
+embedding_plot_sc(
+  object = sc_object,
+  embedding = "umap",
+  colour_by = "SPI1_ulm",
+  palette = "viridis"
+)
+```
+
+![](bag_of_genes_single_cells_files/figure-html/lm-activity-plot-1.png)
+
+ULM activity of SPI1 on the UMAP
+
+`method = "mlm"` fits all TFs in one model, so TFs sharing many targets
+compete for the signal instead of both lighting up. It errors on
+collinear TFs, i.e., two regulons with identical or proportional target
+sets. Unlike decoupler, genes that are zero in every cell stay in the
+model; on real data that shifts the scores a little. `p_values = TRUE`
+adds p-values and an FDR per cell, but with thousands of correlated
+genes in each fit treat them as descriptive.
+
+``` r
+
+mlm_scores <- lm_activity_sc(
+  object = sc_object,
+  net = lm_net,
+  lm_params = params_lm_activity(method = "mlm")
+)
+
+cor(ulm_scores[, "SPI1"], mlm_scores[, "SPI1"])
+#> [1] 0.4353478
+```
 
 This is how you work with all types of `"bag of genes"` analyses for
 single cell in `bixverse`.
@@ -1201,13 +1284,13 @@ plus the parameters and convergence info.
 
 get_w(t_cell_nmf_results)[1:5, 1:5]
 #>                      comp_01      comp_02      comp_03      comp_04
-#> ENSG00000188976 2.764386e+00 9.695635e-02 9.978537e-11 3.186360e-01
-#> ENSG00000188290 9.983918e-11 1.001151e-10 9.978537e-11 8.042422e-02
-#> ENSG00000187608 9.983918e-11 2.828266e+00 1.741380e-01 9.985376e-11
-#> ENSG00000186827 9.983918e-11 1.001151e-10 7.554325e+00 9.985376e-11
-#> ENSG00000176022 9.096401e-01 7.727785e-06 1.778413e-01 9.985376e-11
+#> ENSG00000188976 2.764388e+00 9.696053e-02 9.978537e-11 3.186329e-01
+#> ENSG00000188290 9.983917e-11 1.001151e-10 9.978537e-11 8.042446e-02
+#> ENSG00000187608 9.983917e-11 2.828242e+00 1.741498e-01 9.985378e-11
+#> ENSG00000186827 9.983917e-11 1.001151e-10 7.554324e+00 9.985378e-11
+#> ENSG00000176022 9.096402e-01 8.533373e-06 1.778413e-01 9.985378e-11
 #>                      comp_05
-#> ENSG00000188976 4.423290e-01
+#> ENSG00000188976 4.423305e-01
 #> ENSG00000188290 1.000303e-10
 #> ENSG00000187608 1.000303e-10
 #> ENSG00000186827 1.000303e-10
@@ -1218,17 +1301,17 @@ get_w(t_cell_nmf_results)[1:5, 1:5]
 
 get_h(t_cell_nmf_results)[1:5, 1:5]
 #>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1
-#> comp_01      0.029059781      0.028260555     2.748892e-02     2.643249e-02
-#> comp_02      0.033077642      0.004219869     5.955020e-03     4.755851e-02
-#> comp_03      0.009622637      0.053269282     5.292088e-02     1.002151e-10
-#> comp_04      0.063866802      0.018152479     1.001464e-10     3.951370e-02
-#> comp_05      0.004193234      0.048139926     9.996975e-11     9.100319e-03
+#> comp_01      0.029059784      0.028260555     2.748889e-02     2.643246e-02
+#> comp_02      0.033077601      0.004219749     5.954974e-03     4.755848e-02
+#> comp_03      0.009622693      0.053269371     5.292084e-02     1.002151e-10
+#> comp_04      0.063866839      0.018152405     1.001464e-10     3.951370e-02
+#> comp_05      0.004193192      0.048139926     9.996975e-11     9.100338e-03
 #>         AAACTTGATCCAGA-1
-#> comp_01      0.032565605
-#> comp_02      0.002440464
-#> comp_03      0.007175663
-#> comp_04      0.019132774
-#> comp_05      0.050106976
+#> comp_01      0.032565624
+#> comp_02      0.002440553
+#> comp_03      0.007175695
+#> comp_04      0.019132691
+#> comp_05      0.050107095
 ```
 
 ### Running multiple NMF runs
@@ -1479,11 +1562,11 @@ head(consensus_diag$clusters)
 #>      component_id   run component pooled_idx cluster local_density silhouette
 #>            <char> <int>     <int>      <int>   <int>         <num>      <num>
 #> 1: run_01.comp_01     1         1          1       5   0.013249557  0.7841961
-#> 2: run_01.comp_02     1         2          2       5   0.012458861  0.8275782
-#> 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821
-#> 4: run_01.comp_04     1         4          4       3   0.017579218  0.8770334
-#> 5: run_01.comp_05     1         5          5       4   0.017095884  0.6891547
-#> 6: run_02.comp_01     2         1          6       5   0.008731663  0.8714657
+#> 2: run_01.comp_02     1         2          2       5   0.012458980  0.8275782
+#> 3: run_01.comp_03     1         3          3       1   0.004470190  0.9566821
+#> 4: run_01.comp_04     1         4          4       3   0.017579237  0.8770334
+#> 5: run_01.comp_05     1         5          5       4   0.017095864  0.6891547
+#> 6: run_02.comp_01     2         1          6       5   0.008731703  0.8714657
 #>      kept
 #>    <lgcl>
 #> 1:   TRUE

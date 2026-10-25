@@ -124,9 +124,9 @@ object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
 object <- calculate_pca_adt_sc(object, no_pcs = 10L)
 object <- generate_wnn_graph_sc(object, .verbose = FALSE)
 get_connectivities(object, modality = "wnn")
-#> IGRAPH c925c57 U-W- 1000 35379 -- 
+#> IGRAPH e2a0673 U-W- 1000 35379 -- 
 #> + attr: method (g/c), weight (e/n)
-#> + edges from c925c57:
+#> + edges from e2a0673:
 #>  [1] 1--  4 1-- 13 1-- 16 1-- 22 1-- 37 1-- 43 1-- 55 1-- 61 1-- 64 1-- 67
 #> [11] 1--118 1--154 1--166 1--178 1--184 1--190 1--214 1--220 1--238 1--259
 #> [21] 1--274 1--277 1--283 1--286 1--289 1--292 1--295 1--301 1--304 1--313

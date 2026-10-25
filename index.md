@@ -70,7 +70,9 @@ group via
 Full walk-through: [scaling to millions of
 cells](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html).
 What changed in each release: [the
-changelog](https://gregorlueg.github.io/bixverse/news/index.html).
+changelog](https://gregorlueg.github.io/bixverse/news/index.html). How
+it compares to other frameworks? [Check the
+benchmarks](https://github.com/GregorLueg/single-cell-benchmark/blob/main/docs/results.md)
 
 ## What’s in it
 
@@ -197,9 +199,6 @@ the API.
 analysis, to sit alongside the Palantir and PAGA implementations that
 already ship.
 
-Easy interoperability that chunks of data can be read in for neural
-network training in the corresponding deep learning frameworks.
-
 Full support of spatial transcriptomics via a dedicated `SpatialSpots`
 class, using the current Rust-based infrastructure for large scale
 analysis on local compute.
@@ -212,6 +211,10 @@ integrated into the single cell framework. (Done in `"0.4.11"`).
 
 Save data to h5ad for easier interoperability with Python. (Solved
 thanks to [scx-core](https://crates.io/crates/scx-core))
+
+Easy interoperability that chunks of data can be read in for neural
+network training in the corresponding deep learning frameworks, see
+[Python bindings](https://gregorlueg.github.io/bixverse-rs/).
 
 ### Cross integration
 

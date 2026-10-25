@@ -41,6 +41,8 @@ enrichments; hypergeometric tests, GSVA, (ss)GSEA, blitzGSEA.
   : Bixverse implementation of the blitzGSEA algorithm
 - [`blitzgsea_calibrate()`](https://gregorlueg.github.io/bixverse/reference/blitzgsea_calibrate.md)
   : Calibrate the blitzGSEA null model for a signature
+- [`calc_lm_activity()`](https://gregorlueg.github.io/bixverse/reference/calc_lm_activity.md)
+  : ULM / MLM activity scores (decoupler-style)
 - [`calc_gsea_traditional()`](https://gregorlueg.github.io/bixverse/reference/calc_gsea_traditional.md)
   : Bixverse implementation of the traditional GSEA algorithm
 - [`calc_mitch()`](https://gregorlueg.github.io/bixverse/reference/calc_mitch.md)
@@ -61,6 +63,8 @@ enrichments; hypergeometric tests, GSVA, (ss)GSEA, blitzGSEA.
   : Wrapper function to generate GSEA parameters
 - [`params_gsva()`](https://gregorlueg.github.io/bixverse/reference/params_gsva.md)
   : Wrapper function to generate GSVA parameters
+- [`params_lm_activity()`](https://gregorlueg.github.io/bixverse/reference/params_lm_activity.md)
+  : Wrapper function to generate ULM / MLM activity parameters
 - [`params_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/params_ssgsea.md)
   : Wrapper function to generate ssGSEA parameters
 
@@ -94,6 +98,8 @@ Functions related to CisTarget enrichment.
 
 - [`download_cistarget_hg38()`](https://gregorlueg.github.io/bixverse/reference/download_cistarget_hg38.md)
   : Download CisTarget reference files for human (hg38)
+- [`load_scenic_tfs_hg38()`](https://gregorlueg.github.io/bixverse/reference/load_scenic_tfs_hg38.md)
+  : Load the human (hg38) transcription factor list used by SCENIC
 - [`read_motif_annotation_file()`](https://gregorlueg.github.io/bixverse/reference/read_motif_annotation_file.md)
   : Read in the motif annotation file
 - [`read_motif_ranking()`](https://gregorlueg.github.io/bixverse/reference/read_motif_ranking.md)
@@ -589,6 +595,9 @@ Generating meta cells.
 
   Generate meta cells based on SEACells and return a `MetaCells` object
 
+- [`generate_metacells2_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_metacells2_sc.md)
+  : Generate meta cells via MetaCells2 (divide and conquer)
+
 - [`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md)
   : Merge meta cell objects into one
 
@@ -604,6 +613,12 @@ Generating meta cells.
 
 - [`params_sc_seacells()`](https://gregorlueg.github.io/bixverse/reference/params_sc_seacells.md)
   : Wrapper function for the SEACells parameters
+
+- [`params_sc_metacells2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_metacells2.md)
+  : Wrapper function for the MetaCells2 per-pile parameters
+
+- [`params_sc_metacells2_dac()`](https://gregorlueg.github.io/bixverse/reference/params_sc_metacells2_dac.md)
+  : Wrapper function for the MetaCells2 divide and conquer parameters
 
 ## Single cell i/o
 
@@ -949,6 +964,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`vision_w_autocor_sc()`](https://gregorlueg.github.io/bixverse/reference/vision_w_autocor_sc.md)
   : Calculate VISION scores (with auto-correlation scores)
+
+- [`lm_activity_sc()`](https://gregorlueg.github.io/bixverse/reference/lm_activity_sc.md)
+  : Calculate ULM / MLM activity scores per cell
 
 - [`identify_tf_to_genes()`](https://gregorlueg.github.io/bixverse/reference/identify_tf_to_genes.md)
   : Identify the TF to gene regulation
@@ -1549,6 +1567,8 @@ There is a lot more under the hood…
 - [`rs_leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/rs_leiden_clustering.md)
   **\[experimental\]** : Rust implementation of Leiden and Louvain
   clustering
+- [`rs_lm_activity()`](https://gregorlueg.github.io/bixverse/reference/rs_lm_activity.md)
+  **\[experimental\]** : ULM / MLM activity scores (decoupler-style)
 - [`rs_generate_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/rs_generate_ligand_target_influence.md)
   **\[experimental\]** : Generate the ligand to target influence
   matrices
@@ -1578,6 +1598,8 @@ There is a lot more under the hood…
   **\[experimental\]** : Fits a residual model for meta cells
 - [`rs_mc_hvg()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hvg.md)
   **\[experimental\]** : Meta cells highly variable genes
+- [`rs_mc_lm_activity()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_lm_activity.md)
+  **\[experimental\]** : ULM / MLM activity scores (for meta cells)
 - [`rs_mc_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_pca.md)
   **\[experimental\]** : PCA on MetaCells (sparse data)
 - [`rs_mc_pca_residuals()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_pca_residuals.md)

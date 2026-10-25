@@ -11,7 +11,7 @@ cells reduces sparsity while preserving the heterogeneity that bulk
 pseudo-replicates would average out. Secondly, they reduce the
 computational burden substantially.
 
-`bixverse` provides three meta cell algorithms with different underlying
+`bixverse` provides four meta cell algorithms with different underlying
 ideas:
 
 - **hdWGCNA-style meta cells** ([Morabito, et al.,
@@ -32,6 +32,13 @@ ideas:
   walktrap community detection algorithm to the kNN graph and treats
   each community as a meta cell. Granularity is controlled indirectly
   through a graining factor (the average number of cells per meta cell).
+
+- **MetaCells2** ([Ben-Kiki, et al.,
+  2022](https://doi.org/10.1186/s13059-022-02667-1)) works on the raw
+  counts and builds its own similarity graph, no embedding or kNN
+  needed. It aims for meta cells of a target size and UMI count, splits
+  the cells into piles, and leaves cells it cannot place convincingly
+  unassigned.
 
 One implementation detail worth flagging upfront. In `bixverse`, the
 `SingleCells` class keeps counts on disk in DuckDB and binary Rust-based
@@ -411,6 +418,116 @@ supercells_large <- generate_supercells_sc(
 )
 ```
 
+### MetaCells2
+
+MetaCells2 is the odd one out. It never touches the PCA or the kNN graph
+from above: it downsamples the raw counts per pile, picks its own
+feature genes, builds a balanced kNN graph on their correlations and
+partitions that with simulated annealing. Cells that look deviant within
+their candidate meta cell get pulled out and re-run, and whatever still
+does not fit is left unassigned. The size knobs are
+`target_metacell_size` (cells) and `target_metacell_umis`; the defaults
+(48 cells, 160k UMIs) are upstream’s.
+
+``` r
+
+metacells2 <- generate_metacells2_sc(
+  object = sc_object,
+  .verbose = TRUE
+)
+
+metacells2
+#> Single cell experiment (Meta Cells).
+#>   Meta cell method: metacells2
+#>   Merged: FALSE
+#>   No meta cells: 211
+#>   No genes: 12464
+#>   No cells aggregated: 6844
+#>   No obs rows in source: 6881
+#>   HVG calculated: FALSE
+#>   PCA calculated: FALSE
+#>   Other embeddings: none
+#>   KNN generated: FALSE
+#>   Graph generated: FALSE
+#>   Stale artefacts: none
+```
+
+``` r
+
+no_cells_metacells2 <- purrr::map_dbl(
+  metacells2[[]]$original_cell_idx,
+  length
+)
+
+hist(
+  no_cells_metacells2,
+  xlab = "No cells per meta cell",
+  main = "Cells per MetaCells2 meta cell",
+  breaks = 25L
+)
+```
+
+![](meta_cells_files/figure-html/metacells2%20-%20cells%20per%20meta%20cell-1.png)
+
+The outliers and a few per-cell details sit in `other_data`: whether the
+cell’s candidate got dissolved, in which outlier round it was placed
+and, if any, its rare gene module.
+
+``` r
+
+mc2_cell_info <- metacells2@other_data$cell_info
+
+mc2_cell_info[, .N, by = .(level, dissolved)]
+#>    level dissolved     N
+#>    <int>    <lgcl> <int>
+#> 1:     1     FALSE  6766
+#> 2:     2     FALSE   105
+#> 3:     2      TRUE    10
+
+metacells2@original_assignment$n_unassigned
+#> [1] 37
+```
+
+``` r
+
+metacells2 <- calc_diffusion_coordinates(
+  object = metacells2,
+  knn_data = knn_object
+)
+```
+
+#### MetaCells2 on large data
+
+The divide and conquer part is what makes this scale. Cells get split
+into piles of 8k to 24k cells
+([`params_sc_metacells2_dac()`](https://gregorlueg.github.io/bixverse/reference/params_sc_metacells2_dac.md)),
+every pile is processed on its own, and the resulting meta cells are
+grouped into piles of similar meta cells for a second pass, so rare
+states that got spread across random piles end up together. Each pile
+holds two dense `pile x pile` matrices, so memory is bounded by the pile
+size, not the data size.
+
+Before any of that, rare gene modules are detected: genes expressed in
+at most 0.1% of the cells that co-occur. Their cells get piled
+separately, so a rare population of a few dozen cells does not get
+diluted across piles. On small data like this the step finds nothing,
+which is what upstream does too. Switch it off with
+`rare_gene_modules = FALSE`.
+
+`max_parallel_piles` trades memory for speed. Each extra pile in flight
+costs another two dense matrices.
+
+``` r
+
+metacells2_large <- generate_metacells2_sc(
+  object = sc_object,
+  dac_params = params_sc_metacells2_dac(
+    max_parallel_piles = 4L
+  ),
+  .verbose = TRUE
+)
+```
+
 ## Metrics
 
 ### Purity
@@ -434,19 +551,25 @@ supercells <- calc_meta_cell_purity(
   supercells,
   original_cell_type = cell_labels
 )
+metacells2 <- calc_meta_cell_purity(
+  metacells2,
+  original_cell_type = cell_labels
+)
 
 purity_dt <- rbind(
   data.table(method = "hdWGCNA", purity = hdwgcna[[]]$mc_purity),
   data.table(method = "SEACells", purity = seacells[[]]$mc_purity),
-  data.table(method = "SuperCells", purity = supercells[[]]$mc_purity)
+  data.table(method = "SuperCells", purity = supercells[[]]$mc_purity),
+  data.table(method = "MetaCells2", purity = metacells2[[]]$mc_purity)
 )
 
 purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
 #>        method      mean    median
 #>        <char>     <num>     <num>
 #> 1:    hdWGCNA 0.8830769 0.9615385
-#> 2:   SEACells 0.8998204 1.0000000
+#> 2:   SEACells 0.9036492 1.0000000
 #> 3: SuperCells 0.8994530 0.9933382
+#> 4: MetaCells2 0.8571434 0.9200000
 ```
 
 ``` r
@@ -487,11 +610,15 @@ seacells_regions <- as.data.table(
 supercells_regions <- as.data.table(
   table(supercells[[]]$density_region) / nrow(supercells[[]])
 )[, method := "SuperCells"]
+metacells2_regions <- as.data.table(
+  table(metacells2[[]]$density_region) / nrow(metacells2[[]])
+)[, method := "MetaCells2"]
 
 region_dt <- rbind(
   hdwgcna_regions,
   seacells_regions,
-  supercells_regions
+  supercells_regions,
+  metacells2_regions
 )[, V1 := factor(V1, levels = c("high", "mid", "low"))]
 setnames(region_dt, old = c("V1", "N"), new = c("region", "proportion"))
 ```
@@ -531,6 +658,7 @@ captured in the manifold. We can do this trivially via:
 hdwgcna <- calc_manifold_metrics(hdwgcna)
 seacells <- calc_manifold_metrics(seacells)
 supercells <- calc_manifold_metrics(supercells)
+metacells2 <- calc_manifold_metrics(metacells2)
 ```
 
 Let’s generate a plotting data.table
@@ -555,6 +683,12 @@ metrics_dt <- rbind(
     separation = supercells[[]]$separation,
     compactness = supercells[[]]$compactness,
     region = supercells[[]]$density_region
+  ),
+  data.table(
+    method = "MetaCells2",
+    separation = metacells2[[]]$separation,
+    compactness = metacells2[[]]$compactness,
+    region = metacells2[[]]$density_region
   )
 )[, region := factor(region, levels = c("high", "mid", "low"))]
 
@@ -569,22 +703,29 @@ metrics_dt[,
 ]
 #>        method mean_separation median_separation mean_compactness
 #>        <char>           <num>             <num>            <num>
-#> 1:    hdWGCNA       0.2339972         0.1693764       0.04087567
-#> 2:   SEACells       0.3295148         0.2996956       0.04603253
-#> 3: SuperCells       0.3207075         0.2726718       0.03308521
+#> 1:    hdWGCNA       0.2339971         0.1693765       0.04087564
+#> 2:   SEACells       0.3140203         0.2912224       0.04399582
+#> 3: SuperCells       0.3207074         0.2726717       0.03308518
+#> 4: MetaCells2       0.2619802         0.1558320       0.07146478
 #>    median_compactness
 #>                 <num>
-#> 1:         0.02295963
-#> 2:         0.02322349
-#> 3:         0.01812798
+#> 1:         0.02295962
+#> 2:         0.02331191
+#> 3:         0.01812797
+#> 4:         0.03415730
 ```
 
 Some differences are visible here. hdWGCNA has the worst separation and
 best compactness (not unexpected given the bootstrapping method only
-sampling direct neighbours). SEACells has the worst compactness across
-the three methods (not unsurprising as the meta cells here capture more
-sparse regions of the manifold) and middling separation; SuperCells
-(version 2.0, the default setting here) is in the middle.
+sampling direct neighbours). Of the three kNN-based methods, SEACells
+has the worst compactness (not unsurprising as the meta cells here
+capture more sparse regions of the manifold) and middling separation;
+SuperCells (version 2.0, the default setting here) is in the middle.
+MetaCells2 comes out least compact, mostly in the low density regions.
+Keep in mind that it is judged on someone else’s turf here: the
+diffusion map sits on the PCA kNN graph, while MetaCells2 never saw it
+and built its own graph from the raw counts of the genes it selected per
+pile.
 
 ``` r
 
@@ -600,28 +741,34 @@ per_region_stats <- metrics_dt[,
 setorder(per_region_stats, method, region)
 
 per_region_stats[]
-#>        method region mean_separation median_separation mean_compactness
-#>        <char> <fctr>           <num>             <num>            <num>
-#> 1:   SEACells   high      0.07712428        0.06820391       0.01625168
-#> 2:   SEACells    mid      0.29030701        0.25955026       0.02791226
-#> 3:   SEACells    low      0.42959607        0.40353322       0.06697925
-#> 4: SuperCells   high      0.09665626        0.08661903       0.01280926
-#> 5: SuperCells    mid      0.25111712        0.22342816       0.01421472
-#> 6: SuperCells    low      0.46611313        0.45285365       0.05986448
-#> 7:    hdWGCNA   high      0.06435016        0.06328148       0.02032015
-#> 8:    hdWGCNA    mid      0.19515546        0.18222143       0.02435654
-#> 9:    hdWGCNA    low      0.50090880        0.43333557       0.10098691
-#>    median_compactness
-#>                 <num>
-#> 1:         0.01589959
-#> 2:         0.01588389
-#> 3:         0.05387336
-#> 4:         0.01208876
-#> 5:         0.01235253
-#> 6:         0.05131565
-#> 7:         0.01789759
-#> 8:         0.01973436
-#> 9:         0.09385924
+#>         method region mean_separation median_separation mean_compactness
+#>         <char> <fctr>           <num>             <num>            <num>
+#>  1: MetaCells2   high      0.05668044        0.04667933       0.02743040
+#>  2: MetaCells2    mid      0.22697925        0.19642372       0.04119690
+#>  3: MetaCells2    low      0.61963063        0.49672353       0.19611914
+#>  4:   SEACells   high      0.07922575        0.07095433       0.01588880
+#>  5:   SEACells    mid      0.27792062        0.24623594       0.01811619
+#>  6:   SEACells    low      0.40741538        0.38700494       0.06932360
+#>  7: SuperCells   high      0.09665619        0.08661912       0.01280926
+#>  8: SuperCells    mid      0.25111706        0.22342810       0.01421471
+#>  9: SuperCells    low      0.46611302        0.45285332       0.05986442
+#> 10:    hdWGCNA   high      0.06435013        0.06328148       0.02032014
+#> 11:    hdWGCNA    mid      0.19515540        0.18222128       0.02435652
+#> 12:    hdWGCNA    low      0.50090874        0.43333557       0.10098680
+#>     median_compactness
+#>                  <num>
+#>  1:         0.02388686
+#>  2:         0.03373685
+#>  3:         0.18128230
+#>  4:         0.01521645
+#>  5:         0.01599382
+#>  6:         0.05783278
+#>  7:         0.01208875
+#>  8:         0.01235252
+#>  9:         0.05131561
+#> 10:         0.01789758
+#> 11:         0.01973435
+#> 12:         0.09385921
 ```
 
 We can also look at this per density region in the manifold where we can
@@ -769,8 +916,8 @@ external_dt[,
 ]
 #>    assignment median_compactness median_separation
 #>        <char>              <num>             <num>
-#> 1:   SEACells         0.02322349         0.2996956
-#> 2:     random         0.71745831         0.2570072
+#> 1:   SEACells         0.02331191         0.2912224
+#> 2:     random         0.71670786         0.2527286
 ```
 
 The SEACells numbers match what
@@ -860,11 +1007,7 @@ Let’s run this quickly…
 
 ``` r
 
-tf_dt <- data.table::fread(
-  "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
-  header = FALSE,
-  col.names = "tf"
-)
+tf_dt <- data.table::data.table(tf = load_scenic_tfs_hg38())
 
 scenic_res <- scenic_grn_sc(
   object = seacells,
@@ -905,7 +1048,7 @@ scenic_res <- tf_to_genes_correlations(
 
 # no motif filter here, so the leading edge column does not exist yet
 tf_to_gene_ls <- build_regulons(scenic_res, use_leading_edge = FALSE)
-#> Built 571 regulons (134 dropped below 10 genes). Median size: 354
+#> Built 580 regulons (117 dropped below 10 genes). Median size: 308
 ```
 
 In a proper situation we would filter down the TF to gene associations
@@ -982,21 +1125,21 @@ mc_k_sweep
 #>   Source class:     MetaCells
 #>   k range:          2 to 12
 #>   No runs per k:    10
-#>   Most stable k:    2 (stability = 0.9999)
+#>   Most stable k:    2 (stability = 0.9998)
 #> 
 #>         k stability best_error median_error consensus_failed n_dropped
 #>     <int>     <num>      <num>        <num>           <lgcl>     <int>
-#>  1:     2 0.9998916 0.16550216   0.16550638            FALSE         0
-#>  2:     3 0.9996629 0.13259889   0.13261017            FALSE         0
-#>  3:     4 0.9867086 0.11613743   0.11619368            FALSE         0
-#>  4:     5 0.9142960 0.10370810   0.10375506            FALSE         0
-#>  5:     6 0.8318058 0.09325371   0.09329979            FALSE         0
-#>  6:     7 0.8803599 0.08629599   0.08773988            FALSE         0
-#>  7:     8 0.8966097 0.08218080   0.08264162            FALSE         0
-#>  8:     9 0.8886490 0.07849617   0.07872819            FALSE         0
-#>  9:    10 0.9913691 0.07503599   0.07505216            FALSE         0
-#> 10:    11 0.8304781 0.07283549   0.07297927            FALSE         0
-#> 11:    12 0.8572711 0.07143181   0.07151616            FALSE         0
+#>  1:     2 0.9998408 0.16993909   0.16994593            FALSE         0
+#>  2:     3 0.8823990 0.13567118   0.13568515            FALSE         0
+#>  3:     4 0.9835801 0.11895520   0.11901334            FALSE         0
+#>  4:     5 0.9378940 0.10600561   0.10604621            FALSE         0
+#>  5:     6 0.8818142 0.09547094   0.09550080            FALSE         0
+#>  6:     7 0.9290716 0.08832391   0.08835417            FALSE         0
+#>  7:     8 0.9345667 0.08412663   0.08448355            FALSE         0
+#>  8:     9 0.8272932 0.08024389   0.08045826            FALSE         0
+#>  9:    10 0.9911507 0.07684430   0.07688291            FALSE         0
+#> 10:    11 0.9214025 0.07465325   0.07485404            FALSE         0
+#> 11:    12 0.7295322 0.07329123   0.07354356            FALSE         0
 #>     n_empty_clusters n_converged
 #>                <int>       <int>
 #>  1:                0          10
@@ -1025,14 +1168,15 @@ The usual rule is to take the last `k` before stability falls away,
 while the error curve is still coming down. Here it does not fall away
 so much as bounce: stability stays high across the whole range and dips
 and recovers, which says the meta cells support several plausible ranks
-rather than one obvious answer. It peaks at 6 and the error is still
-coming down there, so that is where we fit.
+rather than one obvious answer. It peaks at 7 and 10 here. We will go
+with the smaller rank for this vignette, but in reality it might be
+worth exploring both.
 
 ``` r
 
 mc_nmf <- consensus_nmf_sc(
   object = seacells,
-  k = 6L,
+  k = 7L,
   n_runs = 10L,
   nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
 )
@@ -1042,11 +1186,11 @@ mc_nmf
 #>   Source class:     MetaCells
 #>   No genes:         2000
 #>   No cells:         250
-#>   No components:    6
+#>   No components:    7
 #>   No runs:          10
-#>   Stability:        0.9552
-#>   Relative error:   0.09325
-#>   Dropped:          0 / 60 components
+#>   Stability:        0.9286
+#>   Relative error:   0.08834
+#>   Dropped:          0 / 70 components
 #>   Preprocessing:    none
 ```
 
@@ -1059,16 +1203,17 @@ where it landed.
 
 mc_nmf_diag <- get_stability(mc_nmf)
 mc_nmf_diag$stability
-#> [1] 0.9551701
+#> [1] 0.9285743
 mc_nmf_diag$cluster_sizes
 #>    cluster     n
 #>      <int> <int>
 #> 1:       1    10
 #> 2:       2    10
-#> 3:       3    10
+#> 3:       3    11
 #> 4:       4    10
-#> 5:       5    10
-#> 6:       6    10
+#> 5:       5     8
+#> 6:       6    11
+#> 7:       7    10
 ```
 
 With 20 restarts, a cluster of 20 is a programme every run found. A thin
@@ -1123,16 +1268,16 @@ top_genes <- lapply(colnames(mc_w), \(comp) {
 names(top_genes) <- colnames(mc_w)
 top_genes[1:3]
 #> $comp_01
-#>  [1] "MPO"    "ATP8B4" "LRMDA"  "FNDC3B" "AZU1"   "KCNQ5"  "EREG"   "ELANE" 
-#>  [9] "PLCB1"  "ANXA1" 
+#>  [1] "XACT"    "ZNF385D" "RYR3"    "S100A6"  "GAPDH"   "S100A4"  "ANK1"   
+#>  [8] "HBB"     "NFIA"    "STXBP5" 
 #> 
 #> $comp_02
-#>  [1] "CST3"      "AFF3"      "PLD4"      "SAMHD1"    "IRF8"      "SULF2"    
-#>  [7] "FAM160A1"  "RAB11FIP1" "RUNX2"     "PIK3R5"   
+#>  [1] "DIAPH3" "ASPM"   "TOP2A"  "POLQ"   "MKI67"  "RRM2"   "CIT"    "NUSAP1"
+#>  [9] "KIF15"  "AURKB" 
 #> 
 #> $comp_03
-#>  [1] "NKAIN2"  "ZNF385D" "MSI2"    "CALN1"   "MEIS1"   "INPP4B"  "ANGPT1" 
-#>  [8] "CHRM3"   "ATP8B4"  "ZBTB20"
+#>  [1] "NKAIN2"  "ZNF385D" "MSI2"    "MEIS1"   "CALN1"   "INPP4B"  "ANGPT1" 
+#>  [8] "CHRM3"   "ZBTB20"  "ELMO1"
 ```
 
 ## Pseudo-bulking

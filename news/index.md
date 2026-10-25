@@ -1,5 +1,29 @@
 # Changelog
 
+## bixverse 0.8.2
+
+- decoupler-style ULM and MLM activity scores:
+  [`calc_lm_activity()`](https://gregorlueg.github.io/bixverse/reference/calc_lm_activity.md)
+  for bulk matrices or a contrast’s statistics and
+  [`lm_activity_sc()`](https://gregorlueg.github.io/bixverse/reference/lm_activity_sc.md)
+  per cell, both taking a long `source`/`target`/`weight` network
+  (CollecTRI, DoRothEA, …).
+  [`lm_activity_sc()`](https://gregorlueg.github.io/bixverse/reference/lm_activity_sc.md)
+  works on `MetaCells` too. Parameters via
+  [`params_lm_activity()`](https://gregorlueg.github.io/bixverse/reference/params_lm_activity.md).
+  Scores match decoupler.
+- MetaCells2 via
+  [`generate_metacells2_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_metacells2_sc.md):
+  the metacells divide and conquer pipeline in Rust, rare gene modules
+  included. Works on the raw counts, no embedding or kNN graph needed.
+  Parameters via
+  [`params_sc_metacells2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_metacells2.md)
+  and
+  [`params_sc_metacells2_dac()`](https://gregorlueg.github.io/bixverse/reference/params_sc_metacells2_dac.md).
+- The Aerts lab hg38 TF list now ships with the package,
+  [`load_scenic_tfs_hg38()`](https://gregorlueg.github.io/bixverse/reference/load_scenic_tfs_hg38.md).
+  Their server is not always up.
+
 ## bixverse 0.8.1
 
 - Single cell stores are now written in the v4 file format (`bixverse-r`

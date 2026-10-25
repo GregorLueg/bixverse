@@ -73,12 +73,12 @@ bixverse_res_gaussian <- calc_gsva(
 )
 
 bixverse_res_gaussian[1:5, 1:5]
-#>              s1           s2          s3           s4           s5
-#> gs1  0.12733950  0.123060741 -0.13195577 -0.008762527 -0.129114479
-#> gs2 -0.08968535 -0.003351222  0.17390543 -0.033644279  0.003527882
-#> gs3  0.04882520  0.054770165 -0.06456187 -0.095976980  0.011200654
-#> gs4  0.22260140  0.096766311 -0.03714347 -0.055216288 -0.053623047
-#> gs5  0.16877906 -0.078184322  0.13809907  0.085142411 -0.021389900
+#>               s1          s2           s3          s4           s5
+#> gs1 -0.162827524 -0.14299527  0.063546569  0.19487018 -0.066199459
+#> gs2 -0.105560160  0.10791042  0.282454633  0.21947363 -0.005104717
+#> gs3 -0.009179827 -0.04213188 -0.046474575  0.02561211 -0.002252421
+#> gs4 -0.224960347  0.09139254  0.004257214 -0.10141521  0.084674067
+#> gs5  0.171749114 -0.35080509  0.139235375 -0.10358006  0.087328084
 ```
 
 If the original `GSVA` Bioconductor package is available we can verify
@@ -119,8 +119,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>      expr       min        lq      mean    median       uq       max neval
-#>      gsva 3401.2984 3402.2478 3413.2736 3403.1971 3419.261 3435.3251     3
-#>  bixverse  263.7297  263.9491  264.3699  264.1686  264.690  265.2114     3
+#>      gsva 2588.1481 2591.9126 2600.9195 2595.6772 2607.305 2618.9334     3
+#>  bixverse  169.0785  171.0935  172.7515  173.1086  174.588  176.0673     3
 ```
 
 ### Poisson kernel
@@ -139,12 +139,12 @@ bixverse_res_poisson <- calc_gsva(
 )
 
 bixverse_res_poisson[1:5, 1:5]
-#>              s1          s2          s3           s4          s5
-#> gs1 -0.01787768  0.09196082 -0.23403721  0.008557539 -0.01293954
-#> gs2 -0.13299245  0.08481333  0.01699539  0.064569398  0.05835940
-#> gs3 -0.04029068 -0.23776538 -0.07409495  0.019107831 -0.04014954
-#> gs4  0.06817098  0.05243006  0.19904074 -0.104909589  0.03161620
-#> gs5 -0.03717972  0.01112621 -0.02639419  0.012296724 -0.07988575
+#>              s1            s2          s3          s4           s5
+#> gs1 -0.12615798 -0.0008376684  0.09148418 -0.11199198  0.006449348
+#> gs2 -0.10302942 -0.0006631410 -0.10852573 -0.10613093 -0.040500077
+#> gs3  0.05504367 -0.0218741958  0.10556842  0.27232615 -0.165617421
+#> gs4  0.10735164  0.0294974919 -0.06052016  0.05325169  0.045347909
+#> gs5  0.23765793 -0.1662366534 -0.18155616  0.21169901  0.157413039
 ```
 
 And vs. the original
@@ -177,9 +177,9 @@ microbenchmark::microbenchmark(
   times = 3L
 )
 #> Unit: milliseconds
-#>      expr        min         lq      mean     median         uq        max
-#>      gsva 19810.4954 19812.1490 19817.294 19813.8025 19820.6935 19827.5845
-#>  bixverse   413.9397   414.0021   415.429   414.0645   416.1737   418.2828
+#>      expr        min         lq       mean     median         uq       max
+#>      gsva 13022.6878 13062.1662 13087.5302 13101.6446 13119.9515 13138.258
+#>  bixverse   260.9036   263.6806   271.8474   266.4575   277.3192   288.181
 #>  neval
 #>      3
 #>      3
@@ -200,12 +200,12 @@ bixverse_res_ssgsea <- calc_ssgsea(
 )
 
 bixverse_res_ssgsea[1:5, 1:5]
-#>            s1         s2         s3         s4          s5
-#> gs1 0.1385286 0.10262055 0.11212784 0.20719254 -0.04915088
-#> gs2 0.1070438 0.09106266 0.21788359 0.10420049  0.07793963
-#> gs3 0.1144490 0.11324057 0.09189083 0.05089892  0.10844890
-#> gs4 0.2517034 0.17341618 0.06409438 0.07067230  0.12308783
-#> gs5 0.1753276 0.07815974 0.19520651 0.17917829  0.07085660
+#>               s1          s2         s3          s4         s5
+#> gs1  0.032183426  0.04978030 0.16229100  0.14037133 0.03403231
+#> gs2  0.038053405  0.14786505 0.23653128  0.13701053 0.11776353
+#> gs3  0.053200708  0.14361700 0.08826673  0.14856273 0.06444265
+#> gs4 -0.005473408  0.19130939 0.08682039  0.03955608 0.09404664
+#> gs5  0.105409186 -0.04645958 0.15125310 -0.02958135 0.21261812
 ```
 
 Let’s compare again against the GSVA version:
@@ -239,8 +239,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>      expr       min        lq      mean    median        uq       max neval
-#>      gsva 660.29528 663.85379 667.45783 667.41230 671.03911 674.66592     3
-#>  bixverse  59.29922  61.67901  63.14083  64.05881  65.06163  66.06445     3
+#>      gsva 413.46736 418.75244 438.04754 424.03752 450.33763 476.63774     3
+#>  bixverse  25.63626  27.77861  29.23459  29.92097  31.03375  32.14653     3
 ```
 
 ## singscore
@@ -264,11 +264,11 @@ ranks <- calc_singscore_rank(exp = X)
 
 ranks[1:5, 1:5]
 #>      s1   s2   s3   s4   s5
-#> g1 9791 8556 1070 8385 6944
-#> g2 3038 4920  438 8246 7865
-#> g3  493 1915 3814 1117 6612
-#> g4 2230 7611 7003 3379 9663
-#> g5 9212 2856 2923 2572 2841
+#> g1 4033 6636 1618   19 9262
+#> g2 4547 6251 2309 2820 3015
+#> g3 9412 4728 5074 7333 1987
+#> g4 2745 9809 1063 8235 7159
+#> g5 6185 2121 4026 1205 6221
 ```
 
 If your data comes from a small targeted panel (NanoString, RT-qPCR)
@@ -306,22 +306,22 @@ singscore_res <- calc_singscore(
 )
 
 head(singscore_res)
-#>     total_score total_dispersion     up_score up_dispersion   down_score
-#>           <num>            <num>        <num>         <num>        <num>
-#> 1:  0.009038284         4118.298  0.006478047      5011.195  0.002560236
-#> 2:  0.024768624         2772.466  0.020215183      2067.489  0.004553441
-#> 3: -0.064088068         3653.503 -0.007104551      3978.563 -0.056983517
-#> 4:  0.029413033         3244.304  0.036508454      3240.968 -0.007095420
-#> 5: -0.069151558         2729.471 -0.078567729      2250.590  0.009416172
-#> 6: -0.147410484         3164.985 -0.141552225      2317.307 -0.005858259
+#>     total_score total_dispersion    up_score up_dispersion   down_score
+#>           <num>            <num>       <num>         <num>        <num>
+#> 1: -0.006635908         3811.770 -0.04123575      4063.813  0.034599840
+#> 2: -0.066003328         3968.185 -0.03480215      3939.274 -0.031201181
+#> 3: -0.059507911         3898.873  0.02461603      4564.932 -0.084123940
+#> 4:  0.005779659         3041.929  0.04536888      2903.676 -0.039589221
+#> 5: -0.038888602         3695.757 -0.02963280      3321.029 -0.009255806
+#> 6:  0.020021993         3772.111  0.01817237      3946.687  0.001849625
 #>    down_dispersion sample_id
 #>              <num>    <char>
-#> 1:        3225.401        s1
-#> 2:        3477.444        s2
-#> 3:        3328.442        s3
-#> 4:        3247.640        s4
-#> 5:        3208.351        s5
-#> 6:        4012.663        s6
+#> 1:        3559.728        s1
+#> 2:        3997.096        s2
+#> 3:        3232.814        s3
+#> 4:        3180.182        s4
+#> 5:        4070.484        s5
+#> 6:        3597.534        s6
 ```
 
 If the direction of the signature is unknown (a gene ontology term, for
@@ -349,22 +349,22 @@ singscore_perm <- calc_singscore(
 )
 
 head(singscore_perm)
-#>     total_score total_dispersion     up_score up_dispersion   down_score
-#>           <num>            <num>        <num>         <num>        <num>
-#> 1:  0.009038284         4118.298  0.006478047      5011.195  0.002560236
-#> 2:  0.024768624         2772.466  0.020215183      2067.489  0.004553441
-#> 3: -0.064088068         3653.503 -0.007104551      3978.563 -0.056983517
-#> 4:  0.029413033         3244.304  0.036508454      3240.968 -0.007095420
-#> 5: -0.069151558         2729.471 -0.078567729      2250.590  0.009416172
-#> 6: -0.147410484         3164.985 -0.141552225      2317.307 -0.005858259
+#>     total_score total_dispersion    up_score up_dispersion   down_score
+#>           <num>            <num>       <num>         <num>        <num>
+#> 1: -0.006635908         3811.770 -0.04123575      4063.813  0.034599840
+#> 2: -0.066003328         3968.185 -0.03480215      3939.274 -0.031201181
+#> 3: -0.059507911         3898.873  0.02461603      4564.932 -0.084123940
+#> 4:  0.005779659         3041.929  0.04536888      2903.676 -0.039589221
+#> 5: -0.038888602         3695.757 -0.02963280      3321.029 -0.009255806
+#> 6:  0.020021993         3772.111  0.01817237      3946.687  0.001849625
 #>    down_dispersion sample_id  pval
 #>              <num>    <char> <num>
-#> 1:        3225.401        s1 0.001
-#> 2:        3477.444        s2 0.870
-#> 3:        3328.442        s3 1.000
-#> 4:        3247.640        s4 1.000
-#> 5:        3208.351        s5 0.998
-#> 6:        4012.663        s6 1.000
+#> 1:        3559.728        s1 0.976
+#> 2:        3997.096        s2 1.000
+#> 3:        3232.814        s3 1.000
+#> 4:        3180.182        s4 0.039
+#> 5:        4070.484        s5 0.972
+#> 6:        3597.534        s6 0.007
 
 dim(attr(singscore_perm, "null_distribution"))
 #> [1] 1000  100
@@ -387,12 +387,12 @@ singscore_multi_res <- calc_singscore_multi(
 )
 
 singscore_multi_res$scores[1:5, 1:5]
-#>               s1           s2           s3          s4           s5
-#> gs1  0.006478047  0.020215183 -0.007104551  0.03650845 -0.078567729
-#> gs2 -0.002560236 -0.004553441  0.056983517  0.00709542 -0.009416172
-#> gs3  0.003161048 -0.000980531 -0.018957996 -0.01633857 -0.013610689
-#> gs4  0.071399878  0.030718669 -0.025452855 -0.02623502 -0.008263238
-#> gs5  0.039995690 -0.013317322  0.040849331  0.03861945 -0.005716793
+#>              s1          s2           s3          s4           s5
+#> gs1 -0.04123575 -0.03480215  0.024616030  0.04536888 -0.029632797
+#> gs2 -0.03459984  0.03120118  0.084123940  0.03958922  0.009255806
+#> gs3 -0.02625616  0.01212554 -0.004906483  0.02593846 -0.006905822
+#> gs4 -0.07690293  0.06012407 -0.005377401 -0.02284033  0.006955029
+#> gs5  0.03173336 -0.08128819  0.044207506 -0.06881404  0.065555562
 ```
 
 The returned list contains a `scores` matrix and a matching
@@ -438,8 +438,145 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>       expr      min       lq     mean   median       uq      max neval
-#>  singscore 87.43369 87.43959 89.51092 88.78877 88.80548 95.08706     5
-#>   bixverse 14.03646 15.09108 16.15657 17.20359 17.21415 17.23755     5
+#>  singscore 64.80983 64.84016 65.06399 65.05103 65.07987 65.53904     5
+#>   bixverse 11.64771 11.90059 12.10648 11.90613 11.96300 13.11496     5
+```
+
+## ULM and MLM
+
+The rank-based scores above treat a gene set as a bag of genes.
+Transcription factor regulons (think
+[CollecTRI](https://academic.oup.com/nar/article/52/D1/D1029/7386439) or
+[DoRothEA](https://genome.cshlp.org/content/29/8/1363)) carry a sign as
+well: some targets get activated, others repressed.
+[decoupler](https://academic.oup.com/bioinformaticsadvances/article/2/1/vbac016/6544613)
+handles that with a linear model per sample: regress the expression of
+all genes on the weights of a source’s targets, and take the t-value of
+the slope as the activity. The univariate version (ULM) fits one model
+per source; the multivariate one (MLM) puts all sources into one model,
+so overlapping regulons compete for the signal.
+[`calc_lm_activity()`](https://gregorlueg.github.io/bixverse/reference/calc_lm_activity.md)
+is the Rust version of both.
+
+The network comes in decoupler’s long format: `source`, `target` and an
+optional `weight`. We turn the random gene sets into signed regulons and
+plant an activation of the first one in the first ten samples.
+
+``` r
+
+net <- data.table::rbindlist(
+  purrr::imap(gs[1:50], \(targets, source) {
+    data.table::data.table(
+      source = source,
+      target = targets,
+      weight = sample(c(-1, 1), length(targets), replace = TRUE)
+    )
+  })
+)
+
+X_lm <- X
+gs1_net <- net[source == "gs1"]
+X_lm[gs1_net$target, 1:10] <- X_lm[gs1_net$target, 1:10] + gs1_net$weight
+```
+
+``` r
+
+ulm_res <- calc_lm_activity(
+  mat = X_lm,
+  net = net,
+  lm_params = params_lm_activity(method = "ulm", p_values = TRUE)
+)
+
+# planted samples first, the rest after
+round(ulm_res$es[c(1:3, 11:13), 1:4], 2)
+#>       gs1  gs10  gs11  gs12
+#> s1   8.60  0.01 -0.55  0.35
+#> s2   7.84  0.40  0.72  2.06
+#> s3   8.10 -1.37 -0.54 -1.12
+#> s11 -0.42 -1.32  0.22 -0.11
+#> s12 -1.72  1.03  0.74  0.19
+#> s13  0.65 -0.03  0.96 -0.76
+```
+
+`es` holds the t-values (`stat = "coef"` gives you the slope instead),
+`pvals` the two-sided p-values and `fdr` the Benjamini-Hochberg
+adjustment per sample across sources, which is what decoupler does.
+Sources with fewer than `tmin` targets in the data (default 5) are
+dropped, same as decoupler.
+
+``` r
+
+mlm_res <- calc_lm_activity(
+  mat = X_lm,
+  net = net,
+  lm_params = params_lm_activity(method = "mlm", p_values = TRUE)
+)
+
+cor(ulm_res$es[, "gs1"], mlm_res$es[, "gs1"])
+#> [1] 0.9992041
+```
+
+A few things to be aware of:
+
+- MLM throws an error on collinear sources, i.e., duplicated or
+  proportional regulons. Merge or drop them first.
+- Rows with `NA` are dropped (with a warning) before scoring.
+- The p-values treat genes as independent. They are not, so read them as
+  a ranking aid rather than gospel.
+- A named vector (say the t statistics of a contrast) works as well and
+  gives you a `data.table` back.
+
+### Comparison with decoupleR
+
+``` r
+
+dc_ulm <- decoupleR::run_ulm(
+  mat = X_lm,
+  network = net,
+  .source = "source",
+  .target = "target",
+  .mor = "weight",
+  minsize = 5L
+)
+
+dc_ulm_wide <- data.table::dcast(
+  data.table::as.data.table(dc_ulm),
+  condition ~ source,
+  value.var = "score"
+)
+dc_ulm_mat <- as.matrix(dc_ulm_wide[, -1])
+rownames(dc_ulm_mat) <- dc_ulm_wide$condition
+
+max(abs(dc_ulm_mat[rownames(ulm_res$es), colnames(ulm_res$es)] - ulm_res$es))
+```
+
+And the speed difference:
+
+``` r
+
+microbenchmark::microbenchmark(
+  decoupleR_ulm = decoupleR::run_ulm(
+    mat = X_lm,
+    network = net,
+    .source = "source",
+    .target = "target",
+    .mor = "weight"
+  ),
+  bixverse_ulm = calc_lm_activity(mat = X_lm, net = net),
+  decoupleR_mlm = decoupleR::run_mlm(
+    mat = X_lm,
+    network = net,
+    .source = "source",
+    .target = "target",
+    .mor = "weight"
+  ),
+  bixverse_mlm = calc_lm_activity(
+    mat = X_lm,
+    net = net,
+    lm_params = params_lm_activity(method = "mlm")
+  ),
+  times = 5L
+)
 ```
 
 ## Multi-contrast enrichment (mitch)
@@ -537,9 +674,9 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: milliseconds
-#>      expr        min         lq       mean     median         uq        max
-#>     mitch 192.962065 196.109634 198.197962 196.707375 201.893305 203.317429
-#>  bixverse   3.820212   3.829759   4.697336   3.961755   5.238445   6.636511
+#>      expr        min         lq       mean     median         uq       max
+#>     mitch 129.172759 133.164535 135.723755 134.495400 134.706225 147.07986
+#>  bixverse   2.169577   2.319831   3.220868   2.548483   3.999337   5.06711
 #>  neval
 #>      5
 #>      5

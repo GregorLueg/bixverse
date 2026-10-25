@@ -166,9 +166,9 @@ much easier. From there we can make some design decisions.
     from disk when needed and Rust’s compiler will free memory once it
     is no longer needed, sometimes enforced explicitly with
     [`drop()`](https://rdrr.io/r/base/drop.html). Raw counts? Nope.
-    Normalised counts? Nope. Scaled counts? Nope. We just removed 40 GB
-    of unnecessary stuff from memory (in our 1M cell example). Data can
-    be loaded into memory in milliseconds if need be.
+    Normalised counts? Nope. Scaled counts? Nope. We just removed up to
+    40 GB of unnecessary stuff from memory (in our 1M cell example).
+    Data can be loaded into memory in milliseconds if need be.
 
 2.  ***We do not even load all data into memory to begin with.*** In
     99.99% of cases, we know we do not want low quality cells with tiny
@@ -186,14 +186,15 @@ much easier. From there we can make some design decisions.
     memory spikes and OOM errors.
 
 3.  ***We accept that single cell is noisy*** and do not bother with
-    `f32` or even `f64` precision for storage. For raw counts, `u16` is
-    sufficient most of the time, and the storage enum falls back to
-    `u32` per chunk for the rare gene that busts it, so nothing gets
-    clipped. The ML field has shown that you can get away with `f16`,
-    which reduces memory pressure and I/O substantially, and they are
-    pushing quantisation even further than that. We will accept the
-    precision loss when upcasting to `f64` to avoid catastrophic
-    cancellation issues at large N.
+    `f32` or even `f64` precision for storage. Raw counts are integers
+    and most of them are tiny, so on disk they get bit-packed to
+    whatever width the block actually needs. A block of ones and twos
+    costs a single bit per value, the rare gene with a count in the
+    thousands only widens its own block, and nothing gets clipped.
+    Normalised counts live as `f16`: the ML field has shown you can get
+    away with it, and they are pushing quantisation even further than
+    that. We will accept the precision loss when upcasting to `f64` to
+    avoid catastrophic cancellation issues at large N.
 
 4.  ***We are not doing any heavy calculations in R (or Python, future
     roadmap).*** Rust is superior for speed and optimisation: aggressive
@@ -251,20 +252,66 @@ cells are loaded via `CsrCellChunk`s. Want to iterate over genes to
 identify HVGs? That goes through `CscGeneChunk`. A further advantage is
 that for quite a few analyses, we can load subsets and stream over the
 data rather than reading everything at once, which massively reduces the
-memory footprint. We still use
-[lz4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm))
-compression to reduce the on-disk footprint, but the core philosophy is:
+memory footprint. The core philosophy is:
 
 > **Disk space is cheap; memory ain’t**
 
-This approach allows fast loading of raw or normalised counts depending
-on what is needed, and the two-layer approach (heavily inspired by
-TileDB) means we avoid duplicating indices and indptr. This assumes
-decent SSD speeds, but most modern hardware has that covered. Once done,
-the package also offers versions to archive the binary files,
-drastically reducing disk space. The idea is to leverage temporarily
-your disk space, stream data into the analysis methods in the right
-shape and when done, compress everything down.
+The two-layer approach (heavily inspired by TileDB) means raw and
+normalised counts share one set of indices instead of each dragging
+their own. Every cell and every gene is its own independently compressed
+chunk, the file tail holds the offsets, and reads go through `mmap`.
+This assumes decent SSD speeds, but most modern hardware has that
+covered.
+
+#### The v4 file format
+
+Cheap disk space is no excuse to waste it though. The first versions of
+the format were lazy: absolute `u32` indices, `u16` raw counts, the full
+`f16` normalised layer, all thrown at
+[lz4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)). lz4 is
+fast, but it cannot do much with a sorted list of absolute indices.
+Version 4 (the default for everything the package writes now) looks at
+what a chunk actually holds:
+
+- **Indices are delta bit-packed** in blocks of 128. Sorted gene (or
+  cell) indices turn into small gaps, and each block is packed to the
+  width of its largest gap.
+- **Raw counts are bit-packed the same way**, stored as `count - 1`
+  since a stored entry is never zero. That saves another bit per value,
+  and in UMI data that bit matters.
+- **The normalised layer is dropped.** Library-size normalisation plus
+  `log1p` is a pure function of the raw count, the library size and the
+  target size, so we recompute it on read, bit for bit identical to what
+  used to be stored. A chunk where the recompute does not reproduce the
+  stored values keeps them verbatim, so nothing changes under your feet.
+  Gene chunks need the library size of each cell for this, so the gene
+  file carries a per-cell library-size table in its tail, plus a small
+  lookup table for counts 1 to 4, which covers the common low counts
+  without a single `ln_1p` call.
+- **A fixed 32 byte header sits uncompressed** in front of every chunk:
+  nnz, library size (or average expression for genes), original index,
+  flags and the codec. Things like library sizes can be read without
+  decompressing anything.
+- **The codec is per chunk:** lz4 by default, zstd if you want smaller
+  files and can live with slower decoding, or none. A chunk that does
+  not shrink is stored raw whatever you asked for.
+
+So in practice we store raw counts and only raw counts, wherever
+possible, and the normalised layer is computed on the fly. Reads also
+prefetch their byte range into the page cache, so cold reads do not
+crawl through one page fault at a time.
+
+Got stores from an older version of the package? They still open and
+work, you just get a warning nudging you to convert them.
+[`upgrade_sc_store()`](https://gregorlueg.github.io/bixverse/reference/upgrade_sc_store.md)
+does that in place: it writes the v4 files next to the old ones, checks
+them, and only then swaps them in, keeping `.v3.bak` copies unless you
+tell it otherwise.
+
+Once you are done with the analysis, the package also offers versions to
+archive the binary files, squeezing the disk footprint further. The idea
+is to use your disk space temporarily, stream data into the analysis
+methods in the right shape and when done, compress everything down.
 
 ### Let’s not round trip into interpreted languages
 
@@ -287,16 +334,24 @@ implement a highly specialised version for single cell. Some examples:
   step, and, perhaps embarrassingly, [still beats fancy foundation
   models](https://arxiv.org/abs/2410.13956). A few tricks make it fast:
 
-  - [Randomised SVD](https://arxiv.org/abs/0909.4061) to approximate PCA
-    much faster. Instead of decomposing a matrix of millions of cells ×
-    HVGs, we reduce the problem to a few hundred cells × HVGs.
-    Alternatively, Eigendecompostion on a dense `n HVG x n HVG` matrix
-    that can be easily streamed in.
+  - [Lanczos](https://en.wikipedia.org/wiki/Lanczos_algorithm) on the
+    sparse matrix. We only want the top 30 to 50 components, so there is
+    no point in decomposing the whole thing. Lanczos runs on the
+    `n HVG x n HVG` Gram matrix without ever building it: all it needs
+    are sparse matrix-vector products, which is exactly what CSR and CSC
+    storage is good at. It is thick-restarted, so the trailing
+    components converge too, even on the flat spectrum single cell data
+    likes to produce. And it is exact, not an approximation. This is the
+    default now. [Randomised SVD](https://arxiv.org/abs/0909.4061) is
+    still there if you want it, but it is approximate and the trailing
+    components suffer the most. On the dense path, the default
+    eigendecomposes the `n HVG x n HVG` cross-product instead.
   - Smart scaling without ever densifying the matrix. As shown in the
     numbers above, densifying with 2k HVGs means holding a 16 GB matrix
-    in memory for a million cells, 80 GB for five million. With smart
-    matrix algebra, you never have to densify at all. An 80 GB problem
-    becomes something closer to 10 GB.
+    in memory for a million cells, 80 GB for five million. Centring and
+    scaling get folded into the matrix-vector products, so you never
+    have to densify at all. An 80 GB problem becomes something closer to
+    10 GB.
 
 - Of course there is also a library for everyone’s favourite 2D
   embedding generation:
@@ -406,7 +461,7 @@ NOT in memory, we need to carefully synchronise state between:
 
 - The “ecosystem” (quotation marks because at the moment it is just this
   R package and several Rust crates) is in its ~~infacy~~puberty. Stuff
-  will bug, break – breaking changes have been and will likely continue
+  will bug, break, breaking changes have been and will likely continue
   to be introduced. If you want to contribute at the methods level, you
   will need to go low-level and learn Rust (or ask your favourite LLM.
   But please no obvious AI slop.) The Rust code powering all of this is
@@ -463,15 +518,26 @@ What is still ahead:
   backend is aspirational. I do not own an Nvidia GPU to test it on.) It
   all lives in the [sister
   package](https://github.com/GregorLueg/bixverse.gpu), and there is a
-  fair amount of it now: sparse randomised SVD for the PCA, Harmony v2
-  with the arrowhead inversion, kNN across exhaustive, IVF and
-  NNDescent-into-CAGRA, k-means coarsened fast clustering, the UMAP Adam
-  optimiser, SEACells (both Frank-Wolfe solves), Scrublet, the NMF HALS
-  family, BBKNN and fastMNN with GPU-accelerated kNN searches, SCENIC’s
-  ExtraTrees and RandomForest learners, and Pearson/Spearman
+  fair amount of it now: block Lanczos (or randomised SVD) for the PCA,
+  Harmony v2 with the arrowhead inversion, kNN across exhaustive, IVF
+  and NNDescent-into-CAGRA, k-means coarsened fast clustering, the UMAP
+  Adam optimiser, SEACells (both Frank-Wolfe solves), Scrublet, the NMF
+  HALS family, BBKNN and fastMNN with GPU-accelerated kNN searches,
+  SCENIC’s ExtraTrees and RandomForest learners, and Pearson/Spearman
   correlation.
 
 - **Deep learning integration:** I like R as a bit of a quirky underdog
   stats language, but it cannot compete with the Deep Learning support
-  in Python. An interface into the binary files to quickly load in
-  counts into your favourite neural net architectures is on the roadmap.
+  in Python. So there is now a first stab at a Python package,
+  [`bixverse`](https://gregorlueg.github.io/bixverse-rs/), living in the
+  `bixverse-rs` repo. It opens the same binary files the R package
+  writes and streams shuffled minibatches out of them, raw, normalised
+  or both, sparse by default. Decoding never leaves Rust and the GIL is
+  released while it happens, so the loader keeps a GPU training loop fed
+  without ever materialising the experiment in memory. The first
+  consumer is a barebone scVI on torch or MLX, with the scvi-tools 1.5.1
+  defaults: load a trained scvi-tools module into it and you get the
+  same loss back. On two PBMC batches (5k cells, M1 Max), the MLX
+  version trains in about 30 seconds against just under three minutes
+  for scvi-tools on MPS, at the same held-out ELBO. Toy-sized, sure, and
+  the million-cell runs are still to come. Watch this space.
