@@ -126,7 +126,7 @@ are going in the right direction here, but can we do even better?
 
 There. It has been said. They are slow and let us stop pretending otherwise. 
 There is a reason why "Rust rewrite by LLM" is becoming a meme. Yes, you can 
-drop into NumPy or Rcpp for the heavy lifting, but that argument  rather proves 
+drop into NumPy or Rcpp for the heavy lifting, but that argument rather proves 
 the point! The real problem is not any single kernel; it is what happens between 
 them.
 
@@ -162,7 +162,7 @@ interface from an interpreted, dynamically typed language: going all-in on Rust
 is just too heavy. The average single cell enthuasist does not want to deal with 
 the borrow checker, does not want to compile code, and wants to quickly analyse 
 and iterate over data. The average bioinformatician lives in blissful ignorance 
-and  will not be able to comment on `f32` vs `f64` float representation in 
+and will not be able to comment on `f32` vs `f64` float representation in 
 memory, when to use which and frankly should not have to. That means the 
 interface should be a dynamically typed, interpreted language. This opens the 
 package up to more people and makes plotting (ggplot2 and its extensions for the 
@@ -173,8 +173,8 @@ leveraging counts only need subsets of cells and genes. We can also avoid
 holding metadata in memory via DuckDB. Data will be streamed from disk when 
 needed and Rust's compiler will free memory once it is no longer needed, 
 sometimes enforced explicitly with `drop()`. Raw counts? Nope. Normalised 
-counts? Nope. Scaled counts? Nope. We just removed 40 GB of unnecessary stuff 
-from memory (in our 1M cell example). Data can be loaded into memory in 
+counts? Nope. Scaled counts? Nope. We just removed up to 40 GB of unnecessary 
+stuff from memory (in our 1M cell example). Data can be loaded into memory in 
 milliseconds if need be.
 
 2. **_We do not even load all data into memory to begin with._** In 
@@ -285,7 +285,8 @@ we recompute it on read, bit for bit identical to what used to be stored. A
 chunk where the recompute does not reproduce the stored values keeps them
 verbatim, so nothing changes under your feet. Gene chunks need the library size
 of each cell for this, so the gene file carries a per-cell library-size table
-in its tail, plus a small lookup table for counts 1 to 4, which covers the common low counts without a single `ln_1p` call.
+in its tail, plus a small lookup table for counts 1 to 4, which covers the 
+common low counts without a single `ln_1p` call.
 - **A fixed 32 byte header sits uncompressed** in front of every chunk: nnz,
 library size (or average expression for genes), original index, flags and the
 codec. Things like library sizes can be read without decompressing anything.
@@ -294,8 +295,9 @@ and can live with slower decoding, or none. A chunk that does not shrink is
 stored raw whatever you asked for.
 
 So in practice we store raw counts and only raw counts, wherever possible, and
-the normalised layer is computed on the fly. Reads also prefetch their byte range into the
-page cache, so cold reads do not crawl through one page fault at a time.
+the normalised layer is computed on the fly. Reads also prefetch their byte 
+range into the page cache, so cold reads do not crawl through one page fault at
+ a time.
 
 Got stores from an older version of the package? They still open and work, you
 just get a warning nudging you to convert them. `upgrade_sc_store()` does that
