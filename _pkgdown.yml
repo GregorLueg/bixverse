@@ -893,6 +893,7 @@ reference:
       - rs_mc_hotspot_gene_cor
       - rs_mc_fit_residuals
       - rs_mc_hvg
+      - rs_mc_lm_activity
       - rs_mc_pca
       - rs_mc_pca_residuals
       - rs_mc_residual_variance

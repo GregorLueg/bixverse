@@ -2470,7 +2470,7 @@ vision_sc <- S7::new_generic(
 #'
 #' @description
 #' Rust implementation of decoupler's univariate (ULM) and multivariate (MLM)
-#' linear model activity scores, per cell on the normalised counts. See
+#' linear model activity scores, per cell (or meta cell) on the normalised counts. See
 #' [bixverse::calc_lm_activity()] for the model. Cells are read and scored in
 #' chunks, so memory stays bounded on large data.
 #'
@@ -2485,7 +2485,7 @@ vision_sc <- S7::new_generic(
 #'  single cell. Read them as descriptive.
 #' }
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `MetaCells` class.
 #' @param net data.frame. The network in long format with the columns `source`,
 #' `target` and optionally `weight`. Targets need to be gene identifiers of the
 #' object.
@@ -2495,10 +2495,11 @@ vision_sc <- S7::new_generic(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @returns An `ScMatrixRes` of cells x sources with the activities if
-#' `p_values = FALSE`. Otherwise a list with the `ScMatrixRes` elements `es`,
-#' `pvals` and `fdr` (BH per cell across sources). `NULL` with a warning if no
-#' source has at least `tmin` targets in the object.
+#' @returns For `SingleCells`, an `ScMatrixRes` of cells x sources with the
+#' activities if `p_values = FALSE`. Otherwise a list with the `ScMatrixRes`
+#' elements `es`, `pvals` and `fdr` (BH per cell across sources). For
+#' `MetaCells` the same, but plain matrices of meta cells x sources. `NULL`
+#' with a warning if no source has at least `tmin` targets in the object.
 #'
 #' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022
 #'

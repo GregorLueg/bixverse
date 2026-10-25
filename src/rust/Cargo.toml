@@ -64,4 +64,4 @@ name = "document"
 path = "document.rs"
 
 [patch.crates-io]
-bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-finalise-meta-cells" }
+bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-mlm-ulm-metacells" }

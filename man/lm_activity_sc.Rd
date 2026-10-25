@@ -7,7 +7,7 @@
 lm_activity_sc(object, net, lm_params = params_lm_activity(), .verbose = TRUE)
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{MetaCells} class.}
 
 \item{net}{data.frame. The network in long format with the columns \code{source},
 \code{target} and optionally \code{weight}. Targets need to be gene identifiers of the
@@ -21,14 +21,15 @@ object.}
 verbosity.}
 }
 \value{
-An \code{ScMatrixRes} of cells x sources with the activities if
-\code{p_values = FALSE}. Otherwise a list with the \code{ScMatrixRes} elements \code{es},
-\code{pvals} and \code{fdr} (BH per cell across sources). \code{NULL} with a warning if no
-source has at least \code{tmin} targets in the object.
+For \code{SingleCells}, an \code{ScMatrixRes} of cells x sources with the
+activities if \code{p_values = FALSE}. Otherwise a list with the \code{ScMatrixRes}
+elements \code{es}, \code{pvals} and \code{fdr} (BH per cell across sources). For
+\code{MetaCells} the same, but plain matrices of meta cells x sources. \code{NULL}
+with a warning if no source has at least \code{tmin} targets in the object.
 }
 \description{
 Rust implementation of decoupler's univariate (ULM) and multivariate (MLM)
-linear model activity scores, per cell on the normalised counts. See
+linear model activity scores, per cell (or meta cell) on the normalised counts. See
 \code{\link[=calc_lm_activity]{calc_lm_activity()}} for the model. Cells are read and scored in
 chunks, so memory stays bounded on large data.
 

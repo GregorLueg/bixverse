@@ -6756,6 +6756,39 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #' @references DeTomaso, et al., Nat. Commun., 2019
 rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed) .Call(wrap__rs_mc_vision_with_autocorrelation, sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed)
 
+#' ULM / MLM activity scores (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' decoupler-style univariate (ULM) or multivariate (MLM) linear model
+#' activity scores per meta cell on the normalised counts, over all genes.
+#' This version works on MetaCell counts which are stored in memory directly.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and the
+#' data need to be the **normalised** counts.
+#' @param gs_list List. One element per set, each a list with `idx` (integer,
+#' 0-indexed gene positions) and optionally `weight` (numeric, aligned with
+#' `idx`; absent means weight 1).
+#' @param lm_params List. With `method` (`"ulm"` or `"mlm"`), `stat` (`"t"` or
+#' `"coef"`) and `p_values` (boolean).
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item es - Numerical matrix of meta cells x sets with the scores.
+#'   \item p_values - Numerical matrix of meta cells x sets with the
+#'   two-sided p-values, or `NULL` if not requested.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+#'
+#' @references Badia-i-Mompel, et al., Bioinform. Adv., 2022.
+rs_mc_lm_activity <- function(sparse_data, gs_list, lm_params, verbose) .Call(wrap__rs_mc_lm_activity, sparse_data, gs_list, lm_params, verbose)
+
 #' Run DIALOGUE over meta cells
 #'
 #' @description

@@ -496,7 +496,7 @@ dependencies = [
 [[package]]
 name = "bixverse-core"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -519,7 +519,7 @@ dependencies = [
 [[package]]
 name = "bixverse-gpu"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "ann-search-rs",
  "bixverse-core",
@@ -539,7 +539,7 @@ dependencies = [
 [[package]]
 name = "bixverse-methods"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -560,7 +560,7 @@ dependencies = [
 [[package]]
 name = "bixverse-r"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "ann-search-rs",
  "bixverse-rs",
@@ -579,7 +579,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "bixverse-core",
  "bixverse-methods",
@@ -593,7 +593,7 @@ dependencies = [
 [[package]]
 name = "bixverse-sc"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -618,7 +618,7 @@ dependencies = [
 [[package]]
 name = "bixverse-sc-data"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "approx 0.5.1",
  "bincode",
@@ -647,7 +647,7 @@ dependencies = [
 [[package]]
 name = "bixverse-sc-gpu"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -674,7 +674,7 @@ dependencies = [
 [[package]]
 name = "bixverse-sparse"
 version = "0.9.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-finalise-meta-cells#009051c789b740bdf5d66173699ac02b2d6be795"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-mlm-ulm-metacells#a769d8e501609afb3228d44a56d935b5abc5bce9"
 dependencies = [
  "num-traits",
  "rayon",

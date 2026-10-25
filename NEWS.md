@@ -3,7 +3,8 @@
 * decoupler-style ULM and MLM activity scores: `calc_lm_activity()` for bulk
   matrices or a contrast's statistics and `lm_activity_sc()` per cell, both
   taking a long `source`/`target`/`weight` network (CollecTRI, DoRothEA, ...).
-  Parameters via `params_lm_activity()`. Scores match decoupler.
+  `lm_activity_sc()` works on `MetaCells` too. Parameters via
+  `params_lm_activity()`. Scores match decoupler.
 * MetaCells2 via `generate_metacells2_sc()`: the metacells divide and conquer
   pipeline in Rust, rare gene modules included. Works on the raw counts, no
   embedding or kNN graph needed. Parameters via `params_sc_metacells2()` and
