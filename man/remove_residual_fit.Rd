@@ -12,15 +12,15 @@
 remove_residual_fit(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-remove_residual_fit(x, ...)
+\special{remove_residual_fit(x, ...)}
 
 \method{remove_residual_fit}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-remove_residual_fit(x, ...)
+\special{remove_residual_fit(x, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-remove_residual_fit(x, ...)
+\special{remove_residual_fit(x, ...)}
 }
 \arguments{
 \item{x}{An object from which to remove the fitted model.}

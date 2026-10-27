@@ -14,17 +14,17 @@
 get_knn_mat(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_knn_mat(x, ...)
+\special{get_knn_mat(x, ...)}
 
 \method{get_knn_mat}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_knn_mat(x, ...)
+\special{get_knn_mat(x, ...)}
 
 \method{get_knn_mat}{SingleCellNearestNeighbour}(x, ...)
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_knn_mat(x, ...)
+\special{get_knn_mat(x, ...)}
 }
 \arguments{
 \item{x}{An object to get the kNN matrix from.}

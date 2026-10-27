@@ -103,4 +103,4 @@ SystemRequirements:
 Depends: 
     R (>= 4.2)
 LazyData: true
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 8.1.1

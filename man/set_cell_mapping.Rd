@@ -11,7 +11,7 @@ set_cell_mapping(x, cell_map)
 \method{set_cell_mapping}{ScMap}(x, cell_map)
 
 ## S7 method for class <bixverse::SingleCells>
-set_cell_mapping(x, cell_map)
+\special{set_cell_mapping(x, cell_map)}
 }
 \arguments{
 \item{x}{An object to set cell mapping for}

@@ -13,10 +13,10 @@ get_cells_to_keep(x)
 \method{get_cells_to_keep}{ScMap}(x)
 
 ## S7 method for class <bixverse::SingleCells>
-get_cells_to_keep(x)
+\special{get_cells_to_keep(x)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_cells_to_keep(x)
+\special{get_cells_to_keep(x)}
 }
 \arguments{
 \item{x}{An object from which to get the cells to keep from. These are

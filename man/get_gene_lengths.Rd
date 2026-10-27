@@ -8,7 +8,7 @@
 get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
 
 ## S7 method for class <bixverse::BulkCoExp>
-get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
+\special{get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)}
 }
 \arguments{
 \item{x}{Object to extract gene lengths from. Can be a matrix or

@@ -13,10 +13,10 @@ remove_magic(x, ...)
 \method{remove_magic}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-remove_magic(x, ...)
+\special{remove_magic(x, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-remove_magic(x, ...)
+\special{remove_magic(x, ...)}
 }
 \arguments{
 \item{x}{An object from which to remove the imputed layer.}

@@ -13,10 +13,10 @@ get_magic(x, ...)
 \method{get_magic}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_magic(x, ...)
+\special{get_magic(x, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_magic(x, ...)
+\special{get_magic(x, ...)}
 }
 \arguments{
 \item{x}{An object to get the imputed layer from.}

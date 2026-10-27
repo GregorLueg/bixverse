@@ -12,15 +12,15 @@
 remove_connectivities(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-remove_connectivities(x, ...)
+\special{remove_connectivities(x, ...)}
 
 \method{remove_connectivities}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-remove_connectivities(x, ...)
+\special{remove_connectivities(x, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-remove_connectivities(x, ...)
+\special{remove_connectivities(x, ...)}
 }
 \arguments{
 \item{x}{An object from which to remove the neighbour graph.}
