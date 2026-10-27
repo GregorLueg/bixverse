@@ -4,7 +4,13 @@
 \alias{per_group_qc_outlier}
 \title{MAD outlier detection on per-group QC metrics}
 \usage{
-per_group_qc_outlier(metrics, groups, directions, threshold = 3)
+per_group_qc_outlier(
+  metrics,
+  groups,
+  directions,
+  threshold = 3,
+  r_standard = TRUE
+)
 }
 \arguments{
 \item{metrics}{Named list of numeric vectors. The QC metrics.}
@@ -15,6 +21,9 @@ per_group_qc_outlier(metrics, groups, directions, threshold = 3)
 One of \code{"twosided"}, \code{"below"}, \code{"above"}.}
 
 \item{threshold}{Numeric. Number of MADs to use for outlier detection.}
+
+\item{r_standard}{Boolean. Scale the MAD by 1.4826 like \code{stats::mad()}. See
+\code{\link[=per_cell_qc_outlier]{per_cell_qc_outlier()}}.}
 }
 \value{
 A \code{data.table} with one row per metric/group and columns \code{metric},

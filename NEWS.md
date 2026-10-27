@@ -1,3 +1,11 @@
+# bixverse 0.8.3
+
+* `bixverse-r` 0.9.3 under the hood.
+* MAD outlier detection in `run_cell_qc()` now scales the MAD by 1.4826 like
+  `stats::mad()`, so `threshold = 3` means three standard deviations under
+  normality. This is wider than before, expect fewer cells flagged with the
+  same threshold. `r_standard = FALSE` gets you the old raw MAD back.
+
 # bixverse 0.8.2
 
 * decoupler-style ULM and MLM activity scores: `calc_lm_activity()` for bulk
