@@ -12,15 +12,15 @@
 set_pca_factors(x, pca_factor, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-set_pca_factors(x, pca_factor, ...)
+\special{set_pca_factors(x, pca_factor, ...)}
 
 \method{set_pca_factors}{ScCache}(x, pca_factor, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-set_pca_factors(x, pca_factor, ...)
+\special{set_pca_factors(x, pca_factor, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-set_pca_factors(x, pca_factor, ...)
+\special{set_pca_factors(x, pca_factor, ...)}
 }
 \arguments{
 \item{x}{An object to add the PCA factors for.}

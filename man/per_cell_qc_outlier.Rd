@@ -7,7 +7,8 @@
 per_cell_qc_outlier(
   metric,
   threshold = 3,
-  direction = c("twosided", "below", "above")
+  direction = c("twosided", "below", "above"),
+  r_standard = TRUE
 )
 }
 \arguments{
@@ -18,6 +19,10 @@ outlier detection.}
 
 \item{direction}{String. One of \code{c("twosided", "below", "above")}. Which
 directionality to consider}
+
+\item{r_standard}{Boolean. If \code{TRUE}, the MAD is scaled by 1.4826 like
+\code{stats::mad()}, so \code{threshold} counts standard deviations under normality.
+Set to \code{FALSE} to use the raw MAD (the previous behaviour).}
 }
 \value{
 A list with:

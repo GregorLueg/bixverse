@@ -22,6 +22,7 @@ Everything and anything you need to do various types of gene set enrichments; hy
 - `calc_fgsea_simple`: Bixverse implementation of the simple fgsea algorithm
 - `calc_blitzgsea`: Bixverse implementation of the blitzGSEA algorithm
 - `blitzgsea_calibrate`: Calibrate the blitzGSEA null model for a signature
+- `calc_lm_activity`: ULM / MLM activity scores (decoupler-style)
 - `calc_gsea_traditional`: Bixverse implementation of the traditional GSEA algorithm
 - `calc_mitch`: Calculate a mitch gene set enrichments on contrast
 - `calc_gsva`: Bixverse implementation of GSVA
@@ -32,6 +33,7 @@ Everything and anything you need to do various types of gene set enrichments; hy
 - `params_blitzgsea`: Wrapper function to generate blitzGSEA parameters
 - `params_gsea`: Wrapper function to generate GSEA parameters
 - `params_gsva`: Wrapper function to generate GSVA parameters
+- `params_lm_activity`: Wrapper function to generate ULM / MLM activity parameters
 - `params_ssgsea`: Wrapper function to generate ssGSEA parameters
 
 ## Gene Ontology-related gene set enrichment helpers
@@ -53,6 +55,7 @@ GSE methods specifically designed with the DAG of the Gene Ontology in mind, ide
 Functions related to CisTarget enrichment.
 
 - `download_cistarget_hg38`: Download CisTarget reference files for human (hg38)
+- `load_scenic_tfs_hg38`: Load the human (hg38) transcription factor list used by SCENIC
 - `read_motif_annotation_file`: Read in the motif annotation file
 - `read_motif_ranking`: Read in the motif rankings and transform them into a matrix
 - `run_cistarget`: Main function to run CisTarget
@@ -72,7 +75,7 @@ Methods to identify co-expression modules via correlations or matrix factorisati
 - `get_nmf_stability`: Get the multi-run NMF diagnostics
 - `get_c_pca_factors`: Get the contrastive PCA factors
 - `get_c_pca_loadings`: Get the contrastive PCA loadings
-- `get_ica_stability_res`: Get the ICA component data (stability, convergence, nMI)
+- `get_ica_stability_res`: Get the ICA component data (stability, convergence, redundancy)
 - `get_grid_search_res`: Get the grid search results
 - `get_cor_graph`: Get correlation-based graph
 - `get_diffcor_graph`: Get differential correlation-based graph
@@ -175,6 +178,7 @@ Different methods working on graphs; diffuse information over a network and iden
 - `community_detection`: Identify privileged communities based on a given diffusion vector
 - `constrained_page_rank`: Constrained personalised page rank
 - `constrained_page_rank_ls`: Constrained personalised page rank over a list
+- `leiden_clustering`: Leiden or Louvain community detection on an igraph
 - `diffuse_seed_nodes`: Diffuse seed genes over a network
 - `permute_seed_nodes`: Generate permuation scores for the diffusion
 - `get_diffusion_perms`: Get the diffusion permutations
@@ -226,7 +230,7 @@ THE single cell class with a large number of getters.
 - `get_pca_singular_val`: Get the PCA singular values
 - `get_pca_loadings`: Get the PCA loadings
 - `get_pca_factors`: Get the PCA factors
-- `get_snn_graph`: Get the sNN graph
+- `get_connectivities`: Get the neighbour graph
 - `get_gene_names_from_idx`: Get the gene names based on the gene idx
 - `get_sc_available_features`: Returns the available features for single cell applications
 - `setnames_sc`: Rename columns in the obs or var table
@@ -281,16 +285,21 @@ Generating meta cells.
 - `MetaCells`: bixverse meta cell class
 - `calc_diffusion_coordinates`: Calculate diffusion coordinates
 - `calc_manifold_metrics`: Calculate manifold metrics
+- `calc_meta_cell_compactness`: Meta cell compactness in a diffusion map
+- `calc_meta_cell_separation`: Meta cell separation in a diffusion map
 - `calc_meta_cell_purity`: Calculate meta cell purity
 - `get_meta_cell_purity`: Calculate meta cell purity without mutating object state
 - `generate_supercells_sc`: Generate SuperCells and return a MetaCells object
 - `generate_bt_meta_cells_sc`: Generate meta cells based on hdWGCNA and return a MetaCells object
 - `generate_seacells_sc`: Generate meta cells based on SEACells and return a MetaCells object
+- `generate_metacells2_sc`: Generate meta cells via MetaCells2 (divide and conquer)
 - `merge_meta_cells`: Merge meta cell objects into one
 - `nebula_mc`: Run NEBULA on meta cells
 - `params_sc_supercell`: Wrapper function for parameters for SuperCell generation
 - `params_sc_bt_metacells`: Wrapper function for parameters for bootstrapped meta cell generation
 - `params_sc_seacells`: Wrapper function for the SEACells parameters
+- `params_sc_metacells2`: Wrapper function for the MetaCells2 per-pile parameters
+- `params_sc_metacells2_dac`: Wrapper function for the MetaCells2 divide and conquer parameters
 
 ## Single cell i/o
 
@@ -316,7 +325,9 @@ I/O functions for single cell. Load in h5ad, mtx, Seurat or R data into Rust and
 - `load_multi_tenx_h5`: Load multiple 10x CellRanger h5 files into a single SingleCells
 - `read_h5ad_metadata`: Read obs and var tables and metadata from an h5ad file
 - `read_h5ad_x_summary`: Read summary statistics from the X slot of an h5ad file
+- `save_h5ad`: Save a SingleCells object to h5ad
 - `save_sc_exp_to_disk`: Save memory-bound data to disk
+- `archive_sc_exp`: Archive the on-disk counts for cold storage
 - `upgrade_sc_store`: Upgrade the on-disk counts to the v4 file format
 - `merge_sc_experiments`: Merge multiple SingleCells experiments into one
 - `params_sc_min_quality`: Wrapper function to generate QC metric params for single cell
@@ -364,8 +375,10 @@ Helpers to process single cell data. Doublet detection, proportions of gene sets
 - `params_sc_neighbours`: Wrapper function for parameters for neighbour identification in single cell
 - `params_scdblfinder`: Wrapper function for scDblFinder doublet detection parameters
 - `params_hvg_defaults`: Helper function to generate HVG defaults
+- `params_hvg_scran_defaults`: Helper function to generate the scran HVG trend defaults
 - `params_pca_defaults`: Helper function to generate default parameters for PCA
 - `params_knn_defaults`: Helper function to generate kNN defaults
+- `params_knn_graph_defaults`: Helper function to generate the kNN graph defaults
 - `params_sc_knn`: Parameters for single cell kNN searches
 - `params_kmeans_defaults`: K-mean parameter defaults.
 - `params_fast_cluster_default`: Helper function to generate default parameters for the fast clustering for the doublet detection methods
@@ -400,8 +413,8 @@ A large number of different methods to extract insights from your single cell ex
 
 - `aucell_sc`: Calculate AUC scores (akin to AUCell)
 - `module_scores_sc`: Calculate module activity scores
-- `fast_cluster_sc`: Run fast Louvain clustering on a SingleCells object
-- `find_clusters_sc`: Graph-based clustering of cells on the sNN graph
+- `fast_cluster_sc`: Run fast clustering on a SingleCells object
+- `find_clusters_sc`: Graph-based clustering of cells on the neighbour graph
 - `find_markers_sc`: Calculate DGE between two cell groups
 - `find_all_markers_sc`: Find all markers
 - `find_specific_markers_sc`: Find markers that are specific to a cell group
@@ -418,11 +431,15 @@ A large number of different methods to extract insights from your single cell ex
 - `run_palantir_sc`: Run Palantir trajectory inference
 - `run_paga_sc`: Run PAGA graph abstraction
 - `run_gene_trends_sc`: Fit gene trends over Palantir pseudotime
+- `bonsai_sc`: Build a Bonsai tree over the cells
+- `relayout_bonsai`: Recompute the layout of a Bonsai tree
+- `set_bonsai_embedding`: Store the leaf coordinates of a Bonsai tree as an embedding
 - `get_index_cells`: Get the index cells
 - `add_nhoods_info`: Add neighbourhood info on majority cell type
 - `test_nhoods`: Test neighbourhoods for differential abundance
 - `vision_sc`: Calculate VISION scores
 - `vision_w_autocor_sc`: Calculate VISION scores (with auto-correlation scores)
+- `lm_activity_sc`: Calculate ULM / MLM activity scores per cell
 - `identify_tf_to_genes`: Identify the TF to gene regulation
 - `scenic_gene_filter_sc`: Filter genes for SCENIC GRN inference
 - `scenic_grn_sc`: Run SCENIC GRN inference
@@ -432,6 +449,7 @@ A large number of different methods to extract insights from your single cell ex
 - `tf_to_genes_motif_enrichment`: Run the SCENIC motif enrichment
 - `binarise_regulon_activity`: Binarise regulon activity into on/off calls
 - `build_regulons`: Build the final regulons
+- `extract_binary_heatmap_data`: Extract plot-ready data for a binary heatmap
 - `nmf_sc`: Run single-run NMF on single cell or meta cell data
 - `stabilised_nmf_sc`: Run stabilised (multi-run) NMF on single cell or meta cell data
 - `consensus_nmf_sc`: Run consensus NMF on single cell or meta cell data
@@ -457,10 +475,12 @@ A large number of different methods to extract insights from your single cell ex
 - `params_scenic_gradient_boosting_defaults`: Default parameters for the SCENIC GradientBoosting (GRNBoost2) regression learner
 - `params_scenic_random_forest_defaults`: Default parameters for the SCENIC RandomForest regression learner
 - `params_scenic_binarise`: Wrapper function for parameters for the SCENIC binarisation
+- `params_binary_heatmap`: Wrapper function for parameters for binary heatmap data
 - `params_meld`: Constructor for MELD parameters
 - `params_sc_palantir`: Wrapper function for Palantir parameters
 - `params_sc_branch_selection`: Wrapper function for the branch cell selection parameters
 - `params_sc_gene_trends`: Wrapper function for gene trend parameters
+- `params_sc_bonsai`: Wrapper function for Bonsai parameters
 - `params_nmf_hals`: Wrapper function for NMF (HALS) parameters
 - `params_nmf_consensus`: Wrapper function for consensus NMF parameters
 - `params_lda`: Wrapper function for the LDA parameters
@@ -515,11 +535,15 @@ Helpers to do reference mapping and cell type identification in single cell
 
 Classes, functions and generics/methods for ligand receptor analysis for single cell.
 
+- `as_ligand_target_influence`: Wrap an existing ligand-target matrix as a LigandTargetInfluence
+- `cellphonedb_sc`: CellPhoneDB ligand-receptor analysis
 - `compute_expression_info_sc`: Compute per-cluster mean expression and expressing fraction for a gene set
 - `generate_ligand_target_influence`: Generate the ligand to target influence matrix
+- `get_cellphonedb_db`: Download the CellPhoneDB ligand-receptor database
 - `get_influence`: Get the ligand-target influence matrix
 - `ligand_activity_scores`: Compute ligand activity scores against gene sets
 - `params_ligand_target`: Parameters for ligand to target influence computation
+- `params_sc_cellphonedb`: Parameters for the CellPhoneDB analysis
 - `prioritise_interactions`: Prioritise sender-ligand-receiver-receptor interactions
 
 ## Single cell plotting stuff
@@ -540,6 +564,7 @@ Various helpers that generate data for plotting single cell, such as 2D embeddin
 - `extract_feature_plot_data`: Extract per-cell expression mapped onto an embedding
 - `extract_gene_violin_data`: Extract per-cell expression grouped for violin plots
 - `extract_paga_plot_data`: Extract the PAGA graph positioned on an embedding
+- `extract_milo_plot_data`: Extract the miloR neighbourhood graph positioned on an embedding
 
 ## Statistical functions
 
@@ -630,7 +655,7 @@ All types of other random helpers without a clear pattern
 
 Everything Rusty - only use this if you know what you are doing... Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood...
 
-112 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
+115 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
 
 ## Not on the package website
 
@@ -657,10 +682,12 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `get_sc_duckdb`: Getter for the single cell DuckDB connection
 - `get_sc_map`: Getter for the different maps in the object
 - `get_sc_rust_ptr`: Getter for the single cell Rust pointer
+- `get_snn_graph`: sNN graph accessors (deprecated)
 - `mc_counts_to_list`: Transform the counts to a Rust-specific list
 - `mc_get_clr_offsets`: Get the offsets for the CLR/PFlogPF transformation prior PCA
 - `meta_cells`: bixverse meta cell class (deprecated)
 - `network_diffusions`: Network diffusion class (deprecated)
+- `new_bonsai_tree`: Helper function to generate the Bonsai results
 - `new_consensus_nmf_result`: Constructor for consensus NMF results
 - `new_dialogue_result`: Constructor for the DialogueResult class
 - `new_gene_trends_res`: Helper function to generate the gene trend results
@@ -682,12 +709,14 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `ontology`: Ontology class (deprecated)
 - `prep_data_gower_hamming_dist`: Transform data.tables into matrices for distance calculations
 - `rbh_graph`: Reciprocal best hit graph (deprecated)
+- `remove_connectivities`: Remove the neighbour graph
 - `remove_knn`: Remove the KNN data
-- `remove_snn_graph`: Remove the sNN graph
+- `remove_snn_graph`: sNN graph accessors (deprecated)
 - `rs_adt_clr`: Applies CLR normalisation on ADT counts
 - `rs_aucell`: Calculate AUCell in Rust
 - `rs_bbknn`: BBKNN implementation in Rust
 - `rs_bbknn_filtering`: Reduce BBKNN results to Top X neighbours
+- `rs_bonsai_layout`: Lay out an existing Bonsai tree
 - `rs_build_symphony_ref`: Build a Symphony reference (Rust)
 - `rs_calc_es`: Calculates the traditional GSEA enrichment score
 - `rs_calc_gsea_stat_cumulative_batch`: Helper function to generate fgsea simple-based permutations
@@ -696,6 +725,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_calc_multi_level`: Calculates p-values for pre-processed data
 - `rs_calculate_dge_mann_whitney`: Calculate DGEs between cells based on Mann Whitney stats
 - `rs_calculate_dge_one_vs_many`: Calculate one-vs-many AUROC DGEs for specific markers
+- `rs_calculate_dge_one_vs_rest`: Calculate one-vs-rest Mann Whitney DGEs for every cell group
 - `rs_compute_cluster_expr_stats`: Compute cluster statistics for NicheNet prioritisation
 - `rs_create_random_aucs`: Create random AUCs
 - `rs_critval`: Calculate the critical value
@@ -705,8 +735,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_extract_counts_plots`: Helper to extract single cell counts as a dense vector for plotting
 - `rs_extract_grouped_gene_stats`: Calculates the gene statistics for a set of cell groups and genes
 - `rs_extract_several_genes_plots`: Helper to extract single cell counts for several genes
-- `rs_fast_cluster_sc`: Runs fast Louvain cluster on the data
-- `rs_fast_cluster_sc_grid`: Runs fast Louvain cluster on the data (with multiple seeds)
+- `rs_fast_cluster_sc`: Runs fast clustering on the data
 - `rs_filter_onto_sim`: Filter the term similarities for a specific critical value
 - `rs_generate_bulk_rnaseq`: Generation of bulkRNAseq-like data with optional correlation structure
 - `rs_get_gs_indices`: Helper function to rapidly retrieve the indices of the gene set members
@@ -719,12 +748,15 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_knn_mat_to_edge_pairs`: Flatten kNN matrix to edge pairs
 - `rs_lda`: Fit a latent Dirichlet allocation model to a document-term matrix
 - `rs_lda_k_sweep`: Fit LDA across a range of topic counts and score each fit
+- `rs_lm_activity_sc`: ULM / MLM activity scores per cell (decoupler-style)
 - `rs_magic_impute`: Impute a subset of genes with MAGIC
 - `rs_make_milor_nhoods`: Generate the neighbourhoods akin to the miloR approach
+- `rs_mc_bonsai`: Build a Bonsai tree from metacell counts
 - `rs_meld_sc`: Run MELD
 - `rs_metacell_compactness`: Calculates the compactness of the MetaCells based on diffusion map coordinates
 - `rs_metacell_density`: Calculates diffusion maps for density calculations for meta cells
 - `rs_metacell_separation`: Calculates the separation of the centroids of the MetaCells based on diffusion map coordinates.
+- `rs_metacells2`: Generate meta cells via MetaCells2 (divide and conquer)
 - `rs_mnn`: FastMNN batch correction in Rust
 - `rs_module_scoring`: Calculate module activity scores in Rust
 - `rs_nebula_sc`: Fit the NEBULA negative binomial gamma mixed model over single cells
@@ -751,6 +783,9 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_read_tenx_h5_modality`: Loads in a modality from a 10x h5 file
 - `rs_regulon_thresholds`: Derive the on/off threshold per regulon in Rust
 - `rs_sample_ids_for_cell_types`: Helper function to generate sample identifiers based on cells
+- `rs_save_h5ad`: Write a single cell experiment to h5ad
+- `rs_sc_bonsai`: Build a Bonsai tree from single cell counts
+- `rs_sc_cellphonedb`: CellPhoneDB ligand/receptor analysis
 - `rs_sc_doublet_detection`: Detect Doublets via BoostClassifier (in Rust)
 - `rs_sc_fit_residuals`: Fits a residual model for single cell data
 - `rs_sc_gene_store_to_cell_store`: Rebuilds the cell-major companion of a gene-major store
@@ -793,6 +828,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_vision_with_autocorrelation`: Calculate VISION pathway scores in Rust with auto-correlation
 - `set_cell_mapping`: Set cell mapping
 - `set_cells_to_keep`: Set cells to keep
+- `set_connectivities`: Set/add the neighbour graph
 - `set_embedding`: Add additional embeddings to the class
 - `set_gene_mapping`: Set gene mapping
 - `set_hvg`: Set the HVG genes
@@ -800,7 +836,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `set_pca_factors`: Set/add PCA factors
 - `set_pca_loadings`: Set/add PCA loadings
 - `set_pca_singular_vals`: Set/add PCA singular values
-- `set_snn_graph`: Set/add KNN
+- `set_snn_graph`: sNN graph accessors (deprecated)
 - `single_cell_exp`: bixverse single cell class (deprecated)
 - `SingleCellDuckDB`: Class for storing single cell experimental data in DuckDB (nightly!)
 - `SingleCellDuckDBBase`: Base class for the single cell DuckDB connection

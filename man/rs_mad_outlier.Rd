@@ -4,17 +4,20 @@
 \alias{rs_mad_outlier}
 \title{Calculate MAD outlier detection in Rust.}
 \usage{
-rs_mad_outlier(x, threshold, direction)
+rs_mad_outlier(x, threshold, direction, r_standard)
 }
 \arguments{
 \item{x}{Numerical vector to test.}
 
-\item{threshold}{Numeric. Number of (unscaled) MADs from the median in
-either direction that is acceptable.}
+\item{threshold}{Numeric. Number of MADs from the median in either
+direction that is acceptable.}
 
 \item{direction}{String. One of \code{c("below", "above", "twosided")}. Shall
 the outlier direction be done for values below the threshold, above the
 threshold or in both directions. Unknown strings default to twosided tests.}
+
+\item{r_standard}{Boolean. If \code{TRUE}, the MAD is scaled by 1.4826 like
+\code{stats::mad()}. If \code{FALSE}, the raw MAD is used (the previous behaviour).}
 }
 \value{
 A list with the following items:

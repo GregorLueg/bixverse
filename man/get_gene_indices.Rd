@@ -12,15 +12,15 @@
 get_gene_indices(x, gene_ids, rust_index)
 
 ## S7 method for class <bixverse::MetaCells>
-get_gene_indices(x, gene_ids, rust_index)
+\special{get_gene_indices(x, gene_ids, rust_index)}
 
 \method{get_gene_indices}{ScMap}(x, gene_ids, rust_index)
 
 ## S7 method for class <bixverse::SingleCells>
-get_gene_indices(x, gene_ids, rust_index)
+\special{get_gene_indices(x, gene_ids, rust_index)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_gene_indices(x, gene_ids, rust_index)
+\special{get_gene_indices(x, gene_ids, rust_index)}
 }
 \arguments{
 \item{x}{An object to get the gene index from.}

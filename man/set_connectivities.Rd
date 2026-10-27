@@ -12,15 +12,15 @@
 set_connectivities(x, connectivities, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-set_connectivities(x, connectivities, ...)
+\special{set_connectivities(x, connectivities, ...)}
 
 \method{set_connectivities}{ScCache}(x, connectivities, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-set_connectivities(x, connectivities, ...)
+\special{set_connectivities(x, connectivities, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-set_connectivities(x, connectivities, ...)
+\special{set_connectivities(x, connectivities, ...)}
 }
 \arguments{
 \item{x}{An object to add the neighbour graph to.}

@@ -13,10 +13,10 @@ get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)
 \method{get_gene_names_from_idx}{ScMap}(x, gene_idx, rust_based = TRUE)
 
 ## S7 method for class <bixverse::SingleCells>
-get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)
+\special{get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)
+\special{get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)}
 }
 \arguments{
 \item{x}{An object to get the gene names from.}

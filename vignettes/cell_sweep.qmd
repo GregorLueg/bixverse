@@ -278,7 +278,7 @@ obs_cells <- get_sc_obs(cell_object)
 table(obs_cells$leiden_clusters)
 ```
 
-762 cells over eight clusters. Good enough to subtract against; you would name
+845 cells over nine clusters. Good enough to subtract against; you would name
 them with `calc_sc_type_scores()` or a reference in a real analysis, but the
 model only cares that barcodes with the same label share a profile.
 
@@ -332,10 +332,10 @@ clean_object
 ```
 
 Three numbers in that output are worth reading. 96,998 barcodes went into the
-ambient profile. 762 got denoised. And 238 barcodes were neither: they cleared
+ambient profile. 845 got denoised. And 155 barcodes were neither: they cleared
 the UMI cutoff but failed QC or the outlier check, so they have no label to
 subtract against. Those are dropped from the fit and from the output, which is
-why the clean object is 762 cells and not 1000.
+why the clean object is 845 cells and not 1000.
 
 The denoised counts land in a new directory. The raw layer takes stochastically
 rounded values so the negative binomial methods downstream still see integers,
@@ -460,10 +460,10 @@ ggplot(rates, aes(x = cell_type, y = detected, fill = layer)) +
 ```
 
 Cluster 1 is the monocytes and it keeps LYZ and S100A8 in essentially every
-cell. Everywhere else those genes were showing up in a few percent of barcodes
-before the sweep and are gone afterwards. PPBP does the same thing in reverse:
-platelet transcripts leaking into the monocytes disappear. The subtraction went
-after the right counts.
+cell, as does the small myeloid cluster 8. Everywhere else those genes were
+showing up in a few percent of barcodes before the sweep and are gone
+afterwards. PPBP does the same thing in reverse: platelet transcripts leaking
+into the monocytes roughly halve. The subtraction went after the right counts.
 
 ## Reprocessing the clean counts
 

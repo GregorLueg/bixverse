@@ -12,15 +12,15 @@
 get_connectivities(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_connectivities(x, ...)
+\special{get_connectivities(x, ...)}
 
 \method{get_connectivities}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_connectivities(x, ...)
+\special{get_connectivities(x, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_connectivities(x, ...)
+\special{get_connectivities(x, ...)}
 }
 \arguments{
 \item{x}{An object to get the neighbour graph from.}

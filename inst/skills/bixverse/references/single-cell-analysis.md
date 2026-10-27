@@ -12,9 +12,17 @@ Most of these need a kNN, so `find_hvg_sc()` then `calculate_pca_sc()` then
 | AUCell | `aucell_sc()` | `params_sc_aucell()` |
 | VISION | `vision_sc()`, `vision_w_autocor_sc()` | `params_sc_vision()` |
 | top expressed gene fraction | `top_genes_perc_sc()` | plain args |
+| TF / pathway activity, ULM or MLM (decoupler-style) | `lm_activity_sc()` | `params_lm_activity()` |
 
 `vision_w_autocor_sc()` adds spatial autocorrelation of the signature over the
 kNN graph, which tells you whether a score is structured or noise.
+
+`lm_activity_sc(obj, net)` takes a weighted network in long format
+(`source`/`target`/`weight`, the CollecTRI / DoRothEA layout) with gene IDs of
+the object as targets, not a gene set list. It returns an `ScMatrixRes` of
+cells x sources, or a list with `es`/`pvals`/`fdr` when `p_values = TRUE`.
+Works on `MetaCells` too. The bulk counterpart is `calc_lm_activity()`, see
+`enrichment.md`.
 
 Scores land as a data.table; push them onto the object with
 `add_sc_new_obs(obj, obs_data = ...)`.
@@ -75,13 +83,19 @@ grn     <- scenic_grn_sc(obj, scenic_params = params_scenic())
 grn     <- tf_to_genes_correlations(grn, ...)
 
 rankings <- read_motif_ranking(path)          # download_cistarget_hg38()
-grn      <- tf_to_genes_motif_enrichment(grn, rankings,
-                                         cistarget_params = params_cistarget())
+grn      <- tf_to_genes_motif_enrichment(grn, rankings, annot_data = annot,
+                                         cis_target_params = params_cistarget())
 
 regulons <- build_regulons(grn)
-binary   <- binarise_regulon_activity(regulons,
-                                      params = params_scenic_binarise())
+auc      <- aucell_sc(obj, gs_list = regulons,
+                      aucell_params = params_sc_aucell())
+binary   <- binarise_regulon_activity(auc,
+                                      binarise_params = params_scenic_binarise())
 ```
+
+`scenic_grn_sc()` takes the candidate regulators as `tf_ids`, gene IDs of the
+object. `load_scenic_tfs_hg38()` ships the Aerts lab hg38 TF list (symbols, map
+them to your IDs first), so no download is needed for that part.
 
 Regressor choice lives in `params_scenic()`, with
 `params_scenic_random_forest_defaults()`,
@@ -117,7 +131,8 @@ you disagree with the pick. Cost is one full fit per `k`.
 ## Differential abundance (miloR)
 
 ```r
-milo <- get_miloR_abundances_sc(obj, milo_params = params_sc_miloR())
+milo <- get_miloR_abundances_sc(obj, sample_id_col = "sample_id",
+                                miloR_params = params_sc_miloR())
 milo <- add_nhoods_info(milo, cell_info)
 milo <- test_nhoods(milo, ...)
 
@@ -204,25 +219,47 @@ believe the FDR column. `nebula_mc()` is the same method on `MetaCells`.
 
 ## Trajectory inference
 
-Order is fixed and each step asserts on the previous one:
+MAGIC writes onto the object; PAGA and Palantir return results:
 
 ```r
-obj    <- run_magic_sc(obj, magic_params = params_sc_magic())
-obj    <- run_paga_sc(obj, cluster_col = "leiden_clusters")
-obj    <- run_palantir_sc(obj, palantir_params = params_sc_palantir())
-trends <- run_gene_trends_sc(obj, gene_trends_params = params_sc_gene_trends())
+obj          <- run_magic_sc(obj, features = genes,      # optional
+                             magic_params = params_sc_magic())
+paga_res     <- run_paga_sc(obj, cluster_col = "leiden_clusters")
+palantir_res <- run_palantir_sc(obj, early_cell = "some_cell_id",
+                                palantir_params = params_sc_palantir())
+trends       <- run_gene_trends_sc(obj, palantir_res = palantir_res,
+                                   features = genes,
+                                   gene_trend_params = params_sc_gene_trends())
 ```
 
-`run_gene_trends_sc()` needs the MAGIC artefact, not just the kNN. Terminal
-state selection is tuned with `params_sc_branch_selection()`.
+`run_gene_trends_sc()` fits the normalised counts by default; `use_magic = TRUE`
+fits the MAGIC layer and needs `run_magic_sc()` first. Branch assignment is
+tuned with `branch_params = params_sc_branch_selection()`.
 
 `meld_sc()` (with `params_meld()`) scores per-cell condition density over the
 graph, which is a different question from PAGA connectivity.
 
+## Bonsai trees
+
+Bonsai builds a tree with every cell as a leaf, on Sanity's posterior log fold
+changes and their error bars. No HVG selection or kNN needed; every gene is a
+candidate and the signal-to-noise filter in `params_sc_bonsai()` picks them.
+
+```r
+tree <- bonsai_sc(obj, bonsai_params = params_sc_bonsai())   # BonsaiTree S3
+tree <- relayout_bonsai(tree, layout = "equal_daylight")
+obj  <- set_bonsai_embedding(obj, tree)                     # name = "bonsai"
+```
+
+`bonsai_sc()` does not touch the object; `set_bonsai_embedding()` stores the
+leaf coordinates as an embedding. Runtime grows a bit faster than linear in the
+cells, so for large data run it on `MetaCells`, where every metacell is a leaf.
+`hvg` takes 1-indexed genes to restrict the candidates.
+
 ## NMF
 
 ```r
-res <- nmf_sc(obj, nmf_params = params_nmf_hals())
+res <- nmf_sc(obj, k = 10L, nmf_hals_params = params_nmf_hals())
 res <- stabilised_nmf_sc(obj, ...)     # multi-run, picks a stable solution
 get_w(res); get_h(res); get_best_run(res)
 ```
@@ -253,7 +290,7 @@ that instead of the full thing.
 
 ```r
 ref   <- build_symphony_ref(reference_obj, ...)      # SymphonyReference
-query <- map_symphony_query(query_obj, ref, symphony_params = params_symphony_map())
+query <- map_symphony_query(ref, query_obj, params = params_symphony_map())
 query <- transfer_labels_symphony(query, ref, ...)
 query <- add_symphony_labels(query, ...)
 ```
@@ -274,10 +311,15 @@ does the per-cell variant.
 ## Ligand-receptor (NicheNet)
 
 ```r
-influence <- generate_ligand_target_influence(networks,
-                                              ligand_params = params_ligand_target())
+influence <- generate_ligand_target_influence(
+  ligand_seeds = ligand_seeds,              # list(c("TGFB1", "TGFB2"), ...)
+  ppi_network  = rbind(lr_network, ppi_network),
+  grn_network  = grn_network,               # from/to/weight data.tables
+  params       = params_ligand_target()
+)
 lt_matrix <- get_influence(influence)
-obj_info  <- compute_expression_info_sc(obj, grouping_variable = "cell_type")
+obj_info  <- compute_expression_info_sc(obj, celltype_colname = "cell_type",
+                                        genes = gene_ids)
 activity  <- ligand_activity_scores(lt_matrix, geneset_of_interest, background)
 top       <- prioritise_interactions(activity, obj_info, ...)
 ```
@@ -305,8 +347,8 @@ ggplot, or you don't have the plotting package installed:
 
 ## Meta cells
 
-Users never call `MetaCells()` directly. Three generators, all needing a kNN on
-the parent:
+Users never call `MetaCells()` directly. Three generators need a kNN on the
+parent:
 
 ```r
 knn_object <- get_knn_obj(obj)              # needed for diffusion coordinates
@@ -319,6 +361,20 @@ mc <- generate_bt_meta_cells_sc(obj,        # hdWGCNA-style, bootstrapped
 mc <- generate_seacells_sc(obj, params_sc_seacells())
 mc <- generate_supercells_sc(obj, params_sc_supercell())
 ```
+
+The fourth, MetaCells2, works on the raw counts and builds its own graph per
+pile, so no embedding or kNN is needed:
+
+```r
+mc <- generate_metacells2_sc(obj,
+        mc2_params = params_sc_metacells2(),
+        dac_params = params_sc_metacells2_dac())
+```
+
+MC2 aims for a target metacell size and UMI count rather than a fixed number of
+metacells, and it leaves unconvincing cells unassigned. Rare gene modules are
+piled together first (`rare_gene_modules` in `params_sc_metacells2_dac()`).
+`mc@other_data$cell_info` and `$rare_gene_modules` carry the assignments.
 
 The important structural difference: unlike `SingleCells`, a `MetaCells` object
 **holds its counts in memory**, with plain data.tables for obs and var and no
@@ -335,7 +391,7 @@ Metacell-specific:
 
 ```r
 mc  <- calc_diffusion_coordinates(mc, knn_data = knn_object)
-mc  <- calc_meta_cell_purity(mc, grouping = "cell_type")
+mc  <- calc_meta_cell_purity(mc, original_cell_type = cell_labels)
 get_meta_cell_purity(mc)
 calc_manifold_metrics(mc)                   # compactness, separation
 merged <- merge_meta_cells(list(mc1, mc2))
@@ -349,7 +405,7 @@ res <- nebula_mc(mc, subject_col = "donor_id", design = ~ condition)
 
 Merged objects set `is_merged = TRUE`, after which anything resolving back to
 source cell indices bails out early. Pick which metacell method to use by
-running the purity and manifold metrics on all three, that's what
+running the purity and manifold metrics on each of them, that's what
 `vignettes/meta_cells.qmd` does.
 
 Metacells are also the natural input to the bulk co-expression module methods in

@@ -12,15 +12,15 @@
 set_residual_fit(x, residual_fit, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-set_residual_fit(x, residual_fit, ...)
+\special{set_residual_fit(x, residual_fit, ...)}
 
 \method{set_residual_fit}{ScCache}(x, residual_fit, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-set_residual_fit(x, residual_fit, ...)
+\special{set_residual_fit(x, residual_fit, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-set_residual_fit(x, residual_fit, ...)
+\special{set_residual_fit(x, residual_fit, ...)}
 }
 \arguments{
 \item{x}{An object to add the fitted model to.}

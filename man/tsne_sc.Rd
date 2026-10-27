@@ -13,7 +13,7 @@ tsne_sc(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10,
-  approx_type = c("bh", "fft", "fft_3k"),
+  approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
   knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
@@ -47,7 +47,8 @@ supported. Defaults to \code{2L}.}
 and 50. Defaults to \code{10.0}.}
 
 \item{approx_type}{String. Approximation method. One of \code{"bh"} (Barnes-Hut),
-\code{"fft"} or \code{"fft_3k"}. Defaults to \code{"bh"}.}
+\code{"bh_qd"} (quick-and-dirty Barnes-Hut), \code{"fft"} or \code{"fft_3k"}. Defaults to
+\code{"bh"}.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
 \code{c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}. Only used when neighbours are
@@ -76,9 +77,12 @@ When \code{use_knn = TRUE}, the kNN graph already stored on the object is reused
 With \code{use_knn = FALSE} (the default), neighbours are computed from the chosen
 embedding.
 
-Three approximation strategies are available via \code{approx_type}: \code{"bh"}
+Four approximation strategies are available via \code{approx_type}: \code{"bh"}
 (Barnes-Hut) is the classical O(n log n) approximation and works well
-across a wide range of dataset sizes; \code{"fft"} (interpolation-based, as in
+across a wide range of dataset sizes; \code{"bh_qd"} is the quick-and-dirty
+Barnes-Hut of qdtsne, with the tree depth capped at \code{max_depth} in
+\code{\link[manifoldsR:params_tsne]{manifoldsR::params_tsne()}} and the repulsion computed once per leaf, so
+faster and coarser; \code{"fft"} (interpolation-based, as in
 FIt-SNE) scales better to very large datasets; \code{"fft_3k"} is the
 three-kernel variant of the latter, with one forward and three inverse FFTs
 per epoch instead of four each. The FFT options are only available on Unix

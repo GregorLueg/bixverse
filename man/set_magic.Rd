@@ -13,10 +13,10 @@ set_magic(x, magic, ...)
 \method{set_magic}{ScCache}(x, magic, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-set_magic(x, magic, ...)
+\special{set_magic(x, magic, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-set_magic(x, magic, ...)
+\special{set_magic(x, magic, ...)}
 }
 \arguments{
 \item{x}{An object to add the imputed layer to.}

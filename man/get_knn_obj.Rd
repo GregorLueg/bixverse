@@ -12,15 +12,15 @@
 get_knn_obj(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_knn_obj(x, ...)
+\special{get_knn_obj(x, ...)}
 
 \method{get_knn_obj}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_knn_obj(x, ...)
+\special{get_knn_obj(x, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_knn_obj(x, ...)
+\special{get_knn_obj(x, ...)}
 }
 \arguments{
 \item{x}{An object to get the KNN class from.}

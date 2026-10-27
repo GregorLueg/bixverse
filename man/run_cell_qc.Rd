@@ -11,7 +11,8 @@ run_cell_qc(
   threshold = 3,
   groups = NULL,
   hard_thresholds = NULL,
-  mad = TRUE
+  mad = TRUE,
+  r_standard = TRUE
 )
 }
 \arguments{
@@ -32,6 +33,10 @@ of groups.}
 
 \item{mad}{Logical. If \code{FALSE}, skip MAD entirely; \code{hard_thresholds} must
 then be supplied.}
+
+\item{r_standard}{Logical. If \code{TRUE}, the MAD is scaled by 1.4826 like
+\code{stats::mad()}. Set to \code{FALSE} to use the raw MAD (the previous
+behaviour).}
 }
 \value{
 A \code{CellQc} object.

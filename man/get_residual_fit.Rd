@@ -12,15 +12,15 @@
 get_residual_fit(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_residual_fit(x, ...)
+\special{get_residual_fit(x, ...)}
 
 \method{get_residual_fit}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_residual_fit(x, ...)
+\special{get_residual_fit(x, ...)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_residual_fit(x, ...)
+\special{get_residual_fit(x, ...)}
 }
 \arguments{
 \item{x}{An object to get the fitted model from.}

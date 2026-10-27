@@ -537,11 +537,13 @@ rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 #' `r lifecycle::badge("experimental")`
 #'
 #' @param x Numerical vector to test.
-#' @param threshold Numeric. Number of (unscaled) MADs from the median in
-#' either direction that is acceptable.
+#' @param threshold Numeric. Number of MADs from the median in either
+#' direction that is acceptable.
 #' @param direction String. One of `c("below", "above", "twosided")`. Shall
 #' the outlier direction be done for values below the threshold, above the
 #' threshold or in both directions. Unknown strings default to twosided tests.
+#' @param r_standard Boolean. If `TRUE`, the MAD is scaled by 1.4826 like
+#' `stats::mad()`. If `FALSE`, the raw MAD is used (the previous behaviour).
 #'
 #' @returns A list with the following items:
 #' \itemize{
@@ -554,7 +556,7 @@ rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 #' boolean and a threshold of 0.
 #'
 #' @export
-rs_mad_outlier <- function(x, threshold, direction) .Call(wrap__rs_mad_outlier, x, threshold, direction)
+rs_mad_outlier <- function(x, threshold, direction, r_standard) .Call(wrap__rs_mad_outlier, x, threshold, direction, r_standard)
 
 #' Rust implementation of prcomp
 #'

@@ -13,16 +13,16 @@
 reset_cells_to_keep(object, force = FALSE)
 
 ## S7 method for class <bixverse::MetaCells>
-reset_cells_to_keep(object, force = FALSE)
+\special{reset_cells_to_keep(object, force = FALSE)}
 
 ## S7 method for class <bixverse::SingleCells>
-reset_cells_to_keep(object, force = FALSE)
+\special{reset_cells_to_keep(object, force = FALSE)}
 
 ## S7 method for class <bixverse::SingleCellsMultiModal>
-reset_cells_to_keep(object, force = FALSE)
+\special{reset_cells_to_keep(object, force = FALSE)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-reset_cells_to_keep(object, force = FALSE)
+\special{reset_cells_to_keep(object, force = FALSE)}
 }
 \arguments{
 \item{object}{\code{SingleCells} or \code{SingleCellsMultiModal} class.}

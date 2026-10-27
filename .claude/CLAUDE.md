@@ -38,7 +38,7 @@ cargo clippy --manifest-path=src/rust/Cargo.toml
 ```
 
 ```r
-devtools::document()   # roxygen2 8.0.0 -> man/, NAMESPACE
+devtools::document()   # roxygen2 8.1.1 (needs rdtools) -> man/, NAMESPACE
 ```
 
 Pre-commit is configured (`air` formatting, large-file and R-artefact guards).
@@ -59,19 +59,22 @@ devtools::document()
 devtools::install()
 ```
 
-The `bixverse-rs` dependency is almost never developed against a released
-crates.io version. `src/rust/Cargo.toml` carries a `[patch.crates-io]` block
-that redirects it, and that patch is the knob to turn while a feature is in
-flight:
+The Rust dependency is `bixverse-r`, the R bindings crate from the
+[bixverse-rs](https://github.com/GregorLueg/bixverse-rs) workspace. While a
+feature is in flight it is developed against a `[patch.crates-io]` block in
+`src/rust/Cargo.toml` rather than a released crates.io version. Patching
+`bixverse-r` alone is enough: it pulls `bixverse-rs` and the other workspace
+crates from the same source through its workspace path dependencies.
 
 ```toml
 # a branch on the remote, once the work is pushed
 [patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "some-branch" }
+bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "some-branch" }
 
-# or a sibling checkout, for work that is not pushed yet
+# or a sibling checkout, for work that is not pushed yet (path from src/rust in
+# the main checkout; a worktree sits deeper)
 [patch.crates-io]
-bixverse-rs = { path = "../../bixverse-rs" }
+bixverse-r = { path = "../../../bixverse-rs/crates/bixverse-r" }
 ```
 
 Check which of the two is active before building: a `path` override needs that
@@ -79,7 +82,7 @@ checkout to actually exist at that path. With a `git` patch, new commits on the
 branch do not arrive on their own, the lock file pins a SHA:
 
 ```sh
-cargo update --manifest-path=src/rust/Cargo.toml -p bixverse-rs
+cargo update --manifest-path=src/rust/Cargo.toml -p bixverse-r
 ```
 
 The patch goes back to the published version only once the crate is released
@@ -88,13 +91,16 @@ through CI/CD, at which point `src/rust/Cargo.toml` and the `version` in
 
 ## Architecture
 
-### Two-layer Rust split
+### Rust split
 
 The heavy numerical code does **not** live in this repo. It sits in the
-standalone [`bixverse-rs`](https://crates.io/crates/bixverse-rs) crate, declared
-in `src/rust/Cargo.toml` with features `single-cell` + `multi-modal`. It is
-usually redirected by a `[patch.crates-io]` block, see "Local development"
-above. Everything under `src/rust/src/` is a thin extendr binding layer, one module per domain
+standalone [`bixverse-rs`](https://crates.io/crates/bixverse-rs) crate, which
+reaches this repo through `bixverse-r` (extendr conversions, re-exports
+`bixverse-rs`). `src/rust/Cargo.toml` declares it with features `single-cell`,
+`multi-modal`, `dge`, `bonsai`, `accelerate` and `h5`, plus `hdf5-filters` off
+Windows and `hdf5-static` by default. See "Local development" above for the
+patch block. Everything under `src/rust/src/` is a thin extendr binding layer,
+one module per domain
 (`base`, `data`, `enrichment`, `graph`, `meta_cell`, `methods`, `ontology`,
 `single_cell`), registered in `src/rust/src/lib.rs` via `extendr_module!`.
 
@@ -144,11 +150,14 @@ handle over a directory containing:
   through the `SingleCellCountData` extendr object (an env-based class, not R6)
 - `sc_duckdb.db` - obs/var tables via the `SingleCellDuckDB` R6 class
   (`R/classes_single_cell_db.R`)
+- `memory.qs2` - the saved `ScMap`/`ScCache` state (`R/methods_sc_io.R`)
 
 Two lightweight S3 side-cars ride along in the S7 object: `ScMap` (gene/cell
 name to index maps, cells-to-keep, HVG indices) and `ScCache` (PCA factors,
-embeddings, kNN, sNN graph). `SingleCellsMultiModal` extends this with
-additional assay layers (currently ADT).
+loadings and singular values, other embeddings, kNN, connectivities graph,
+MAGIC, residual fit). `SingleCellsMultiModal`
+(`R/classes_single_cell_multimodal.R`) extends this with additional assay
+layers: ADT today, the ATAC slots are placeholders.
 
 Gotcha: `ScMap` stores **0-based** indices for Rust. Setters like
 `set_cells_to_keep()` subtract 1 on the way in; anything reading those slots and

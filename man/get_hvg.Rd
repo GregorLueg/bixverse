@@ -12,15 +12,15 @@
 get_hvg(x)
 
 ## S7 method for class <bixverse::MetaCells>
-get_hvg(x)
+\special{get_hvg(x)}
 
 \method{get_hvg}{ScMap}(x)
 
 ## S7 method for class <bixverse::SingleCells>
-get_hvg(x)
+\special{get_hvg(x)}
 
 ## S7 method for class <bixverse::SingleCellsSubset>
-get_hvg(x)
+\special{get_hvg(x)}
 }
 \arguments{
 \item{x}{An object to get HVG from.}
