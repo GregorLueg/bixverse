@@ -188,11 +188,13 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// `r lifecycle::badge("experimental")`
 ///
 /// @param x Numerical vector to test.
-/// @param threshold Numeric. Number of (unscaled) MADs from the median in
-/// either direction that is acceptable.
+/// @param threshold Numeric. Number of MADs from the median in either
+/// direction that is acceptable.
 /// @param direction String. One of `c("below", "above", "twosided")`. Shall
 /// the outlier direction be done for values below the threshold, above the
 /// threshold or in both directions. Unknown strings default to twosided tests.
+/// @param r_standard Boolean. If `TRUE`, the MAD is scaled by 1.4826 like
+/// `stats::mad()`. If `FALSE`, the raw MAD is used (the previous behaviour).
 ///
 /// @returns A list with the following items:
 /// \itemize{
@@ -206,10 +208,15 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 ///
 /// @export
 #[extendr]
-fn rs_mad_outlier(x: &[f64], threshold: f64, direction: &str) -> extendr_api::Result<List> {
+fn rs_mad_outlier(
+    x: &[f64],
+    threshold: f64,
+    direction: &str,
+    r_standard: bool,
+) -> extendr_api::Result<List> {
     let direction = parse_outlier_type(direction).unwrap_or_default();
 
-    let (outliers, threshold) = mad_outlier(x, threshold, direction);
+    let (outliers, threshold) = mad_outlier(x, threshold, direction, r_standard);
 
     Ok(list!(outlier = outliers, threshold = threshold))
 }

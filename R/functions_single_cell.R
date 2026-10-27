@@ -402,6 +402,9 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #' outlier detection.
 #' @param direction String. One of `c("twosided", "below", "above")`. Which
 #' directionality to consider
+#' @param r_standard Boolean. If `TRUE`, the MAD is scaled by 1.4826 like
+#' `stats::mad()`, so `threshold` counts standard deviations under normality.
+#' Set to `FALSE` to use the raw MAD (the previous behaviour).
 #'
 #' @returns A list with:
 #' \itemize{
@@ -421,16 +424,19 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 per_cell_qc_outlier <- function(
   metric,
   threshold = 3,
-  direction = c("twosided", "below", "above")
+  direction = c("twosided", "below", "above"),
+  r_standard = TRUE
 ) {
   direction <- match.arg(direction)
   checkmate::qassert(metric, "N+")
   checkmate::qassert(threshold, "N1")
+  checkmate::qassert(r_standard, "B1")
 
   outliers <- rs_mad_outlier(
     x = metric,
     threshold = threshold,
-    direction = direction
+    direction = direction,
+    r_standard = r_standard
   )
 
   med <- median(metric)
@@ -460,14 +466,23 @@ per_cell_qc_outlier <- function(
 #' @param directions Named character vector mapping metric names to direction.
 #' One of `"twosided"`, `"below"`, `"above"`.
 #' @param threshold Numeric. Number of MADs to use for outlier detection.
+#' @param r_standard Boolean. Scale the MAD by 1.4826 like `stats::mad()`. See
+#' [per_cell_qc_outlier()].
 #'
 #' @returns A `data.table` with one row per metric/group and columns `metric`,
 #' `group`, `group_median`, `lower_threshold`, `upper_threshold`, `is_outlier`.
 #'
 #' @keywords internal
-per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
+per_group_qc_outlier <- function(
+  metrics,
+  groups,
+  directions,
+  threshold = 3,
+  r_standard = TRUE
+) {
   checkmate::assertList(metrics, types = "numeric", names = "unique")
   checkmate::qassert(threshold, "N1")
+  checkmate::qassert(r_standard, "B1")
 
   stats <- lapply(names(metrics), function(nm) {
     dt <- data.table::data.table(value = metrics[[nm]], group = groups)
@@ -475,7 +490,8 @@ per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
     res <- per_cell_qc_outlier(
       metric = medians$group_median,
       threshold = threshold,
-      direction = directions[[nm]]
+      direction = directions[[nm]],
+      r_standard = r_standard
     )
     data.table::data.table(
       metric = nm,
@@ -509,6 +525,9 @@ per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
 #' of groups.
 #' @param mad Logical. If `FALSE`, skip MAD entirely; `hard_thresholds` must
 #' then be supplied.
+#' @param r_standard Logical. If `TRUE`, the MAD is scaled by 1.4826 like
+#' `stats::mad()`. Set to `FALSE` to use the raw MAD (the previous
+#' behaviour).
 #'
 #' @returns A `CellQc` object.
 #'
@@ -533,12 +552,14 @@ run_cell_qc <- function(
   threshold = 3,
   groups = NULL,
   hard_thresholds = NULL,
-  mad = TRUE
+  mad = TRUE,
+  r_standard = TRUE
 ) {
   checkmate::assertList(metrics, types = "numeric", names = "unique")
   checkmate::qassert(cells_to_keep, "I+")
   checkmate::qassert(threshold, "N1")
   checkmate::qassert(mad, "B1")
+  checkmate::qassert(r_standard, "B1")
 
   if (!mad && is.null(hard_thresholds)) {
     stop("Nothing to do: `mad = FALSE` and no `hard_thresholds` supplied.")
@@ -581,7 +602,8 @@ run_cell_qc <- function(
           res <- per_cell_qc_outlier(
             metric = x[idx],
             threshold = threshold,
-            direction = dir
+            direction = dir,
+            r_standard = r_standard
           )
           outlier[idx] <- res$outlier
           thresholds[[g]] <- res$metrics
@@ -593,7 +615,7 @@ run_cell_qc <- function(
     )
     outlier_mat <- do.call(cbind, lapply(per_metric, `[[`, "outlier"))
     per_group_stats <- if (length(group_levels) > 1L) {
-      per_group_qc_outlier(metrics, groups, directions, threshold)
+      per_group_qc_outlier(metrics, groups, directions, threshold, r_standard)
     } else {
       NULL
     }

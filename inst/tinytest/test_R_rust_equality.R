@@ -571,3 +571,31 @@ expect_true(
   current = cor(rs_predictions$residuals, r_residuals) > 0.99,
   info = "Rust version of a Loess implementation - residuals"
 )
+
+# mad outliers -----------------------------------------------------------------
+
+set.seed(123)
+lib_size <- c(rnorm(200, 1000, 100), 400, 1700)
+med <- median(lib_size)
+
+mad_res <- per_cell_qc_outlier(lib_size, threshold = 3)
+
+expect_equal(
+  current = unname(mad_res$metrics[c("lower_threshold", "upper_threshold")]),
+  target = med + c(-3, 3) * mad(lib_size),
+  tolerance = 1e-5,
+  info = "MAD outlier thresholds match stats::mad()"
+)
+expect_equal(
+  current = mad_res$outlier,
+  target = abs(lib_size - med) > 3 * mad(lib_size),
+  info = "MAD outlier calls match stats::mad()"
+)
+
+mad_res_raw <- per_cell_qc_outlier(lib_size, threshold = 3, r_standard = FALSE)
+
+expect_equal(
+  current = unname(mad_res_raw$metrics["upper_threshold"]),
+  target = med + 3 * mad(lib_size, constant = 1),
+  info = "MAD outlier with r_standard = FALSE uses the raw MAD"
+)
