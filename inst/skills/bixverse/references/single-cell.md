@@ -61,6 +61,9 @@ obj <- find_clusters_sc(obj, res = 1, name = "leiden_clusters")
 
 # 8. embedding for plots
 obj <- umap_sc(obj)
+# t-SNE flavours: approx_type = "bh" | "bh_qd" (quick-and-dirty BH, tree
+# depth via manifoldsR::params_tsne(max_depth)) | "fft" | "fft_3k" (Unix only)
+obj <- tsne_sc(obj, approx_type = "bh_qd")
 
 # 9. markers
 markers <- find_all_markers_sc(obj, column_of_interest = "leiden_clusters")

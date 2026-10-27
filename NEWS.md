@@ -5,6 +5,9 @@
   `stats::mad()`, so `threshold = 3` means three standard deviations under
   normality. This is wider than before, expect fewer cells flagged with the
   same threshold. `r_standard = FALSE` gets you the old raw MAD back.
+* `tsne_sc()` and `densne_sc()` take `approx_type = "bh_qd"`, the
+  quick-and-dirty Barnes-Hut from qdtsne (tree depth capped via `max_depth` in
+  `manifoldsR::params_tsne()`). Needs `manifoldsR` 0.4.0.
 
 # bixverse 0.8.2
 

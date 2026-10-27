@@ -533,9 +533,12 @@ S7::method(densmap_sc, ScOrMc) <- function(
 #' With `use_knn = FALSE` (the default), neighbours are computed from the chosen
 #' embedding.
 #'
-#' Three approximation strategies are available via `approx_type`: `"bh"`
+#' Four approximation strategies are available via `approx_type`: `"bh"`
 #' (Barnes-Hut) is the classical O(n log n) approximation and works well
-#' across a wide range of dataset sizes; `"fft"` (interpolation-based, as in
+#' across a wide range of dataset sizes; `"bh_qd"` is the quick-and-dirty
+#' Barnes-Hut of qdtsne, with the tree depth capped at `max_depth` in
+#' [manifoldsR::params_tsne()] and the repulsion computed once per leaf, so
+#' faster and coarser; `"fft"` (interpolation-based, as in
 #' FIt-SNE) scales better to very large datasets; `"fft_3k"` is the
 #' three-kernel variant of the latter, with one forward and three inverse FFTs
 #' per epoch instead of four each. The FFT options are only available on Unix
@@ -565,7 +568,8 @@ S7::method(densmap_sc, ScOrMc) <- function(
 #' @param perplexity Numeric. Perplexity parameter. Typical values between 5
 #' and 50. Defaults to `10.0`.
 #' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut),
-#' `"fft"` or `"fft_3k"`. Defaults to `"bh"`.
+#' `"bh_qd"` (quick-and-dirty Barnes-Hut), `"fft"` or `"fft_3k"`. Defaults to
+#' `"bh"`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
 #' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
 #' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
@@ -598,7 +602,7 @@ tsne_sc <- S7::new_generic(
     modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     perplexity = 10.0,
-    approx_type = c("bh", "fft", "fft_3k"),
+    approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
     knn_method = c(
       "kmknn",
       "hnsw",
@@ -626,7 +630,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10.0,
-  approx_type = c("bh", "fft", "fft_3k"),
+  approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
   knn_method = c(
     "kmknn",
     "hnsw",
@@ -724,7 +728,8 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' @param perplexity Numeric. Perplexity parameter. Typical values between 5
 #' and 50. Defaults to `10.0`.
 #' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut),
-#' `"fft"` or `"fft_3k"`. Defaults to `"bh"`.
+#' `"bh_qd"` (quick-and-dirty Barnes-Hut), `"fft"` or `"fft_3k"`. Defaults to
+#' `"bh"`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
 #' `c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf",
 #' "exhaustive")`. Defaults to `"kmknn"`. Only used when neighbours are
@@ -761,7 +766,7 @@ densne_sc <- S7::new_generic(
     modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     perplexity = 10.0,
-    approx_type = c("bh", "fft", "fft_3k"),
+    approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
     knn_method = c(
       "kmknn",
       "hnsw",
@@ -790,7 +795,7 @@ S7::method(densne_sc, ScOrMc) <- function(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10.0,
-  approx_type = c("bh", "fft", "fft_3k"),
+  approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
   knn_method = c(
     "kmknn",
     "hnsw",
