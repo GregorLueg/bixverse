@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-25</p>
+      <p class="date">2026-10-27</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -284,7 +284,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.053 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.113 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -381,7 +381,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.556 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.169 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -572,8 +572,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.080914 2.188263 2.366273 2.364144 2.521613 2.676431     5</span></span>
-<span><span class="co">#&gt;   rust 1.421534 1.425838 1.438335 1.442161 1.451014 1.451127     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.252873 2.436637 2.519018 2.463779 2.683524 2.758277     5</span></span>
+<span><span class="co">#&gt;   rust 1.442166 1.459345 1.511717 1.460509 1.470552 1.726012     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -679,10 +679,10 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr         min          lq       mean     median         uq        max</span></span>
-<span><span class="co">#&gt;       fgsea 1415.448241 1422.839127 1426.18320 1426.01269 1430.46699 1436.14898</span></span>
-<span><span class="co">#&gt;  blitz_cold  327.208345  329.558796  334.19044  331.89285  338.78104  343.51114</span></span>
-<span><span class="co">#&gt;  blitz_warm    9.529988    9.833711   10.33496   10.03261   10.20767   12.07082</span></span>
+<span><span class="co">#&gt;        expr        min         lq       mean    median         uq        max</span></span>
+<span><span class="co">#&gt;       fgsea 1427.32084 1433.30120 1451.71568 1450.5058 1451.89445 1495.55614</span></span>
+<span><span class="co">#&gt;  blitz_cold  371.30539  372.96206  375.67705  374.3568  378.04559  381.71544</span></span>
+<span><span class="co">#&gt;  blitz_warm   10.69407   12.23419   12.34354   12.5394   12.57511   13.67492</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span>

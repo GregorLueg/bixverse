@@ -286,7 +286,7 @@ sc_object[["cell_type"]] <- obs$cell_type
 table(obs$cell_type)
 #> 
 #>   B cells        DC Monocytes        NK Platelets   T cells 
-#>       873        69       945       861        88      3005
+#>       933       163      1421       889        28      3192
 ```
 
 ## Comparing the different methods
@@ -300,7 +300,7 @@ compute baseline metrics.
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, approx_type = "bh_qd")
 #> Running t-SNE.
 ```
 
@@ -332,10 +332,10 @@ on its own:
 
 calculate_kbet_sc(sc_object, batch_column = "exp_id")
 #> kBET Scores
-#>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.9868 (5764 / 5841)
-#>   Mean Chi-Square:     12.8102 (expected under H0: 1)
-#>   Median Chi-Square:   8.7578
+#>   Cells: 6626 | Batches: 2 | Threshold: 0.050
+#>   Rejection rate:      0.9870 (6540 / 6626)
+#>   Mean Chi-Square:     12.7892 (expected under H0: 1)
+#>   Median Chi-Square:   8.1742
 ```
 
 In practice, you’d want all of them at once.
@@ -356,10 +356,10 @@ metrics_dt <- calculate_integration_metrics_sc(
 metrics_dt[]
 #>    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num> <num>          <num> <num>         <num>
-#> 1:       pca  0.01318267 0.8897316     0             NA     1     0.6537424
+#> 1:       pca  0.01297917 0.9063555     0             NA     1     0.6508355
 #>    graph_connectivity      method
 #>                 <num>      <char>
-#> 1:                  1 Uncorrected
+#> 1:          0.9501534 Uncorrected
 ```
 
 The high kBET rejection rate (so a low `kbet_accept`) and a low `ilisi`
@@ -415,10 +415,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "fastMNN"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1      0.636044
+#> 1:       mnn   0.6845759 0.9736488 0.4705881      0.9600038     1     0.6492018
 #>    graph_connectivity  method
 #>                 <num>  <char>
-#> 1:          0.9361725 fastMNN
+#> 1:          0.9489644 fastMNN
 ```
 
 We can see clear improvements on the batch side: kBET acceptance, batch
@@ -426,7 +426,12 @@ ASW and iLISI all go up.
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object, slot_name = "tsne_mnn", use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_mnn",
+  use_knn = TRUE,
+  approx_type = "bh_qd"
+)
 #> Running t-SNE.
 #> Using provided kNN graph.
 ```
@@ -498,10 +503,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6687658
+#> 1:   harmony   0.8827347 0.9754045 0.6423357      0.9817465     1     0.6671693
 #>    graph_connectivity  method
 #>                 <num>  <char>
-#> 1:          0.9996955 Harmony
+#> 1:          0.9499659 Harmony
 ```
 
 Also here, we observe improvements across the board.
@@ -511,7 +516,8 @@ Also here, we observe improvements across the board.
 sc_object <- tsne_sc(
   object = sc_object,
   slot_name = "tsne_harm",
-  use_knn = TRUE
+  use_knn = TRUE,
+  approx_type = "bh_qd"
 )
 #> Running t-SNE.
 #> Using provided kNN graph.
@@ -595,10 +601,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v2"]
 #>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1
+#> 1: harmony_v2   0.7982191  0.977846 0.6423357      0.9493217     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
-#> 1:     0.6677586          0.9993072 Harmony v2
+#> 1:     0.6677088          0.9499137 Harmony v2
 ```
 
 ``` r
@@ -606,7 +612,8 @@ metrics_dt[method == "Harmony v2"]
 sc_object <- tsne_sc(
   object = sc_object,
   slot_name = "tsne_harm_v2",
-  use_knn = TRUE
+  use_knn = TRUE,
+  approx_type = "bh_qd"
 )
 #> Running t-SNE.
 #> Using provided kNN graph.
@@ -696,15 +703,20 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat CCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       cca   0.7183701 0.8929769 0.4705881      0.8688658     1     0.6711522
+#> 1:       cca     0.77377 0.9569454 0.4705881      0.9784447     1     0.6653001
 #>    graph_connectivity     method
 #>                 <num>     <char>
-#> 1:          0.9997509 Seurat CCA
+#> 1:          0.9499659 Seurat CCA
 ```
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object, slot_name = "tsne_cca", use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_cca",
+  use_knn = TRUE,
+  approx_type = "bh_qd"
+)
 #> Running t-SNE.
 #> Using provided kNN graph.
 ```
@@ -773,10 +785,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat rPCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:      rpca   0.7844547 0.9079038 0.6423357      0.8138765     1     0.6619311
+#> 1:      rpca   0.8131603 0.9678163 0.6423357      0.9419804     1      0.663178
 #>    graph_connectivity      method
 #>                 <num>      <char>
-#> 1:          0.9998064 Seurat rPCA
+#> 1:          0.9495387 Seurat rPCA
 ```
 
 ``` r
@@ -784,7 +796,8 @@ metrics_dt[method == "Seurat rPCA"]
 sc_object <- tsne_sc(
   object = sc_object,
   slot_name = "tsne_rpca",
-  use_knn = TRUE
+  use_knn = TRUE,
+  approx_type = "bh_qd"
 )
 #> Running t-SNE.
 #> Using provided kNN graph.
@@ -863,12 +876,12 @@ metrics_dt[method == "BBKNN"]
 #> 1:      <NA>           1        NA   0.8             NA     1            NA
 #>    graph_connectivity method
 #>                 <num> <char>
-#> 1:          0.9979125  BBKNN
+#> 1:          0.9499659  BBKNN
 ```
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE, approx_type = "bh_qd")
 #> Running t-SNE.
 #> Using provided kNN graph.
 ```
@@ -908,22 +921,22 @@ metrics_dt[, .(
 )]
 #>         method kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>         <char>       <num>     <num>     <num>          <num> <num>
-#> 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1
-#> 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1
-#> 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1
-#> 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1
-#> 5:  Seurat CCA  0.71837014 0.8929769 0.4705881      0.8688658     1
-#> 6: Seurat rPCA  0.78445472 0.9079038 0.6423357      0.8138765     1
+#> 1: Uncorrected  0.01297917 0.9063555 0.0000000             NA     1
+#> 2:     fastMNN  0.68457591 0.9736488 0.4705881      0.9600038     1
+#> 3:     Harmony  0.88273468 0.9754045 0.6423357      0.9817465     1
+#> 4:  Harmony v2  0.79821914 0.9778460 0.6423357      0.9493217     1
+#> 5:  Seurat CCA  0.77377000 0.9569454 0.4705881      0.9784447     1
+#> 6: Seurat rPCA  0.81316028 0.9678163 0.6423357      0.9419804     1
 #> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
-#> 1:     0.6537424          1.0000000
-#> 2:     0.6360440          0.9361725
-#> 3:     0.6687658          0.9996955
-#> 4:     0.6677586          0.9993072
-#> 5:     0.6711522          0.9997509
-#> 6:     0.6619311          0.9998064
-#> 7:            NA          0.9979125
+#> 1:     0.6508355          0.9501534
+#> 2:     0.6492018          0.9489644
+#> 3:     0.6671693          0.9499659
+#> 4:     0.6677088          0.9499137
+#> 5:     0.6653001          0.9499659
+#> 6:     0.6631780          0.9495387
+#> 7:            NA          0.9499659
 ```
 
 ``` r
@@ -938,15 +951,20 @@ metrics_long <- melt(
 ) %>%
   .[, `:=`(
     method = factor(method, levels = rev(unique(metrics_dt$method))),
-    type = fifelse(metric %in% bio_metrics, "Bio conservation", "Batch mixing")
+    type = fifelse(metric %in% bio_metrics, "Bio conservation", "Batch mixing"),
+    label_col = fifelse(!is.na(score) & score > 0.6, "white", "black")
   )]
 
 ggplot(metrics_long, aes(x = metric, y = method, fill = score)) +
   geom_tile(colour = "white") +
   geom_text(
-    aes(label = fifelse(is.na(score), "", sprintf("%.2f", score))),
+    aes(
+      label = fifelse(is.na(score), "", sprintf("%.2f", score)),
+      colour = label_col
+    ),
     size = 3
   ) +
+  scale_colour_identity() +
   facet_grid(~type, scales = "free_x", space = "free_x") +
   scale_fill_distiller(
     palette = "Blues",
@@ -957,7 +975,7 @@ ggplot(metrics_long, aes(x = metric, y = method, fill = score)) +
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = NULL, y = NULL, fill = "Score", title = "Integration metrics")
+  labs(x = NULL, y = NULL, fill = "Sc metrics")
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/metrics%20plot-1.png)

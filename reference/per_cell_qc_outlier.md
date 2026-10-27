@@ -8,7 +8,8 @@ Use MAD outlier detection on per-cell QC metrics
 per_cell_qc_outlier(
   metric,
   threshold = 3,
-  direction = c("twosided", "below", "above")
+  direction = c("twosided", "below", "above"),
+  r_standard = TRUE
 )
 ```
 
@@ -28,6 +29,13 @@ per_cell_qc_outlier(
   String. One of `c("twosided", "below", "above")`. Which directionality
   to consider
 
+- r_standard:
+
+  Boolean. If `TRUE`, the MAD is scaled by 1.4826 like
+  [`stats::mad()`](https://rdrr.io/r/stats/mad.html), so `threshold`
+  counts standard deviations under normality. Set to `FALSE` to use the
+  raw MAD (the previous behaviour).
+
 ## Value
 
 A list with:
@@ -44,8 +52,8 @@ set.seed(42L)
 lib_size <- c(rnorm(99, 1000, 100), 50)
 res <- per_cell_qc_outlier(lib_size, direction = "below")
 sum(res$outlier)
-#> [1] 5
+#> [1] 2
 res$metrics
 #>          median upper_threshold lower_threshold 
-#>       1008.9100              NA        816.0509 
+#>       1008.9100              NA        722.9766 
 ```

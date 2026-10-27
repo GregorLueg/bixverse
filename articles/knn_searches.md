@@ -215,10 +215,10 @@ exhaustive_knn <- generate_knn_sc(
 )
 
 exhaustive_knn
-#> SingleCellNearestNeighbour: 2163 cells, k = 15
+#> SingleCellNearestNeighbour: 2490 cells, k = 15
 #>   Distance metric: euclidean
-#>   Index range: [0, 2162]
-#>   Distance range: [3.8343, 155.6370]
+#>   Index range: [0, 2489]
+#>   Distance range: [3.6076, 153.2035]
 ```
 
 This is the class that is actually sored in the object after running
@@ -252,10 +252,10 @@ annoy_knn <- generate_knn_sc(
 )
 
 annoy_knn
-#> SingleCellNearestNeighbour: 2163 cells, k = 15
+#> SingleCellNearestNeighbour: 2490 cells, k = 15
 #>   Distance metric: euclidean
-#>   Index range: [0, 2162]
-#>   Distance range: [3.8343, 155.6370]
+#>   Index range: [0, 2489]
+#>   Distance range: [3.6076, 153.2035]
 ```
 
 The print message showed this line here:
@@ -298,10 +298,10 @@ annoy_knn_less_trees <- generate_knn_sc(
 )
 
 annoy_knn_less_trees
-#> SingleCellNearestNeighbour: 2163 cells, k = 15
+#> SingleCellNearestNeighbour: 2490 cells, k = 15
 #>   Distance metric: euclidean
-#>   Index range: [0, 2162]
-#>   Distance range: [3.8343, 157.2724]
+#>   Index range: [0, 2489]
+#>   Distance range: [3.6076, 154.7401]
 ```
 
 With one tree, we can appreciate that the Recall is dropping:
@@ -326,8 +326,8 @@ cat(
   )
 )
 #> Annoy vs exhaustive.
-#>   Recall@15: 0.725.
-#>   Distance ratio: 1.021.
+#>   Recall@15: 0.736.
+#>   Distance ratio: 1.022.
 ```
 
 We can appreciate that with one tree we do not get a Recall of 1 and the
@@ -344,10 +344,10 @@ nndescent_knn <- generate_knn_sc(
 )
 
 nndescent_knn
-#> SingleCellNearestNeighbour: 2163 cells, k = 15
+#> SingleCellNearestNeighbour: 2490 cells, k = 15
 #>   Distance metric: euclidean
-#>   Index range: [0, 2162]
-#>   Distance range: [3.8343, 155.7910]
+#>   Index range: [0, 2489]
+#>   Distance range: [3.6076, 153.3202]
 ```
 
 And benchmark it:

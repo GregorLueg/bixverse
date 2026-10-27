@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,6 +93,14 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.3" id="bixverse-083">bixverse 0.8.3<a class="anchor" aria-label="anchor" href="#bixverse-083"></a></h2>
+<ul><li>
+<code>bixverse-r</code> 0.9.3 under the hood.</li>
+<li>MAD outlier detection in <code><a href="../reference/run_cell_qc.html">run_cell_qc()</a></code> now scales the MAD by 1.4826 like <code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code>, so <code>threshold = 3</code> means three standard deviations under normality. This is wider than before, expect fewer cells flagged with the same threshold. <code>r_standard = FALSE</code> gets you the old raw MAD back.</li>
+<li>
+<code><a href="../reference/tsne_sc.html">tsne_sc()</a></code> and <code><a href="../reference/densne_sc.html">densne_sc()</a></code> take <code>approx_type = "bh_qd"</code>, the quick-and-dirty Barnes-Hut from qdtsne (tree depth capped via <code>max_depth</code> in <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_tsne.html" class="external-link">manifoldsR::params_tsne()</a></code>). Needs <code>manifoldsR</code> 0.4.0.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.2" id="bixverse-082">bixverse 0.8.2<a class="anchor" aria-label="anchor" href="#bixverse-082"></a></h2>
 <ul><li>decoupler-style ULM and MLM activity scores: <code><a href="../reference/calc_lm_activity.html">calc_lm_activity()</a></code> for bulk matrices or a contrast’s statistics and <code><a href="../reference/lm_activity_sc.html">lm_activity_sc()</a></code> per cell, both taking a long <code>source</code>/<code>target</code>/<code>weight</code> network (CollecTRI, DoRothEA, …). <code><a href="../reference/lm_activity_sc.html">lm_activity_sc()</a></code> works on <code>MetaCells</code> too. Parameters via <code><a href="../reference/params_lm_activity.html">params_lm_activity()</a></code>. Scores match decoupler.</li>

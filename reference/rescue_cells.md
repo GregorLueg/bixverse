@@ -42,8 +42,8 @@ qc <- run_cell_qc(
 rescue_cells(qc, list(lib_size = c(lower = 500)))
 #> CellQc: 100 cells, 1 outliers (1.0%)
 #> Metrics:
-#>   - lib_size: 1 outliers (mad = 5, rescued = 4)
-#>     MAD lower = 816.05
+#>   - lib_size: 1 outliers (mad = 2, rescued = 1)
+#>     MAD lower = 722.98
 #>   - pct_mt: 0 outliers (mad = 0)
-#>     MAD upper = 23.60
+#>     MAD upper = 30.72
 ```

@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Ambient RNA removal with CellSweep</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-25</p>
+      <p class="date">2026-10-27</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -355,7 +355,7 @@
 <span><span class="va">cell_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span><span class="va">cell_object</span>, <span class="va">qc_df</span><span class="op">[</span><span class="op">!</span><span class="va">qc</span><span class="op">$</span><span class="va">combined</span>, <span class="va">cell_id</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">qc</span><span class="op">$</span><span class="va">combined</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 213</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 130</span></span></code></pre></div>
 </div>
 <p>Then the pipeline, unchanged from any other single cell workflow.</p>
 <div class="cell">
@@ -387,10 +387,10 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">obs_cells</span><span class="op">$</span><span class="va">leiden_clusters</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   0   1   2   3   4   5   6   7 </span></span>
-<span><span class="co">#&gt; 230 189  86  85  70  37  35  30</span></span></code></pre></div>
+<span><span class="co">#&gt;   0   1   2   3   4   5   6   7   8 </span></span>
+<span><span class="co">#&gt; 243 233  89  82  81  36  36  32  13</span></span></code></pre></div>
 </div>
-<p>762 cells over eight clusters. Good enough to subtract against; you would name them with <code><a href="../reference/calc_sc_type_scores.html">calc_sc_type_scores()</a></code> or a reference in a real analysis, but the model only cares that barcodes with the same label share a profile.</p>
+<p>845 cells over nine clusters. Good enough to subtract against; you would name them with <code><a href="../reference/calc_sc_type_scores.html">calc_sc_type_scores()</a></code> or a reference in a real analysis, but the model only cares that barcodes with the same label share a profile.</p>
 </section><section class="level2"><h2 id="putting-the-labels-back">Putting the labels back<a class="anchor" aria-label="anchor" href="#putting-the-labels-back"></a>
 </h2>
 <p>The labels live on the cell object and CellSweep reads them off the raw one, so they have to be joined across by barcode. Every barcode that is not a clustered cell keeps an <code>NA</code>, which is exactly how <code><a href="../reference/cellsweep_sc.html">cellsweep_sc()</a></code> finds the barcodes it should ignore.</p>
@@ -409,9 +409,9 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">cell_type</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; cell_type</span></span>
 <span><span class="co">#&gt; cluster_0 cluster_1 cluster_2 cluster_3 cluster_4 cluster_5 cluster_6 cluster_7 </span></span>
-<span><span class="co">#&gt;       230       189        86        85        70        37        35        30 </span></span>
-<span><span class="co">#&gt;      &lt;NA&gt; </span></span>
-<span><span class="co">#&gt;     97236</span></span></code></pre></div>
+<span><span class="co">#&gt;       243       233        89        82        81        36        36        32 </span></span>
+<span><span class="co">#&gt; cluster_8      &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;        13     97153</span></span></code></pre></div>
 </div>
 <p>Watch the <code>NA</code> handling there. <code>sprintf("cluster_%s", NA)</code> gives you the string <code>"cluster_NA"</code>, and CellSweep will happily treat those barcodes as a ninth cell type and fit a profile to them. Keep the <code>NA</code> an <code>NA</code>.</p>
 <p><code>sample_id</code> is a constant here because this is one emulsion. It is still required: the ambient profile is a property of a single run, and pooling samples into one profile is wrong even when it runs.</p>
@@ -431,16 +431,16 @@
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Empty droplets (method 'umi_cutoff'): 96_998 of 97_998 barcodes called empty.</span></span>
-<span><span class="co">#&gt; 238 barcodes are neither empty nor annotated-and-passing-QC. They are excluded from the fit and from the output.</span></span>
-<span><span class="co">#&gt; Running CellSweep over 1 samples, 762 barcodes, 96998 empty droplets.</span></span>
+<span><span class="co">#&gt; 155 barcodes are neither empty nor annotated-and-passing-QC. They are excluded from the fit and from the output.</span></span>
+<span><span class="co">#&gt; Running CellSweep over 1 samples, 845 barcodes, 96998 empty droplets.</span></span>
 <span><span class="co">#&gt; Generating gene-based binary.</span></span>
 <span><span class="co">#&gt;  Converting the cell-based data into the gene-based format.</span></span>
 <span><span class="co">#&gt; Populating obs and var tables.</span></span>
 <span></span>
 <span><span class="va">clean_object</span></span>
 <span><span class="co">#&gt; Single cell experiment (Single Cells).</span></span>
-<span><span class="co">#&gt;   No cells (original): 762</span></span>
-<span><span class="co">#&gt;    To keep n: 762</span></span>
+<span><span class="co">#&gt;   No cells (original): 845</span></span>
+<span><span class="co">#&gt;    To keep n: 845</span></span>
 <span><span class="co">#&gt;   No genes: 36601</span></span>
 <span><span class="co">#&gt;   HVG calculated: FALSE</span></span>
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
@@ -451,7 +451,7 @@
 <span><span class="co">#&gt;   Residual model: none</span></span>
 <span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
 </div>
-<p>Three numbers in that output are worth reading. 96,998 barcodes went into the ambient profile. 762 got denoised. And 238 barcodes were neither: they cleared the UMI cutoff but failed QC or the outlier check, so they have no label to subtract against. Those are dropped from the fit and from the output, which is why the clean object is 762 cells and not 1000.</p>
+<p>Three numbers in that output are worth reading. 96,998 barcodes went into the ambient profile. 845 got denoised. And 155 barcodes were neither: they cleared the UMI cutoff but failed QC or the outlier check, so they have no label to subtract against. Those are dropped from the fit and from the output, which is why the clean object is 845 cells and not 1000.</p>
 <p>The denoised counts land in a new directory. The raw layer takes stochastically rounded values so the negative binomial methods downstream still see integers, and the normalised layer keeps the float magnitudes.</p>
 </section><section class="level2"><h2 id="what-came-out">What came out<a class="anchor" aria-label="anchor" href="#what-came-out"></a>
 </h2>
@@ -506,7 +506,7 @@
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">obs_clean</span><span class="op">$</span><span class="va">cellsweep_alpha</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. </span></span>
-<span><span class="co">#&gt; 0.000e+00 8.300e-07 1.031e-04 1.925e-02 7.948e-03 7.126e-01</span></span>
+<span><span class="co">#&gt; 0.000e+00 8.800e-07 1.069e-04 2.282e-02 9.736e-03 7.321e-01</span></span>
 <span></span>
 <span><span class="va">obs_clean</span><span class="op">[</span>,</span>
 <span>  <span class="fu">.</span><span class="op">(</span>n <span class="op">=</span> <span class="va">.N</span>, median_alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">cellsweep_alpha</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -514,14 +514,15 @@
 <span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">median_alpha</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    cell_type     n median_alpha</span></span>
 <span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: cluster_1   189 1.051318e-02</span></span>
-<span><span class="co">#&gt; 2: cluster_2    86 1.618127e-04</span></span>
-<span><span class="co">#&gt; 3: cluster_0   230 1.003124e-04</span></span>
-<span><span class="co">#&gt; 4: cluster_3    85 1.979548e-05</span></span>
-<span><span class="co">#&gt; 5: cluster_5    37 8.139454e-06</span></span>
-<span><span class="co">#&gt; 6: cluster_7    30 1.845323e-06</span></span>
-<span><span class="co">#&gt; 7: cluster_6    35 4.584807e-07</span></span>
-<span><span class="co">#&gt; 8: cluster_4    70 4.468508e-07</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: cluster_1   233 1.148048e-02</span></span>
+<span><span class="co">#&gt; 2: cluster_3    82 1.155385e-04</span></span>
+<span><span class="co">#&gt; 3: cluster_0   243 1.030036e-04</span></span>
+<span><span class="co">#&gt; 4: cluster_2    89 1.559239e-05</span></span>
+<span><span class="co">#&gt; 5: cluster_8    13 1.397798e-05</span></span>
+<span><span class="co">#&gt; 6: cluster_6    36 5.526336e-06</span></span>
+<span><span class="co">#&gt; 7: cluster_7    32 1.685669e-06</span></span>
+<span><span class="co">#&gt; 8: cluster_5    36 4.179532e-07</span></span>
+<span><span class="co">#&gt; 9: cluster_4    81 2.480712e-07</span></span></code></pre></div>
 </div>
 <p>This run is clean. The median barcode is essentially uncontaminated and only a handful sit above the 0.3 the reference notebook filters at. That is not always what you get, and it is worth knowing before you assume your lineage markers are real.</p>
 <section class="level3"><h3 id="does-the-subtraction-do-anything">Does the subtraction do anything?<a class="anchor" aria-label="anchor" href="#does-the-subtraction-do-anything"></a>
@@ -561,34 +562,37 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/dcast.data.table.html" class="external-link">dcast</a></span><span class="op">(</span><span class="va">rates</span>, <span class="va">gene</span> <span class="op">+</span> <span class="va">cell_type</span> <span class="op">~</span> <span class="va">layer</span>, value.var <span class="op">=</span> <span class="st">"detected"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Key: &lt;gene, cell_type&gt;</span></span>
-<span><span class="co">#&gt;       gene cell_type denoised         raw</span></span>
-<span><span class="co">#&gt;     &lt;char&gt;    &lt;char&gt;    &lt;num&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1:    LYZ cluster_0 0.000000 0.008695652</span></span>
-<span><span class="co">#&gt;  2:    LYZ cluster_1 1.000000 1.000000000</span></span>
-<span><span class="co">#&gt;  3:    LYZ cluster_2 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt;  4:    LYZ cluster_3 0.000000 0.023529412</span></span>
-<span><span class="co">#&gt;  5:    LYZ cluster_4 0.000000 0.014285714</span></span>
-<span><span class="co">#&gt;  6:    LYZ cluster_5 0.000000 0.027027027</span></span>
-<span><span class="co">#&gt;  7:    LYZ cluster_6 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt;  8:    LYZ cluster_7 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt;  9:   PPBP cluster_0 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 10:   PPBP cluster_1 0.000000 0.026455026</span></span>
-<span><span class="co">#&gt; 11:   PPBP cluster_2 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 12:   PPBP cluster_3 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 13:   PPBP cluster_4 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 14:   PPBP cluster_5 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 15:   PPBP cluster_6 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 16:   PPBP cluster_7 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 17: S100A8 cluster_0 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 18: S100A8 cluster_1 0.989418 0.989417989</span></span>
-<span><span class="co">#&gt; 19: S100A8 cluster_2 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 20: S100A8 cluster_3 0.000000 0.047058824</span></span>
-<span><span class="co">#&gt; 21: S100A8 cluster_4 0.000000 0.042857143</span></span>
-<span><span class="co">#&gt; 22: S100A8 cluster_5 0.000000 0.027027027</span></span>
-<span><span class="co">#&gt; 23: S100A8 cluster_6 0.000000 0.000000000</span></span>
-<span><span class="co">#&gt; 24: S100A8 cluster_7 0.000000 0.033333333</span></span>
-<span><span class="co">#&gt;       gene cell_type denoised         raw</span></span>
-<span><span class="co">#&gt;     &lt;char&gt;    &lt;char&gt;    &lt;num&gt;       &lt;num&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;       gene cell_type   denoised         raw</span></span>
+<span><span class="co">#&gt;     &lt;char&gt;    &lt;char&gt;      &lt;num&gt;       &lt;num&gt;</span></span>
+<span><span class="co">#&gt;  1:    LYZ cluster_0 0.00000000 0.012345679</span></span>
+<span><span class="co">#&gt;  2:    LYZ cluster_1 0.98283262 0.987124464</span></span>
+<span><span class="co">#&gt;  3:    LYZ cluster_2 0.00000000 0.011235955</span></span>
+<span><span class="co">#&gt;  4:    LYZ cluster_3 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt;  5:    LYZ cluster_4 0.00000000 0.012345679</span></span>
+<span><span class="co">#&gt;  6:    LYZ cluster_5 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt;  7:    LYZ cluster_6 0.00000000 0.027777778</span></span>
+<span><span class="co">#&gt;  8:    LYZ cluster_7 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt;  9:    LYZ cluster_8 0.92307692 0.923076923</span></span>
+<span><span class="co">#&gt; 10:   PPBP cluster_0 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 11:   PPBP cluster_1 0.02145923 0.038626609</span></span>
+<span><span class="co">#&gt; 12:   PPBP cluster_2 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 13:   PPBP cluster_3 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 14:   PPBP cluster_4 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 15:   PPBP cluster_5 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 16:   PPBP cluster_6 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 17:   PPBP cluster_7 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 18:   PPBP cluster_8 0.07692308 0.076923077</span></span>
+<span><span class="co">#&gt; 19: S100A8 cluster_0 0.00000000 0.004115226</span></span>
+<span><span class="co">#&gt; 20: S100A8 cluster_1 0.98712446 0.987124464</span></span>
+<span><span class="co">#&gt; 21: S100A8 cluster_2 0.00000000 0.033707865</span></span>
+<span><span class="co">#&gt; 22: S100A8 cluster_3 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 23: S100A8 cluster_4 0.00000000 0.037037037</span></span>
+<span><span class="co">#&gt; 24: S100A8 cluster_5 0.00000000 0.000000000</span></span>
+<span><span class="co">#&gt; 25: S100A8 cluster_6 0.00000000 0.027777778</span></span>
+<span><span class="co">#&gt; 26: S100A8 cluster_7 0.00000000 0.031250000</span></span>
+<span><span class="co">#&gt; 27: S100A8 cluster_8 0.69230769 0.692307692</span></span>
+<span><span class="co">#&gt;       gene cell_type   denoised         raw</span></span>
+<span><span class="co">#&gt;     &lt;char&gt;    &lt;char&gt;      &lt;num&gt;       &lt;num&gt;</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
@@ -606,7 +610,7 @@
 </div>
 </div>
 </div>
-<p>Cluster 1 is the monocytes and it keeps LYZ and S100A8 in essentially every cell. Everywhere else those genes were showing up in a few percent of barcodes before the sweep and are gone afterwards. PPBP does the same thing in reverse: platelet transcripts leaking into the monocytes disappear. The subtraction went after the right counts.</p>
+<p>Cluster 1 is the monocytes and it keeps LYZ and S100A8 in essentially every cell, as does the small myeloid cluster 8. Everywhere else those genes were showing up in a few percent of barcodes before the sweep and are gone afterwards. PPBP does the same thing in reverse: platelet transcripts leaking into the monocytes roughly halve. The subtraction went after the right counts.</p>
 </section></section><section class="level2"><h2 id="reprocessing-the-clean-counts">Reprocessing the clean counts<a class="anchor" aria-label="anchor" href="#reprocessing-the-clean-counts"></a>
 </h2>
 <p>Feature selection and reduction were computed on contaminated counts, so they have to be redone. Drop the barcodes CellSweep says are mostly soup while you are at it.</p>
@@ -638,8 +642,8 @@
 <span></span>
 <span><span class="va">clean_object</span></span>
 <span><span class="co">#&gt; Single cell experiment (Single Cells).</span></span>
-<span><span class="co">#&gt;   No cells (original): 762</span></span>
-<span><span class="co">#&gt;    To keep n: 755</span></span>
+<span><span class="co">#&gt;   No cells (original): 845</span></span>
+<span><span class="co">#&gt;    To keep n: 834</span></span>
 <span><span class="co">#&gt;   No genes: 36601</span></span>
 <span><span class="co">#&gt;   HVG calculated: TRUE</span></span>
 <span><span class="co">#&gt;   PCA calculated: TRUE</span></span>

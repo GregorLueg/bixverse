@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Cell trees with Bonsai</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-25</p>
+      <p class="date">2026-10-27</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -234,7 +234,7 @@
 <span><span class="va">sc_object</span></span>
 <span><span class="co">#&gt; Single cell experiment (Single Cells).</span></span>
 <span><span class="co">#&gt;   No cells (original): 2700</span></span>
-<span><span class="co">#&gt;    To keep n: 2103</span></span>
+<span><span class="co">#&gt;    To keep n: 2399</span></span>
 <span><span class="co">#&gt;   No genes: 11139</span></span>
 <span><span class="co">#&gt;   HVG calculated: TRUE</span></span>
 <span><span class="co">#&gt;   PCA calculated: TRUE</span></span>
@@ -293,14 +293,14 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bonsai_sc.html">bonsai_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Running Sanity and Bonsai over 2_103 cells and 11_139 candidate genes.</span></span>
+<span><span class="co">#&gt; Running Sanity and Bonsai over 2_399 cells and 11_139 candidate genes.</span></span>
 <span></span>
 <span><span class="va">tree</span></span>
-<span><span class="co">#&gt; BonsaiTree: 2103 leaves, 1981 inferred ancestors</span></span>
-<span><span class="co">#&gt;   Genes: 347 used, 10792 dropped</span></span>
-<span><span class="co">#&gt;   Loglikelihood: -450291.6</span></span>
+<span><span class="co">#&gt; BonsaiTree: 2399 leaves, 2259 inferred ancestors</span></span>
+<span><span class="co">#&gt;   Genes: 348 used, 10791 dropped</span></span>
+<span><span class="co">#&gt;   Loglikelihood: -504754.9</span></span>
 <span><span class="co">#&gt;   Layout: equal_angle</span></span>
-<span><span class="co">#&gt;   Seconds: sanity 26.8 | ingest 0.0 | bonsai 24.6 | layout 0.0 | total 51.4</span></span></code></pre></div>
+<span><span class="co">#&gt;   Seconds: sanity 34.0 | ingest 0.0 | bonsai 34.0 | layout 0.0 | total 68.0</span></span></code></pre></div>
 </div>
 <p>Where did the time go? Every stage is timed, and <code>total</code> is the whole call as R saw it, so a gap between <code>total</code> and the stages would be time spent somewhere nobody measured. At this size Sanity is most of the run: it fits every one of the candidate genes, while the search only sees the few hundred that survive.</p>
 <div class="cell">
@@ -308,11 +308,11 @@
 <code class="sourceCode R"><span><span class="va">tree</span><span class="op">$</span><span class="va">timings</span></span>
 <span><span class="co">#&gt;     stage      seconds</span></span>
 <span><span class="co">#&gt;    &lt;char&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: sanity 26.836294293</span></span>
-<span><span class="co">#&gt; 2: ingest  0.006917529</span></span>
-<span><span class="co">#&gt; 3: bonsai 24.550515515</span></span>
-<span><span class="co">#&gt; 4: layout  0.000079229</span></span>
-<span><span class="co">#&gt; 5:  total 51.403895140</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: sanity 33.958581515</span></span>
+<span><span class="co">#&gt; 2: ingest  0.012634028</span></span>
+<span><span class="co">#&gt; 3: bonsai 34.006549629</span></span>
+<span><span class="co">#&gt; 4: layout  0.000144647</span></span>
+<span><span class="co">#&gt; 5:  total 67.988689184</span></span></code></pre></div>
 </div>
 <p>The search reports its steps too: the loglikelihood after each and what it took. Steps 4 and 7 re-fit the branch lengths, 5 and 6 rearrange the tree (subtree pruning and regrafting, then nearest-neighbour interchanges), and 8 collapses the zero-length edges the rest leave behind.</p>
 <div class="cell">
@@ -320,13 +320,13 @@
 <code class="sourceCode R"><span><span class="va">tree</span><span class="op">$</span><span class="va">steps</span></span>
 <span><span class="co">#&gt;           step    loglik     seconds</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;     &lt;num&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 1-2 linkage -668287.8  0.12151617</span></span>
-<span><span class="co">#&gt; 2:  3 polytomy -668287.8  0.00678543</span></span>
-<span><span class="co">#&gt; 3:    4 branch -461620.0  0.52095457</span></span>
-<span><span class="co">#&gt; 4:       5 spr -450590.6 21.88246353</span></span>
-<span><span class="co">#&gt; 5:       6 nni -450581.4  0.97887992</span></span>
-<span><span class="co">#&gt; 6:    7 branch -450292.6  0.54147076</span></span>
-<span><span class="co">#&gt; 7:  8 collapse -450291.6  0.49400036</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: 1-2 linkage -760924.3  0.22350752</span></span>
+<span><span class="co">#&gt; 2:  3 polytomy -760924.3  0.01051888</span></span>
+<span><span class="co">#&gt; 3:    4 branch -518298.5  0.72976580</span></span>
+<span><span class="co">#&gt; 4:       5 spr -505044.2 30.18418306</span></span>
+<span><span class="co">#&gt; 5:       6 nni -505041.8  1.01875348</span></span>
+<span><span class="co">#&gt; 6:    7 branch -504756.6  0.80131981</span></span>
+<span><span class="co">#&gt; 7:  8 collapse -504754.9  1.02892262</span></span></code></pre></div>
 </div>
 <section class="level3"><h3 id="which-genes-made-it">Which genes made it?<a class="anchor" aria-label="anchor" href="#which-genes-made-it"></a>
 </h3>
@@ -342,7 +342,7 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;    genes_used genes_dropped also_hvg</span></span>
 <span><span class="co">#&gt;         &lt;int&gt;         &lt;int&gt;    &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        347         10792      236</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        348         10791      219</span></span></code></pre></div>
 </div>
 <p>Want the tree on your own gene set instead? Pass <code>hvg</code> (1-indexed), e.g. <code>bonsai_sc(sc_object, hvg = get_hvg(sc_object) + 1L)</code>. The signal-to-noise filter still applies on top.</p>
 </section></section><section class="level2"><h2 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a>
@@ -434,14 +434,14 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tree_mc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bonsai_sc.html">bonsai_sc</a></span><span class="op">(</span><span class="va">supercells</span>, .verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Running Sanity and Bonsai over 106 metacells and 11139 candidate genes.</span></span>
+<span><span class="co">#&gt; Running Sanity and Bonsai over 120 metacells and 11139 candidate genes.</span></span>
 <span></span>
 <span><span class="va">tree_mc</span></span>
-<span><span class="co">#&gt; BonsaiTree: 106 leaves (2103 cells), 91 inferred ancestors</span></span>
-<span><span class="co">#&gt;   Genes: 2138 used, 9001 dropped</span></span>
-<span><span class="co">#&gt;   Loglikelihood: -119805.9</span></span>
+<span><span class="co">#&gt; BonsaiTree: 120 leaves (2399 cells), 109 inferred ancestors</span></span>
+<span><span class="co">#&gt;   Genes: 2228 used, 8911 dropped</span></span>
+<span><span class="co">#&gt;   Loglikelihood: -145143.8</span></span>
 <span><span class="co">#&gt;   Layout: equal_angle</span></span>
-<span><span class="co">#&gt;   Seconds: sanity 8.7 | ingest 0.0 | bonsai 3.2 | layout 0.0 | total 11.9</span></span></code></pre></div>
+<span><span class="co">#&gt;   Seconds: sanity 10.0 | ingest 0.0 | bonsai 3.1 | layout 0.0 | total 13.2</span></span></code></pre></div>
 </div>
 <p>The same PBMCs as 100 metacells: a few seconds instead of the minutes the cell-level tree took, most of it Sanity. And the summed counts are deep enough that thousands of genes clear the signal-to-noise bar, against a few hundred for single cells, so the tree sees far more of the transcriptome.</p>
 <p><code>size_by_cells = TRUE</code> scales every leaf by the cells behind it.</p>

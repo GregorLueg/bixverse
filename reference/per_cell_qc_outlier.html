@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,7 +103,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">per_cell_qc_outlier</span><span class="op">(</span></span>
 <span>  <span class="va">metric</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>  direction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"twosided"</span>, <span class="st">"below"</span>, <span class="st">"above"</span><span class="op">)</span></span>
+<span>  direction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"twosided"</span>, <span class="st">"below"</span>, <span class="st">"above"</span><span class="op">)</span>,</span>
+<span>  r_standard <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -124,6 +125,12 @@ outlier detection.</p></dd>
 <dd><p>String. One of <code>c("twosided", "below", "above")</code>. Which
 directionality to consider</p></dd>
 
+
+<dt id="arg-r-standard">r_standard<a class="anchor" aria-label="anchor" href="#arg-r-standard"></a></dt>
+<dd><p>Boolean. If <code>TRUE</code>, the MAD is scaled by 1.4826 like
+<code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code>, so <code>threshold</code> counts standard deviations under normality.
+Set to <code>FALSE</code> to use the raw MAD (the previous behaviour).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -138,10 +145,10 @@ directionality to consider</p></dd>
 <span class="r-in"><span><span class="va">lib_size</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">99</span>, <span class="fl">1000</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fl">50</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">per_cell_qc_outlier</span><span class="op">(</span><span class="va">lib_size</span>, direction <span class="op">=</span> <span class="st">"below"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">outlier</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
 <span class="r-in"><span><span class="va">res</span><span class="op">$</span><span class="va">metrics</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          median upper_threshold lower_threshold </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       1008.9100              NA        816.0509 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       1008.9100              NA        722.9766 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

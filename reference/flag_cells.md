@@ -42,11 +42,11 @@ qc <- run_cell_qc(
   directions = c(lib_size = "below", pct_mt = "above")
 )
 flag_cells(qc, list(pct_mt = c(upper = 15)))
-#> CellQc: 100 cells, 25 outliers (25.0%)
+#> CellQc: 100 cells, 23 outliers (23.0%)
 #> Metrics:
-#>   - lib_size: 5 outliers (mad = 5)
-#>     MAD lower = 816.05
+#>   - lib_size: 2 outliers (mad = 2)
+#>     MAD lower = 722.98
 #>   - pct_mt: 21 outliers (mad = 0, hard = 21)
-#>     MAD upper = 23.60
+#>     MAD upper = 30.72
 #>     Hard upper = 15.00
 ```

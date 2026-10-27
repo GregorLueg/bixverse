@@ -154,7 +154,7 @@ sc_object <- set_cells_to_keep(sc_object, qc_df[!qc$combined, cell_id])
 sc_object
 #> Single cell experiment (Single Cells).
 #>   No cells (original): 7040
-#>    To keep n: 5841
+#>    To keep n: 6626
 #>   No genes: 13925
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
@@ -179,13 +179,13 @@ sc_object <- fit_residuals_sc(
   method = "analytic_pearson",
   .verbose = TRUE
 )
-#> Fitting analytic_pearson over 5_841 cells.
-#> Fitted 1 model(s) over 13_879 genes.
+#> Fitting analytic_pearson over 6_626 cells.
+#> Fitted 1 model(s) over 13_925 genes.
 
 get_residual_fit(sc_object)
 #> Fitted residual model: analytic Pearson
-#>   1 group over 5_841 cells
-#>   13_879 genes modelled in every group
+#>   1 group over 6_626 cells
+#>   13_925 genes modelled in every group
 ```
 
 The fit is keyed to the cells it saw. Move the filter afterwards and
@@ -198,7 +198,7 @@ about it too:
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id   from
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char> <list>
-#> 1:      rna residuals   <NA>    TRUE  FALSE   <NA> 68173d7a8dc30836
+#> 1:      rna residuals   <NA>    TRUE  FALSE   <NA> 0d85ca6460145028
 ```
 
 ## Variable features
@@ -269,7 +269,7 @@ sprintf(
   length(intersect(hvg_residual, hvg_vst)),
   100 * length(intersect(hvg_residual, hvg_vst)) / 2000
 )
-#> [1] "1560 of 2000 genes shared (78%)"
+#> [1] "1537 of 2000 genes shared (77%)"
 ```
 
 Substantial overlap, and the disagreement is the interesting part. The
@@ -313,7 +313,7 @@ sc_object <- calculate_pca_sc(
 #> Using dense SVD on analytic_pearson residuals for 2000 genes.
 
 dim(get_pca_factors(sc_object))
-#> [1] 5841   30
+#> [1] 6626   30
 ```
 
 From here it’s the normal pipeline. Neighbours, clusters, embeddings,
@@ -368,13 +368,13 @@ sc_grouped <- fit_residuals_sc(
   group_column = "exp_id",
   .verbose = TRUE
 )
-#> Fitting analytic_pearson over 5_841 cells in 2 groups.
-#> Fitted 2 model(s) over 11_990 genes.
+#> Fitting analytic_pearson over 6_626 cells in 2 groups.
+#> Fitted 2 model(s) over 12_155 genes.
 
 get_residual_fit(sc_grouped)
 #> Fitted residual model: analytic Pearson
-#>   2 groups over 5_841 cells
-#>   11_990 genes modelled in every group
+#>   2 groups over 6_626 cells
+#>   12_155 genes modelled in every group
 #>   grouped by: exp_id
 ```
 
@@ -395,10 +395,10 @@ sc_grouped <- find_hvg_sc(
   hvg_params = params_sc_hvg(method = "residual"),
   .verbose = TRUE
 )
-#> Selected 3395 variable features: the union of the top 2000 of each of 2 groups.
+#> Selected 3404 variable features: the union of the top 2000 of each of 2 groups.
 
 length(get_hvg(sc_grouped))
-#> [1] 3395
+#> [1] 3404
 ```
 
 `bixverse` doesn’t trim that back to 2000. Trimming would undo the
@@ -424,8 +424,8 @@ sc_cov <- fit_residuals_sc(
   covariate_columns = "MT",
   .verbose = TRUE
 )
-#> Fitting sctransform over 5_841 cells.
-#> Fitted 1 model(s) over 13_879 genes.
+#> Fitting sctransform over 6_626 cells.
+#> Fitted 1 model(s) over 13_925 genes.
 
 fit <- get_residual_fit(sc_cov)
 fit$covariate_names
@@ -457,8 +457,8 @@ intercept.
 ``` r
 
 sc_sct <- fit_residuals_sc(sc_object, method = "sctransform", .verbose = TRUE)
-#> Fitting sctransform over 5_841 cells.
-#> Fitted 1 model(s) over 13_879 genes.
+#> Fitting sctransform over 6_626 cells.
+#> Fitted 1 model(s) over 13_925 genes.
 
 corrected <- sct_corrected_counts_sc(
   object = sc_sct,
@@ -466,13 +466,13 @@ corrected <- sct_corrected_counts_sc(
   .verbose = TRUE
 )
 #> Building the cell-major companion store.
-#> Corrected store: 5841 cells by 13879 genes in /tmp/RtmpFb331F/pbmc_corrected.
+#> Corrected store: 6626 cells by 13925 genes in /tmp/RtmpsaWcBT/pbmc_corrected.
 
 corrected
 #> Single cell experiment (Single Cells).
-#>   No cells (original): 5841
-#>    To keep n: 5841
-#>   No genes: 13879
+#>   No cells (original): 6626
+#>    To keep n: 6626
+#>   No genes: 13925
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
 #>   Other embeddings: none

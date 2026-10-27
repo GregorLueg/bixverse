@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Pearson residuals and scTransform</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-25</p>
+      <p class="date">2026-10-27</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -242,7 +242,7 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span><span class="va">sc_object</span></span>
 <span><span class="co">#&gt; Single cell experiment (Single Cells).</span></span>
 <span><span class="co">#&gt;   No cells (original): 7040</span></span>
-<span><span class="co">#&gt;    To keep n: 5841</span></span>
+<span><span class="co">#&gt;    To keep n: 6626</span></span>
 <span><span class="co">#&gt;   No genes: 13925</span></span>
 <span><span class="co">#&gt;   HVG calculated: FALSE</span></span>
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
@@ -264,13 +264,13 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span>  method <span class="op">=</span> <span class="st">"analytic_pearson"</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting analytic_pearson over 5_841 cells.</span></span>
-<span><span class="co">#&gt; Fitted 1 model(s) over 13_879 genes.</span></span>
+<span><span class="co">#&gt; Fitting analytic_pearson over 6_626 cells.</span></span>
+<span><span class="co">#&gt; Fitted 1 model(s) over 13_925 genes.</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/get_residual_fit.html">get_residual_fit</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Fitted residual model: analytic Pearson</span></span>
-<span><span class="co">#&gt;   1 group over 5_841 cells</span></span>
-<span><span class="co">#&gt;   13_879 genes modelled in every group</span></span></code></pre></div>
+<span><span class="co">#&gt;   1 group over 6_626 cells</span></span>
+<span><span class="co">#&gt;   13_925 genes modelled in every group</span></span></code></pre></div>
 </div>
 <p>The fit is keyed to the cells it saw. Move the filter afterwards and anything that tries to use it errors rather than quietly applying coefficients to the wrong cells. The usual cache-status machinery knows about it too:</p>
 <div class="cell">
@@ -278,7 +278,7 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality  artefact   name stamped  stale reason               id   from</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;    &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt; &lt;list&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna residuals   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 68173d7a8dc30836</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:      rna residuals   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 0d85ca6460145028</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="variable-features">Variable features<a class="anchor" aria-label="anchor" href="#variable-features"></a>
 </h2>
@@ -340,7 +340,7 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">hvg_residual</span>, <span class="va">hvg_vst</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  <span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">hvg_residual</span>, <span class="va">hvg_vst</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2000</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "1560 of 2000 genes shared (78%)"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "1537 of 2000 genes shared (77%)"</span></span></code></pre></div>
 </div>
 <p>Substantial overlap, and the disagreement is the interesting part. The residual ranking tends to favour lower-expressed markers that a variance ranking buries under housekeeping genes.</p>
 </section><section class="level2"><h2 id="pca-on-residuals">PCA on residuals<a class="anchor" aria-label="anchor" href="#pca-on-residuals"></a>
@@ -370,7 +370,7 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span><span class="co">#&gt; Using dense SVD on analytic_pearson residuals for 2000 genes.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 5841   30</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 6626   30</span></span></code></pre></div>
 </div>
 <p>From here it’s the normal pipeline. Neighbours, clusters, embeddings, none of them know or care where the PCA came from.</p>
 <div class="cell">
@@ -413,13 +413,13 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span>  group_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting analytic_pearson over 5_841 cells in 2 groups.</span></span>
-<span><span class="co">#&gt; Fitted 2 model(s) over 11_990 genes.</span></span>
+<span><span class="co">#&gt; Fitting analytic_pearson over 6_626 cells in 2 groups.</span></span>
+<span><span class="co">#&gt; Fitted 2 model(s) over 12_155 genes.</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/get_residual_fit.html">get_residual_fit</a></span><span class="op">(</span><span class="va">sc_grouped</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Fitted residual model: analytic Pearson</span></span>
-<span><span class="co">#&gt;   2 groups over 5_841 cells</span></span>
-<span><span class="co">#&gt;   11_990 genes modelled in every group</span></span>
+<span><span class="co">#&gt;   2 groups over 6_626 cells</span></span>
+<span><span class="co">#&gt;   12_155 genes modelled in every group</span></span>
 <span><span class="co">#&gt;   grouped by: exp_id</span></span></code></pre></div>
 </div>
 <p>The gene axis narrows to the intersection: a gene one sample filtered out is not modelled anywhere, because there’d be no coefficients to apply to that sample’s cells.</p>
@@ -432,10 +432,10 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span>  hvg_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_hvg.html">params_sc_hvg</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"residual"</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Selected 3395 variable features: the union of the top 2000 of each of 2 groups.</span></span>
+<span><span class="co">#&gt; Selected 3404 variable features: the union of the top 2000 of each of 2 groups.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_hvg.html">get_hvg</a></span><span class="op">(</span><span class="va">sc_grouped</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 3395</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 3404</span></span></code></pre></div>
 </div>
 <p><code>bixverse</code> doesn’t trim that back to 2000. Trimming would undo the per-sample ranking, which is the only reason to do the union in the first place.</p>
 <p>One thing this is not: batch correction. Per-sample models remove the sample-level depth differences, not the batch effect. If the batches still don’t mix, you want <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_batch_corrections.html">the batch correction vignette</a>.</p>
@@ -450,8 +450,8 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span>  covariate_columns <span class="op">=</span> <span class="st">"MT"</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting sctransform over 5_841 cells.</span></span>
-<span><span class="co">#&gt; Fitted 1 model(s) over 13_879 genes.</span></span>
+<span><span class="co">#&gt; Fitting sctransform over 6_626 cells.</span></span>
+<span><span class="co">#&gt; Fitted 1 model(s) over 13_925 genes.</span></span>
 <span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_residual_fit.html">get_residual_fit</a></span><span class="op">(</span><span class="va">sc_cov</span><span class="op">)</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="va">covariate_names</span></span>
@@ -468,8 +468,8 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_sct</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_residuals_sc.html">fit_residuals_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, method <span class="op">=</span> <span class="st">"sctransform"</span>, .verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting sctransform over 5_841 cells.</span></span>
-<span><span class="co">#&gt; Fitted 1 model(s) over 13_879 genes.</span></span>
+<span><span class="co">#&gt; Fitting sctransform over 6_626 cells.</span></span>
+<span><span class="co">#&gt; Fitted 1 model(s) over 13_925 genes.</span></span>
 <span></span>
 <span><span class="va">corrected</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sct_corrected_counts_sc.html">sct_corrected_counts_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_sct</span>,</span>
@@ -477,13 +477,13 @@ r_{gc} = \frac{y_{gc} - \mu_{gc}}{\sqrt{\mu_{gc} + \mu_{gc}^2 / \theta_g}}
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Building the cell-major companion store.</span></span>
-<span><span class="co">#&gt; Corrected store: 5841 cells by 13879 genes in /tmp/RtmpFb331F/pbmc_corrected.</span></span>
+<span><span class="co">#&gt; Corrected store: 6626 cells by 13925 genes in /tmp/RtmpsaWcBT/pbmc_corrected.</span></span>
 <span></span>
 <span><span class="va">corrected</span></span>
 <span><span class="co">#&gt; Single cell experiment (Single Cells).</span></span>
-<span><span class="co">#&gt;   No cells (original): 5841</span></span>
-<span><span class="co">#&gt;    To keep n: 5841</span></span>
-<span><span class="co">#&gt;   No genes: 13879</span></span>
+<span><span class="co">#&gt;   No cells (original): 6626</span></span>
+<span><span class="co">#&gt;    To keep n: 6626</span></span>
+<span><span class="co">#&gt;   No genes: 13925</span></span>
 <span><span class="co">#&gt;   HVG calculated: FALSE</span></span>
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>

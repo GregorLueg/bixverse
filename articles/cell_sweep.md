@@ -281,7 +281,7 @@ qc <- run_cell_qc(
 cell_object <- set_cells_to_keep(cell_object, qc_df[!qc$combined, cell_id])
 
 sum(qc$combined)
-#> [1] 213
+#> [1] 130
 ```
 
 Then the pipeline, unchanged from any other single cell workflow.
@@ -315,12 +315,12 @@ obs_cells <- get_sc_obs(cell_object)
 
 table(obs_cells$leiden_clusters)
 #> 
-#>   0   1   2   3   4   5   6   7 
-#> 230 189  86  85  70  37  35  30
+#>   0   1   2   3   4   5   6   7   8 
+#> 243 233  89  82  81  36  36  32  13
 ```
 
-762 cells over eight clusters. Good enough to subtract against; you
-would name them with
+845 cells over nine clusters. Good enough to subtract against; you would
+name them with
 [`calc_sc_type_scores()`](https://gregorlueg.github.io/bixverse/reference/calc_sc_type_scores.md)
 or a reference in a real analysis, but the model only cares that
 barcodes with the same label share a profile.
@@ -348,9 +348,9 @@ raw_object[["sample_id"]] <- rep("pbmc_1k", nrow(obs_raw))
 table(cell_type, useNA = "ifany")
 #> cell_type
 #> cluster_0 cluster_1 cluster_2 cluster_3 cluster_4 cluster_5 cluster_6 cluster_7 
-#>       230       189        86        85        70        37        35        30 
-#>      <NA> 
-#>     97236
+#>       243       233        89        82        81        36        36        32 
+#> cluster_8      <NA> 
+#>        13     97153
 ```
 
 Watch the `NA` handling there. `sprintf("cluster_%s", NA)` gives you the
@@ -377,16 +377,16 @@ clean_object <- cellsweep_sc(
   .verbose = TRUE
 )
 #> Empty droplets (method 'umi_cutoff'): 96_998 of 97_998 barcodes called empty.
-#> 238 barcodes are neither empty nor annotated-and-passing-QC. They are excluded from the fit and from the output.
-#> Running CellSweep over 1 samples, 762 barcodes, 96998 empty droplets.
+#> 155 barcodes are neither empty nor annotated-and-passing-QC. They are excluded from the fit and from the output.
+#> Running CellSweep over 1 samples, 845 barcodes, 96998 empty droplets.
 #> Generating gene-based binary.
 #>  Converting the cell-based data into the gene-based format.
 #> Populating obs and var tables.
 
 clean_object
 #> Single cell experiment (Single Cells).
-#>   No cells (original): 762
-#>    To keep n: 762
+#>   No cells (original): 845
+#>    To keep n: 845
 #>   No genes: 36601
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
@@ -399,10 +399,10 @@ clean_object
 ```
 
 Three numbers in that output are worth reading. 96,998 barcodes went
-into the ambient profile. 762 got denoised. And 238 barcodes were
+into the ambient profile. 845 got denoised. And 155 barcodes were
 neither: they cleared the UMI cutoff but failed QC or the outlier check,
 so they have no label to subtract against. Those are dropped from the
-fit and from the output, which is why the clean object is 762 cells and
+fit and from the output, which is why the clean object is 845 cells and
 not 1000.
 
 The denoised counts land in a new directory. The raw layer takes
@@ -464,7 +464,7 @@ ggplot(obs_clean, aes(x = cellsweep_alpha)) +
 
 summary(obs_clean$cellsweep_alpha)
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> 0.000e+00 8.300e-07 1.031e-04 1.925e-02 7.948e-03 7.126e-01
+#> 0.000e+00 8.800e-07 1.069e-04 2.282e-02 9.736e-03 7.321e-01
 
 obs_clean[,
   .(n = .N, median_alpha = median(cellsweep_alpha)),
@@ -472,14 +472,15 @@ obs_clean[,
 ][order(-median_alpha)]
 #>    cell_type     n median_alpha
 #>       <char> <int>        <num>
-#> 1: cluster_1   189 1.051318e-02
-#> 2: cluster_2    86 1.618127e-04
-#> 3: cluster_0   230 1.003124e-04
-#> 4: cluster_3    85 1.979548e-05
-#> 5: cluster_5    37 8.139454e-06
-#> 6: cluster_7    30 1.845323e-06
-#> 7: cluster_6    35 4.584807e-07
-#> 8: cluster_4    70 4.468508e-07
+#> 1: cluster_1   233 1.148048e-02
+#> 2: cluster_3    82 1.155385e-04
+#> 3: cluster_0   243 1.030036e-04
+#> 4: cluster_2    89 1.559239e-05
+#> 5: cluster_8    13 1.397798e-05
+#> 6: cluster_6    36 5.526336e-06
+#> 7: cluster_7    32 1.685669e-06
+#> 8: cluster_5    36 4.179532e-07
+#> 9: cluster_4    81 2.480712e-07
 ```
 
 This run is clean. The median barcode is essentially uncontaminated and
@@ -528,34 +529,37 @@ rates <- rbind(
 
 dcast(rates, gene + cell_type ~ layer, value.var = "detected")
 #> Key: <gene, cell_type>
-#>       gene cell_type denoised         raw
-#>     <char>    <char>    <num>       <num>
-#>  1:    LYZ cluster_0 0.000000 0.008695652
-#>  2:    LYZ cluster_1 1.000000 1.000000000
-#>  3:    LYZ cluster_2 0.000000 0.000000000
-#>  4:    LYZ cluster_3 0.000000 0.023529412
-#>  5:    LYZ cluster_4 0.000000 0.014285714
-#>  6:    LYZ cluster_5 0.000000 0.027027027
-#>  7:    LYZ cluster_6 0.000000 0.000000000
-#>  8:    LYZ cluster_7 0.000000 0.000000000
-#>  9:   PPBP cluster_0 0.000000 0.000000000
-#> 10:   PPBP cluster_1 0.000000 0.026455026
-#> 11:   PPBP cluster_2 0.000000 0.000000000
-#> 12:   PPBP cluster_3 0.000000 0.000000000
-#> 13:   PPBP cluster_4 0.000000 0.000000000
-#> 14:   PPBP cluster_5 0.000000 0.000000000
-#> 15:   PPBP cluster_6 0.000000 0.000000000
-#> 16:   PPBP cluster_7 0.000000 0.000000000
-#> 17: S100A8 cluster_0 0.000000 0.000000000
-#> 18: S100A8 cluster_1 0.989418 0.989417989
-#> 19: S100A8 cluster_2 0.000000 0.000000000
-#> 20: S100A8 cluster_3 0.000000 0.047058824
-#> 21: S100A8 cluster_4 0.000000 0.042857143
-#> 22: S100A8 cluster_5 0.000000 0.027027027
-#> 23: S100A8 cluster_6 0.000000 0.000000000
-#> 24: S100A8 cluster_7 0.000000 0.033333333
-#>       gene cell_type denoised         raw
-#>     <char>    <char>    <num>       <num>
+#>       gene cell_type   denoised         raw
+#>     <char>    <char>      <num>       <num>
+#>  1:    LYZ cluster_0 0.00000000 0.012345679
+#>  2:    LYZ cluster_1 0.98283262 0.987124464
+#>  3:    LYZ cluster_2 0.00000000 0.011235955
+#>  4:    LYZ cluster_3 0.00000000 0.000000000
+#>  5:    LYZ cluster_4 0.00000000 0.012345679
+#>  6:    LYZ cluster_5 0.00000000 0.000000000
+#>  7:    LYZ cluster_6 0.00000000 0.027777778
+#>  8:    LYZ cluster_7 0.00000000 0.000000000
+#>  9:    LYZ cluster_8 0.92307692 0.923076923
+#> 10:   PPBP cluster_0 0.00000000 0.000000000
+#> 11:   PPBP cluster_1 0.02145923 0.038626609
+#> 12:   PPBP cluster_2 0.00000000 0.000000000
+#> 13:   PPBP cluster_3 0.00000000 0.000000000
+#> 14:   PPBP cluster_4 0.00000000 0.000000000
+#> 15:   PPBP cluster_5 0.00000000 0.000000000
+#> 16:   PPBP cluster_6 0.00000000 0.000000000
+#> 17:   PPBP cluster_7 0.00000000 0.000000000
+#> 18:   PPBP cluster_8 0.07692308 0.076923077
+#> 19: S100A8 cluster_0 0.00000000 0.004115226
+#> 20: S100A8 cluster_1 0.98712446 0.987124464
+#> 21: S100A8 cluster_2 0.00000000 0.033707865
+#> 22: S100A8 cluster_3 0.00000000 0.000000000
+#> 23: S100A8 cluster_4 0.00000000 0.037037037
+#> 24: S100A8 cluster_5 0.00000000 0.000000000
+#> 25: S100A8 cluster_6 0.00000000 0.027777778
+#> 26: S100A8 cluster_7 0.00000000 0.031250000
+#> 27: S100A8 cluster_8 0.69230769 0.692307692
+#>       gene cell_type   denoised         raw
+#>     <char>    <char>      <num>       <num>
 ```
 
 ``` r
@@ -572,10 +576,11 @@ ggplot(rates, aes(x = cell_type, y = detected, fill = layer)) +
 ![](cell_sweep_files/figure-html/soup%20marker%20plot-1.png)
 
 Cluster 1 is the monocytes and it keeps LYZ and S100A8 in essentially
-every cell. Everywhere else those genes were showing up in a few percent
-of barcodes before the sweep and are gone afterwards. PPBP does the same
-thing in reverse: platelet transcripts leaking into the monocytes
-disappear. The subtraction went after the right counts.
+every cell, as does the small myeloid cluster 8. Everywhere else those
+genes were showing up in a few percent of barcodes before the sweep and
+are gone afterwards. PPBP does the same thing in reverse: platelet
+transcripts leaking into the monocytes roughly halve. The subtraction
+went after the right counts.
 
 ## Reprocessing the clean counts
 
@@ -611,8 +616,8 @@ clean_object <- umap_sc(clean_object, .verbose = FALSE)
 
 clean_object
 #> Single cell experiment (Single Cells).
-#>   No cells (original): 762
-#>    To keep n: 755
+#>   No cells (original): 845
+#>    To keep n: 834
 #>   No genes: 36601
 #>   HVG calculated: TRUE
 #>   PCA calculated: TRUE

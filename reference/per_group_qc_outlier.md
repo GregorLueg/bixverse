@@ -8,7 +8,13 @@ Directionality is respected per metric.
 ## Usage
 
 ``` r
-per_group_qc_outlier(metrics, groups, directions, threshold = 3)
+per_group_qc_outlier(
+  metrics,
+  groups,
+  directions,
+  threshold = 3,
+  r_standard = TRUE
+)
 ```
 
 ## Arguments
@@ -29,6 +35,12 @@ per_group_qc_outlier(metrics, groups, directions, threshold = 3)
 - threshold:
 
   Numeric. Number of MADs to use for outlier detection.
+
+- r_standard:
+
+  Boolean. Scale the MAD by 1.4826 like
+  [`stats::mad()`](https://rdrr.io/r/stats/mad.html). See
+  [`per_cell_qc_outlier()`](https://gregorlueg.github.io/bixverse/reference/per_cell_qc_outlier.md).
 
 ## Value
 

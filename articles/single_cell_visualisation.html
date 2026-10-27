@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>A guide to single-cell plotting functions</h1>
 
       <p class="author">Liesbeth François</p>
-      <p class="date">2026-10-25</p>
+      <p class="date">2026-10-27</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -544,7 +544,7 @@
 <section class="level2"><h3 id="density-preserving-embeddings">Density-preserving embeddings<a class="anchor" aria-label="anchor" href="#density-preserving-embeddings"></a>
 </h3>
 <p>UMAP and t-SNE throw away local density. A tight, homogeneous population and a diffuse, heterogeneous one come out at roughly the same size, so reading anything into the area a cluster takes up on the plot is a mistake. densMAP and den-SNE fix this with an extra term in the loss that keeps the local radius of each cell in the embedding correlated with its radius in PCA space. Big blob now means lots of variation, small tight blob means not much. <code>lambda</code> in <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_densmap.html" class="external-link">manifoldsR::params_densmap()</a></code> and <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_densne.html" class="external-link">manifoldsR::params_densne()</a></code> sets how hard that term pulls; <code>lambda = 0</code> gives you plain UMAP and t-SNE back.</p>
-<p>For the t-SNE flavours we use <code>approx_type = "fft_3k"</code>, the three-kernel FFT optimiser. The FFT options only exist on Unix, on Windows stick to <code>"bh"</code>.</p>
+<p>The t-SNE flavours come with four optimisers via <code>approx_type</code>: <code>"bh"</code> (classic Barnes-Hut), <code>"bh_qd"</code> (the quick-and-dirty Barnes-Hut of qdtsne, tree depth capped via <code>max_depth</code> in <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_tsne.html" class="external-link">manifoldsR::params_tsne()</a></code>, coarser by design), <code>"fft"</code> (FIt-SNE style interpolation) and <code>"fft_3k"</code> (its three-kernel variant). Here we use <code>"fft_3k"</code>. The FFT options only exist on Unix, on Windows stick to <code>"bh"</code> or <code>"bh_qd"</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/densmap_sc.html">densmap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>

@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Batch correction with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-10-25</p>
+      <p class="date">2026-10-27</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -355,7 +355,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_type</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   B cells        DC Monocytes        NK Platelets   T cells </span></span>
-<span><span class="co">#&gt;       873        69       945       861        88      3005</span></span></code></pre></div>
+<span><span class="co">#&gt;       933       163      1421       889        28      3192</span></span></code></pre></div>
 </details>
 </div>
 </section></section><section class="level2"><h2 id="comparing-the-different-methods">Comparing the different methods<a class="anchor" aria-label="anchor" href="#comparing-the-different-methods"></a>
@@ -366,7 +366,7 @@
 <p>Before applying any correction, we can visualise the batch effect and compute baseline metrics.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, approx_type <span class="op">=</span> <span class="st">"bh_qd"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span></code></pre></div>
 </div>
 <p>tSNE plot (tSNE’s usually look prettier… It’s anyway not a good way to assess batch effect correction, so at least let’s make it pleasant on the eye).</p>
@@ -395,10 +395,10 @@
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, batch_column <span class="op">=</span> <span class="st">"exp_id"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; kBET Scores</span></span>
-<span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.9868 (5764 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     12.8102 (expected under H0: 1)</span></span>
-<span><span class="co">#&gt;   Median Chi-Square:   8.7578</span></span></code></pre></div>
+<span><span class="co">#&gt;   Cells: 6626 | Batches: 2 | Threshold: 0.050</span></span>
+<span><span class="co">#&gt;   Rejection rate:      0.9870 (6540 / 6626)</span></span>
+<span><span class="co">#&gt;   Mean Chi-Square:     12.7892 (expected under H0: 1)</span></span>
+<span><span class="co">#&gt;   Median Chi-Square:   8.1742</span></span></code></pre></div>
 </div>
 <p>In practice, you’d want all of them at once. <code><a href="../reference/calculate_integration_metrics_sc.html">calculate_integration_metrics_sc()</a></code> gives one row per call, and we’ll stack one row per method into <code>metrics_dt</code>:</p>
 <div class="cell">
@@ -414,10 +414,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt; &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       pca  0.01318267 0.8897316     0             NA     1     0.6537424</span></span>
+<span><span class="co">#&gt; 1:       pca  0.01297917 0.9063555     0             NA     1     0.6508355</span></span>
 <span><span class="co">#&gt;    graph_connectivity      method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                  1 Uncorrected</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9501534 Uncorrected</span></span></code></pre></div>
 </div>
 <p>The high kBET rejection rate (so a low <code>kbet_accept</code>) and a low <code>ilisi</code> confirm a substantial batch effect, and the tSNE shows clear separation by batch. <code>pcr_comparison</code> is <code>NA</code> here: it compares a corrected embedding against this PCA, so the PCA has nothing to compare against.</p>
 </section><section class="level3"><h3 id="fastmnn">fastMNN<a class="anchor" aria-label="anchor" href="#fastmnn"></a>
@@ -461,15 +461,20 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"fastMNN"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       mnn   0.6926896 0.9413111 0.4705881      0.8862376     1      0.636044</span></span>
+<span><span class="co">#&gt; 1:       mnn   0.6845759 0.9736488 0.4705881      0.9600038     1     0.6492018</span></span>
 <span><span class="co">#&gt;    graph_connectivity  method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9361725 fastMNN</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9489644 fastMNN</span></span></code></pre></div>
 </div>
 <p>We can see clear improvements on the batch side: kBET acceptance, batch ASW and iLISI all go up.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, slot_name <span class="op">=</span> <span class="st">"tsne_mnn"</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"tsne_mnn"</span>,</span>
+<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  approx_type <span class="op">=</span> <span class="st">"bh_qd"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
@@ -534,10 +539,10 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:   harmony   0.8568738 0.9179469 0.6423357      0.8909875     1     0.6687658</span></span>
+<span><span class="co">#&gt; 1:   harmony   0.8827347 0.9754045 0.6423357      0.9817465     1     0.6671693</span></span>
 <span><span class="co">#&gt;    graph_connectivity  method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;  &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9996955 Harmony</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9499659 Harmony</span></span></code></pre></div>
 </div>
 <p>Also here, we observe improvements across the board.</p>
 <div class="cell">
@@ -545,7 +550,8 @@
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_harm"</span>,</span>
-<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  approx_type <span class="op">=</span> <span class="st">"bh_qd"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
@@ -615,17 +621,18 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Harmony v2"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: harmony_v2   0.7693888 0.9140862 0.6423357      0.8576872     1</span></span>
+<span><span class="co">#&gt; 1: harmony_v2   0.7982191  0.977846 0.6423357      0.9493217     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity     method</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;     &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:     0.6677586          0.9993072 Harmony v2</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:     0.6677088          0.9499137 Harmony v2</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_harm_v2"</span>,</span>
-<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  approx_type <span class="op">=</span> <span class="st">"bh_qd"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
@@ -697,14 +704,19 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Seurat CCA"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       cca   0.7183701 0.8929769 0.4705881      0.8688658     1     0.6711522</span></span>
+<span><span class="co">#&gt; 1:       cca     0.77377 0.9569454 0.4705881      0.9784447     1     0.6653001</span></span>
 <span><span class="co">#&gt;    graph_connectivity     method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;     &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9997509 Seurat CCA</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9499659 Seurat CCA</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, slot_name <span class="op">=</span> <span class="st">"tsne_cca"</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"tsne_cca"</span>,</span>
+<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  approx_type <span class="op">=</span> <span class="st">"bh_qd"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
@@ -765,17 +777,18 @@
 <span><span class="va">metrics_dt</span><span class="op">[</span><span class="va">method</span> <span class="op">==</span> <span class="st">"Seurat rPCA"</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:      rpca   0.7844547 0.9079038 0.6423357      0.8138765     1     0.6619311</span></span>
+<span><span class="co">#&gt; 1:      rpca   0.8131603 0.9678163 0.6423357      0.9419804     1      0.663178</span></span>
 <span><span class="co">#&gt;    graph_connectivity      method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9998064 Seurat rPCA</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9495387 Seurat rPCA</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_rpca"</span>,</span>
-<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  approx_type <span class="op">=</span> <span class="st">"bh_qd"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
@@ -838,11 +851,11 @@
 <span><span class="co">#&gt; 1:      &lt;NA&gt;           1        NA   0.8             NA     1            NA</span></span>
 <span><span class="co">#&gt;    graph_connectivity method</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt; &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          0.9979125  BBKNN</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:          0.9499659  BBKNN</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span>, approx_type <span class="op">=</span> <span class="st">"bh_qd"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
@@ -883,22 +896,22 @@
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         method kbet_accept batch_asw     ilisi pcr_comparison clisi</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: Uncorrected  0.01318267 0.8897316 0.0000000             NA     1</span></span>
-<span><span class="co">#&gt; 2:     fastMNN  0.69268961 0.9413111 0.4705881      0.8862376     1</span></span>
-<span><span class="co">#&gt; 3:     Harmony  0.85687382 0.9179469 0.6423357      0.8909875     1</span></span>
-<span><span class="co">#&gt; 4:  Harmony v2  0.76938880 0.9140862 0.6423357      0.8576872     1</span></span>
-<span><span class="co">#&gt; 5:  Seurat CCA  0.71837014 0.8929769 0.4705881      0.8688658     1</span></span>
-<span><span class="co">#&gt; 6: Seurat rPCA  0.78445472 0.9079038 0.6423357      0.8138765     1</span></span>
+<span><span class="co">#&gt; 1: Uncorrected  0.01297917 0.9063555 0.0000000             NA     1</span></span>
+<span><span class="co">#&gt; 2:     fastMNN  0.68457591 0.9736488 0.4705881      0.9600038     1</span></span>
+<span><span class="co">#&gt; 3:     Harmony  0.88273468 0.9754045 0.6423357      0.9817465     1</span></span>
+<span><span class="co">#&gt; 4:  Harmony v2  0.79821914 0.9778460 0.6423357      0.9493217     1</span></span>
+<span><span class="co">#&gt; 5:  Seurat CCA  0.77377000 0.9569454 0.4705881      0.9784447     1</span></span>
+<span><span class="co">#&gt; 6: Seurat rPCA  0.81316028 0.9678163 0.6423357      0.9419804     1</span></span>
 <span><span class="co">#&gt; 7:       BBKNN  1.00000000        NA 0.8000000             NA     1</span></span>
 <span><span class="co">#&gt;    cell_type_asw graph_connectivity</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;              &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     0.6537424          1.0000000</span></span>
-<span><span class="co">#&gt; 2:     0.6360440          0.9361725</span></span>
-<span><span class="co">#&gt; 3:     0.6687658          0.9996955</span></span>
-<span><span class="co">#&gt; 4:     0.6677586          0.9993072</span></span>
-<span><span class="co">#&gt; 5:     0.6711522          0.9997509</span></span>
-<span><span class="co">#&gt; 6:     0.6619311          0.9998064</span></span>
-<span><span class="co">#&gt; 7:            NA          0.9979125</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:     0.6508355          0.9501534</span></span>
+<span><span class="co">#&gt; 2:     0.6492018          0.9489644</span></span>
+<span><span class="co">#&gt; 3:     0.6671693          0.9499659</span></span>
+<span><span class="co">#&gt; 4:     0.6677088          0.9499137</span></span>
+<span><span class="co">#&gt; 5:     0.6653001          0.9499659</span></span>
+<span><span class="co">#&gt; 6:     0.6631780          0.9495387</span></span>
+<span><span class="co">#&gt; 7:            NA          0.9499659</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
@@ -912,15 +925,20 @@
 <span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="va">.</span><span class="op">[</span>, <span class="fu">`:=`</span><span class="op">(</span></span>
 <span>    method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">method</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rev.html" class="external-link">rev</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">metrics_dt</span><span class="op">$</span><span class="va">method</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fifelse.html" class="external-link">fifelse</a></span><span class="op">(</span><span class="va">metric</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">bio_metrics</span>, <span class="st">"Bio conservation"</span>, <span class="st">"Batch mixing"</span><span class="op">)</span></span>
+<span>    type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fifelse.html" class="external-link">fifelse</a></span><span class="op">(</span><span class="va">metric</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">bio_metrics</span>, <span class="st">"Bio conservation"</span>, <span class="st">"Batch mixing"</span><span class="op">)</span>,</span>
+<span>    label_col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fifelse.html" class="external-link">fifelse</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">score</span> <span class="op">&gt;</span> <span class="fl">0.6</span>, <span class="st">"white"</span>, <span class="st">"black"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">metrics_long</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">metric</span>, y <span class="op">=</span> <span class="va">method</span>, fill <span class="op">=</span> <span class="va">score</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_tile</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"white"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fifelse.html" class="external-link">fifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.2f"</span>, <span class="va">score</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
+<span>      label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fifelse.html" class="external-link">fifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.2f"</span>, <span class="va">score</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>      colour <span class="op">=</span> <span class="va">label_col</span></span>
+<span>    <span class="op">)</span>,</span>
 <span>    size <span class="op">=</span> <span class="fl">3</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_identity.html" class="external-link">scale_colour_identity</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html" class="external-link">facet_grid</a></span><span class="op">(</span><span class="op">~</span><span class="va">type</span>, scales <span class="op">=</span> <span class="st">"free_x"</span>, space <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span></span>
 <span>    palette <span class="op">=</span> <span class="st">"Blues"</span>,</span>
@@ -931,7 +949,7 @@
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="cn">NULL</span>, y <span class="op">=</span> <span class="cn">NULL</span>, fill <span class="op">=</span> <span class="st">"Score"</span>, title <span class="op">=</span> <span class="st">"Integration metrics"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="cn">NULL</span>, y <span class="op">=</span> <span class="cn">NULL</span>, fill <span class="op">=</span> <span class="st">"Sc metrics"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="single_cell_batch_corrections_files/figure-html/metrics%20plot-1.png" width="864"></p>

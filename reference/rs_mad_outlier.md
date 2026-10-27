@@ -5,7 +5,7 @@
 ## Usage
 
 ``` r
-rs_mad_outlier(x, threshold, direction)
+rs_mad_outlier(x, threshold, direction, r_standard)
 ```
 
 ## Arguments
@@ -16,14 +16,20 @@ rs_mad_outlier(x, threshold, direction)
 
 - threshold:
 
-  Numeric. Number of (unscaled) MADs from the median in either direction
-  that is acceptable.
+  Numeric. Number of MADs from the median in either direction that is
+  acceptable.
 
 - direction:
 
   String. One of `c("below", "above", "twosided")`. Shall the outlier
   direction be done for values below the threshold, above the threshold
   or in both directions. Unknown strings default to twosided tests.
+
+- r_standard:
+
+  Boolean. If `TRUE`, the MAD is scaled by 1.4826 like
+  [`stats::mad()`](https://rdrr.io/r/stats/mad.html). If `FALSE`, the
+  raw MAD is used (the previous behaviour).
 
 ## Value
 

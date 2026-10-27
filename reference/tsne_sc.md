@@ -13,20 +13,24 @@ When `use_knn = TRUE`, the kNN graph already stored on the object is
 reused. With `use_knn = FALSE` (the default), neighbours are computed
 from the chosen embedding.
 
-Three approximation strategies are available via `approx_type`: `"bh"`
+Four approximation strategies are available via `approx_type`: `"bh"`
 (Barnes-Hut) is the classical O(n log n) approximation and works well
-across a wide range of dataset sizes; `"fft"` (interpolation-based, as
-in FIt-SNE) scales better to very large datasets; `"fft_3k"` is the
-three-kernel variant of the latter, with one forward and three inverse
-FFTs per epoch instead of four each. The FFT options are only available
-on Unix systems. `perplexity` controls the bandwidth of the Gaussian
-kernel used to compute affinities within the neighbour set (typical
-values 5-50). When a pre-computed kNN is supplied via `use_knn = TRUE`,
-perplexity no longer drives neighbour retrieval but still shapes the
-affinity distribution over the retrieved neighbours; values too close to
-the kNN size will produce poor results. With tSNE in particular the rule
-of thumb is to set k to `3 * perplexity`. When `k <= perplexity` the
-algorithm does not behave properly anymore, thus, will throw an error.
+across a wide range of dataset sizes; `"bh_qd"` is the quick-and-dirty
+Barnes-Hut of qdtsne, with the tree depth capped at `max_depth` in
+[`manifoldsR::params_tsne()`](https://gregorlueg.github.io/manifoldsR/reference/params_tsne.html)
+and the repulsion computed once per leaf, so faster and coarser; `"fft"`
+(interpolation-based, as in FIt-SNE) scales better to very large
+datasets; `"fft_3k"` is the three-kernel variant of the latter, with one
+forward and three inverse FFTs per epoch instead of four each. The FFT
+options are only available on Unix systems. `perplexity` controls the
+bandwidth of the Gaussian kernel used to compute affinities within the
+neighbour set (typical values 5-50). When a pre-computed kNN is supplied
+via `use_knn = TRUE`, perplexity no longer drives neighbour retrieval
+but still shapes the affinity distribution over the retrieved
+neighbours; values too close to the kNN size will produce poor results.
+With tSNE in particular the rule of thumb is to set k to
+`3 * perplexity`. When `k <= perplexity` the algorithm does not behave
+properly anymore, thus, will throw an error.
 
 ## Usage
 
@@ -40,7 +44,7 @@ tsne_sc(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10,
-  approx_type = c("bh", "fft", "fft_3k"),
+  approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
   knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
@@ -93,8 +97,9 @@ tsne_sc(
 
 - approx_type:
 
-  String. Approximation method. One of `"bh"` (Barnes-Hut), `"fft"` or
-  `"fft_3k"`. Defaults to `"bh"`.
+  String. Approximation method. One of `"bh"` (Barnes-Hut), `"bh_qd"`
+  (quick-and-dirty Barnes-Hut), `"fft"` or `"fft_3k"`. Defaults to
+  `"bh"`.
 
 - knn_method:
 

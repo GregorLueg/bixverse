@@ -1,5 +1,23 @@
 # Changelog
 
+## bixverse 0.8.3
+
+- `bixverse-r` 0.9.3 under the hood.
+- MAD outlier detection in
+  [`run_cell_qc()`](https://gregorlueg.github.io/bixverse/reference/run_cell_qc.md)
+  now scales the MAD by 1.4826 like
+  [`stats::mad()`](https://rdrr.io/r/stats/mad.html), so `threshold = 3`
+  means three standard deviations under normality. This is wider than
+  before, expect fewer cells flagged with the same threshold.
+  `r_standard = FALSE` gets you the old raw MAD back.
+- [`tsne_sc()`](https://gregorlueg.github.io/bixverse/reference/tsne_sc.md)
+  and
+  [`densne_sc()`](https://gregorlueg.github.io/bixverse/reference/densne_sc.md)
+  take `approx_type = "bh_qd"`, the quick-and-dirty Barnes-Hut from
+  qdtsne (tree depth capped via `max_depth` in
+  [`manifoldsR::params_tsne()`](https://gregorlueg.github.io/manifoldsR/reference/params_tsne.html)).
+  Needs `manifoldsR` 0.4.0.
+
 ## bixverse 0.8.2
 
 - decoupler-style ULM and MLM activity scores:

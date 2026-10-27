@@ -12,7 +12,8 @@ run_cell_qc(
   threshold = 3,
   groups = NULL,
   hard_thresholds = NULL,
-  mad = TRUE
+  mad = TRUE,
+  r_standard = TRUE
 )
 ```
 
@@ -50,6 +51,12 @@ run_cell_qc(
   Logical. If `FALSE`, skip MAD entirely; `hard_thresholds` must then be
   supplied.
 
+- r_standard:
+
+  Logical. If `TRUE`, the MAD is scaled by 1.4826 like
+  [`stats::mad()`](https://rdrr.io/r/stats/mad.html). Set to `FALSE` to
+  use the raw MAD (the previous behaviour).
+
 ## Value
 
 A `CellQc` object.
@@ -68,10 +75,10 @@ run_cell_qc(
   cells_to_keep = 0:99,
   directions = c(lib_size = "below", pct_mt = "above")
 )
-#> CellQc: 100 cells, 5 outliers (5.0%)
+#> CellQc: 100 cells, 2 outliers (2.0%)
 #> Metrics:
-#>   - lib_size: 5 outliers (mad = 5)
-#>     MAD lower = 816.05
+#>   - lib_size: 2 outliers (mad = 2)
+#>     MAD lower = 722.98
 #>   - pct_mt: 0 outliers (mad = 0)
-#>     MAD upper = 23.60
+#>     MAD upper = 30.72
 ```

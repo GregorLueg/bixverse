@@ -429,9 +429,13 @@ and
 sets how hard that term pulls; `lambda = 0` gives you plain UMAP and
 t-SNE back.
 
-For the t-SNE flavours we use `approx_type = "fft_3k"`, the three-kernel
-FFT optimiser. The FFT options only exist on Unix, on Windows stick to
-`"bh"`.
+The t-SNE flavours come with four optimisers via `approx_type`: `"bh"`
+(classic Barnes-Hut), `"bh_qd"` (the quick-and-dirty Barnes-Hut of
+qdtsne, tree depth capped via `max_depth` in
+[`manifoldsR::params_tsne()`](https://gregorlueg.github.io/manifoldsR/reference/params_tsne.html),
+coarser by design), `"fft"` (FIt-SNE style interpolation) and `"fft_3k"`
+(its three-kernel variant). Here we use `"fft_3k"`. The FFT options only
+exist on Unix, on Windows stick to `"bh"` or `"bh_qd"`.
 
 ``` r
 

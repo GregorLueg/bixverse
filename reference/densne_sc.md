@@ -26,7 +26,7 @@ densne_sc(
   modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10,
-  approx_type = c("bh", "fft", "fft_3k"),
+  approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
   knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
@@ -80,8 +80,9 @@ densne_sc(
 
 - approx_type:
 
-  String. Approximation method. One of `"bh"` (Barnes-Hut), `"fft"` or
-  `"fft_3k"`. Defaults to `"bh"`.
+  String. Approximation method. One of `"bh"` (Barnes-Hut), `"bh_qd"`
+  (quick-and-dirty Barnes-Hut), `"fft"` or `"fft_3k"`. Defaults to
+  `"bh"`.
 
 - knn_method:
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,7 +107,8 @@
 <span>  threshold <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hard_thresholds <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  mad <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  mad <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  r_standard <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -146,6 +147,12 @@ of groups.</p></dd>
 <dd><p>Logical. If <code>FALSE</code>, skip MAD entirely; <code>hard_thresholds</code> must
 then be supplied.</p></dd>
 
+
+<dt id="arg-r-standard">r_standard<a class="anchor" aria-label="anchor" href="#arg-r-standard"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, the MAD is scaled by 1.4826 like
+<code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code>. Set to <code>FALSE</code> to use the raw MAD (the previous
+behaviour).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -165,12 +172,12 @@ then be supplied.</p></dd>
 <span class="r-in"><span>  cells_to_keep <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">99</span>,</span></span>
 <span class="r-in"><span>  directions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lib_size <span class="op">=</span> <span class="st">"below"</span>, pct_mt <span class="op">=</span> <span class="st">"above"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CellQc: 100 cells, 5 outliers (5.0%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> CellQc: 100 cells, 2 outliers (2.0%)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Metrics:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   - lib_size: 5 outliers (mad = 5)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     MAD lower = 816.05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - lib_size: 2 outliers (mad = 2)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     MAD lower = 722.98</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   - pct_mt: 0 outliers (mad = 0)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     MAD upper = 23.60</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     MAD upper = 30.72</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
