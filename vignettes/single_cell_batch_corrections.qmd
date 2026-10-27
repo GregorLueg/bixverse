@@ -286,7 +286,7 @@ baseline metrics.
 
 ```{r}
 #| label: uncorrected tsne
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, approx_type = "bh_qd")
 ```
 
 tSNE plot (tSNE's usually look prettier... It's anyway not a good way to assess
@@ -388,7 +388,12 @@ iLISI all go up.
 
 ```{r}
 #| label: fastmnn tsne
-sc_object <- tsne_sc(object = sc_object, slot_name = "tsne_mnn", use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_mnn",
+  use_knn = TRUE,
+  approx_type = "bh_qd"
+)
 ```
 
 ```{r}
@@ -461,7 +466,8 @@ Also here, we observe improvements across the board.
 sc_object <- tsne_sc(
   object = sc_object,
   slot_name = "tsne_harm",
-  use_knn = TRUE
+  use_knn = TRUE,
+  approx_type = "bh_qd"
 )
 ```
 
@@ -542,7 +548,8 @@ metrics_dt[method == "Harmony v2"]
 sc_object <- tsne_sc(
   object = sc_object,
   slot_name = "tsne_harm_v2",
-  use_knn = TRUE
+  use_knn = TRUE,
+  approx_type = "bh_qd"
 )
 ```
 
@@ -629,7 +636,12 @@ metrics_dt[method == "Seurat CCA"]
 
 ```{r}
 #| label: seurat cca tsne
-sc_object <- tsne_sc(object = sc_object, slot_name = "tsne_cca", use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_cca",
+  use_knn = TRUE,
+  approx_type = "bh_qd"
+)
 ```
 
 ```{r}
@@ -698,7 +710,8 @@ metrics_dt[method == "Seurat rPCA"]
 sc_object <- tsne_sc(
   object = sc_object,
   slot_name = "tsne_rpca",
-  use_knn = TRUE
+  use_knn = TRUE,
+  approx_type = "bh_qd"
 )
 ```
 
@@ -769,7 +782,7 @@ metrics_dt[method == "BBKNN"]
 
 ```{r}
 #| label: bbknn tsne
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE, approx_type = "bh_qd")
 ```
 
 ```{r}
@@ -821,15 +834,20 @@ metrics_long <- melt(
 ) %>%
   .[, `:=`(
     method = factor(method, levels = rev(unique(metrics_dt$method))),
-    type = fifelse(metric %in% bio_metrics, "Bio conservation", "Batch mixing")
+    type = fifelse(metric %in% bio_metrics, "Bio conservation", "Batch mixing"),
+    label_col = fifelse(!is.na(score) & score > 0.6, "white", "black")
   )]
 
 ggplot(metrics_long, aes(x = metric, y = method, fill = score)) +
   geom_tile(colour = "white") +
   geom_text(
-    aes(label = fifelse(is.na(score), "", sprintf("%.2f", score))),
+    aes(
+      label = fifelse(is.na(score), "", sprintf("%.2f", score)),
+      colour = label_col
+    ),
     size = 3
   ) +
+  scale_colour_identity() +
   facet_grid(~type, scales = "free_x", space = "free_x") +
   scale_fill_distiller(
     palette = "Blues",
@@ -840,7 +858,7 @@ ggplot(metrics_long, aes(x = metric, y = method, fill = score)) +
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = NULL, y = NULL, fill = "Score", title = "Integration metrics")
+  labs(x = NULL, y = NULL, fill = "Sc metrics")
 ```
 
 Read the two panels together. A method that tops batch mixing but drops on
