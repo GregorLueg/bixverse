@@ -14,6 +14,7 @@ Pick by what you have:
 | a ranked statistic vector | `calc_fgsea()` |
 | a ranked vector, want non-redundant GO | `fgsea_go_elim()` |
 | an expression matrix, want per-sample scores | `calc_gsva()`, `calc_ssgsea()`, `calc_singscore()` |
+| a weighted TF / pathway network, want activities | `calc_lm_activity()` |
 | several contrasts at once | `calc_mitch()` |
 
 ## Over-representation
@@ -33,7 +34,7 @@ Many target sets at once, parallelised in Rust:
 
 ```r
 res <- gse_hypergeometric_list(
-  target_gene_list = list(set_1 = ..., set_2 = ...),
+  target_genes_list = list(set_1 = ..., set_2 = ...),
   gene_set_list    = h_gene_sets_ls
 )
 ```
@@ -136,6 +137,24 @@ calc_singscore_rank(exp = X, stable_genes = c("g1", "g2", "g3"))
 ```
 
 `params_gsva()` and `params_ssgsea()` carry the tuning for the first two.
+
+**ULM / MLM activity** (decoupler-style) scores a weighted network rather than
+gene sets, typically CollecTRI or DoRothEA for TF activity:
+
+```r
+# net: long data.frame with source, target and optionally weight (default 1)
+res <- calc_lm_activity(mat = X, net = net,
+                        lm_params = params_lm_activity(method = "ulm"))
+res$es                                   # samples x sources
+
+# or one contrast's statistics, returns a data.table per source
+calc_lm_activity(mat = t_stats, net = net)
+```
+
+`X` should be roughly normal (log-normalised expression or contrast-level
+statistics). `p_values = TRUE` in `params_lm_activity()` adds `pvals` and a
+per-sample BH `fdr`. MLM errors on collinear sources. The per-cell version is
+`lm_activity_sc()`.
 
 ## Multi-contrast (mitch)
 

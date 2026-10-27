@@ -11,7 +11,7 @@ directory:
 
 Plus two lightweight side-cars living on the S7 object itself: `ScMap` (name to
 index maps, cells-to-keep, HVG indices) and `ScCache` (PCA factors, embeddings,
-kNN, sNN graph).
+kNN, neighbour graph, MAGIC, residual fit).
 
 The binaries come in two on-disk versions. New stores are v4 (delta bit-packed,
 several times smaller and faster to scan). v3 stores still load and work, but
@@ -131,7 +131,9 @@ qc <- run_cell_qc(metrics, cells_to_keep = get_cells_to_keep(obj),
 ```
 
 `run_cell_qc()` returns a `CellQc` S3 object carrying the metrics, per-metric
-outlier calls and `$combined`. `run_cell_qc_fixed()` is the hard-threshold
+outlier calls and `$combined`. The MAD is scaled by 1.4826 like `stats::mad()`
+(since 0.8.3), so `threshold = 3` is three standard deviations under normality;
+`r_standard = FALSE` gives the raw MAD that older versions and scripts used. `run_cell_qc_fixed()` is the hard-threshold
 version. `violin_plot_sc(qc)` and `joint_plot_sc(qc)` plot it, both from
 `bixverse.plots`.
 
@@ -172,7 +174,7 @@ object or call `get_sc_cache_status()` after each step you're unsure of.
 | `calculate_pca_sc` | `find_hvg_sc`, or explicit `hvg =` |
 | batch correction | `calculate_pca_sc` |
 | `find_neighbours_sc` | an embedding matching `embd_to_use` |
-| `find_clusters_sc` | `find_neighbours_sc` (the sNN) |
+| `find_clusters_sc` | `find_neighbours_sc` (the neighbour graph) |
 | `fast_mnn_sc`, `seurat_cca_sc`, `seurat_rpca_sc` | `batch_hvg_genes` from `find_hvg_batch_aware_sc` |
 | `umap_sc(use_knn = TRUE)` | a kNN |
 | metacell generators, `run_paga_sc`, `run_palantir_sc`, `meld_sc`, miloR | a kNN |
@@ -187,8 +189,8 @@ cell filter or a PCA setting it can't honour all error.
 
 Every cache artefact carries a provenance stamp recording the cell-set hash and
 its parent artefact ids. Call `set_cells_to_keep()` after computing a PCA and
-the PCA isn't deleted, it's stamped stale, transitively taking the kNN and sNN
-with it. The next `find_neighbours_sc()` then errors.
+the PCA isn't deleted, it's stamped stale, transitively taking the kNN and
+neighbour graph with it. The next `find_neighbours_sc()` then errors.
 
 ```r
 get_sc_cache_status(obj)   # one row per artefact: stamped, stale, reason
@@ -247,7 +249,8 @@ Related: `obj[[...]]` is filtered, `get_sc_obs(obj)` defaults to
 
 ### Reserved embedding names
 
-`pca`, `knn`, `snn`, `magic`, `residuals`. Don't use them as a `slot_name`.
+`pca`, `knn`, `connectivities`, `magic`, `residuals`. Don't use them as a
+`slot_name`.
 
 ### Silent auto-switches
 
@@ -262,13 +265,23 @@ obj <- find_clusters_sc(obj, cluster_algorithm = "leiden", res = 1,
                         name = "leiden_clusters")
 ```
 
-For large data, `fast_cluster_sc()` runs mini-batch k-means, then kNN on the
-centroids, then Louvain across a resolution grid. Optionally across seeds for
-stability:
+`find_clusters_sc()` runs on the graph `find_neighbours_sc()` built, and
+`knn_sym` picks which: `"snn"` (bluster/Seurat sNN, the default), `"umap"` (the
+fuzzy simplicial set ScanPy keeps in `obsp/connectivities`) or `"knn"` (plain
+kNN union). Pass it as
+`params_sc_neighbours(graph = list(knn_sym = "umap"))`; defaults in
+`params_knn_graph_defaults()`. Resolutions don't carry over between graphs.
+
+For large data, `fast_cluster_sc()` coarsens the cells with k-means, builds a
+graph over the centroids (centroid kNN, or the Secuer cell-mediated graph with
+`cell_mediated = TRUE`) and runs Louvain or Leiden on it. All knobs live in
+`params_sc_fast_cluster()`. With `n_seeds > 1` every resolution runs once per
+seed and the lowest mean conductance seed wins:
 
 ```r
-res <- fast_cluster_sc(obj, resolutions = c(5, 3, 2, 1.5, 1, 0.5),
-                       return_kmeans = TRUE, no_seeds = 25L, grid_search = TRUE)
+res <- fast_cluster_sc(obj, embd_to_use = "pca",
+                       resolutions = c(5, 3, 2, 1.5, 1, 0.5),
+                       fc_params = params_sc_fast_cluster(), n_seeds = 10L)
 obj <- add_sc_new_obs(obj, obs_data = get_data(res))
 ```
 
@@ -494,8 +507,12 @@ Push labels back up with `merge_subset_obs()`.
 
 `save_sc_exp_to_disk()` persists the in-memory cache (`type = "qs2"` is faster
 and needs the `qs2` package). `merge_sc_experiments()` combines objects.
-`write_h5ad_sc()`, `write_h5ad_sc_dense()`, `write_tenx_h5_sc()` and
-`write_cellranger_output()` export to the usual interchange formats.
+`save_h5ad(obj, h5_path)` writes a whole `SingleCells` object to a
+spec-compliant h5ad for ScanPy: kept cells only, counts streamed, obs/var plus
+the cached PCA, embeddings and neighbour graph (`assay = "norm"` puts the
+normalised counts in `X`). `write_h5ad_sc()`, `write_h5ad_sc_dense()`,
+`write_tenx_h5_sc()` and `write_cellranger_output()` export raw matrices to the
+usual interchange formats.
 
 ## Minimal working example
 

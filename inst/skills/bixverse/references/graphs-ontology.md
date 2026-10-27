@@ -149,7 +149,7 @@ The `%<-%` destructuring comes from `zeallot`, which bixverse imports.
 obj <- OntologySim(parent_child_dt)
 obj <- pre_process_sim_onto(obj)
 
-obj <- calculate_semantic_sim_onto(obj, similarity_type = "resnik")
+obj <- calculate_semantic_sim_onto(obj, sim_type = "resnik")
 #  or calculate_wang_sim_onto(obj, ...)
 
 crit <- calculate_critical_value(...)
