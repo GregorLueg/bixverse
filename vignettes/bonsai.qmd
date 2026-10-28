@@ -60,7 +60,6 @@ tempdir_pbmc <- tempdir()
 sc_object <- load_mtx(
   object = SingleCells(dir_data = tempdir_pbmc),
   sc_mtx_io_param = get_cell_ranger_params(pbmc3k_path),
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 

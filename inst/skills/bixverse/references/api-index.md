@@ -178,7 +178,7 @@ Different methods working on graphs; diffuse information over a network and iden
 - `community_detection`: Identify privileged communities based on a given diffusion vector
 - `constrained_page_rank`: Constrained personalised page rank
 - `constrained_page_rank_ls`: Constrained personalised page rank over a list
-- `leiden_clustering`: Leiden or Louvain community detection on an igraph
+- `leiden_clustering`: Leiden or Louvain community detection
 - `diffuse_seed_nodes`: Diffuse seed genes over a network
 - `permute_seed_nodes`: Generate permuation scores for the diffusion
 - `get_diffusion_perms`: Get the diffusion permutations
@@ -661,10 +661,13 @@ Everything Rusty - only use this if you know what you are doing... Maybe useful 
 
 Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*` bindings that take on-disk streaming input. Usable, but undocumented on the website, so read the roxygen with `?fn` first.
 
+- `as_igraph`: Convert a graph to igraph
+- `as_sc_connectivity`: Convert a graph into a SingleCellConnectivity
 - `BixverseBaseClass`: BixverseBaseClass
 - `bulk_coexp`: Bulk RNAseq co-expression modules (deprecated)
 - `bulk_dge`: Bulk RNAseq differential gene expression class (deprecated)
 - `detect_raw_count_slot`: Detect which slot holds raw integer counts in an h5ad file
+- `from_bytes`: Read a SingleCellConnectivity back from bytes
 - `gene_ontology_data`: Gene Ontology data (deprecated)
 - `generate_single_cell_test_data_adt`: Single cell test data (ADT)
 - `get_params.ConsensusNmfResult`: Get the parameters that were used.
@@ -741,6 +744,14 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_get_gs_indices`: Helper function to rapidly retrieve the indices of the gene set members
 - `rs_get_metacells_bootstrapped`: Generate meta cells (hdWGCNA method)
 - `rs_get_seacells`: Generate SEACells
+- `rs_graph_from_bytes`: Read a Rust neighbour graph back from bytes
+- `rs_graph_from_edges`: Build a Rust neighbour graph from an edge list
+- `rs_graph_info`: Summary of a Rust neighbour graph
+- `rs_graph_leiden`: Leiden and Louvain clustering on a Rust neighbour graph
+- `rs_graph_to_bytes`: Serialise a Rust neighbour graph to bytes
+- `rs_graph_to_csr`: Extract the CSR adjacency of a Rust neighbour graph
+- `rs_graph_to_edges`: Flatten a Rust neighbour graph into an edge list
+- `rs_h5ad_frame_to_parquet`: Write the obs or var dataframe of an h5ad file to Parquet
 - `rs_hotspot_autocor`: Calculate gene spatial auto-correlations
 - `rs_hotspot_cluster_genes`: Cluster the genes by Z-score together
 - `rs_hotspot_gene_cor`: Calculate gene to gene spatial correlations
@@ -803,6 +814,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_sc_scrublet`: Scrublet Rust interface
 - `rs_sc_type`: Run the ScType scoring approach
 - `rs_sc_type_assign_cells`: Per-cell ScType assignment with optional kNN smoothing
+- `rs_sc_type_assign_cells_graph`: Assign ScType cell types per cell, smoothing over a Rust neighbour graph
 - `rs_sc_type_cluster_assignment`: Score the individual clusters based on ScType
 - `rs_scenic_gene_filter`: Identifies genes to include into a SCENIC analysis
 - `rs_scenic_grn`: SCENIC: Generating gene-regulatory networks
@@ -822,6 +834,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_synthetic_sc_cellsweep_data`: Generates synthetic single cell counts with a planted ambient profile
 - `rs_synthetic_sc_data_with_cell_types`: Generates synthetic data for single cell
 - `rs_synthetic_sc_dialogue_data`: Generates synthetic data with a planted multicellular programme
+- `rs_tenx_frame_to_parquet`: Write the barcodes or features of a 10x h5 file to Parquet
 - `rs_top_k_targets`: SCENIC: Select the Top TF <> Gene pairs
 - `rs_transfer_labels_symphony`: Transfer labels from a Symphony reference to a query via kNN vote
 - `rs_vision`: Calculate VISION pathway scores in Rust
@@ -842,5 +855,6 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `SingleCellDuckDBBase`: Base class for the single cell DuckDB connection
 - `snf`: Similarity network fusion (deprecated)
 - `sparse_list_to_mat`: Helper function to transform the Rust-exported sparse matrices into R ones
+- `to_bytes`: Serialise an object to bytes
 - `write_tenx_h5_sc`: Helper function to write data to a 10x CellRanger-style h5 file
 

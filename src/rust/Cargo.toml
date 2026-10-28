@@ -64,14 +64,5 @@ bixverse-r = { version = "0.9.4", default-features = false, features = [
 name = "document"
 path = "document.rs"
 
-# TEMPORARY (WS3): local bixverse-rs worktree. Strip before commit.
 [patch.crates-io]
-bixverse-core = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-core" }
-bixverse-gpu = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-gpu" }
-bixverse-methods = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-methods" }
-bixverse-r = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-r" }
-bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-rs" }
-bixverse-sc = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-sc" }
-bixverse-sc-data = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-sc-data" }
-bixverse-sc-gpu = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-sc-gpu" }
-bixverse-sparse = { path = "/Users/gregorlueg/repos/shared/bixverse-rs/.claude/worktrees/glistening-wobbling-lerdorf/crates/bixverse-sparse" }
+bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-faster-i/o" }

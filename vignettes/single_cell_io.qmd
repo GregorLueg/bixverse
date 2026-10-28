@@ -158,7 +158,6 @@ sc_mtx <- load_mtx(
   object = sc_mtx,
   sc_mtx_io_param = mtx_params,
   sc_qc_param = qc,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 sc_mtx
@@ -233,7 +232,6 @@ sc_mtx_swapped <- load_mtx(
   object = sc_mtx_swapped,
   sc_mtx_io_param = mtx_params_swapped,
   sc_qc_param = qc,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 sc_mtx_swapped

@@ -724,7 +724,6 @@ sc_query <- SingleCells(dir_data = tempdir_query)
 sc_query <- load_mtx(
   object = sc_query,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = TRUE
 )
 ```
