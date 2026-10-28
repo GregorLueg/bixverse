@@ -394,6 +394,10 @@ reference:
       - get_pca_loadings
       - get_pca_factors
       - get_connectivities
+      - as_sc_connectivity
+      - as_igraph
+      - to_bytes
+      - from_bytes
       - get_gene_names_from_idx
       - get_sc_available_features
       - setnames_sc

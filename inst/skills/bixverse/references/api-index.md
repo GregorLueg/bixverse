@@ -231,6 +231,10 @@ THE single cell class with a large number of getters.
 - `get_pca_loadings`: Get the PCA loadings
 - `get_pca_factors`: Get the PCA factors
 - `get_connectivities`: Get the neighbour graph
+- `as_sc_connectivity`: Convert a graph into a SingleCellConnectivity
+- `as_igraph`: Convert a graph to igraph
+- `to_bytes`: Serialise an object to bytes
+- `from_bytes`: Read a SingleCellConnectivity back from bytes
 - `get_gene_names_from_idx`: Get the gene names based on the gene idx
 - `get_sc_available_features`: Returns the available features for single cell applications
 - `setnames_sc`: Rename columns in the obs or var table
@@ -661,13 +665,10 @@ Everything Rusty - only use this if you know what you are doing... Maybe useful 
 
 Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*` bindings that take on-disk streaming input. Usable, but undocumented on the website, so read the roxygen with `?fn` first.
 
-- `as_igraph`: Convert a graph to igraph
-- `as_sc_connectivity`: Convert a graph into a SingleCellConnectivity
 - `BixverseBaseClass`: BixverseBaseClass
 - `bulk_coexp`: Bulk RNAseq co-expression modules (deprecated)
 - `bulk_dge`: Bulk RNAseq differential gene expression class (deprecated)
 - `detect_raw_count_slot`: Detect which slot holds raw integer counts in an h5ad file
-- `from_bytes`: Read a SingleCellConnectivity back from bytes
 - `gene_ontology_data`: Gene Ontology data (deprecated)
 - `generate_single_cell_test_data_adt`: Single cell test data (ADT)
 - `get_params.ConsensusNmfResult`: Get the parameters that were used.
@@ -855,6 +856,5 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `SingleCellDuckDBBase`: Base class for the single cell DuckDB connection
 - `snf`: Similarity network fusion (deprecated)
 - `sparse_list_to_mat`: Helper function to transform the Rust-exported sparse matrices into R ones
-- `to_bytes`: Serialise an object to bytes
 - `write_tenx_h5_sc`: Helper function to write data to a 10x CellRanger-style h5 file
 
