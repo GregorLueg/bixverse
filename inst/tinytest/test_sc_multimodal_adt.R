@@ -208,9 +208,9 @@ expect_true(
 expect_true(
   current = checkmate::testClass(
     get_connectivities(sc_mm, modality = "adt"),
-    "igraph"
+    "SingleCellConnectivity"
   ),
-  info = "mm: adt snn graph returned as igraph"
+  info = "mm: adt snn graph returned as SingleCellConnectivity"
 )
 
 ## wnn -------------------------------------------------------------------------
@@ -238,9 +238,9 @@ expect_true(
 expect_true(
   current = checkmate::testClass(
     get_connectivities(sc_mm, modality = "wnn"),
-    "igraph"
+    "SingleCellConnectivity"
   ),
-  info = "mm: wnn snn graph returned as igraph"
+  info = "mm: wnn snn graph returned as SingleCellConnectivity"
 )
 
 # the integration test: clustering on the fused graph recovers cell types

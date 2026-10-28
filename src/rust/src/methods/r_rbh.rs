@@ -1,7 +1,5 @@
-use bixverse_r::methods_r_wrapper::{
-    r_matrix_list_to_vec, r_matrix_vec_to_named_matrices,
-};
 use bixverse_r::methods::rbh::*;
+use bixverse_r::methods_r_wrapper::{r_matrix_list_to_vec, r_matrix_vec_to_named_matrices};
 use bixverse_r::prelude::*;
 use bixverse_r::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;

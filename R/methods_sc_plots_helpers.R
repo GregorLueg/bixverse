@@ -1235,7 +1235,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     }
 
     fa2_embd <- manifoldsR::forceatlas2_from_graph(
-      graph = connectivities,
+      graph = as_igraph(connectivities),
       init = init,
       fa2_params = fa2_params,
       seed = seed,

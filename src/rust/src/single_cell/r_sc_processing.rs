@@ -2,6 +2,7 @@ use bixverse_r::graph::graph_structures::SparseGraph;
 use bixverse_r::graph::knn_graph::{build_knn_graph, KnnSymmetrisation};
 use bixverse_r::prelude::*;
 use bixverse_r::sc_r_wrappers::cpu_kmeans_from_r_list;
+use bixverse_r::sc_r_wrappers::empty_droplet_call_from_r_list;
 use bixverse_r::single_cell::sc_analysis::fast_clusters::*;
 use bixverse_r::single_cell::sc_processing::magic::{
     magic_impute_genes, MagicOperator, MagicParams,
@@ -11,7 +12,6 @@ use bixverse_r::single_cell::sc_processing::{
     cellsweep::infer_empty_droplets, doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*,
     scrublet::*, utils_doublets::find_threshold_otsu,
 };
-use bixverse_r::sc_r_wrappers::empty_droplet_call_from_r_list;
 use extendr_api::prelude::*;
 use faer::Mat;
 use rustc_hash::FxHashSet;
@@ -1364,7 +1364,7 @@ fn rs_sc_knn_w_dist(
     ))
 }
 
-/// Generates the neighbour graph for igraph
+/// Generates the neighbour graph
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
@@ -1384,12 +1384,8 @@ fn rs_sc_knn_w_dist(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with the following items:
-/// \itemize{
-///  \item edges - Integer vector with the flattened edge pairs (1-indexed!),
-///  each undirected edge once, ready for `igraph::add_edges()`.
-///  \item weights - Edge weights of the pairs above.
-/// }
+/// @returns External pointer to the Rust graph. See `rs_graph_info()`,
+/// `rs_graph_to_edges()` and `rs_graph_to_bytes()`.
 ///
 /// @export
 #[extendr]
@@ -1398,7 +1394,7 @@ fn rs_sc_knn_graph(
     knn_dist: Nullable<RMatrix<f64>>,
     graph_params: List,
     verbose: usize,
-) -> extendr_api::Result<List> {
+) -> extendr_api::Result<ExternalPtr<SparseGraph<f32>>> {
     let (n, k) = (knn_mat.nrows(), knn_mat.ncols());
     let sym = KnnSymmetrisation::from_r_list(graph_params)?;
 
@@ -1423,20 +1419,7 @@ fn rs_sc_knn_graph(
     let graph: SparseGraph<f32> =
         build_knn_graph(&idx, dist.as_deref(), k, n, &sym, verbose).to_extendr()?;
 
-    let mut edges: Vec<i32> = Vec::new();
-    let mut weights: Vec<f64> = Vec::new();
-    for i in 0..n {
-        let (nbrs, ws) = graph.get_neighbours_raw(i);
-        for (&j, &w) in nbrs.iter().zip(ws) {
-            if j as usize > i {
-                edges.push(i as i32 + 1);
-                edges.push(j as i32 + 1);
-                weights.push(w as f64);
-            }
-        }
-    }
-
-    Ok(list!(edges = edges, weights = weights))
+    Ok(ExternalPtr::new(graph))
 }
 
 /// Helper to compare kNN graphs

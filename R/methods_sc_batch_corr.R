@@ -1361,30 +1361,56 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
     ))
   }
 
-  sparse_mat <- Matrix::sparseMatrix(
-    i = rep(
-      seq_along(bbknn_res$connectivities$indptr[-1]),
-      diff(bbknn_res$connectivities$indptr)
-    ),
-    j = bbknn_res$connectivities$indices + 1,
-    x = bbknn_res$connectivities$data,
-    dims = c(bbknn_res$connectivities$nrow, bbknn_res$connectivities$ncol),
-    index1 = TRUE
-  )
-
-  connectivities <- igraph::graph_from_adjacency_matrix(
-    sparse_mat,
-    mode = "max",
-    weighted = TRUE
-  )
-
   object <- set_connectivities(
     object,
-    connectivities = connectivities,
+    connectivities = .bbknn_to_connectivity(bbknn_res$connectivities),
     from = "knn"
   )
 
   object
+}
+
+#' Symmetrise the BBKNN connectivities into the neighbour graph
+#'
+#' @description
+#' Keeps the larger of the two directed weights per cell pair, as
+#' `igraph::graph_from_adjacency_matrix(mode = "max")` does, and moves the
+#' result into Rust.
+#'
+#' @param conn List. The `connectivities` CSR from `rs_bbknn()` with `indptr`,
+#' `indices` (0-indexed), `data` and `nrow`.
+#'
+#' @returns A `SingleCellConnectivity` with method `"bbknn"`.
+#'
+#' @keywords internal
+.bbknn_to_connectivity <- function(conn) {
+  # checks
+  checkmate::assertList(conn)
+  checkmate::assertNames(
+    names(conn),
+    must.include = c("indptr", "indices", "data", "nrow")
+  )
+
+  # data.table NSE
+  i <- j <- w <- NULL
+
+  from <- rep(seq_len(conn$nrow), diff(conn$indptr))
+  to <- as.integer(conn$indices) + 1L
+  pairs <- data.table::data.table(
+    i = pmin(from, to),
+    j = pmax(from, to),
+    w = as.numeric(conn$data)
+  )
+  pairs <- pairs[, list(w = max(w)), by = list(i, j)]
+  data.table::setorder(pairs, i, j)
+
+  ptr <- rs_graph_from_edges(
+    edges = as.integer(rbind(pairs$i, pairs$j)),
+    weights = pairs$w,
+    n_nodes = as.integer(conn$nrow)
+  )
+
+  .new_sc_connectivity(ptr, method = "bbknn")
 }
 
 ## fastMNN ---------------------------------------------------------------------

@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_graph.R
 \name{leiden_clustering}
 \alias{leiden_clustering}
-\title{Leiden or Louvain community detection on an igraph}
+\title{Leiden or Louvain community detection}
 \usage{
 leiden_clustering(
   graph,
@@ -16,8 +16,11 @@ leiden_clustering(
 )
 }
 \arguments{
-\item{graph}{igraph. Undirected. If it has an edge attribute \code{weight}, it is
-used, otherwise all edges get weight 1.}
+\item{graph}{\code{SingleCellConnectivity} or undirected igraph. For an igraph,
+the edge attribute \code{weight} is used if present, otherwise all edges get
+weight 1. A \code{SingleCellConnectivity} is clustered in Rust directly; an
+igraph is flattened into an edge list first. Both give identical labels for
+the same graph.}
 
 \item{resolution}{Numeric. Modularity resolution parameter. Higher values
 give more communities.}

@@ -651,7 +651,10 @@ expect_true(
 )
 
 expect_true(
-  current = checkmate::testClass(get_connectivities(object), "igraph"),
+  current = checkmate::testClass(
+    get_connectivities(object),
+    "SingleCellConnectivity"
+  ),
   info = "snn graph generated"
 )
 

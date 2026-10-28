@@ -9,6 +9,7 @@ use bixverse_r::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
 use bixverse_r::single_cell::sc_processing::pca::SingleCellPcaParams;
 use extendr_api::*;
 
+use crate::graph::r_sparse_graph::GraphPtr;
 use crate::single_cell::utils::process_cell_markers;
 
 ////////////////////
@@ -22,6 +23,7 @@ extendr_module! {
     fn rs_sc_type;
     fn rs_sc_type_cluster_assignment;
     fn rs_sc_type_assign_cells;
+    fn rs_sc_type_assign_cells_graph;
     // symphony
     fn rs_build_symphony_ref;
     fn rs_symphony_map_query;
@@ -222,14 +224,96 @@ fn rs_sc_type_assign_cells(
         _ => None,
     };
 
-    let cell_res = assign_cells(&sc_res, graph.as_ref(), Some(cell_params)).to_extendr()?;
+    sc_type_assign_to_r(&sc_res, graph.as_ref(), cluster_labels, cell_params)
+}
+
+/// Assign ScType cell types per cell, smoothing over a Rust neighbour graph
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// As `rs_sc_type_assign_cells()`, but the graph is the Rust neighbour graph
+/// behind an external pointer rather than an edge list.
+///
+/// @param sc_type_res List. The ScType results, see `rs_sc_type()`.
+/// @param graph External pointer to the Rust neighbour graph, with one node per
+/// scored cell.
+/// @param cluster_labels Optional integer vector. 0-indexed(!) cluster
+/// assignment, of length of the scored cells.
+/// @param params List. The output of `params_sctype_cells()`.
+///
+/// @returns See `rs_sc_type_assign_cells()`.
+///
+/// @references
+/// Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_sc_type_assign_cells_graph(
+    sc_type_res: List,
+    graph: GraphPtr,
+    cluster_labels: Option<Vec<i32>>,
+    params: List,
+) -> Result<List> {
+    let sc_res = SctypeRes::from_r_list(sc_type_res)?;
+    let cell_params = ScTypeCellParams::from_r_list(params)?;
+    let n_nodes = sc_res.n_cells;
+
+    if graph.get_node_number() != n_nodes {
+        return Err(Error::Other(format!(
+            "The neighbour graph has {} nodes, but the ScType results {} cells.",
+            graph.get_node_number(),
+            n_nodes
+        )));
+    }
+
+    // same symmetrisation as the edge-list route, so both give the same labels
+    let (edges, weights) = graph.to_edge_pairs();
+    let from: Vec<usize> = edges.iter().step_by(2).map(|&x| x as usize).collect();
+    let to: Vec<usize> = edges
+        .iter()
+        .skip(1)
+        .step_by(2)
+        .map(|&x| x as usize)
+        .collect();
+    let lp_graph = KnnLabPropGraph::from_weighted_node_pairs(
+        &from,
+        &to,
+        &weights,
+        n_nodes,
+        Some(SymmetryWeightStrategy::Average),
+    );
+
+    sc_type_assign_to_r(&sc_res, Some(&lp_graph), cluster_labels, cell_params)
+}
+
+/// Run the per-cell (and optional hybrid) ScType assignment and wrap it for R
+///
+/// ### Params
+///
+/// * `sc_res` - The ScType scores.
+/// * `graph` - Optional label propagation graph for smoothing.
+/// * `cluster_labels` - Optional 0-indexed cluster labels from R.
+/// * `cell_params` - The per-cell assignment parameters.
+///
+/// ### Returns
+///
+/// The R list documented on `rs_sc_type_assign_cells()`.
+fn sc_type_assign_to_r(
+    sc_res: &SctypeRes,
+    graph: Option<&KnnLabPropGraph<f32>>,
+    cluster_labels: Option<Vec<i32>>,
+    cell_params: ScTypeCellParams,
+) -> Result<List> {
+    let cell_res = assign_cells(sc_res, graph, Some(cell_params)).to_extendr()?;
 
     let (hybrid_assignments, composition) = match cluster_labels {
         Some(cluster_labels) => {
             let cluster_labels = cluster_labels.r_int_convert();
 
             let hybrid = assign_hybrid(
-                &sc_res,
+                sc_res,
                 &cell_res,
                 &cluster_labels,
                 Some(cell_params.purity_threshold),

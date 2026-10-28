@@ -1,12 +1,12 @@
 //! Analysis methods for meta cells specifically: SCENIC, AUCell, HotSpot,
 //! VISION, ULM / MLM, NMF and DIALOGUE.
 
+use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::enrichment::lm_activity::LmActivityParams;
 use bixverse_r::enrichment_r_wrapper::r_list_to_feature_set_weights;
-use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
-use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_r::methods::nmf_hals::HalsOpts;
+use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
 use bixverse_r::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
@@ -314,8 +314,7 @@ fn rs_mc_lm_activity(
     let net = r_list_to_feature_set_weights(gs_list, sparse.shape.1)?;
     let params = LmActivityParams::from_r_list(lm_params)?;
 
-    let res =
-        calculate_lm_activity_metacells(&sparse, &net, Some(params), verbose).to_extendr()?;
+    let res = calculate_lm_activity_metacells(&sparse, &net, Some(params), verbose).to_extendr()?;
 
     let to_r = |m: &Mat<f32>| {
         let m = Mat::from_fn(m.nrows(), m.ncols(), |i, j| m[(i, j)] as f64);

@@ -878,7 +878,8 @@ SingleCellDuckDB <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param filter Optional integer. Positions of obs to read in from file.
+    #' @param filter Optional integer. 1-indexed positions of the obs rows to
+    #' keep, in output order.
     #' @param cell_id_col Optional string. If you can see that the first column
     #' in the h5ad obs table is NOT the cell identifier, you can provide
     #' here the correct column name to use as cell_name.
@@ -894,51 +895,17 @@ SingleCellDuckDB <- R6::R6Class(
       checkmate::qassert(filter, c("I+", "0"))
       checkmate::qassert(cell_id_col, c("S1", "0"))
 
-      h5_content <- rhdf5::h5ls(h5_path) |> data.table::setDT()
+      parquet_path <- tempfile(fileext = ".parquet")
+      on.exit(unlink(parquet_path), add = TRUE)
 
-      on.exit(
-        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
-        add = TRUE
+      info <- rs_h5ad_frame_to_parquet(
+        h5_path = h5_path,
+        frame = "obs",
+        keep = if (is.null(filter)) NULL else filter - 1L,
+        id_col = cell_id_col,
+        out_path = parquet_path
       )
-
-      frame <- .read_h5ad_frame(h5_path, "/obs", h5_content)
-
-      if (length(frame$cols) == 0L && is.null(frame$idx)) {
-        stop("No obs data could be found in the h5 file. Nothing was loaded.")
-      }
-
-      obs_dt <- data.table::as.data.table(frame$cols)
-
-      if (!is.null(frame$idx)) {
-        obs_dt[, cell_id := frame$idx]
-        data.table::setcolorder(
-          obs_dt,
-          c("cell_id", setdiff(names(obs_dt), "cell_id"))
-        )
-      } else if (!is.null(cell_id_col)) {
-        data.table::setnames(obs_dt, cell_id_col, "cell_id")
-      } else {
-        data.table::setnames(obs_dt, names(obs_dt)[1L], "cell_id")
-      }
-
-      other_cols <- setdiff(names(obs_dt), "cell_id")
-      if (length(other_cols) > 0L) {
-        data.table::setnames(obs_dt, other_cols, to_snake_case(other_cols))
-      }
-
-      if (!is.null(filter)) {
-        obs_dt <- obs_dt[filter]
-      }
-
-      obs_dt[, cell_idx := .I]
-      data.table::setcolorder(
-        obs_dt,
-        c(
-          "cell_idx",
-          "cell_id",
-          setdiff(names(obs_dt), c("cell_idx", "cell_id"))
-        )
-      )
+      .warn_skipped_columns(info, "/obs")
 
       con <- private$connect_db()
       on.exit(
@@ -950,7 +917,7 @@ SingleCellDuckDB <- R6::R6Class(
         add = TRUE
       )
 
-      DBI::dbWriteTable(con, "obs", obs_dt, overwrite = TRUE)
+      .parquet_to_duckdb(con, "obs", parquet_path, info)
 
       invisible(self)
     },
@@ -960,57 +927,26 @@ SingleCellDuckDB <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param filter Optional integer. Positions of obs to read in from file.
+    #' @param filter Optional integer. 1-indexed positions of the var rows to
+    #' keep, in output order.
     #'
     #' @returns Returns invisible self. As a side effect, it will load in the
-    #' obs data from the h5ad file into the DuckDB.
+    #' var data from the h5ad file into the DuckDB.
     populate_vars_from_h5ad = function(h5_path, filter = NULL) {
       checkmate::assertFileExists(h5_path)
       checkmate::qassert(filter, c("I+", "0"))
 
-      h5_content <- rhdf5::h5ls(h5_path) |> data.table::setDT()
+      parquet_path <- tempfile(fileext = ".parquet")
+      on.exit(unlink(parquet_path), add = TRUE)
 
-      on.exit(
-        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
-        add = TRUE
+      info <- rs_h5ad_frame_to_parquet(
+        h5_path = h5_path,
+        frame = "var",
+        keep = if (is.null(filter)) NULL else filter - 1L,
+        id_col = NULL,
+        out_path = parquet_path
       )
-
-      frame <- .read_h5ad_frame(h5_path, "/var", h5_content)
-
-      if (length(frame$cols) == 0L && is.null(frame$idx)) {
-        stop("No var data could be found in the h5 file. Nothing was loaded.")
-      }
-
-      var_dt <- data.table::as.data.table(frame$cols)
-
-      if (!is.null(frame$idx)) {
-        var_dt[, gene_id := frame$idx]
-        data.table::setcolorder(
-          var_dt,
-          c("gene_id", setdiff(names(var_dt), "gene_id"))
-        )
-      } else {
-        data.table::setnames(var_dt, names(var_dt)[1L], "gene_id")
-      }
-
-      other_cols <- setdiff(names(var_dt), "gene_id")
-      if (length(other_cols) > 0L) {
-        data.table::setnames(var_dt, other_cols, to_snake_case(other_cols))
-      }
-
-      if (!is.null(filter)) {
-        var_dt <- var_dt[filter]
-      }
-
-      var_dt[, gene_idx := .I]
-      data.table::setcolorder(
-        var_dt,
-        c(
-          "gene_idx",
-          "gene_id",
-          setdiff(names(var_dt), c("gene_idx", "gene_id"))
-        )
-      )
+      .warn_skipped_columns(info, "/var")
 
       con <- private$connect_db()
       on.exit(
@@ -1022,7 +958,7 @@ SingleCellDuckDB <- R6::R6Class(
         add = TRUE
       )
 
-      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
+      .parquet_to_duckdb(con, "var", parquet_path, info)
 
       invisible(self)
     },
@@ -1039,73 +975,46 @@ SingleCellDuckDB <- R6::R6Class(
       checkmate::assertList(per_file_info, min.len = 2L)
       checkmate::qassert(cell_id_col, c("S1", "0"))
 
-      obs_parts <- vector("list", length(per_file_info))
-
-      for (i in seq_along(per_file_info)) {
-        fi <- per_file_info[[i]]
-
-        h5_content <- rhdf5::h5ls(fi$h5_path) |> data.table::setDT()
-
-        frame <- .read_h5ad_frame(fi$h5_path, "/obs", h5_content)
-
-        if (length(frame$cols) == 0L && is.null(frame$idx)) {
-          stop(sprintf("No obs data found in %s", fi$h5_path))
-        }
-
-        rhdf5::h5closeAll()
-
-        obs_dt <- data.table::as.data.table(frame$cols)
-
-        if (!is.null(frame$idx)) {
-          obs_dt[, cell_id := frame$idx]
-          data.table::setcolorder(
-            obs_dt,
-            c("cell_id", setdiff(names(obs_dt), "cell_id"))
-          )
-        } else if (!is.null(cell_id_col)) {
-          data.table::setnames(obs_dt, cell_id_col, "cell_id")
-        } else {
-          data.table::setnames(obs_dt, names(obs_dt)[1L], "cell_id")
-        }
-
-        other_cols <- setdiff(names(obs_dt), "cell_id")
-        if (length(other_cols) > 0L) {
-          data.table::setnames(obs_dt, other_cols, to_snake_case(other_cols))
-        }
-
-        obs_dt <- obs_dt[fi$cell_filter]
-        obs_dt[, exp_id := fi$exp_id]
-        obs_dt[, cell_id := paste(exp_id, cell_id, sep = "_")]
-
-        obs_parts[[i]] <- obs_dt
-      }
-
-      # keep the union of all obs columns; columns absent from a given file are
-      # NA-filled rather than silently dropped (cell_id / exp_id always present)
-      obs_combined <- data.table::rbindlist(
-        obs_parts,
-        use.names = TRUE,
-        fill = TRUE
+      parquet_paths <- replicate(
+        length(per_file_info),
+        tempfile(fileext = ".parquet")
       )
-      obs_combined[, cell_idx := .I]
-      data.table::setcolorder(
-        obs_combined,
-        c(
-          "cell_idx",
-          "cell_id",
-          "exp_id",
-          setdiff(names(obs_combined), c("cell_idx", "cell_id", "exp_id"))
+      on.exit(unlink(parquet_paths), add = TRUE)
+
+      parts <- purrr::map2(per_file_info, parquet_paths, \(fi, path) {
+        checkmate::assertFileExists(fi$h5_path)
+        checkmate::qassert(fi$exp_id, "S1")
+        checkmate::qassert(fi$cell_filter, "I+")
+
+        info <- rs_h5ad_frame_to_parquet(
+          h5_path = fi$h5_path,
+          frame = "obs",
+          keep = fi$cell_filter - 1L,
+          id_col = cell_id_col,
+          out_path = path
         )
-      )
-
-      con <- private$connect_db()
-      on.exit({
-        if (exists("con") && !is.null(con)) {
-          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-        }
+        .warn_skipped_columns(info, "/obs")
+        list(path = path, info = info, exp_id = fi$exp_id)
       })
 
-      DBI::dbWriteTable(con, "obs", obs_combined, overwrite = TRUE)
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      # columns absent from a given file are NULL-filled rather than dropped
+      .parquet_parts_to_duckdb(
+        con,
+        table = "obs",
+        parts = parts,
+        idx_col = "cell_idx",
+        id_col = "cell_id"
+      )
 
       invisible(self)
     },
@@ -1151,7 +1060,8 @@ SingleCellDuckDB <- R6::R6Class(
     #'
     #' @param f_path File path to the plain text file.
     #' @param has_hdr Boolean. Does the flat file have a header.
-    #' @param filter Optional integer. Positions of obs to read in from file.
+    #' @param filter Optional integer. 1-indexed rows of the file to keep.
+    #' `cell_idx` follows the file order of the kept rows.
     #'
     #' @returns Invisible self and populates the internal obs table.
     populate_obs_from_plain_text = function(
@@ -1163,92 +1073,25 @@ SingleCellDuckDB <- R6::R6Class(
       checkmate::assertFileExists(f_path)
       checkmate::qassert(has_hdr, "B1")
       checkmate::qassert(filter, c("I+", "0"))
+
       con <- private$connect_db()
       on.exit(
         {
           if (exists("con") && !is.null(con)) {
             tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
           }
-        }
+        },
+        add = TRUE
       )
 
-      # detect delimiter from file extension
-      delimiter <- if (grepl("\\.tsv$", f_path, ignore.case = TRUE)) {
-        "'\t'"
-      } else {
-        "','"
-      }
-
-      header_query <- sprintf(
-        "SELECT * FROM read_csv(?, delim=%s, header=%s) LIMIT 0",
-        delimiter,
-        has_hdr
-      )
-
-      header_df <- DBI::dbGetQuery(
-        conn = con,
-        statement = header_query,
-        params = list(f_path)
-      )
-
-      original_col_names <- colnames(header_df)
-
-      if (has_hdr) {
-        sanitised_cols_names <- to_snake_case(original_col_names)
-        sanitised_cols_names[1] <- "cell_id"
-      } else {
-        sanitised_cols_names <- original_col_names
-        sanitised_cols_names[1] <- "cell_id"
-      }
-
-      col_mapping <- sprintf(
-        '"%s" AS %s',
-        original_col_names,
-        sanitised_cols_names
-      ) %>%
-        paste(collapse = ",\n    ")
-
-      query <- if (!is.null(filter)) {
-        row_placeholders <- paste(
-          rep("?", length(filter)),
-          collapse = ","
-        )
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE obs AS
-          SELECT
-            ROW_NUMBER() OVER() as cell_idx,
-            %s
-          FROM (
-            SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?, delim=%s, header=%s)
-          ) t
-          WHERE t.original_row_num IN (%s)",
-          col_mapping,
-          delimiter,
-          has_hdr,
-          row_placeholders
-        )
-      } else {
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE obs AS
-          SELECT 
-            ROW_NUMBER() OVER() as cell_idx,
-            %s
-          FROM (
-            SELECT * FROM read_csv(?, delim=%s, header=%s)
-          )",
-          col_mapping,
-          delimiter,
-          has_hdr
-        )
-      }
-
-      DBI::dbExecute(
-        conn = con,
-        statement = query,
-        params = c(list(f_path), as.list(filter))
+      .plain_text_to_duckdb(
+        con,
+        f_path = f_path,
+        has_hdr = has_hdr,
+        filter = filter,
+        table = "obs",
+        idx_col = "cell_idx",
+        id_col = "cell_id"
       )
 
       invisible(self)
@@ -1258,10 +1101,16 @@ SingleCellDuckDB <- R6::R6Class(
     #'
     #' @param f_path File path to the plain text file.
     #' @param has_hdr Boolean. Does the flat file have a header.
-    #' @param filter Optional integer. Positions of obs to read in from file.
+    #' @param filter Optional integer. 1-indexed rows of the file to keep.
+    #' `gene_idx` follows the file order of the kept rows.
     #'
     #' @returns Invisible self and populates the internal var table.
-    populate_var_from_plain_text = function(f_path, has_hdr, filter = NULL) {
+    populate_var_from_plain_text = function(
+      f_path,
+      has_hdr,
+      filter = NULL
+    ) {
+      # checks
       checkmate::assertFileExists(f_path)
       checkmate::qassert(has_hdr, "B1")
       checkmate::qassert(filter, c("I+", "0"))
@@ -1272,86 +1121,18 @@ SingleCellDuckDB <- R6::R6Class(
           if (exists("con") && !is.null(con)) {
             tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
           }
-        }
+        },
+        add = TRUE
       )
 
-      # Detect delimiter from file extension
-      delimiter <- if (grepl("\\.tsv$", f_path, ignore.case = TRUE)) {
-        "'\t'"
-      } else {
-        "','"
-      }
-
-      header_query <- sprintf(
-        "SELECT * FROM read_csv(?, delim=%s, header=%s) LIMIT 0",
-        delimiter,
-        has_hdr
-      )
-
-      header_df <- DBI::dbGetQuery(
-        conn = con,
-        statement = header_query,
-        params = list(f_path)
-      )
-
-      original_col_names <- colnames(header_df)
-
-      if (has_hdr) {
-        sanitised_cols_names <- to_snake_case(original_col_names)
-        sanitised_cols_names[1] <- "gene_id"
-      } else {
-        sanitised_cols_names <- original_col_names
-        sanitised_cols_names[1] <- "gene_id"
-      }
-
-      col_mapping <- sprintf(
-        '"%s" AS %s',
-        original_col_names,
-        sanitised_cols_names
-      ) %>%
-        paste(collapse = ",\n    ")
-
-      query <- if (!is.null(filter)) {
-        row_placeholders <- paste(
-          rep("?", length(filter)),
-          collapse = ","
-        )
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE var AS
-          SELECT
-            ROW_NUMBER() OVER() AS gene_idx,
-            %s
-          FROM (
-            SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?, delim=%s, header=%s)
-          ) t
-          WHERE t.original_row_num IN (%s)",
-          col_mapping,
-          delimiter,
-          has_hdr,
-          row_placeholders
-        )
-      } else {
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE var AS
-          SELECT 
-            ROW_NUMBER() OVER() AS gene_idx,
-            %s
-          FROM (
-            SELECT * FROM read_csv(?, delim=%s, header=%s)
-          )",
-          col_mapping,
-          delimiter,
-          has_hdr
-        )
-      }
-
-      DBI::dbExecute(
-        conn = con,
-        statement = query,
-        params = c(list(f_path), as.list(filter))
+      .plain_text_to_duckdb(
+        con,
+        f_path = f_path,
+        has_hdr = has_hdr,
+        filter = filter,
+        table = "var",
+        idx_col = "gene_idx",
+        id_col = "gene_id"
       )
 
       invisible(self)
@@ -1525,21 +1306,16 @@ SingleCellDuckDB <- R6::R6Class(
       checkmate::assertChoice(version, c("v2", "v3"))
       checkmate::qassert(filter, c("I+", "0"))
 
-      on.exit(
-        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
-        add = TRUE
+      parquet_path <- tempfile(fileext = ".parquet")
+      on.exit(unlink(parquet_path), add = TRUE)
+
+      info <- rs_tenx_frame_to_parquet(
+        h5_path = h5_path,
+        version = version,
+        frame = "obs",
+        keep = if (is.null(filter)) NULL else filter - 1L,
+        out_path = parquet_path
       )
-
-      barcodes_path <- if (version == "v3") "matrix/barcodes" else "barcodes"
-      barcodes <- as.character(rhdf5::h5read(h5_path, barcodes_path))
-
-      obs_dt <- data.table::data.table(cell_id = barcodes)
-
-      if (!is.null(filter)) {
-        obs_dt <- obs_dt[filter]
-      }
-      obs_dt[, cell_idx := .I]
-      data.table::setcolorder(obs_dt, c("cell_idx", "cell_id"))
 
       con <- private$connect_db()
       on.exit(
@@ -1551,7 +1327,7 @@ SingleCellDuckDB <- R6::R6Class(
         add = TRUE
       )
 
-      DBI::dbWriteTable(con, "obs", obs_dt, overwrite = TRUE)
+      .parquet_to_duckdb(con, "obs", parquet_path, info)
 
       invisible(self)
     },
@@ -1572,40 +1348,15 @@ SingleCellDuckDB <- R6::R6Class(
       checkmate::assertChoice(version, c("v2", "v3"))
       checkmate::qassert(filter, c("I+", "0"))
 
-      on.exit(
-        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
-        add = TRUE
-      )
+      parquet_path <- tempfile(fileext = ".parquet")
+      on.exit(unlink(parquet_path), add = TRUE)
 
-      var_dt <- if (version == "v3") {
-        data.table::data.table(
-          gene_id = as.character(rhdf5::h5read(h5_path, "matrix/features/id")),
-          gene_name = as.character(rhdf5::h5read(
-            h5_path,
-            "matrix/features/name"
-          )),
-          feature_type = as.character(
-            rhdf5::h5read(h5_path, "matrix/features/feature_type")
-          )
-        )
-      } else {
-        data.table::data.table(
-          gene_id = as.character(rhdf5::h5read(h5_path, "genes")),
-          gene_name = as.character(rhdf5::h5read(h5_path, "gene_names"))
-        )
-      }
-
-      if (!is.null(filter)) {
-        var_dt <- var_dt[filter]
-      }
-      var_dt[, gene_idx := .I]
-      data.table::setcolorder(
-        var_dt,
-        c(
-          "gene_idx",
-          "gene_id",
-          setdiff(names(var_dt), c("gene_idx", "gene_id"))
-        )
+      info <- rs_tenx_frame_to_parquet(
+        h5_path = h5_path,
+        version = version,
+        frame = "var",
+        keep = if (is.null(filter)) NULL else filter - 1L,
+        out_path = parquet_path
       )
 
       con <- private$connect_db()
@@ -1618,7 +1369,7 @@ SingleCellDuckDB <- R6::R6Class(
         add = TRUE
       )
 
-      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
+      .parquet_to_duckdb(con, "var", parquet_path, info)
 
       invisible(self)
     },
@@ -1637,41 +1388,27 @@ SingleCellDuckDB <- R6::R6Class(
     populate_obs_from_multi_tenx_h5 = function(per_file_info) {
       checkmate::assertList(per_file_info, min.len = 2L)
 
-      on.exit(
-        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
-        add = TRUE
+      parquet_paths <- replicate(
+        length(per_file_info),
+        tempfile(fileext = ".parquet")
       )
+      on.exit(unlink(parquet_paths), add = TRUE)
 
-      obs_parts <- vector("list", length(per_file_info))
-
-      for (i in seq_along(per_file_info)) {
-        fi <- per_file_info[[i]]
+      parts <- purrr::map2(per_file_info, parquet_paths, \(fi, path) {
         checkmate::assertFileExists(fi$h5_path)
         checkmate::assertChoice(fi$version, c("v2", "v3"))
         checkmate::qassert(fi$exp_id, "S1")
         checkmate::qassert(fi$cell_filter, "I+")
 
-        barcodes_path <- if (fi$version == "v3") {
-          "matrix/barcodes"
-        } else {
-          "barcodes"
-        }
-        barcodes <- as.character(rhdf5::h5read(fi$h5_path, barcodes_path))
-
-        dt <- data.table::data.table(cell_id = barcodes)
-        dt <- dt[fi$cell_filter]
-        dt[, cell_id := paste(fi$exp_id, cell_id, sep = "_")]
-        dt[, exp_id := fi$exp_id]
-
-        obs_parts[[i]] <- dt
-      }
-
-      combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
-      combined[, cell_idx := .I]
-      data.table::setcolorder(
-        combined,
-        c("cell_idx", "cell_id", "exp_id")
-      )
+        info <- rs_tenx_frame_to_parquet(
+          h5_path = fi$h5_path,
+          version = fi$version,
+          frame = "obs",
+          keep = fi$cell_filter - 1L,
+          out_path = path
+        )
+        list(path = path, info = info, exp_id = fi$exp_id)
+      })
 
       con <- private$connect_db()
       on.exit(
@@ -1683,7 +1420,13 @@ SingleCellDuckDB <- R6::R6Class(
         add = TRUE
       )
 
-      DBI::dbWriteTable(con, "obs", combined, overwrite = TRUE)
+      .parquet_parts_to_duckdb(
+        con,
+        table = "obs",
+        parts = parts,
+        idx_col = "cell_idx",
+        id_col = "cell_id"
+      )
 
       invisible(self)
     },
@@ -2021,3 +1764,465 @@ SingleCellDuckDB <- R6::R6Class(
     }
   )
 )
+
+# plain text ingestion ---------------------------------------------------------
+
+#' Load a plain-text metadata file into DuckDB
+#'
+#' @description
+#' Reads a CSV / TSV (delimiter from the extension) into `table`, renaming the
+#' first column to `id_col` and snake_casing the others when there is a
+#' header, and numbering the kept rows in `idx_col`.
+#'
+#' Row identity has to follow the file, and neither a window function over
+#' `read_csv()` nor an `IN` list with one bound parameter per kept row is
+#' safe for that at scale. The file is therefore first materialised into a
+#' temporary table with insertion order preserved, whose `rowid` is then the
+#' 0-based file row. The filter goes in as a registered data.frame and a semi
+#' join, and the index is assigned ordered by `rowid`.
+#'
+#' @param con DuckDB connection.
+#' @param f_path String. The file.
+#' @param has_hdr Boolean. Whether the file has a header.
+#' @param filter Optional integer. 1-indexed rows to keep. `NULL` keeps all.
+#' @param table String. Target table, e.g. `"obs"`.
+#' @param idx_col String. Index column, e.g. `"cell_idx"`.
+#' @param id_col String. Identifier column, e.g. `"cell_id"`.
+#'
+#' @returns Invisible `NULL`. Writes the table as a side effect.
+#'
+#' @keywords internal
+.plain_text_to_duckdb <- function(
+  con,
+  f_path,
+  has_hdr,
+  filter,
+  table,
+  idx_col,
+  id_col
+) {
+  # checks
+  checkmate::assertFileExists(f_path)
+  checkmate::qassert(has_hdr, "B1")
+  checkmate::qassert(filter, c("I+", "0"))
+  checkmate::qassert(table, "S1")
+  checkmate::qassert(idx_col, "S1")
+  checkmate::qassert(id_col, "S1")
+
+  delimiter <- if (grepl("\\.tsv(\\.gz)?$", f_path, ignore.case = TRUE))
+    "\t" else ","
+  raw_tbl <- "bixverse_plain_text_raw"
+  keep_tbl <- "bixverse_plain_text_keep"
+
+  DBI::dbExecute(con, "SET preserve_insertion_order = true")
+  DBI::dbExecute(
+    con,
+    sprintf(
+      "CREATE OR REPLACE TEMP TABLE %s AS SELECT * FROM read_csv(?, delim = %s, header = %s)",
+      raw_tbl,
+      DBI::dbQuoteString(con, delimiter),
+      has_hdr
+    ),
+    params = list(f_path)
+  )
+  on.exit(
+    DBI::dbExecute(con, sprintf("DROP TABLE IF EXISTS %s", raw_tbl)),
+    add = TRUE
+  )
+
+  original <- DBI::dbListFields(con, raw_tbl)
+  sanitised <- if (has_hdr) to_snake_case(original) else original
+  sanitised[1L] <- id_col
+  col_mapping <- paste(
+    sprintf("t.%s AS %s", DBI::dbQuoteIdentifier(con, original), sanitised),
+    collapse = ", "
+  )
+
+  where <- ""
+  if (!is.null(filter)) {
+    duckdb::duckdb_register(con, keep_tbl, data.frame(row_num = filter - 1L))
+    on.exit(duckdb::duckdb_unregister(con, keep_tbl), add = TRUE)
+    where <- sprintf(
+      "WHERE t.rowid IN (SELECT row_num FROM %s)",
+      keep_tbl
+    )
+  }
+
+  DBI::dbExecute(
+    con,
+    sprintf(
+      paste(
+        "CREATE OR REPLACE TABLE %s AS",
+        "SELECT ROW_NUMBER() OVER (ORDER BY t.rowid) AS %s, %s",
+        "FROM %s t %s ORDER BY t.rowid"
+      ),
+      table,
+      idx_col,
+      col_mapping,
+      raw_tbl,
+      where
+    )
+  )
+
+  invisible(NULL)
+}
+
+# parquet ingestion ------------------------------------------------------------
+
+#' Warn about the metadata columns the Parquet writer skipped
+#'
+#' @param info List. Output of [rs_h5ad_frame_to_parquet()].
+#' @param group String. The h5ad group, e.g. `"/obs"`.
+#'
+#' @returns Invisible `NULL`. Warns once per skipped column.
+#'
+#' @keywords internal
+.warn_skipped_columns <- function(info, group) {
+  # checks
+  checkmate::assertList(info)
+  checkmate::qassert(group, "S1")
+
+  for (col in info$skipped) {
+    warning(sprintf("Skipping %s/%s: unsupported h5ad encoding.", group, col))
+  }
+
+  invisible(NULL)
+}
+
+#' Largest categorical cast to an inline ENUM literal
+#'
+#' @description
+#' Up to this many levels, a categorical is cast with `ENUM('a', 'b', ...)`
+#' written into the SQL, which is what `DBI::dbWriteTable()` produces for a
+#' factor. Beyond it, parsing the literal dominates the load (a per-cell
+#' categorical can carry millions of levels), so the levels go in through a
+#' registered data.frame and a named type instead. Not tuned.
+#'
+#' @keywords internal
+SC_ENUM_LITERAL_MAX <- 10000L
+
+#' Drop a table and the named ENUM types its loads created
+#'
+#' @description
+#' The named types of [.parquet_select_col()] are called
+#' `<table>_<column>_enum`. Only the names built from the table's current
+#' columns are dropped, so a table whose name prefixes another (`var`,
+#' `var_adt`) never touches the other's types. A type cannot be dropped while
+#' a table uses it, hence the table goes first.
+#'
+#' @param con DuckDB connection.
+#' @param table String. The table, e.g. `"obs"`.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @keywords internal
+.drop_table_and_enums <- function(con, table) {
+  # checks
+  checkmate::qassert(table, "S1")
+
+  cols <- DBI::dbGetQuery(
+    con,
+    paste(
+      "SELECT column_name FROM duckdb_columns()",
+      "WHERE database_name = current_database() AND table_name = ?"
+    ),
+    params = list(table)
+  )$column_name
+
+  DBI::dbExecute(
+    con,
+    sprintf("DROP TABLE IF EXISTS %s", DBI::dbQuoteIdentifier(con, table))
+  )
+  for (col in cols) {
+    DBI::dbExecute(
+      con,
+      sprintf(
+        "DROP TYPE IF EXISTS %s",
+        DBI::dbQuoteIdentifier(con, sprintf("%s_%s_enum", table, col))
+      )
+    )
+  }
+
+  invisible(NULL)
+}
+
+#' SQL select expression for one Parquet column
+#'
+#' @description
+#' A categorical with at least one level is cast to an ENUM with its levels in
+#' order, which is what `DBI::dbWriteTable()` makes of a factor. `ENUM()` with
+#' no levels is invalid, so an empty categorical stays VARCHAR. Up to
+#' `enum_literal_max` levels the ENUM is written inline; above it a named type
+#' `<table>_<column>_enum` is created from a registered data.frame, which is
+#' far cheaper for very many levels. Either way the column comes back into R
+#' as a factor with the same levels.
+#'
+#' @param con DuckDB connection.
+#' @param table String. The table being built, used to name the type.
+#' @param name String. Column name.
+#' @param levels Character vector or `NULL`. The ENUM levels.
+#' @param enum_literal_max Integer. Most levels written inline.
+#'
+#' @returns String. The select expression. Creates the named type as a side
+#' effect where one is needed.
+#'
+#' @keywords internal
+.parquet_select_col <- function(
+  con,
+  table,
+  name,
+  levels,
+  enum_literal_max = SC_ENUM_LITERAL_MAX
+) {
+  # checks
+  checkmate::qassert(table, "S1")
+  checkmate::qassert(name, "S1")
+  checkmate::qassert(levels, c("0", "S*"))
+  checkmate::qassert(enum_literal_max, "X1[0,)")
+
+  col <- DBI::dbQuoteIdentifier(con, name)
+  if (length(levels) == 0L) {
+    return(as.character(col))
+  }
+
+  if (length(levels) <= enum_literal_max) {
+    return(sprintf(
+      "CAST(%s AS ENUM(%s)) AS %s",
+      col,
+      paste(DBI::dbQuoteString(con, levels), collapse = ", "),
+      col
+    ))
+  }
+
+  type_name <- DBI::dbQuoteIdentifier(con, sprintf("%s_%s_enum", table, name))
+  view <- "bixverse_enum_levels_tmp"
+  duckdb::duckdb_register(
+    con,
+    view,
+    data.frame(pos = seq_along(levels), lvl = levels)
+  )
+  on.exit(duckdb::duckdb_unregister(con, view), add = TRUE)
+  DBI::dbExecute(con, sprintf("DROP TYPE IF EXISTS %s", type_name))
+  DBI::dbExecute(
+    con,
+    sprintf(
+      "CREATE TYPE %s AS ENUM (SELECT lvl FROM %s ORDER BY pos)",
+      type_name,
+      view
+    )
+  )
+
+  sprintf("CAST(%s AS %s) AS %s", col, type_name, col)
+}
+
+#' Load a Parquet metadata table into DuckDB
+#'
+#' @description
+#' Runs `CREATE OR REPLACE TABLE ... AS SELECT ... FROM read_parquet(...)`,
+#' casting the categorical columns to ENUMs.
+#'
+#' @param con DuckDB connection.
+#' @param table String. Target table, e.g. `"obs"`.
+#' @param parquet_path String. The Parquet file.
+#' @param info List. Output of [rs_h5ad_frame_to_parquet()] or
+#' [rs_tenx_frame_to_parquet()] for that file.
+#' @param enum_literal_max Integer. Most levels cast with an inline ENUM, see
+#' [SC_ENUM_LITERAL_MAX].
+#'
+#' @returns Invisible `NULL`. Writes the table as a side effect.
+#'
+#' @keywords internal
+.parquet_to_duckdb <- function(
+  con,
+  table,
+  parquet_path,
+  info,
+  enum_literal_max = SC_ENUM_LITERAL_MAX
+) {
+  # checks
+  checkmate::qassert(table, "S1")
+  checkmate::assertFileExists(parquet_path)
+  checkmate::assertList(info)
+  checkmate::assertNames(
+    names(info),
+    must.include = c("names", "types", "categories")
+  )
+  checkmate::qassert(enum_literal_max, "X1[0,)")
+
+  .drop_table_and_enums(con, table)
+
+  cols <- purrr::map_chr(seq_along(info$names), \(i) {
+    levels <- if (info$types[[i]] == "categorical") info$categories[[i]]
+    .parquet_select_col(con, table, info$names[[i]], levels, enum_literal_max)
+  })
+
+  DBI::dbExecute(
+    con,
+    sprintf(
+      "CREATE OR REPLACE TABLE %s AS SELECT %s FROM read_parquet(%s)",
+      DBI::dbQuoteIdentifier(con, table),
+      paste(cols, collapse = ", "),
+      DBI::dbQuoteString(con, parquet_path)
+    )
+  )
+
+  invisible(NULL)
+}
+
+#' ENUM levels of a column across several Parquet parts
+#'
+#' @description
+#' Reproduces what `data.table::rbindlist()` makes of the column when at least
+#' one part holds it as a factor: per part in order, a categorical adds its
+#' levels in level order and a string column adds its values in row order,
+#' each only when not yet seen.
+#'
+#' @param con DuckDB connection.
+#' @param name String. Column name.
+#' @param parts List of parts, see [.parquet_parts_to_duckdb()].
+#' @param idx_col String. The per-part row index column.
+#'
+#' @returns Character vector of levels, or `NULL` if the column is not
+#' categorical in any part, or is held as something other than a string in
+#' some part.
+#'
+#' @keywords internal
+.parquet_parts_levels <- function(con, name, parts, idx_col) {
+  # checks
+  checkmate::qassert(name, "S1")
+  checkmate::assertList(parts)
+  checkmate::qassert(idx_col, "S1")
+
+  types <- purrr::map_chr(parts, \(p) {
+    i <- match(name, p$info$names)
+    if (is.na(i)) NA_character_ else p$info$types[[i]]
+  })
+  present <- types[!is.na(types)]
+  if (
+    !any(present == "categorical") ||
+      !all(present %in% c("categorical", "string"))
+  ) {
+    return(NULL)
+  }
+
+  levels <- character()
+  for (k in seq_along(parts)) {
+    p <- parts[[k]]
+    new <- switch(
+      types[[k]],
+      categorical = p$info$categories[[match(name, p$info$names)]],
+      string = DBI::dbGetQuery(
+        con,
+        sprintf(
+          paste(
+            "SELECT %1$s AS v FROM read_parquet(%2$s) WHERE %1$s IS NOT NULL",
+            "GROUP BY %1$s ORDER BY min(%3$s)"
+          ),
+          DBI::dbQuoteIdentifier(con, name),
+          DBI::dbQuoteString(con, p$path),
+          DBI::dbQuoteIdentifier(con, idx_col)
+        )
+      )$v,
+      NULL
+    )
+    levels <- c(levels, setdiff(new, levels))
+  }
+
+  levels
+}
+
+#' Load several Parquet metadata tables into one DuckDB table
+#'
+#' @description
+#' The multi-file counterpart of [.parquet_to_duckdb()]. Stacks the parts in
+#' order with `UNION ALL BY NAME` (columns missing from a part become `NULL`),
+#' adds `exp_id`, prefixes the identifier with it and renumbers the index.
+#' Column order is the index, the identifier, `exp_id`, then the remaining
+#' columns in order of first appearance, as `data.table::rbindlist(fill =
+#' TRUE)` produced.
+#'
+#' @param con DuckDB connection.
+#' @param table String. Target table, e.g. `"obs"`.
+#' @param parts List. One element per file, each a list with `path` (the
+#' Parquet file), `info` (its writer output) and `exp_id`.
+#' @param idx_col String. The index column, e.g. `"cell_idx"`.
+#' @param id_col String. The identifier column, e.g. `"cell_id"`.
+#' @param enum_literal_max Integer. Most levels cast with an inline ENUM, see
+#' [SC_ENUM_LITERAL_MAX].
+#'
+#' @returns Invisible `NULL`. Writes the table as a side effect.
+#'
+#' @keywords internal
+.parquet_parts_to_duckdb <- function(
+  con,
+  table,
+  parts,
+  idx_col,
+  id_col,
+  enum_literal_max = SC_ENUM_LITERAL_MAX
+) {
+  # checks
+  checkmate::qassert(table, "S1")
+  checkmate::assertList(parts, min.len = 1L)
+  checkmate::qassert(idx_col, "S1")
+  checkmate::qassert(id_col, "S1")
+  checkmate::qassert(enum_literal_max, "X1[0,)")
+
+  .drop_table_and_enums(con, table)
+
+  q_id <- function(x) as.character(DBI::dbQuoteIdentifier(con, x))
+  q_str <- function(x) as.character(DBI::dbQuoteString(con, x))
+
+  other_cols <- setdiff(
+    unique(unlist(purrr::map(parts, \(p) p$info$names))),
+    c(idx_col, id_col, "exp_id")
+  )
+
+  stacked <- paste(
+    purrr::imap_chr(parts, \(p, k) {
+      sprintf(
+        "SELECT *, %i AS _part, %s AS exp_id FROM read_parquet(%s)",
+        k,
+        q_str(p$exp_id),
+        q_str(p$path)
+      )
+    }),
+    collapse = " UNION ALL BY NAME "
+  )
+
+  cols <- c(
+    sprintf(
+      "CAST(row_number() OVER (ORDER BY _part, %s) AS INTEGER) AS %s",
+      q_id(idx_col),
+      q_id(idx_col)
+    ),
+    sprintf(
+      "exp_id || '_' || coalesce(%s, 'NA') AS %s",
+      q_id(id_col),
+      q_id(id_col)
+    ),
+    "exp_id",
+    purrr::map_chr(other_cols, \(col) {
+      .parquet_select_col(
+        con,
+        table,
+        col,
+        .parquet_parts_levels(con, col, parts, idx_col),
+        enum_literal_max
+      )
+    })
+  )
+
+  DBI::dbExecute(
+    con,
+    sprintf(
+      "CREATE OR REPLACE TABLE %s AS SELECT %s FROM (%s) ORDER BY _part, %s",
+      q_id(table),
+      paste(cols, collapse = ", "),
+      stacked,
+      q_id(idx_col)
+    )
+  )
+
+  invisible(NULL)
+}

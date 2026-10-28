@@ -429,8 +429,7 @@ fn rs_mc_fit_residuals(
 
             // the analytic Pearson fit sums each cell over its group's retained
             // genes, which a gene-major sweep cannot answer
-            let cell_reader =
-                InMemorySparseReader::new_cell_major(&sparse, None).to_extendr()?;
+            let cell_reader = InMemorySparseReader::new_cell_major(&sparse, None).to_extendr()?;
 
             let fit = match &group_of_cell {
                 None => {

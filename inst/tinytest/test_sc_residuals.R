@@ -677,9 +677,9 @@ expect_silent(
 )
 
 expect_equal(
-  current = igraph::vcount(get_sc_cache(renamed_object)$connectivities),
+  current = get_sc_cache(renamed_object)$connectivities$n,
   target = 5L,
-  info = "The old snn_graph comes back under connectivities"
+  info = "The old snn_graph comes back under connectivities, moved into Rust"
 )
 
 ### slots the constructor no longer knows --------------------------------------

@@ -1,5 +1,5 @@
-use bixverse_r::ontology_r_wrappers::ic_list_to_ic_hashmap;
 use bixverse_r::ontology::similarity::*;
+use bixverse_r::ontology_r_wrappers::ic_list_to_ic_hashmap;
 use bixverse_r::prelude::*;
 use extendr_api::prelude::*;
 

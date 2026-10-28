@@ -1,11 +1,13 @@
 use bixverse_r::prelude::*;
+use bixverse_r::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
 use bixverse_r::single_cell::mc_analysis::metacell_density::*;
 use bixverse_r::single_cell::mc_generation::cell_aggregation_utils::*;
 use bixverse_r::single_cell::mc_generation::hdwgcna_meta_cells::*;
-use bixverse_r::single_cell::mc_generation::metacells2::{compute_dac_metacells, DacParams, MetacellsParams};
+use bixverse_r::single_cell::mc_generation::metacells2::{
+    compute_dac_metacells, DacParams, MetacellsParams,
+};
 use bixverse_r::single_cell::mc_generation::seacells::*;
 use bixverse_r::single_cell::mc_generation::super_cells::*;
-use bixverse_r::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
 use extendr_api::*;
 use faer::Mat;
 use rustc_hash::FxHashMap;
@@ -998,8 +1000,7 @@ fn rs_metacells2(
 
     let metacells_refs: Vec<&[usize]> = metacells.iter().map(|v| v.as_slice()).collect();
     let aggregated: CompressedSparseData2<u32, f32> =
-        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes)
-            .to_extendr()?;
+        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes).to_extendr()?;
 
     let selected_genes: Vec<i32> = res.selected_genes.iter().map(|&g| g as i32 + 1).collect();
 

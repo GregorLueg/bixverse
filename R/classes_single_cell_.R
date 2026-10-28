@@ -218,9 +218,13 @@ set_knn.ScCache <- function(x, knn, ...) {
 set_connectivities.ScCache <- function(x, connectivities, ...) {
   # checks
   checkmate::assertClass(x, "ScCache")
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
 
-  x[["connectivities"]] <- connectivities
+  # an igraph is moved into Rust on entry; the cache only holds the Rust graph
+  x[["connectivities"]] <- as_sc_connectivity(connectivities)
 
   return(x)
 }
@@ -2319,7 +2323,10 @@ S7::method(set_connectivities, SingleCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_connectivities(

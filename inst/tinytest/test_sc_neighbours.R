@@ -458,22 +458,22 @@ edge_table <- function(edges, weights) {
 }
 
 bixverse_snn_euclidean_rank <- with(
-  rs_sc_knn_graph(
+  rs_graph_to_edges(rs_sc_knn_graph(
     sc_knn_euclidean,
     knn_dist = NULL,
     graph_params = snn_params("rank"),
     verbose = 0L
-  ),
+  )),
   edge_table(edges, weights)
 )
 
 bixverse_snn_euclidean_jaccard <- with(
-  rs_sc_knn_graph(
+  rs_graph_to_edges(rs_sc_knn_graph(
     sc_knn_euclidean,
     knn_dist = NULL,
     graph_params = snn_params("jaccard"),
     verbose = 0L
-  ),
+  )),
   edge_table(edges, weights)
 )
 

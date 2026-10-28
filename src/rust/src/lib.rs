@@ -40,6 +40,7 @@ pub use graph::r_graph_clustering;
 pub use graph::r_knn;
 pub use graph::r_page_rank;
 pub use graph::r_snf;
+pub use graph::r_sparse_graph;
 
 // methods
 pub use methods::r_cistarget;
@@ -66,6 +67,7 @@ pub use single_cell::r_sc_bonsai;
 pub use single_cell::r_sc_h5ad;
 pub use single_cell::r_sc_metacells;
 pub use single_cell::r_sc_multimodal;
+pub use single_cell::r_sc_obs_var;
 pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
 pub use single_cell::r_sc_residuals;
@@ -108,6 +110,7 @@ extendr_module! {
     use r_snf;
     use r_graph_clustering;
     use r_knn;
+    use r_sparse_graph;
 
     // methods
     use r_coremo;
@@ -144,4 +147,5 @@ extendr_module! {
     // multi-modal
     use r_sc_adt;
     use r_sc_multimodal;
+    use r_sc_obs_var;
 }

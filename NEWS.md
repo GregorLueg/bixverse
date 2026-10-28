@@ -1,3 +1,51 @@
+# bixverse 0.8.4
+
+## Features
+
+* `bixverse-r` 0.9.4 under the hood.
+* The neighbour graph now stays in Rust. `get_connectivities()` returns a
+  `SingleCellConnectivity`, an S3 list holding a pointer to the Rust graph plus
+  its size and build method. It prints, converts with `as_igraph()` and
+  `as_sc_connectivity()`, and serialises with `to_bytes()` / `from_bytes()`.
+  Clustering, ScType smoothing and the h5ad export read it directly, so the
+  graph is never flattened into R vectors on the way.
+* `set_connectivities()` still takes an igraph and converts it on entry.
+  `save_sc_exp_to_disk()` / `load_existing()` store the graph as bytes, and
+  caches saved with an igraph are converted on load.
+* BBKNN and WNN produce a `SingleCellConnectivity` too. Louvain runs through the
+  Leiden engine with the refinement switched off.
+* `load_mtx()` reads `.mtx.gz` directly, no decompressed copy in R's temp
+  directory, and `prescan_mtx_dirs()` passes gzipped matrices straight
+  through. `real` files with integral values and `pattern` files load (every
+  entry a count of 1). Anything else (fractional or negative values, `array`,
+  `complex`, non-`general` symmetry) errors with a clear message. Before,
+  `real` values were truncated and `pattern` files loaded empty.
+
+## Performance
+
+* h5ad and 10x h5 counts: 5x faster on a 4.7M cell Tahoe plate.
+* obs / var from h5ad and 10x h5: read in Rust and handed to DuckDB as Parquet,
+  5x faster on the same plate. Categoricals still land as ENUMs with the same
+  levels.
+* obs / var from plain text (`load_mtx()` and friends): ~40x faster on the
+  Parse PBMC 1M metadata. The cell filter is a joined table instead of one SQL
+  parameter per cell, and the row order is now guaranteed to follow the file.
+* MTX parsing: one text pass, 2x faster on Parse PBMC 1M.
+* CSR to CSC conversion: 2x faster, and `csc_mem_gb` fits 25% more non-zeros
+  per phase.
+* `find_hvg_sc()` with VST: 2x faster.
+* Neighbour graph build plus Leiden: 2x faster on 1M cells, identical labels.
+
+## Changes
+
+* `get_connectivities()` no longer returns an igraph. Code calling igraph
+  functions on it needs `as_igraph(get_connectivities(sc))` first.
+* The BBKNN graph's method is now `"bbknn"`.
+* `mtx_streaming` in `load_mtx()` is deprecated and ignored. The file is always
+  read in one pass with its entries bucketed on disk next to the store.
+* `prescan_mtx_dirs()` no longer returns `temp_files`, there are none to clean
+  up.
+
 # bixverse 0.8.3
 
 * `bixverse-r` 0.9.3 under the hood.

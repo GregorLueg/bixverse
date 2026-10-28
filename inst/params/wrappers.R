@@ -1556,7 +1556,7 @@ spec_sc_mtx_io <- param_spec(
     }
   }),
   fields = list(
-    path_mtx = p_free(doc = "Path to the .mtx file"),
+    path_mtx = p_free(doc = "Path to the .mtx or .mtx.gz file"),
     path_obs = p_free(doc = "Path to the file containing cell/barcode info."),
     path_var = p_free(doc = "Path to the file containing gene/variable info."),
     cells_as_rows = p_lgl(doc = "Do cells represent the rows or columns."),

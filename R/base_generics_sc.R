@@ -663,8 +663,10 @@ set_knn <- function(x, knn, ...) {
 #' Set/add the neighbour graph
 #'
 #' @param x An object to add the neighbour graph to.
-#' @param connectivities Igraph. The neighbour graph for subsequent
-#' clustering, see [bixverse::find_neighbours_sc()].
+#' @param connectivities `SingleCellConnectivity` or undirected igraph. The
+#' neighbour graph for subsequent clustering, see
+#' [bixverse::find_neighbours_sc()]. An igraph is converted with
+#' [bixverse::as_sc_connectivity()] on entry.
 #' @param ... Other parameters.
 #'
 #' @export
@@ -676,7 +678,7 @@ set_knn <- function(x, knn, ...) {
 #' sc <- demo_single_cells()
 #' g <- get_connectivities(sc)
 #' sc <- set_connectivities(remove_connectivities(sc), g)
-#' igraph::vcount(get_connectivities(sc))
+#' get_connectivities(sc)
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_connectivities <- function(x, connectivities, ...) {
@@ -939,19 +941,20 @@ get_available_embeddings <- function(x, ...) {
 #' Returns the neighbour graph the clustering runs on. Depending on the
 #' `knn_sym` it was built with, see [bixverse::params_knn_graph_defaults()],
 #' this is the shared nearest neighbour graph, the UMAP fuzzy simplicial set
-#' or the kNN union. The method is stored in the `method` graph attribute.
+#' or the kNN union. The graph lives in Rust; convert it with
+#' [bixverse::as_igraph()] if you need an igraph.
 #'
 #' @param x An object to get the neighbour graph from.
 #' @param ... Other parameters.
 #'
-#' @returns The undirected, weighted igraph.
+#' @returns A `SingleCellConnectivity`, see [bixverse::as_sc_connectivity()].
 #'
 #' @export
 #'
 #' @examples
 #' # the neighbour graph the clustering methods run on
 #' sc <- demo_single_cells()
-#' igraph::vcount(get_connectivities(sc))
+#' get_connectivities(sc)
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_connectivities <- function(x, ...) {

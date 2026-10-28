@@ -162,16 +162,12 @@ S7::method(assign_sc_type, SingleCells) <- function(
       "No neighbour graph found. Did you run find_neighbours_sc()?",
       "Scoring without smoothing."
     ))
-    edges <- NULL
-  } else {
-    if (igraph::vcount(connectivities) != sc_type_res$n_cells) {
-      stop(sprintf(
-        "The neighbour graph has %d nodes, but the ScType results %d cells.",
-        igraph::vcount(connectivities),
-        sc_type_res$n_cells
-      ))
-    }
-    edges <- igraph::as_edgelist(connectivities, names = FALSE)
+  } else if (connectivities$n != sc_type_res$n_cells) {
+    stop(sprintf(
+      "The neighbour graph has %d nodes, but the ScType results %d cells.",
+      connectivities$n,
+      sc_type_res$n_cells
+    ))
   }
 
   cluster_labels <- NULL
@@ -185,19 +181,27 @@ S7::method(assign_sc_type, SingleCells) <- function(
   if (.verbose) {
     message(sprintf(
       "Assigning cell types per cell (smoothing: %s).",
-      !is.null(edges)
+      !is.null(connectivities)
     ))
   }
 
-  res <- rs_sc_type_assign_cells(
-    sc_type_res = sc_type_res,
-    from = if (is.null(edges)) NULL else as.integer(edges[, 1]),
-    to = if (is.null(edges)) NULL else as.integer(edges[, 2]),
-    weights = if (is.null(connectivities)) NULL else
-      igraph::E(connectivities)$weight,
-    cluster_labels = cluster_labels,
-    params = sctype_cell_params
-  )
+  res <- if (is.null(connectivities)) {
+    rs_sc_type_assign_cells(
+      sc_type_res = sc_type_res,
+      from = NULL,
+      to = NULL,
+      weights = NULL,
+      cluster_labels = cluster_labels,
+      params = sctype_cell_params
+    )
+  } else {
+    rs_sc_type_assign_cells_graph(
+      sc_type_res = sc_type_res,
+      graph = .connectivity_ptr(connectivities),
+      cluster_labels = cluster_labels,
+      params = sctype_cell_params
+    )
+  }
 
   new_sc_type_cell_results(res)
 }

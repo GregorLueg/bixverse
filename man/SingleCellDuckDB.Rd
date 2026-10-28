@@ -73,7 +73,8 @@ observation/cell metadata and the feature/gene metadata.
     \describe{
       \item{\code{h5_path}}{String. Path to the h5 file from which to load in the
 observation table.}
-      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+      \item{\code{filter}}{Optional integer. 1-indexed positions of the obs rows to
+keep, in output order.}
       \item{\code{cell_id_col}}{Optional string. If you can see that the first column
 in the h5ad obs table is NOT the cell identifier, you can provide
 here the correct column name to use as cell_name.}
@@ -101,13 +102,14 @@ obs data from the h5ad file into the DuckDB.
     \describe{
       \item{\code{h5_path}}{String. Path to the h5 file from which to load in the
 observation table.}
-      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+      \item{\code{filter}}{Optional integer. 1-indexed positions of the var rows to
+keep, in output order.}
     }
     \if{html}{\out{</div>}}
   }
   \subsection{Returns}{
     Returns invisible self. As a side effect, it will load in the
-obs data from the h5ad file into the DuckDB.
+var data from the h5ad file into the DuckDB.
   }
 }
 
@@ -179,7 +181,8 @@ Function to populate the obs table from plain text files
     \describe{
       \item{\code{f_path}}{File path to the plain text file.}
       \item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
-      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+      \item{\code{filter}}{Optional integer. 1-indexed rows of the file to keep.
+\code{cell_idx} follows the file order of the kept rows.}
     }
     \if{html}{\out{</div>}}
   }
@@ -203,7 +206,8 @@ Function to populate the var table from plain text files
     \describe{
       \item{\code{f_path}}{File path to the plain text file.}
       \item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
-      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+      \item{\code{filter}}{Optional integer. 1-indexed rows of the file to keep.
+\code{gene_idx} follows the file order of the kept rows.}
     }
     \if{html}{\out{</div>}}
   }

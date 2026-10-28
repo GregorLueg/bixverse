@@ -10,6 +10,7 @@
     "BoostRes",
     "ScDblFinderRes",
     "SingleCellNearestNeighbour",
+    "SingleCellConnectivity",
     "KbetScores",
     "BatchSilhouetteScores",
     "LisiScores",

@@ -1,9 +1,9 @@
+use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::enrichment::lm_activity::LmActivityParams;
 use bixverse_r::enrichment_r_wrapper::r_list_to_feature_set_weights;
-use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
-use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_r::methods::nmf_hals::HalsOpts;
+use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
 use bixverse_r::single_cell::sc_analysis::{
@@ -747,8 +747,8 @@ fn rs_lm_activity_sc(
     let net = r_list_to_feature_set_weights(gs_list, reader.get_header().total_genes)?;
     let params = LmActivityParams::from_r_list(lm_params)?;
 
-    let res = calculate_lm_activity(&reader, &net, &cells_to_keep, Some(params), verbose)
-        .to_extendr()?;
+    let res =
+        calculate_lm_activity(&reader, &net, &cells_to_keep, Some(params), verbose).to_extendr()?;
 
     let to_r = |m: &Mat<f32>| {
         let m = Mat::from_fn(m.nrows(), m.ncols(), |i, j| m[(i, j)] as f64);

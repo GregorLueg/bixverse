@@ -33,8 +33,6 @@
 #'   order they will appear in the final var table.
 #'   \item universe_size - Length of the universe.
 #'   \item file_tasks - List of per-input task lists for Rust and DuckDB.
-#'   \item temp_files - Character vector of temp files created during
-#'   decompression; the caller should `unlink()` these after use.
 #' }
 #'
 #' @export
@@ -61,7 +59,7 @@
 #' )
 #' scan_res$universe_size
 #'
-#' unlink(c(dirs, scan_res$temp_files), recursive = TRUE, force = TRUE)
+#' unlink(dirs, recursive = TRUE, force = TRUE)
 prescan_mtx_dirs <- function(
   dirs,
   exp_ids,
@@ -78,10 +76,6 @@ prescan_mtx_dirs <- function(
   checkmate::qassert(has_hdr, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  temp_dir <- tempfile(pattern = "bixverse_mtx_prescan_")
-  dir.create(temp_dir)
-  temp_files <- character()
-
   locate <- function(dir, pat) {
     files <- list.files(
       dir,
@@ -96,32 +90,6 @@ prescan_mtx_dirs <- function(
       stop(sprintf("Multiple files matching '%s' in %s", pat, dir))
     }
     files
-  }
-
-  gunzip_to_temp <- function(path) {
-    out_name <- sub("\\.gz$", "", basename(path), ignore.case = TRUE)
-    out_path <- file.path(
-      temp_dir,
-      paste0(
-        tools::file_path_sans_ext(out_name),
-        "_",
-        basename(tempfile("")),
-        ".",
-        tools::file_ext(out_name)
-      )
-    )
-    con_in <- gzfile(path, open = "rb")
-    on.exit(close(con_in), add = TRUE)
-    con_out <- file(out_path, open = "wb")
-    on.exit(close(con_out), add = TRUE)
-    repeat {
-      chunk <- readBin(con_in, "raw", n = 8 * 1024 * 1024)
-      if (length(chunk) == 0L) {
-        break
-      }
-      writeBin(chunk, con_out)
-    }
-    out_path
   }
 
   gene_sets <- vector("list", length(dirs))
@@ -141,12 +109,8 @@ prescan_mtx_dirs <- function(
     features_path <- locate(d, "(features|genes)\\.(tsv|csv)(\\.gz)?$")
     barcodes_path <- locate(d, "barcodes\\.(tsv|csv)(\\.gz)?$")
 
-    if (grepl("\\.gz$", mtx_path, ignore.case = TRUE)) {
-      decompressed <- gunzip_to_temp(mtx_path)
-      temp_files <- c(temp_files, decompressed)
-      mtx_path <- decompressed
-    }
-
+    # a .mtx.gz goes to Rust as is; the reader detects gzip from the magic
+    # bytes
     delim <- if (grepl("\\.tsv(\\.gz)?$", features_path, ignore.case = TRUE)) {
       "\t"
     } else {
@@ -189,8 +153,7 @@ prescan_mtx_dirs <- function(
   list(
     universe = universe,
     universe_size = length(universe),
-    file_tasks = file_tasks,
-    temp_files = temp_files
+    file_tasks = file_tasks
   )
 }
 
@@ -1818,32 +1781,17 @@ S7::method(save_h5ad, SingleCells) <- function(
     }
   }
 
-  connectivities <- .drop_stamp(get_connectivities(sc_cache))
+  connectivities <- get_connectivities(sc_cache)
   if (
-    inherits(connectivities, "igraph") &&
-      igraph::vcount(connectivities) == no_cells
+    inherits(connectivities, "SingleCellConnectivity") &&
+      connectivities$n == no_cells
   ) {
     if (.verbose) {
       message("Adding the neighbour graph as obsp/connectivities.")
     }
-    attr_name <- if ("weight" %in% igraph::edge_attr_names(connectivities)) {
-      "weight"
-    } else {
-      NULL
-    }
-    adj <- igraph::as_adjacency_matrix(
-      connectivities,
-      attr = attr_name,
-      sparse = TRUE
-    )
-    adj <- methods::as(
-      methods::as(methods::as(adj, "dMatrix"), "generalMatrix"),
-      "RsparseMatrix"
-    )
-    obsp[["connectivities"]] <- list(
-      indptr = adj@p,
-      indices = adj@j,
-      data = adj@x
+    # the Rust CSR is the symmetric adjacency, rows sorted
+    obsp[["connectivities"]] <- rs_graph_to_csr(
+      .connectivity_ptr(connectivities)
     )
     uns[["neighbors"]] <- list(connectivities_key = "connectivities")
   }
@@ -1870,9 +1818,9 @@ S7::method(save_h5ad, SingleCells) <- function(
 #' @param sc_mtx_io_param List. Please generate this one via
 #' [bixverse::params_sc_mtx_io()].
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
-#' @param mtx_streaming Boolean. Shall the .mtx file ingestion itself be
-#' streamed (via temp-file bucketing). Recommended for large mtx files.
-#' Defaults to `TRUE`.
+#' @param mtx_streaming No longer has an effect: the .mtx file is always read in
+#' a single pass with its entries bucketed on disk next to the store. Ignored.
+#' `r lifecycle::badge("deprecated")`
 #' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
 #' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
 #' (default) converts in one pass and holds the whole matrix. Set a cap for
@@ -1925,7 +1873,7 @@ load_mtx <- S7::new_generic(
     object,
     sc_mtx_io_param = params_sc_mtx_io(),
     sc_qc_param = params_sc_min_quality(),
-    mtx_streaming = TRUE,
+    mtx_streaming = deprecated(),
     csc_mem_gb = NULL,
     streaming = deprecated(),
     batch_size = deprecated(),
@@ -1947,7 +1895,7 @@ S7::method(load_mtx, SingleCells) <- function(
   object,
   sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
-  mtx_streaming = TRUE,
+  mtx_streaming = deprecated(),
   csc_mem_gb = NULL,
   streaming = deprecated(),
   batch_size = deprecated(),
@@ -1958,33 +1906,31 @@ S7::method(load_mtx, SingleCells) <- function(
   checkmate::assertClass(object, "bixverse::SingleCells")
   assertScMtxIOParams(sc_mtx_io_param)
   assertScMinQCParams(sc_qc_param)
-  checkmate::qassert(mtx_streaming, "B1")
   checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
-  rust_con <- get_sc_rust_ptr(object)
-
-  file_res <- if (mtx_streaming) {
-    with(
-      sc_mtx_io_param,
-      rust_con$mtx_to_file_streaming(
-        mtx_path = path_mtx,
-        qc_params = sc_qc_param,
-        cells_as_rows = cells_as_rows,
-        verbose = .verbose
-      )
-    )
-  } else {
-    with(
-      sc_mtx_io_param,
-      rust_con$mtx_to_file(
-        mtx_path = path_mtx,
-        qc_params = sc_qc_param,
-        cells_as_rows = cells_as_rows,
-        verbose = .verbose
+  if (lifecycle::is_present(mtx_streaming)) {
+    deprecate_warn(
+      "0.8.4",
+      "load_mtx(mtx_streaming)",
+      details = paste(
+        "The .mtx file is always read in a single pass with its entries",
+        "bucketed on disk next to the store. The argument is ignored."
       )
     )
   }
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- with(
+    sc_mtx_io_param,
+    rust_con$mtx_to_file_streaming(
+      mtx_path = path_mtx,
+      qc_params = sc_qc_param,
+      cells_as_rows = cells_as_rows,
+      verbose = .verbose
+    )
+  )
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
@@ -2101,11 +2047,7 @@ S7::method(load_mtx, SingleCells) <- function(
 #' )
 #' dim(sc)
 #'
-#' unlink(
-#'   c(dirs, dir_data, scan_res$temp_files),
-#'   recursive = TRUE,
-#'   force = TRUE
-#' )
+#' unlink(c(dirs, dir_data), recursive = TRUE, force = TRUE)
 load_multi_mtx <- S7::new_generic(
   name = "load_multi_mtx",
   dispatch_args = "object",
@@ -2142,18 +2084,10 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   assertScMinQCParams(sc_qc_param)
   checkmate::assertList(prescan_result)
   checkmate::assertTRUE(all(
-    c("universe", "universe_size", "file_tasks", "temp_files") %in%
-      names(prescan_result)
+    c("universe", "universe_size", "file_tasks") %in% names(prescan_result)
   ))
   checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
-
-  on.exit(
-    if (length(prescan_result$temp_files) > 0L) {
-      unlink(prescan_result$temp_files)
-    },
-    add = TRUE
-  )
 
   rust_con <- get_sc_rust_ptr(object)
 
@@ -2579,7 +2513,11 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
 
   # pull the data out from the class
   sc_map <- get_sc_map(object)
-  sc_cache <- get_sc_cache(object)
+  # the Rust graph pointer does not survive serialisation; save its bytes
+  sc_cache <- .map_cache_connectivities(
+    get_sc_cache(object),
+    .connectivity_to_disk
+  )
   dir <- S7::prop(object, "dir_data")
 
   to_save <- list(sc_map = sc_map, sc_cache = sc_cache)
@@ -2819,11 +2757,27 @@ S7::method(save_sc_exp_to_disk, SingleCellsMultiModal) <- function(
 
   # pull the data out from the class
   sc_map <- get_sc_map(object)
-  sc_cache <- get_sc_cache(object)
-  adt_cache <- S7::prop(object, "adt_cache")
-  atac_cache <- S7::prop(object, "atac_cache")
+  # the Rust graph pointers do not survive serialisation; save their bytes
+  sc_cache <- .map_cache_connectivities(
+    get_sc_cache(object),
+    .connectivity_to_disk
+  )
+  adt_cache <- .map_cache_connectivities(
+    S7::prop(object, "adt_cache"),
+    .connectivity_to_disk
+  )
+  atac_cache <- .map_cache_connectivities(
+    S7::prop(object, "atac_cache"),
+    .connectivity_to_disk
+  )
   adt_counts <- S7::prop(object, "adt_counts")
   other_data <- S7::prop(object, "other_data")
+  if (!is.null(other_data[["wnn"]])) {
+    other_data[["wnn"]] <- .map_cache_connectivities(
+      other_data[["wnn"]],
+      .connectivity_to_disk
+    )
+  }
   dir <- S7::prop(object, "dir_data")
 
   to_save <- list(

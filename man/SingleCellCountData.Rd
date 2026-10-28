@@ -180,7 +180,7 @@ Write an mtx file to the cells binary file
 
 \subsection{Arguments}{
 \describe{
-\item{\code{mtx_path}}{(\code{character})\cr Path to the mtx file.}
+\item{\code{mtx_path}}{(\code{character})\cr Path to the mtx file, plain or gzipped (\code{.mtx.gz}, detected from the magic bytes).}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
 \item{\code{cells_as_rows}}{(\code{logical})\cr \code{TRUE} if cells are rows in the mtx file, \code{FALSE} if cells are columns.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
@@ -196,7 +196,7 @@ Write an mtx file to the cells binary file using streaming
 
 \subsection{Arguments}{
 \describe{
-\item{\code{mtx_path}}{(\code{character})\cr Path to the mtx file.}
+\item{\code{mtx_path}}{(\code{character})\cr Path to the mtx file, plain or gzipped (\code{.mtx.gz}, detected from the magic bytes).}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
 \item{\code{cells_as_rows}}{(\code{logical})\cr \code{TRUE} if cells are rows in the mtx file, \code{FALSE} if cells are columns.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }

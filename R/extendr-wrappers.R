@@ -2017,6 +2017,138 @@ rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_t
 #' @keywords internal
 rs_knn_mat_to_edge_pairs <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_pairs, knn_mat, one_index)
 
+#' Summary of a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the shape of the graph behind an external pointer.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item n_nodes - Integer. Number of nodes.
+#'   \item n_edges - Numeric. Number of (undirected) edges. Numeric, since a
+#'   very large graph can hold more than `.Machine$integer.max` edges.
+#'   \item directed - Logical. Whether the graph is directed.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_info <- function(ptr) .Call(wrap__rs_graph_info, ptr)
+
+#' Serialise a Rust neighbour graph to bytes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The byte layout carries a magic, a format version and the float width, so
+#' reading back a foreign or outdated blob errors rather than decoding into
+#' garbage.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns Raw vector.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_to_bytes <- function(ptr) .Call(wrap__rs_graph_to_bytes, ptr)
+
+#' Read a Rust neighbour graph back from bytes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Inverse of `rs_graph_to_bytes()`. The CSR is validated on the way in.
+#'
+#' @param bytes Raw vector written by `rs_graph_to_bytes()`.
+#'
+#' @returns External pointer to the Rust graph.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_from_bytes <- function(bytes) .Call(wrap__rs_graph_from_bytes, bytes)
+
+#' Flatten a Rust neighbour graph into an edge list
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Each undirected edge comes out once, ready for `igraph::add_edges()`.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item edges - Integer vector with the flattened edge pairs (1-indexed!),
+#'   `c(from_1, to_1, from_2, to_2, ...)`.
+#'   \item weights - Numeric vector. One weight per pair.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_to_edges <- function(ptr) .Call(wrap__rs_graph_to_edges, ptr)
+
+#' Build a Rust neighbour graph from an edge list
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Builds an undirected graph. Each edge should be listed once; duplicates are
+#' kept as separate entries, as in igraph. Weights are stored as `f32`.
+#'
+#' @param edges Integer vector. Flattened edge pairs (1-indexed!),
+#' `c(from_1, to_1, from_2, to_2, ...)`.
+#' @param weights Numeric vector. One weight per pair.
+#' @param n_nodes Integer. Number of nodes.
+#'
+#' @returns External pointer to the Rust graph.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_from_edges <- function(edges, weights, n_nodes) .Call(wrap__rs_graph_from_edges, edges, weights, n_nodes)
+
+#' Extract the CSR adjacency of a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The symmetric adjacency, rows sorted, as ScanPy stores it under
+#' `obsp/connectivities`.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item indptr - Integer vector. Row pointers (0-indexed).
+#'   \item indices - Integer vector. Column indices (0-indexed).
+#'   \item data - Numeric vector. Edge weights.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_to_csr <- function(ptr) .Call(wrap__rs_graph_to_csr, ptr)
+
+#' Leiden and Louvain clustering on a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Same engine and parameters as `rs_leiden_clustering()`, but on the graph
+#' behind the pointer, so nothing is flattened into R vectors. Louvain is
+#' `refine = FALSE`.
+#'
+#' @param ptr External pointer to the Rust graph.
+#' @param leiden_params List. See `rs_leiden_clustering()`.
+#'
+#' @returns Integer vector with the 1-based community of each node; `1` is the
+#' largest community.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_leiden <- function(ptr, leiden_params) .Call(wrap__rs_graph_leiden, ptr, leiden_params)
+
 #' Calculates the TOM over an affinity matrix
 #'
 #' @description
@@ -3272,6 +3404,30 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #' @keywords internal
 rs_sc_type_assign_cells <- function(sc_type_res, from, to, weights, cluster_labels, params) .Call(wrap__rs_sc_type_assign_cells, sc_type_res, from, to, weights, cluster_labels, params)
 
+#' Assign ScType cell types per cell, smoothing over a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' As `rs_sc_type_assign_cells()`, but the graph is the Rust neighbour graph
+#' behind an external pointer rather than an edge list.
+#'
+#' @param sc_type_res List. The ScType results, see `rs_sc_type()`.
+#' @param graph External pointer to the Rust neighbour graph, with one node per
+#' scored cell.
+#' @param cluster_labels Optional integer vector. 0-indexed(!) cluster
+#' assignment, of length of the scored cells.
+#' @param params List. The output of `params_sctype_cells()`.
+#'
+#' @returns See `rs_sc_type_assign_cells()`.
+#'
+#' @references
+#' Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_type_assign_cells_graph <- function(sc_type_res, graph, cluster_labels, params) .Call(wrap__rs_sc_type_assign_cells_graph, sc_type_res, graph, cluster_labels, params)
+
 #' Build a Symphony reference (Rust)
 #'
 #' @description
@@ -4356,7 +4512,7 @@ rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wra
 #' @export
 rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, validate_index, verbose, seed)
 
-#' Generates the neighbour graph for igraph
+#' Generates the neighbour graph
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -4376,12 +4532,8 @@ rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .C
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with the following items:
-#' \itemize{
-#'  \item edges - Integer vector with the flattened edge pairs (1-indexed!),
-#'  each undirected edge once, ready for `igraph::add_edges()`.
-#'  \item weights - Edge weights of the pairs above.
-#' }
+#' @returns External pointer to the Rust graph. See `rs_graph_info()`,
+#' `rs_graph_to_edges()` and `rs_graph_to_bytes()`.
 #'
 #' @export
 rs_sc_knn_graph <- function(knn_mat, knn_dist, graph_params, verbose) .Call(wrap__rs_sc_knn_graph, knn_mat, knn_dist, graph_params, verbose)
@@ -7191,6 +7343,62 @@ rs_dsb <- function(raw_counts, background_counts, isotype_indices, dsb_params, s
 #' @references Hao et al., Cell, 2021
 rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose) .Call(wrap__rs_wnn, modality_emb_one, modality_emb_two, wnn_params, seed, verbose)
 
+#' Write the obs or var dataframe of an h5ad file to Parquet
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Writes the table the obs / var DuckDB tables are built from: `cell_idx` /
+#' `gene_idx` (1-based after filtering), `cell_id` / `gene_id`, then the
+#' remaining columns snake_cased. Categoricals are written as strings; their
+#' levels come back for the caller to cast to an ENUM.
+#'
+#' @param h5_path String. Path to the h5ad file.
+#' @param frame String. One of `c("obs", "var")`.
+#' @param keep Optional integer vector. 0-indexed(!) rows to keep, in output
+#' order. `NULL` keeps all.
+#' @param id_col Optional string. Column to use as identifier when the group
+#' has no index; the first column otherwise.
+#' @param out_path String. Parquet file to write.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item names - Character vector. Column names in file order.
+#'   \item types - Character vector. One of `"integer"`, `"double"`,
+#'   `"boolean"`, `"string"` or `"categorical"` per column.
+#'   \item categories - List. The levels in order for a categorical column,
+#'   `NULL` otherwise.
+#'   \item skipped - Character vector. Source columns left out for an
+#'   unsupported encoding.
+#'   \item n_rows - Numeric. Number of rows written.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5ad_frame_to_parquet <- function(h5_path, frame, keep, id_col, out_path) .Call(wrap__rs_h5ad_frame_to_parquet, h5_path, frame, keep, id_col, out_path)
+
+#' Write the barcodes or features of a 10x h5 file to Parquet
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Obs is `cell_idx`, `cell_id`. Var is `gene_idx`, `gene_id`, `gene_name`,
+#' plus `feature_type` for v3. Features are read in file order across all
+#' modalities, so `keep` indexes into that order.
+#'
+#' @param h5_path String. Path to the 10x h5 file.
+#' @param version String. One of `c("v2", "v3")`.
+#' @param frame String. One of `c("obs", "var")`.
+#' @param keep Optional integer vector. 0-indexed(!) rows to keep, in output
+#' order. `NULL` keeps all.
+#' @param out_path String. Parquet file to write.
+#'
+#' @returns See `rs_h5ad_frame_to_parquet()`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_tenx_frame_to_parquet <- function(h5_path, version, frame, keep, out_path) .Call(wrap__rs_tenx_frame_to_parquet, h5_path, version, frame, keep, out_path)
+
 #' Single cell count data handler
 #'
 #' @description
@@ -7368,7 +7576,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file.}
+#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the magic bytes).}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
@@ -7384,7 +7592,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file.}
+#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the magic bytes).}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }

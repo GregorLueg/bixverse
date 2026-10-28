@@ -386,7 +386,7 @@ expect_equal(
 )
 
 expect_true(
-  current = inherits(get_connectivities(subset_obj), "igraph"),
+  current = inherits(get_connectivities(subset_obj), "SingleCellConnectivity"),
   info = "sNN graph stored on subset"
 )
 

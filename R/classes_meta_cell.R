@@ -916,7 +916,10 @@ S7::method(set_connectivities, MetaCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
 
   S7::prop(x, "sc_cache") <- set_connectivities(
     x = S7::prop(x, "sc_cache"),

@@ -986,7 +986,10 @@ S7::method(set_connectivities, SingleCellsMultiModal) <- function(
 ) {
   modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
   S7::prop(x, slot) <- set_connectivities(S7::prop(x, slot), connectivities)
   .stamp_artefact(
     x,

@@ -33,8 +33,6 @@ A list with:
 order they will appear in the final var table.
 \item universe_size - Length of the universe.
 \item file_tasks - List of per-input task lists for Rust and DuckDB.
-\item temp_files - Character vector of temp files created during
-decompression; the caller should \code{unlink()} these after use.
 }
 }
 \description{
@@ -71,5 +69,5 @@ scan_res <- prescan_mtx_dirs(
 )
 scan_res$universe_size
 
-unlink(c(dirs, scan_res$temp_files), recursive = TRUE, force = TRUE)
+unlink(dirs, recursive = TRUE, force = TRUE)
 }

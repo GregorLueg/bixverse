@@ -1545,8 +1545,8 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
 #' [params_knn_graph_defaults()].
 #' @param .verbose Boolean or integer. Controls verbosity.
 #'
-#' @returns Undirected, weighted igraph with the method in the `method` graph
-#' attribute.
+#' @returns A `SingleCellConnectivity` holding the undirected, weighted Rust
+#' graph, with the method in `method`.
 #'
 #' @keywords internal
 .knn_to_graph <- function(knn, graph_params, .verbose = TRUE) {
@@ -1558,23 +1558,14 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     message(sprintf("Generating the %s graph.", graph_params$knn_sym))
   }
 
-  knn_mat <- get_knn_mat(knn)
-  graph_rs <- rs_sc_knn_graph(
-    knn_mat = knn_mat,
+  ptr <- rs_sc_knn_graph(
+    knn_mat = get_knn_mat(knn),
     knn_dist = if (graph_params$knn_sym == "umap") get_knn_dist(knn) else NULL,
     graph_params = graph_params,
     verbose = parse_verbosity(.verbose)
   )
 
-  g <- igraph::make_empty_graph(n = nrow(knn_mat), directed = FALSE)
-  g <- igraph::add_edges(
-    g,
-    graph_rs$edges,
-    attr = list(weight = graph_rs$weights)
-  )
-  igraph::graph_attr(g, "method") <- graph_params$knn_sym
-
-  g
+  .new_sc_connectivity(ptr, method = graph_params$knn_sym)
 }
 
 ### clustering -----------------------------------------------------------------
