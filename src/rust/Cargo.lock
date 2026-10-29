@@ -509,8 +509,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-core"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -532,8 +532,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-gpu"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "ann-search-rs",
  "bixverse-core",
@@ -552,8 +552,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-methods"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -575,8 +575,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-r"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "ann-search-rs",
  "bixverse-rs",
@@ -594,8 +594,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "bixverse-core",
  "bixverse-methods",
@@ -608,8 +608,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sc"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -633,8 +633,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sc-data"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "approx 0.5.1",
  "bincode",
@@ -665,8 +665,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sc-gpu"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -692,8 +692,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sparse"
-version = "0.9.4"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-i%2Fo#78f50462b4e78b9345d243502e92d164b44307e5"
+version = "0.9.5"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=jax-wiring#01e7b2ef825f260294b5a12abd45eb0326c5077f"
 dependencies = [
  "bincode",
  "num-traits",

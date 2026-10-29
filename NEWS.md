@@ -20,6 +20,7 @@
   entry a count of 1). Anything else (fractional or negative values, `array`,
   `complex`, non-`general` symmetry) errors with a clear message. Before,
   `real` values were truncated and `pattern` files loaded empty.
+* More memory-frugal and faster sparse SVDs for single cell.
 
 ## Performance
 
