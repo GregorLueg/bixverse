@@ -502,7 +502,7 @@ more interesting is their behaviour in the manifold, see below...
 We called the `calc_diffusion_coordinates()` with the kNN graph on the data.
 This will tell us which parts of the manifold are being sampled here, i.e., for
 example high, medium or low density regions (based on the diffusion map and
-distance to the 150k-th neighbour within that). This gives an idea how many rare
+distance to the 150th neighbour within that). This gives an idea how many rare
 cell states the meta cells capture.
 
 ```{r}

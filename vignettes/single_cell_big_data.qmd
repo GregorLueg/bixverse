@@ -114,7 +114,7 @@ been filtered) and the vars.
 This part - streaming the data and processing it - is usually what takes quite a
 bit of time. If you have already loaded in the data and it exists on-disk from a 
 previous session, skip the streaming step entirely and reconnect. On a MacBook
-Air with 24 GB and an M3 chip, this takes 90 seconds minutes.
+Air with 24 GB and an M3 chip, this takes 90 seconds.
 
 ```{r}
 #| label: reconnect
@@ -132,7 +132,7 @@ flag doublets. Doublets are called per sample via the `group_by` argument,
 which is what you want when sample-level differences in capture rates would
 otherwise distort a single global score. Results are merged back onto the cell
 metadata and the doublets are dropped from the set of cells to keep. The
-runs over the individual samples are occuring sequentially to not overwhelm
+runs over the individual samples are occurring sequentially to not overwhelm
 memory and each run is massively parallelised internally in Rust.
 
 ```{r}
@@ -155,7 +155,7 @@ sce <- set_cells_to_keep(x = sce, cells_to_keep = cells_without_doublets)
 
 Due to having run over 24 samples in this case, this will take ~6 minutes. 
 Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - 
-which ever floats your boat. Once you have passed this, things will get 
+whichever floats your boat. Once you have passed this, things will get 
 substantially faster.
 
 ### Scrublet on the GPU
@@ -440,7 +440,7 @@ sce <- umap_gpu_sc(
 #| label: embeddings prior tsne (gpu)
 #| eval: false
 
-sce <- umap_tsne_sc(
+sce <- tsne_gpu_sc(
   sce,
   slot_name = "tsne_prior_gpu"
 )

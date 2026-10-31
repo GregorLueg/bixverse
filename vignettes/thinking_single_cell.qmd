@@ -474,13 +474,13 @@ unfiltered_counts <- sc_object[1:10L, 1:10L, use_cells_to_keep = FALSE]
 
 cat(sprintf(
   "Number of cells: %i | Number of genes: %i (filtered version - primitive)\n",
-  nrow(counts_filtered),
-  ncol(counts_filtered)
+  nrow(filtered_counts),
+  ncol(filtered_counts)
 ))
 cat(sprintf(
   "Number of cells: %i | Number of genes: %i (unfiltered version - primitive)\n",
-  nrow(counts_unfiltered),
-  ncol(counts_unfiltered)
+  nrow(unfiltered_counts),
+  ncol(unfiltered_counts)
 ))
 ```
 

@@ -351,8 +351,8 @@ plot_overlap(
 ### Fast clustering
 
 On a few thousand cells the full graph clustering is instant. On a million it
-isn't. `fast_cluster_sc()` coarsens the cells with k-means first (`sqrt(N)`
-centroids by default), builds a graph over the centroids and runs Louvain or
+isn't. `fast_cluster_sc()` coarsens the cells with k-means first
+(`floor(4 * sqrt(N))` centroids by default), builds a graph over the centroids and runs Louvain or
 Leiden on that. Each cell inherits the community of its centroid. Two options
 for the centroid graph:
 

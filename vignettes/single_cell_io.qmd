@@ -417,7 +417,8 @@ sc_restored
 ### Archiving for cold storage
 
 Project done, but you want to keep the data around? The two count binaries
-are uncompressed, so they eat disk. `archive_sc_exp()` compresses
+are lz4-compressed per chunk (v4 format), but still take disk space.
+`archive_sc_exp()` compresses
 `counts_cells.bin` into a single zstd `counts.bxa` and, by default, deletes
 both binaries. The gene-based file is not archived at all, it's just a
 transpose of the cell-based one. Normalised values only go into the archive

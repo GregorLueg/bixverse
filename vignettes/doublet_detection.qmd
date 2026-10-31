@@ -35,8 +35,9 @@ distribution is expected: singlets cluster near zero, doublets near one. A
 threshold on this score determines the final calls.
 
 - **Boosted doublet detection** takes a different angle. Rather than simulating
-doublets, it trains a gradient-boosted tree ensemble to distinguish real cells
-from synthetic doublets generated in the same way as Scrublet. The classifier
+doublets, it repeatedly clusters real cells together with synthetic doublets
+(Louvain) and tests each cluster for doublet enrichment, the DoubletDetection
+approach; the synthetic doublets are generated in the same way as Scrublet. The classifier
 produces a probability per cell, and doublet calls are derived from that
 probability. This can be more robust when the score distribution from Scrublet
 is not cleanly bimodal, though it introduces its own hyperparameters (and is
@@ -215,8 +216,8 @@ see the `group_by = NULL` parameter).
 
 The boosted approach trains a classifier to separate real cells from synthetic
 doublets. This can work better when the Scrublet score distribution is messy or
-unimodal. However, in this case we are running 25 iterations of the algorithm,
-which means 20x generation of synthetic doublets. The initial PCA will be stored
+unimodal. However, in this case we are running 20 iterations of the algorithm
+(the `n_iters` default), which means 20x generation of synthetic doublets. The initial PCA will be stored
 in the object for subsequent reprojection - nonetheless, this makes this usually 
 slower than the other methods in this vignette.
 
