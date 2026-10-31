@@ -1336,6 +1336,67 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
   x
 }
 
+#' Attach obs columns to extracted rows by cell id
+#'
+#' @description Joins by id rather than by position, so the obs values cannot
+#' slide off the extracted values whatever order either side comes in.
+#'
+#' @param dt data.table. Extracted rows with a `cell_id` column.
+#' @param object `SingleCells`, `SingleCellsSubset` or `MetaCells` class.
+#' @param obs_cols Character vector. The obs columns to attach.
+#'
+#' @returns `dt` with the obs columns added by reference.
+#'
+#' @keywords internal
+.attach_obs_by_id <- function(dt, object, obs_cols) {
+  checkmate::assertDataTable(dt)
+  checkmate::assertNames(names(dt), must.include = "cell_id")
+  checkmate::qassert(obs_cols, "S+")
+
+  id_col <- if (S7::S7_inherits(object, MetaCells)) "meta_cell_id" else
+    "cell_id"
+
+  obs_dt <- get_sc_obs(
+    object,
+    cols = unique(c(id_col, obs_cols)),
+    filtered = TRUE
+  )
+  pos <- match(dt$cell_id, obs_dt[[id_col]])
+  if (anyNA(pos)) {
+    stop("Some extracted cells are not in the (filtered) obs table.")
+  }
+  for (col in obs_cols) {
+    data.table::set(dt, j = col, value = obs_dt[[col]][pos])
+  }
+
+  dt
+}
+
+#' Restrict ADT counts to the kept cells
+#'
+#' @description ADT counts are keyed by barcode and frozen when they are added,
+#' so they can hold cells a later filter dropped. Returns the rows of the kept
+#' cells present in the ADT matrix, in kept cell order.
+#'
+#' @param object `SingleCellsMultiModal` class.
+#' @param mat Numeric matrix. Cells x features, cell ids as row names.
+#'
+#' @returns `mat` restricted to (and ordered by) the kept cells.
+#'
+#' @keywords internal
+.adt_kept_rows <- function(object, mat) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
+  checkmate::assertCharacter(rownames(mat), any.missing = FALSE)
+
+  kept <- get_cell_names(object, filtered = TRUE)
+  kept <- kept[kept %in% rownames(mat)]
+  if (length(kept) == 0L) {
+    stop("None of the kept cells are present in the ADT counts.")
+  }
+
+  mat[kept, , drop = FALSE]
+}
+
 #' Extract dense expression for in-memory count matrices
 #'
 #' @param mat Numeric matrix. Cells x features, with cell ids as row names and
@@ -1515,11 +1576,18 @@ S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
   }
 
   features <- .match_features(features, colnames(adt$norm_counts))
-  grouping <- as.factor(
-    unlist(object[[grouping_variable]], use.names = FALSE)
+  mat <- .adt_kept_rows(object, adt$norm_counts)
+  obs_dt <- get_sc_obs(
+    object,
+    cols = unique(c("cell_id", grouping_variable)),
+    filtered = TRUE
   )
+  grouping <- droplevels(as.factor(unlist(
+    obs_dt[[grouping_variable]][match(rownames(mat), obs_dt$cell_id)],
+    use.names = FALSE
+  )))
 
-  plot_dt <- .grouped_gene_stats_in_memory(adt$norm_counts, features, grouping)
+  plot_dt <- .grouped_gene_stats_in_memory(mat, features, grouping)
   .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
 }
 
@@ -1548,9 +1616,9 @@ S7::method(extract_dot_plot_data, MetaCells) <- function(
 
   mat <- get_sc_counts(object, assay = "norm")
   features <- .match_features(features, colnames(mat))
-  grouping <- as.factor(
+  grouping <- droplevels(as.factor(
     unlist(object[[grouping_variable]], use.names = FALSE)
-  )
+  ))
 
   plot_dt <- .grouped_gene_stats_in_memory(mat, features, grouping)
   .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
@@ -1617,10 +1685,7 @@ S7::method(extract_gene_expression, ScOrScSubset) <- function(
   }
 
   if (!is.null(obs_cols)) {
-    obs_dt <- object[[obs_cols]]
-    for (col in names(obs_dt)) {
-      data.table::set(dt, j = col, value = obs_dt[[col]])
-    }
+    dt <- .attach_obs_by_id(dt, object, obs_cols)
   }
 
   dt
@@ -1695,14 +1760,15 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
   }
 
   features <- .match_features(features, colnames(adt$norm_counts))
-  dt <- .extract_expr_in_memory(adt$norm_counts, features, scale, clip)
+  dt <- .extract_expr_in_memory(
+    .adt_kept_rows(object, adt$norm_counts),
+    features,
+    scale,
+    clip
+  )
 
-  # obs are attached positionally; rows are the kept cells in kept order
   if (!is.null(obs_cols)) {
-    obs_dt <- object[[obs_cols]]
-    for (col in names(obs_dt)) {
-      data.table::set(dt, j = col, value = obs_dt[[col]])
-    }
+    dt <- .attach_obs_by_id(dt, object, obs_cols)
   }
 
   dt
@@ -1747,10 +1813,7 @@ S7::method(extract_gene_expression, MetaCells) <- function(
   dt <- .extract_expr_in_memory(mat, features, scale, clip)
 
   if (!is.null(obs_cols)) {
-    obs_dt <- object[[obs_cols]]
-    for (col in names(obs_dt)) {
-      data.table::set(dt, j = col, value = obs_dt[[col]])
-    }
+    dt <- .attach_obs_by_id(dt, object, obs_cols)
   }
 
   dt

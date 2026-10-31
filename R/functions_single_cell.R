@@ -940,10 +940,7 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
   )
 
   if (!is.null(obs_cols)) {
-    obs_dt <- object[[obs_cols]]
-    for (col in names(obs_dt)) {
-      data.table::set(dt, j = col, value = obs_dt[[col]])
-    }
+    dt <- .attach_obs_by_id(dt, object, obs_cols)
   }
 
   data.table::setattr(dt, "embedding", embedding)

@@ -129,7 +129,11 @@ SingleCellDuckDBBase <- R6::R6Class(
         ""
       }
 
-      sql_query <- sprintf("SELECT %s FROM obs %s", col_part, where_part)
+      sql_query <- sprintf(
+        "SELECT %s FROM obs %s ORDER BY cell_idx",
+        col_part,
+        where_part
+      )
 
       obs_dt <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
@@ -170,11 +174,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       }
 
       sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM var", col_part)
+        sprintf("SELECT %s FROM var ORDER BY gene_idx", col_part)
       } else {
         placeholders <- paste(rep("?", length(indices)), collapse = ", ")
         sprintf(
-          "SELECT %s FROM var WHERE gene_idx IN (%s)",
+          "SELECT %s FROM var WHERE gene_idx IN (%s) ORDER BY gene_idx",
           col_part,
           placeholders
         )
@@ -257,7 +261,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       data <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
-        statement = 'SELECT cell_idx, cell_id FROM obs'
+        statement = 'SELECT cell_idx, cell_id FROM obs ORDER BY cell_idx'
       )) %>%
         `colnames<-`(c("index", "id"))
 
@@ -283,7 +287,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       data <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
-        statement = 'SELECT gene_idx, gene_id FROM var'
+        statement = 'SELECT gene_idx, gene_id FROM var ORDER BY gene_idx'
       )) %>%
         `colnames<-`(c("index", "id"))
 
@@ -309,7 +313,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       data <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
-        statement = 'SELECT cell_idx FROM obs WHERE to_keep'
+        statement = 'SELECT cell_idx FROM obs WHERE to_keep ORDER BY cell_idx'
       ))
 
       return(as.integer(data$cell_idx))

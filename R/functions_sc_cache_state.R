@@ -261,9 +261,9 @@ sc_stamp_env$counter <- 0L
 #' Hash of the cell state an artefact must agree with
 #'
 #' @description
-#' Order sensitive on purpose. [set_cells_to_keep()] does not sort, and the PCA
-#' rows come back from Rust in exactly `cell_indices` order, so row order is
-#' what aligns a cached matrix to a cell list.
+#' Order sensitive on purpose. [set_cells_to_keep()] stores the filter unique
+#' and ascending, but memory files written before 0.9.0 can hold an unsorted
+#' one; their cached rows follow that order and must hash as stale.
 #'
 #' @param x The object owning the cache.
 #'

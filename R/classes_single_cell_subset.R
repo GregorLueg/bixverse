@@ -859,7 +859,6 @@ S7::method(get_pca_factors, SingleCellsSubset) <- function(x, ...) {
   }
   .warn_sc_state(x, artefact = "pca")
   res <- .drop_stamp(res)
-  # TODO: confirm cell id column name
   rownames(res) <- S7::prop(x, "obs_table")$cell_id
   colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
   res
@@ -907,7 +906,6 @@ S7::method(get_embedding, SingleCellsSubset) <- function(x, embd_name, ...) {
   }
   .warn_sc_state(x, artefact = "embedding", name = embd_name)
   res <- .drop_stamp(res)
-  # TODO: confirm cell id column name
   rownames(res) <- S7::prop(x, "obs_table")$cell_id
   res
 }

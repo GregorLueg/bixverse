@@ -1544,10 +1544,8 @@ S7::method(save_h5ad, SingleCells) <- function(
   obs <- .h5ad_export_obs(object)
   var <- .h5ad_export_var(object)
 
-  # `set_cells_to_keep()` keeps whatever order it was handed, while the obs
-  # table comes back in cell index order; sorting here is what keeps the two
-  # aligned. 0-based, as Rust wants it.
-  cell_indices <- sort(get_cells_to_keep(object))
+  # ascending, like the obs table; 0-based, as Rust wants it
+  cell_indices <- get_cells_to_keep(object)
 
   # the DuckDB and the ScMap both track which cells are kept; a mismatch here
   # would silently misalign the obs table against the counts
@@ -2511,6 +2509,10 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertChoice(type, c("qs2", "rds"))
 
+  # copies of the object share one DuckDB; the saved object's filter is the
+  # one load_existing() reads back
+  .sync_cells_to_keep_to_db(object)
+
   # pull the data out from the class
   sc_map <- get_sc_map(object)
   # the Rust graph pointer does not survive serialisation; save its bytes
@@ -2639,6 +2641,69 @@ S7::method(upgrade_sc_store, SingleCells) <- function(
   invisible(NULL)
 }
 
+#' Write the object's cell filter to DuckDB before saving
+#'
+#' @description R copies of a `SingleCells` object share one DuckDB, so a
+#' [set_cells_to_keep()] on one copy rewrites `obs.to_keep` under all others.
+#' Saving re-asserts the saved object's own filter, so the memory file and
+#' the DB agree on disk.
+#'
+#' @param object `SingleCells` or `SingleCellsMultiModal` class.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @keywords internal
+.sync_cells_to_keep_to_db <- function(object) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+
+  duckdb_con <- get_sc_duckdb(object)
+  keep <- get_cells_to_keep(object) + 1L
+  if (!identical(duckdb_con$get_cells_to_keep(), keep)) {
+    duckdb_con$set_cells_to_keep(cell_idx_to_keep = keep)
+  }
+
+  invisible(NULL)
+}
+
+#' Take the cell filter from DuckDB when loading a saved object
+#'
+#' @description DuckDB `obs.to_keep` is the authoritative cell filter: another
+#' front end (or a hand edit of the DB) may have changed it after the memory
+#' file was written. When the two disagree, the DB wins and the cached
+#' artefacts in the memory file are flagged as stale.
+#'
+#' @param object `SingleCells` or `SingleCellsMultiModal` with the memory file
+#' already loaded.
+#' @param duckdb_con The `SingleCellDuckDB` connection of the object.
+#'
+#' @returns The object with the cell filter set from DuckDB.
+#'
+#' @keywords internal
+.sync_cells_to_keep_from_db <- function(object, duckdb_con) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertR6(duckdb_con, "SingleCellDuckDB")
+
+  db_keep <- duckdb_con$get_cells_to_keep()
+  # memory files from before 0.9.0 can hold an unsorted filter; the cached
+  # rows follow that order, so it counts as a mismatch too
+  mem_keep <- get_cells_to_keep(object) + 1L
+
+  if (!identical(as.integer(db_keep), as.integer(mem_keep))) {
+    warning(paste(
+      "The cell filter in the DuckDB differs from the one in the memory file.",
+      "Using the DuckDB one; cached artefacts may be stale, see",
+      "`get_sc_cache_status()`."
+    ))
+  }
+
+  S7::prop(object, "sc_map") <- set_cells_to_keep(
+    S7::prop(object, "sc_map"),
+    db_keep
+  )
+
+  object
+}
+
 #' @method load_existing SingleCells
 #'
 #' @export
@@ -2710,6 +2775,8 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
         "The dimensions of the found data do not agree with the Rust data."
       ))
     }
+
+    object <- .sync_cells_to_keep_from_db(object, duckdb_con)
   } else {
     cell_map <- duckdb_con$get_obs_index_map()
     gene_map <- duckdb_con$get_var_index_map()
@@ -2754,6 +2821,8 @@ S7::method(save_sc_exp_to_disk, SingleCellsMultiModal) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
   checkmate::assertChoice(type, c("qs2", "rds"))
+
+  .sync_cells_to_keep_to_db(object)
 
   # pull the data out from the class
   sc_map <- get_sc_map(object)
@@ -2864,6 +2933,8 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
         "The dimensions of the found data do not agree with the Rust data."
       ))
     }
+
+    object <- .sync_cells_to_keep_from_db(object, duckdb_con)
 
     # ADT is keyed by barcode and frozen at add time, so it can hold more
     # cells than survive later QC; only kept cells missing from it matter

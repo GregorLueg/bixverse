@@ -251,8 +251,8 @@ S7::method(assign_sc_type, SingleCells) <- function(
 #' @param slim Boolean. If `TRUE`, drops `z_orig` and `r` from the returned
 #' reference. `z_corr` is always kept (needed for kNN label transfer).
 #' @param label_columns Optional character vector of obs column names to
-#' snapshot into the reference. Read in `cells_to_keep` order to align with
-#' `z_corr`. Required for [transfer_labels_symphony()] unless populated
+#' snapshot into the reference. Read in cell index order of the kept cells,
+#' which is the row order of `z_corr`. Required for [transfer_labels_symphony()] unless populated
 #' later via [add_symphony_labels()].
 #' @param seed Integer.
 #' @param .verbose Boolean or integer.

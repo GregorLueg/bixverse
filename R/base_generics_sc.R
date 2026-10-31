@@ -278,11 +278,13 @@ set_cell_mapping <- function(x, cell_map) {
 #'
 #' @description Set the cells to keep. This is used for the single cell-related
 #' classes with streaming from disk and tells subsequent (Rust) methods which
-#' cells to include.
+#' cells to include. The filter is stored as unique, ascending cell indices:
+#' the order and any duplicates of `cells_to_keep` are dropped, so every
+#' result downstream follows the cell order of the store.
 #'
 #' @param x An object to set cells to keep for
-#' @param cells_to_keep String or integer. The names or indices of the cells
-#' to keep in downstream analysis.
+#' @param cells_to_keep String or integer. The names or indices (1-based) of
+#' the cells to keep in downstream analysis.
 #'
 #' @export
 #'

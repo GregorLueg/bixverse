@@ -39,8 +39,8 @@ universe of \code{object}. Must be provided explicitly.}
 reference. \code{z_corr} is always kept (needed for kNN label transfer).}
 
 \item{label_columns}{Optional character vector of obs column names to
-snapshot into the reference. Read in \code{cells_to_keep} order to align with
-\code{z_corr}. Required for \code{\link[=transfer_labels_symphony]{transfer_labels_symphony()}} unless populated
+snapshot into the reference. Read in cell index order of the kept cells,
+which is the row order of \code{z_corr}. Required for \code{\link[=transfer_labels_symphony]{transfer_labels_symphony()}} unless populated
 later via \code{\link[=add_symphony_labels]{add_symphony_labels()}}.}
 
 \item{seed}{Integer.}

@@ -157,7 +157,7 @@ S7::method(merge_sc_experiments, SingleCells) <- function(
     match_idx <- match(local_genes, universe)
     gene_local_to_universe <- as.integer(match_idx - 1L)
 
-    cells_to_keep_0idx <- sort(as.integer(get_cells_to_keep(inp)))
+    cells_to_keep_0idx <- get_cells_to_keep(inp)
 
     merge_tasks[[i]] <- list(
       exp_id = exp_ids[i],
