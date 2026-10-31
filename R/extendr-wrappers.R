@@ -3747,20 +3747,22 @@ rs_graph_connectivity <- function(knn_mat, labels) .Call(wrap__rs_graph_connecti
 #' @keywords internal
 rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
 
-#' Reduce BBKNN results to Top X neighbours
+#' Reduce BBKNN results to the k nearest neighbours
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Keeps the first `no_neighbours_to_keep` stored entries of each CSR row.
+#' Sorts each row of the BBKNN distance CSR by distance (ties by index) and
+#' keeps the first `no_neighbours_to_keep`. Rows with fewer stored entries
+#' are padded by repeating their last neighbour; an empty row points at the
+#' cell itself at distance zero.
 #'
 #' @param indptr Integer vector. The index pointers of the underlying data.
 #' @param indices Integer vector. The indices of the nearest neighbours.
 #' @param data Numeric vector. The distances to the nearest neighbours.
 #' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 #'
-#' @returns A list with `indices` and `dist`, both numeric (double) matrices
-#' of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
-#' are `NaN` in both.
+#' @returns A list with `indices` (integer, 0-indexed) and `dist` (numeric)
+#' matrices of shape (n_cells, no_neighbours_to_keep), nearest first.
 #'
 #' @export
 #'
@@ -4781,7 +4783,6 @@ rs_sc_residual_variance <- function(f_path_gene, f_path_cell, residual_fit, cell
 #' @param gene_indices Integer vector. The gene indices to use. (0-indexed!)
 #' Every one must be covered by the fit.
 #' @param seed Integer. Random seed for the randomised SVD.
-#' @param return_scaled Boolean. Shall the scaled data be returned.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -4790,14 +4791,12 @@ rs_sc_residual_variance <- function(f_path_gene, f_path_cell, residual_fit, cell
 #'   \item scores - The samples projected on the PCA space.
 #'   \item loadings - The loadings of the features for the PCA.
 #'   \item singular_values - The singular values for the PCA.
-#'   \item scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
-#'   `NULL`.
 #' }
 #'
 #' @export
 #'
 #' @keywords internal
-rs_sc_pca_residuals <- function(f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
+rs_sc_pca_residuals <- function(f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose)
 
 #' Writes scTransform-corrected counts to a new store
 #'
@@ -6233,8 +6232,7 @@ rs_metacell_separation <- function(dc, meta_cells) .Call(wrap__rs_metacell_separ
 #' @param cell_indices_ls List. Each element contains the 0-indexed positions
 #' of the cells to aggregate.
 #' @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
-#' counts, `"norm"` averages the normalised counts. Unrecognised values fall
-#' back to `"raw"`.
+#' counts, `"norm"` averages the normalised counts.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -6258,8 +6256,7 @@ rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .
 #' @param cell_indices_ls List. Each element contains the 0-indexed positions
 #' of the cells to aggregate.
 #' @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
-#' counts, `"norm"` averages the normalised counts. Unrecognised values fall
-#' back to `"raw"`.
+#' counts, `"norm"` averages the normalised counts.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'

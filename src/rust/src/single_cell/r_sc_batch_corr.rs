@@ -11,6 +11,8 @@ use bixverse_r::single_cell::sc_batch_correction::seurat_cca::*;
 use bixverse_r::single_cell::sc_batch_correction::seurat_rpca::*;
 use bixverse_r::single_cell::sc_processing::metrics::*;
 
+use crate::single_cell::utils::pad_knn_rows_warn;
+
 ////////////////////
 // extendr Module //
 ////////////////////
@@ -404,20 +406,22 @@ fn rs_bbknn(
     ))
 }
 
-/// Reduce BBKNN results to Top X neighbours
+/// Reduce BBKNN results to the k nearest neighbours
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Keeps the first `no_neighbours_to_keep` stored entries of each CSR row.
+/// Sorts each row of the BBKNN distance CSR by distance (ties by index) and
+/// keeps the first `no_neighbours_to_keep`. Rows with fewer stored entries
+/// are padded by repeating their last neighbour; an empty row points at the
+/// cell itself at distance zero.
 ///
 /// @param indptr Integer vector. The index pointers of the underlying data.
 /// @param indices Integer vector. The indices of the nearest neighbours.
 /// @param data Numeric vector. The distances to the nearest neighbours.
 /// @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 ///
-/// @returns A list with `indices` and `dist`, both numeric (double) matrices
-/// of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
-/// are `NaN` in both.
+/// @returns A list with `indices` (integer, 0-indexed) and `dist` (numeric)
+/// matrices of shape (n_cells, no_neighbours_to_keep), nearest first.
 ///
 /// @export
 ///
@@ -430,21 +434,19 @@ fn rs_bbknn_filtering(
     no_neighbours_to_keep: usize,
 ) -> List {
     let nrow = indptr.len() - 1;
-    let ncol = no_neighbours_to_keep;
+    let k = no_neighbours_to_keep;
 
-    let mut idx_mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
-    let mut dist_mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
+    let data: Vec<f32> = data.iter().map(|&d| d as f32).collect();
+    let indices: Vec<u32> = indices.iter().map(|&i| i as u32).collect();
+    let indptr: Vec<u32> = indptr.iter().map(|&i| i as u32).collect();
+    let distances: CompressedSparseData2<f32> =
+        CompressedSparseData2::new_csr(&data, &indices, &indptr, None, (nrow, nrow));
 
-    for i in 0..nrow {
-        let start_i = indptr[i] as usize;
-        let end_i = indptr[i + 1] as usize;
-        let take = (end_i - start_i).min(no_neighbours_to_keep);
+    let (mut knn_idx, mut knn_dist) = bbknn_nearest_neighbours(&distances, k);
+    pad_knn_rows_warn(&mut knn_idx, Some(&mut knn_dist), k);
 
-        for j in 0..take {
-            idx_mat[(i, j)] = indices[start_i + j] as f64;
-            dist_mat[(i, j)] = data[start_i + j];
-        }
-    }
+    let idx_mat = Mat::from_fn(nrow, k, |i, j| knn_idx[i][j] as i32);
+    let dist_mat = Mat::from_fn(nrow, k, |i, j| knn_dist[i][j] as f64);
 
     list!(
         indices = faer_to_r_matrix(idx_mat.as_ref()),
@@ -498,37 +500,19 @@ fn rs_mnn(
     verbose: usize,
     seed: usize,
 ) -> Result<RArray<f64, 2>> {
-    let verbosity = parse_verbosity_level(verbose);
-
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
     let mnn_params = FastMnnParams::from_r_list(mnn_params)?;
-
-    let offsets = if mnn_params.pca_params.clr {
-        if verbosity.normal_verbosity() {
-            println!("PFlogPF-transformation requested. Loading offsets from disk.")
-        }
-
-        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
-
-        Some(offsets)
-    } else {
-        None
-    };
-
-    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
-    let corrected_embd = fast_mnn_main(
-        &gene_reader,
+    let corrected_embd = fast_mnn_on_store(
+        f_path_gene,
+        f_path_cell,
         &cell_indices,
         &gene_indices,
         &batch_indices,
         pre_computed_pca,
-        offsets.as_deref(),
         &mnn_params,
         verbose,
         seed,
@@ -572,7 +556,9 @@ fn rs_harmony(
 
     for i in 0..batch_labels.len() {
         let batch_indices_i = batch_labels.elt(i)?;
-        let batch_indices_i = batch_indices_i.as_integer_vector().unwrap();
+        let batch_indices_i = batch_indices_i
+            .as_integer_vector()
+            .ok_or_else(|| Error::Other("batch_labels must be integer vectors.".into()))?;
         batch_indices.push(batch_indices_i.r_int_convert());
     }
 
@@ -623,7 +609,9 @@ fn rs_harmony_v2(
 
     for i in 0..batch_labels.len() {
         let batch_indices_i = batch_labels.elt(i)?;
-        let batch_indices_i = batch_indices_i.as_integer_vector().unwrap();
+        let batch_indices_i = batch_indices_i
+            .as_integer_vector()
+            .ok_or_else(|| Error::Other("batch_labels must be integer vectors.".into()))?;
         batch_indices.push(batch_indices_i.r_int_convert());
     }
 
@@ -693,37 +681,19 @@ fn rs_seurat_cca(
     verbose: usize,
     seed: usize,
 ) -> Result<RArray<f64, 2>> {
-    let verbosity = parse_verbosity_level(verbose);
-
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
     let cca_params = SeuratCcaParams::from_r_list(cca_params)?;
-
-    let offsets = if cca_params.pca_params.clr {
-        if verbosity.normal_verbosity() {
-            println!("PFlogPF-transformation requested. Loading offsets from disk.")
-        }
-
-        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
-
-        Some(offsets)
-    } else {
-        None
-    };
-
-    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
-    let corrected_embd = seurat_cca_integration(
-        &gene_reader,
+    let corrected_embd = seurat_cca_on_store(
+        f_path_gene,
+        f_path_cell,
         &cell_indices,
         &gene_indices,
         &batch_indices,
         pre_computed_pca,
-        offsets.as_deref(),
         &cca_params,
         verbose,
         seed,
@@ -783,37 +753,19 @@ fn rs_seurat_rpca(
     verbose: usize,
     seed: usize,
 ) -> Result<RArray<f64, 2>> {
-    let verbosity = parse_verbosity_level(verbose);
-
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
     let rpca_params = SeuratRpcaParams::from_r_list(rpca_params)?;
-
-    let offsets = if rpca_params.pca_params.clr {
-        if verbosity.normal_verbosity() {
-            println!("PFlogPF-transformation requested. Loading offsets from disk.")
-        }
-
-        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
-
-        Some(offsets)
-    } else {
-        None
-    };
-
-    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
-    let corrected_embd = seurat_rpca_integration(
-        &gene_reader,
+    let corrected_embd = seurat_rpca_on_store(
+        f_path_gene,
+        f_path_cell,
         &cell_indices,
         &gene_indices,
         &batch_indices,
         pre_computed_pca,
-        offsets.as_deref(),
         &rpca_params,
         verbose,
         seed,

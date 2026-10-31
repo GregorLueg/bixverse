@@ -9,7 +9,7 @@ use bixverse_r::single_cell::sc_data::data_io::{ParallelSparseReader, SingleCell
 use bixverse_r::single_cell::sc_data::in_memory_io::{
     prefer_cell_subset, read_cell_subset_csc, InMemorySparseReader,
 };
-use bixverse_r::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgScranRes};
+use bixverse_r::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgRes, HvgScranRes};
 use std::collections::HashMap;
 
 use extendr_api::*;
@@ -156,6 +156,48 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
     )
 }
 
+/// Flatten per-batch VST results into one long R list.
+///
+/// Assumes every batch covers the same genes, in the same order.
+///
+/// ### Params
+///
+/// * `results` - One [HvgRes] per batch.
+///
+/// ### Returns
+///
+/// List of equal-length vectors, batch-major: `mean`, `var`, `var_exp`,
+/// `var_std`, `batch` (0-indexed) and `gene_idx` (0-indexed position within
+/// the batch).
+pub fn flatten_vst_batches(results: Vec<HvgRes>) -> List {
+    let n_genes = results.first().map_or(0, |res| res.mean.len());
+    let total_len = n_genes * results.len();
+    let mut mean_flat = Vec::with_capacity(total_len);
+    let mut var_flat = Vec::with_capacity(total_len);
+    let mut var_exp_flat = Vec::with_capacity(total_len);
+    let mut var_std_flat = Vec::with_capacity(total_len);
+    let mut batch_idx = Vec::with_capacity(total_len);
+    let mut gene_idx = Vec::with_capacity(total_len);
+
+    for (batch, res) in results.into_iter().enumerate() {
+        mean_flat.extend(res.mean);
+        var_flat.extend(res.var);
+        var_exp_flat.extend(res.var_exp);
+        var_std_flat.extend(res.var_std);
+        batch_idx.extend(vec![batch as i32; n_genes]);
+        gene_idx.extend(0..n_genes as i32);
+    }
+
+    list!(
+        mean = mean_flat,
+        var = var_flat,
+        var_exp = var_exp_flat,
+        var_std = var_std_flat,
+        batch = batch_idx,
+        gene_idx = gene_idx
+    )
+}
+
 /// Flatten per-batch scran trend results into one long R list.
 ///
 /// Assumes every batch covers the same genes, in the same order.
@@ -262,6 +304,25 @@ pub fn pad_knn_rows_warn(
     }
 
     padded
+}
+
+/// Parse an optional R kNN list into indices and distances.
+///
+/// ### Params
+///
+/// * `knn_data` - `NULL` or the kNN list with `indices` and `dist`.
+///
+/// ### Returns
+///
+/// `None` for `NULL`, else the indices and distances per cell.
+pub fn optional_knn(knn_data: Nullable<List>) -> Result<Option<KnnRows>> {
+    match knn_data {
+        Nullable::Null => Ok(None),
+        Nullable::NotNull(list) => {
+            let (idx, dist, _, _) = knn_data_to_rust(list)?;
+            Ok(Some((idx, dist)))
+        }
+    }
 }
 
 /// Convert an R kNN index matrix into per-sample neighbour vectors.

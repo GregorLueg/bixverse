@@ -14,7 +14,6 @@ use bixverse_r::single_cell::sc_processing::{
 };
 use extendr_api::prelude::*;
 use faer::Mat;
-use rustc_hash::FxHashSet;
 use std::time::Instant;
 
 use crate::single_cell::utils::*;
@@ -433,10 +432,10 @@ fn rs_sc_get_gene_set_perc(
     let cell_indices = cell_indices.r_int_convert();
 
     for i in 0..gene_set_idx.len() {
-        let element = gene_set_idx.elt(i).unwrap();
+        let element = gene_set_idx.elt(i)?;
         let indices_i: Vec<u32> = element
             .as_integer_vector()
-            .unwrap()
+            .ok_or_else(|| Error::Other("gene_set_idx must be a list of integer vectors.".into()))?
             .iter()
             .map(|x| *x as u32)
             .collect();
@@ -597,138 +596,80 @@ fn rs_sc_hvg(
     streaming: bool,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
-    let cell_set = cell_indices.r_int_convert();
-
-    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
-    let hvg_type = parse_hvg_method(hvg_method)
-        .ok_or_else(|| format!("Invalid HVG method method: {}", hvg_method))?;
-    let subset = CellSubset::load(
-        f_path_cell,
-        &cell_set,
-        reader.get_header().total_cells,
-        verbose > 0,
+    let params = hvg_params_from_args(
+        hvg_method,
+        loess_span,
+        binning,
+        n_bins,
+        clip_max,
+        scran_params,
     )?;
 
-    match &subset {
-        Some(sub) => hvg_from_reader(
-            &sub.reader()?,
-            &sub.local,
-            hvg_type,
-            loess_span,
-            &binning,
-            n_bins,
-            clip_max,
-            scran_params,
-            streaming,
-            verbose,
+    let stats = hvg_on_store(
+        f_path_gene,
+        f_path_cell,
+        &cell_indices.r_int_convert(),
+        &params,
+        streaming,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(match stats {
+        HvgStats::Vst(res) => list!(
+            mean = res.mean,
+            var = res.var,
+            var_exp = res.var_exp,
+            var_std = res.var_std
         ),
-        None => hvg_from_reader(
-            &reader,
-            &cell_set,
-            hvg_type,
-            loess_span,
-            &binning,
-            n_bins,
-            clip_max,
-            scran_params,
-            streaming,
-            verbose,
+        HvgStats::Dispersion(res) => list!(
+            mean = res.mean,
+            dispersion = res.dispersion,
+            dispersion_scaled = res.dispersion_scaled,
+            bin = res.bin
         ),
-    }
+        HvgStats::Scran(res) => list!(
+            scran_mean = res.mean,
+            scran_var = res.var,
+            scran_fitted = res.fitted,
+            scran_residual = res.residual
+        ),
+    })
 }
 
-/// HVG statistics over one reader, the shared body of [`rs_sc_hvg`].
+/// Build the crate's HVG parameters from the loose `rs_sc_hvg*` arguments.
 ///
 /// ### Params
 ///
-/// * `reader` - Gene-major store, on disk or an in-memory cell subset.
-/// * `cell_set` - The selected cells, as indices into `reader`.
-/// * `hvg_type` - Which HVG method to run.
+/// * `hvg_method` - Which HVG method to run.
 /// * `loess_span` - Span of the loess (`vst`) or lowess (`scran`) trend.
 /// * `binning` - Binning strategy for `meanvarbin` and `dispersion`.
 /// * `n_bins` - Number of bins for `meanvarbin` and `dispersion`.
 /// * `clip_max` - Optional clipping value (`vst` only).
 /// * `scran_params` - The scran trend parameters as an R list.
-/// * `streaming` - Shall the genes be streamed in.
-/// * `verbose` - `0` quiet, `1` normal, `2` detailed.
 ///
 /// ### Returns
 ///
-/// The R list [`rs_sc_hvg`] documents.
-#[allow(clippy::too_many_arguments)]
-fn hvg_from_reader<S: SingleCellReading>(
-    reader: &S,
-    cell_set: &[usize],
-    hvg_type: HvgMethod,
+/// The `HvgParams`, or an error on an unknown method.
+fn hvg_params_from_args(
+    hvg_method: &str,
     loess_span: f64,
-    binning: &str,
+    binning: String,
     n_bins: usize,
     clip_max: Option<f32>,
     scran_params: List,
-    streaming: bool,
-    verbose: usize,
-) -> Result<List, extendr_api::Error> {
-    match hvg_type {
-        HvgMethod::Vst => {
-            let res = if streaming {
-                get_hvg_vst_streaming(reader, cell_set, loess_span as f32, clip_max, verbose)
-                    .to_extendr()?
-            } else {
-                get_hvg_vst(reader, cell_set, loess_span as f32, clip_max, verbose).to_extendr()?
-            };
-            Ok(list!(
-                mean = res.mean,
-                var = res.var,
-                var_exp = res.var_exp,
-                var_std = res.var_std
-            ))
-        }
-        HvgMethod::MeanVarBin => {
-            let res = if streaming {
-                get_hvg_mvb_streaming(reader, cell_set, binning, n_bins, verbose).to_extendr()?
-            } else {
-                get_hvg_mvb(reader, cell_set, binning, n_bins, verbose).to_extendr()?
-            };
-            Ok(list!(
-                mean = res.mean,
-                dispersion = res.dispersion,
-                dispersion_scaled = res.dispersion_scaled,
-                bin = res.bin
-            ))
-        }
-        HvgMethod::Dispersion => {
-            let res = if streaming {
-                get_hvg_dispersion_streaming(reader, cell_set, binning, n_bins, verbose)
-                    .to_extendr()?
-            } else {
-                get_hvg_dispersion(reader, cell_set, binning, n_bins, verbose).to_extendr()?
-            };
-            Ok(list!(
-                mean = res.mean,
-                dispersion = res.dispersion,
-                dispersion_scaled = res.dispersion_scaled,
-                bin = res.bin
-            ))
-        }
-        HvgMethod::Scran => {
-            let params = ScranTrendParams {
-                span: loess_span,
-                ..ScranTrendParams::from_r_list(scran_params)?
-            };
-            let res = if streaming {
-                get_hvg_scran_streaming(reader, cell_set, Some(params), verbose)
-            } else {
-                get_hvg_scran(reader, cell_set, Some(params), verbose)
-            }
-            .to_extendr()?;
-            Ok(list!(
-                scran_mean = res.mean,
-                scran_var = res.var,
-                scran_fitted = res.fitted,
-                scran_residual = res.residual
-            ))
-        }
-    }
+) -> Result<HvgParams, extendr_api::Error> {
+    let method = parse_hvg_method(hvg_method)
+        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))?;
+
+    Ok(HvgParams {
+        method,
+        loess_span,
+        n_bins,
+        binning,
+        clip_max,
+        scran: ScranTrendParams::from_r_list(scran_params)?,
+    })
 }
 
 /// Calculate HVG per batch
@@ -813,182 +754,56 @@ fn rs_sc_hvg_batch_aware(
     streaming: bool,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
-    let cell_set = cell_indices.r_int_convert();
-
-    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
-    let batch_set = batch_labels.r_int_convert();
-    let hvg_type = parse_hvg_method(hvg_method)
-        .ok_or_else(|| format!("Invalid HVG method method: {}", hvg_method))?;
-    // the batch labels are per selected cell, so they carry over to the
-    // renumbered subset unchanged
-    let subset = CellSubset::load(
-        f_path_cell,
-        &cell_set,
-        reader.get_header().total_cells,
-        verbose > 0,
+    let params = hvg_params_from_args(
+        hvg_method,
+        loess_span,
+        binning,
+        n_bins,
+        clip_max,
+        scran_params,
     )?;
 
-    match &subset {
-        Some(sub) => hvg_batch_aware_from_reader(
-            &sub.reader()?,
-            &sub.local,
-            &batch_set,
-            hvg_type,
-            loess_span,
-            &binning,
-            n_bins,
-            clip_max,
-            scran_params,
-            streaming,
-            verbose,
+    let stats = hvg_batch_aware_on_store(
+        f_path_gene,
+        f_path_cell,
+        &cell_indices.r_int_convert(),
+        &batch_labels.r_int_convert(),
+        &params,
+        streaming,
+        verbose,
+    )
+    .to_extendr()?;
+
+    // every batch ran the same method, so all entries share one variant
+    Ok(match params.method {
+        HvgMethod::Vst => flatten_vst_batches(
+            stats
+                .into_iter()
+                .filter_map(|s| match s {
+                    HvgStats::Vst(res) => Some(res),
+                    _ => None,
+                })
+                .collect(),
         ),
-        None => hvg_batch_aware_from_reader(
-            &reader,
-            &cell_set,
-            &batch_set,
-            hvg_type,
-            loess_span,
-            &binning,
-            n_bins,
-            clip_max,
-            scran_params,
-            streaming,
-            verbose,
+        HvgMethod::MeanVarBin | HvgMethod::Dispersion => flatten_dispersion_batches(
+            stats
+                .into_iter()
+                .filter_map(|s| match s {
+                    HvgStats::Dispersion(res) => Some(res),
+                    _ => None,
+                })
+                .collect(),
         ),
-    }
-}
-
-/// Batch-aware HVG statistics over one reader, the shared body of
-/// [`rs_sc_hvg_batch_aware`].
-///
-/// ### Params
-///
-/// * `reader` - Gene-major store, on disk or an in-memory cell subset.
-/// * `cell_set` - The selected cells, as indices into `reader`.
-/// * `batch_set` - Batch label per selected cell, 0-indexed and dense.
-/// * `hvg_type` - Which HVG method to run.
-/// * `loess_span` - Span of the loess (`vst`) or lowess (`scran`) trend.
-/// * `binning` - Binning strategy for `meanvarbin` and `dispersion`.
-/// * `n_bins` - Number of bins for `meanvarbin` and `dispersion`.
-/// * `clip_max` - Optional clipping value (`vst` only).
-/// * `scran_params` - The scran trend parameters as an R list.
-/// * `streaming` - Shall the genes be streamed in.
-/// * `verbose` - `0` quiet, `1` normal, `2` detailed.
-///
-/// ### Returns
-///
-/// The R list [`rs_sc_hvg_batch_aware`] documents.
-#[allow(clippy::too_many_arguments)]
-fn hvg_batch_aware_from_reader<S: SingleCellReading>(
-    reader: &S,
-    cell_set: &[usize],
-    batch_set: &[usize],
-    hvg_type: HvgMethod,
-    loess_span: f64,
-    binning: &str,
-    n_bins: usize,
-    clip_max: Option<f32>,
-    scran_params: List,
-    streaming: bool,
-    verbose: usize,
-) -> Result<List, extendr_api::Error> {
-    match hvg_type {
-        HvgMethod::Vst => {
-            let results = if streaming {
-                get_hvg_vst_batch_aware_streaming(
-                    reader,
-                    cell_set,
-                    batch_set,
-                    loess_span as f32,
-                    clip_max,
-                    verbose,
-                )
-            } else {
-                get_hvg_vst_batch_aware(
-                    reader,
-                    cell_set,
-                    batch_set,
-                    loess_span as f32,
-                    clip_max,
-                    verbose,
-                )
-            }
-            .to_extendr()?;
-
-            let n_genes = results.first().map_or(0, |res| res.mean.len());
-            let total_len = n_genes * results.len();
-            let mut mean_flat = Vec::with_capacity(total_len);
-            let mut var_flat = Vec::with_capacity(total_len);
-            let mut var_exp_flat = Vec::with_capacity(total_len);
-            let mut var_std_flat = Vec::with_capacity(total_len);
-            let mut batch_idx = Vec::with_capacity(total_len);
-            let mut gene_idx = Vec::with_capacity(total_len);
-
-            for (batch, res) in results.into_iter().enumerate() {
-                mean_flat.extend(res.mean);
-                var_flat.extend(res.var);
-                var_exp_flat.extend(res.var_exp);
-                var_std_flat.extend(res.var_std);
-                batch_idx.extend(vec![batch as i32; n_genes]);
-                gene_idx.extend(0..n_genes as i32);
-            }
-
-            Ok(list!(
-                mean = mean_flat,
-                var = var_flat,
-                var_exp = var_exp_flat,
-                var_std = var_std_flat,
-                batch = batch_idx,
-                gene_idx = gene_idx
-            ))
-        }
-        HvgMethod::MeanVarBin => {
-            let results = if streaming {
-                get_hvg_mvb_batch_aware_streaming(
-                    reader, cell_set, batch_set, binning, n_bins, verbose,
-                )
-            } else {
-                get_hvg_mvb_batch_aware(reader, cell_set, batch_set, binning, n_bins, verbose)
-            }
-            .to_extendr()?;
-
-            Ok(flatten_dispersion_batches(results))
-        }
-        HvgMethod::Dispersion => {
-            let results = if streaming {
-                get_hvg_dispersion_batch_aware_streaming(
-                    reader, cell_set, batch_set, binning, n_bins, verbose,
-                )
-            } else {
-                get_hvg_dispersion_batch_aware(
-                    reader, cell_set, batch_set, binning, n_bins, verbose,
-                )
-            }
-            .to_extendr()?;
-
-            Ok(flatten_dispersion_batches(results))
-        }
-        HvgMethod::Scran => {
-            let params = ScranTrendParams {
-                span: loess_span,
-                ..ScranTrendParams::from_r_list(scran_params)?
-            };
-            let results = if streaming {
-                get_hvg_scran_batch_aware_streaming(
-                    reader,
-                    cell_set,
-                    batch_set,
-                    Some(params),
-                    verbose,
-                )
-            } else {
-                get_hvg_scran_batch_aware(reader, cell_set, batch_set, Some(params), verbose)
-            }
-            .to_extendr()?;
-
-            Ok(flatten_scran_batches(results))
-        }
-    }
+        HvgMethod::Scran => flatten_scran_batches(
+            stats
+                .into_iter()
+                .filter_map(|s| match s {
+                    HvgStats::Scran(res) => Some(res),
+                    _ => None,
+                })
+                .collect(),
+        ),
+    })
 }
 
 /////////
@@ -1044,30 +859,17 @@ fn rs_sc_pca(
     return_scaled: bool,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
-    let verbosity = parse_verbosity_level(verbose);
-
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
-
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
 
-    let offsets = if pca_params.clr {
-        if verbosity.normal_verbosity() {
-            println!("PFlogPF-transformation requested. Loading offsets from disk.")
-        }
-
-        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-        let offsets = reader.get_clr_offsets(&cell_set, None).to_extendr()?;
-
-        Some(offsets)
-    } else {
-        None
-    };
-
+    // the crate's pca_on_store drops the scaled matrix, so the dense path
+    // keeps calling pca_on_sc directly
+    let offsets =
+        clr_offsets_on_store(f_path_cell, &cell_set, pca_params.clr, verbose).to_extendr()?;
     let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
 
-    let res = pca_on_sc(
+    let (scores, loadings, singular_values, scaled) = pca_on_sc(
         &gene_reader,
         &cell_set,
         &gene_indices,
@@ -1080,14 +882,11 @@ fn rs_sc_pca(
     )
     .to_extendr()?;
 
-    let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
-    let scaled = res.3.map(|s| faer_to_r_matrix(s.as_ref()));
-
     Ok(list!(
-        scores = faer_to_r_matrix(res.0.as_ref()),
-        loadings = faer_to_r_matrix(res.1.as_ref()),
-        singular_values = singular_values_f64,
-        scaled = scaled
+        scores = faer_to_r_matrix(scores.as_ref()),
+        loadings = faer_to_r_matrix(loadings.as_ref()),
+        singular_values = singular_values.r_float_convert(),
+        scaled = scaled.map(|m| faer_to_r_matrix(m.as_ref()))
     ))
 }
 
@@ -1139,44 +938,25 @@ fn rs_sc_pca_sparse(
     seed: usize,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
-    let verbosity = parse_verbosity_level(verbose);
-    let cell_set = cell_indices.r_int_convert();
-    let gene_indices = gene_indices.r_int_convert();
-
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
 
-    let offsets = if pca_params.clr {
-        if verbosity.normal_verbosity() {
-            println!("PFlogPF-transformation requested. Loading offsets from disk.")
-        }
-
-        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-        let offsets = reader.get_clr_offsets(&cell_set, None).to_extendr()?;
-
-        Some(offsets)
-    } else {
-        None
-    };
-
-    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
-
-    let res = pca_on_sc_sparse(
-        &gene_reader,
-        &cell_set,
-        &gene_indices,
+    let (scores, loadings, singular_values) = pca_on_store(
+        f_path_gene,
+        f_path_cell,
+        &cell_indices.r_int_convert(),
+        &gene_indices.r_int_convert(),
         no_pcs,
         &pca_params,
-        offsets.as_deref(),
+        true,
         seed,
         verbose,
     )
     .to_extendr()?;
 
     Ok(list!(
-        scores = faer_to_r_matrix(res.0.as_ref()),
-        loadings = faer_to_r_matrix(res.1.as_ref()),
-        singular_values = res.2.r_float_convert()
+        scores = faer_to_r_matrix(scores.as_ref()),
+        loadings = faer_to_r_matrix(loadings.as_ref()),
+        singular_values = singular_values.r_float_convert()
     ))
 }
 
@@ -1400,57 +1180,26 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
     let (indices_a, dist_a, _, _) = knn_data_to_rust(knn_data_a)?;
     let (indices_b, dist_b, _, _) = knn_data_to_rust(knn_data_b)?;
 
-    if indices_a.len() != indices_b.len() {
-        return Err(Error::Other(
-            "The two kNN data sets have different number of samples".into(),
-        ));
-    }
-    if indices_a[0].len() != indices_b[0].len() {
-        return Err(Error::Other(
-            "The two kNN data sets have a different set of neighbours requested".into(),
-        ));
-    }
+    let k = indices_a.first().map_or(0, |row| row.len());
+    let flat_idx = |rows: &[Vec<usize>]| -> Vec<u32> {
+        rows.iter().flatten().map(|&i| i as u32).collect()
+    };
+    let flat_dist = |rows: &[Vec<f32>]| -> Vec<f32> { rows.iter().flatten().copied().collect() };
 
-    // calculate the recalls
-    let k = indices_a[0].len();
-
-    let mut total_recall = 0.0;
-    let mut all_matches: Vec<usize> = Vec::with_capacity(indices_a.len());
-
-    for (nn_a, nn_b) in indices_a.iter().zip(indices_b.iter()) {
-        let true_set: FxHashSet<_> = nn_a.iter().take(k).collect();
-        let approx_set: FxHashSet<_> = nn_b.iter().take(k).collect();
-
-        let matches = approx_set.intersection(&true_set).count();
-        all_matches.push(matches);
-
-        total_recall += matches as f64 / k as f64;
-    }
-
-    let final_recall = total_recall / indices_a.len() as f64;
-
-    let mut all_ratios: Vec<f64> = Vec::with_capacity(dist_a.len());
-    let mut total_ratio: f64 = 0.0;
-    let mut count = 0usize;
-
-    for (d_a, d_b) in dist_a.iter().zip(dist_b.iter()) {
-        let sum_a: f64 = d_a.iter().map(|x| *x as f64).sum();
-        let sum_b: f64 = d_b.iter().map(|x| *x as f64).sum();
-        if sum_a > 1e-12 {
-            let ratio = sum_b / sum_a;
-            all_ratios.push(ratio);
-            total_ratio += ratio;
-            count += 1;
-        }
-    }
-
-    let final_ratio = total_ratio / count as f64;
+    let metrics = compare_knn(
+        &flat_idx(&indices_a),
+        &flat_dist(&dist_a),
+        &flat_idx(&indices_b),
+        &flat_dist(&dist_b),
+        k,
+    )
+    .to_extendr()?;
 
     Ok(list!(
-        all_matches = all_matches.r_int_convert(),
-        all_ratios = all_ratios,
-        final_recall = final_recall,
-        final_ratio = final_ratio
+        all_matches = metrics.all_matches.r_int_convert(),
+        all_ratios = metrics.all_ratios,
+        final_recall = metrics.final_recall,
+        final_ratio = metrics.final_ratio
     ))
 }
 

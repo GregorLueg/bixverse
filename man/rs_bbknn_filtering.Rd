@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_bbknn_filtering}
 \alias{rs_bbknn_filtering}
-\title{Reduce BBKNN results to Top X neighbours}
+\title{Reduce BBKNN results to the k nearest neighbours}
 \usage{
 rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 }
@@ -16,12 +16,14 @@ rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 \item{no_neighbours_to_keep}{Integer. Number of nearest neighbours to keep.}
 }
 \value{
-A list with \code{indices} and \code{dist}, both numeric (double) matrices
-of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
-are \code{NaN} in both.
+A list with \code{indices} (integer, 0-indexed) and \code{dist} (numeric)
+matrices of shape (n_cells, no_neighbours_to_keep), nearest first.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Keeps the first \code{no_neighbours_to_keep} stored entries of each CSR row.
+Sorts each row of the BBKNN distance CSR by distance (ties by index) and
+keeps the first \code{no_neighbours_to_keep}. Rows with fewer stored entries
+are padded by repeating their last neighbour; an empty row points at the
+cell itself at distance zero.
 }
 \keyword{internal}

@@ -688,7 +688,6 @@ print.ScResidualFit <- function(x, ...) {
     cell_indices = cell_indices,
     gene_indices = selected_hvg,
     seed = seed,
-    return_scaled = FALSE,
     verbose = parse_verbosity(.verbose)
   )
 

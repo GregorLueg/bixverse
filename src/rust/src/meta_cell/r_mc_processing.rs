@@ -5,26 +5,19 @@
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::mc_analysis::metrics::pairwise_gene_correlations_in_memory;
 use bixverse_r::single_cell::mc_processing::hvg_pca::*;
-use bixverse_r::single_cell::sc_data::in_memory_io::InMemorySparseReader;
-use bixverse_r::single_cell::sc_processing::analytic_pearson::model::AprParams;
-use bixverse_r::single_cell::sc_processing::analytic_pearson::stream::{
-    apr_gene_pass, build_apr_model, cell_totals_over_genes, fit_analytic_pearson_grouped,
-    AprGroupedFit,
-};
 use bixverse_r::single_cell::sc_processing::hvg::*;
-use bixverse_r::single_cell::sc_processing::pca::{pca_on_sc_residuals, SingleCellPcaParams};
-use bixverse_r::single_cell::sc_processing::residuals::residual_variance;
-use bixverse_r::single_cell::sc_processing::sctransform::model::{SctCovariates, SctParams};
-use bixverse_r::single_cell::sc_processing::sctransform::stream::{
-    fit_sctransform, fit_sctransform_grouped, SctGroupedFit, SctStreamOpts,
+use bixverse_r::single_cell::sc_processing::pca::SingleCellPcaParams;
+use bixverse_r::single_cell::sc_processing::residual_fit::{
+    fit_residuals_in_memory, pca_residuals_in_memory, residual_variance_in_memory,
 };
+use bixverse_r::single_cell::sc_processing::sctransform::stream::SctStreamOpts;
 use extendr_api::*;
 use std::time::Instant;
 
 use crate::meta_cell::utils::{mc_list_to_sparse_f32, mc_list_to_sparse_u32};
 use crate::single_cell::r_sc_residuals::{
-    apr_fit_to_r_list, parse_residual_fit, residual_variance_to_r_list, resolve_groups,
-    sct_fit_to_r_list, stream_opts, with_residual_source, METHOD_APR, METHOD_SCT,
+    parse_residual_fit, residual_covariates, residual_fit_to_r_list, residual_params,
+    residual_variance_to_r_list, resolve_groups, stream_opts,
 };
 
 /////////////
@@ -364,107 +357,20 @@ fn rs_mc_fit_residuals(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_u32(sparse_data)?;
-    let sparse = to_csc(sparse);
+    let groups = resolve_groups(group_of_cell, sparse.shape.0)?;
+    let params = residual_params(method, params)?;
+    let covariates = residual_covariates(&params, covariates)?;
 
-    let n_cells = sparse.shape.0;
-    let cell_set: Vec<usize> = (0..n_cells).collect();
-    let opts = stream_opts(None, seed, verbose);
+    let fit = fit_residuals_in_memory(
+        &sparse,
+        groups.as_deref(),
+        covariates,
+        params,
+        stream_opts(None, seed, verbose),
+    )
+    .to_extendr()?;
 
-    let gene_reader = InMemorySparseReader::new(&sparse, None).to_extendr()?;
-
-    match method {
-        METHOD_SCT => {
-            let sct_params = SctParams::from_r_list(params)?;
-            let covariates = SctCovariates::from_r_list(covariates)?;
-            covariates.validate(n_cells).to_extendr()?;
-
-            let library_sizes: Vec<f64> = gene_reader
-                .read_cell_library_sizes(&cell_set)
-                .to_extendr()?
-                .into_iter()
-                .map(|s| s as f64)
-                .collect();
-            let log10_umi: Vec<f64> = library_sizes.iter().map(|&s| s.log10()).collect();
-
-            let fit = match &group_of_cell {
-                None => {
-                    let (model, _pass) = fit_sctransform(
-                        &gene_reader,
-                        &cell_set,
-                        &library_sizes,
-                        &covariates,
-                        &sct_params,
-                        None,
-                        None,
-                        opts,
-                    )
-                    .to_extendr()?;
-
-                    SctGroupedFit {
-                        genes: model.genes.clone(),
-                        models: vec![model],
-                        passes: Vec::new(),
-                        group_of_cell: vec![0_u32; n_cells],
-                    }
-                }
-                Some(_) => {
-                    let groups = resolve_groups(group_of_cell.clone(), n_cells)?;
-                    fit_sctransform_grouped(
-                        &gene_reader,
-                        &cell_set,
-                        &groups,
-                        &library_sizes,
-                        &covariates,
-                        &sct_params,
-                        opts,
-                    )
-                    .to_extendr()?
-                }
-            };
-
-            Ok(sct_fit_to_r_list(&fit, &log10_umi, &covariates, &cell_set))
-        }
-        METHOD_APR => {
-            let apr_params = AprParams::from_r_list(params)?;
-
-            // the analytic Pearson fit sums each cell over its group's retained
-            // genes, which a gene-major sweep cannot answer
-            let cell_reader = InMemorySparseReader::new_cell_major(&sparse, None).to_extendr()?;
-
-            let fit = match &group_of_cell {
-                None => {
-                    let pass =
-                        apr_gene_pass(&gene_reader, &cell_set, &apr_params, opts).to_extendr()?;
-                    let totals = cell_totals_over_genes(&cell_reader, &cell_set, &pass.retained)
-                        .to_extendr()?;
-                    let model = build_apr_model(&pass, &totals, &apr_params).to_extendr()?;
-
-                    AprGroupedFit {
-                        models: vec![model],
-                        cell_totals: totals,
-                        group_of_cell: vec![0_u32; n_cells],
-                    }
-                }
-                Some(_) => {
-                    let groups = resolve_groups(group_of_cell.clone(), n_cells)?;
-                    fit_analytic_pearson_grouped(
-                        &gene_reader,
-                        &cell_reader,
-                        &cell_set,
-                        &groups,
-                        &apr_params,
-                        opts,
-                    )
-                    .to_extendr()?
-                }
-            };
-
-            Ok(apr_fit_to_r_list(&fit, &cell_set))
-        }
-        other => Err(Error::Other(format!(
-            "Unknown residual method '{other}'. Expected '{METHOD_SCT}' or '{METHOD_APR}'."
-        ))),
-    }
+    Ok(residual_fit_to_r_list(&fit))
 }
 
 /// Residual variance and variable features for meta cells
@@ -499,21 +405,17 @@ fn rs_mc_residual_variance(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_u32(sparse_data)?;
-    let sparse = to_csc(sparse);
+    let fit = parse_residual_fit(residual_fit)?;
 
-    let cell_set: Vec<usize> = (0..sparse.shape.0).collect();
-    let opts = stream_opts(None, SctStreamOpts::default().seed, verbose);
+    let res = residual_variance_in_memory(
+        &sparse,
+        &fit,
+        n_hvg,
+        stream_opts(None, SctStreamOpts::default().seed, verbose),
+    )
+    .to_extendr()?;
 
-    let reader = InMemorySparseReader::new(&sparse, None).to_extendr()?;
-    let fit = parse_residual_fit(residual_fit, &cell_set)?;
-
-    let (genes, variance, hvg) = with_residual_source(&fit, |source| {
-        let per_group = residual_variance(&reader, source, &cell_set, opts)?;
-        let hvg = select_residual_hvg(&per_group, source.genes(), n_hvg)?;
-        Ok((source.genes().to_vec(), per_group, hvg))
-    })?;
-
-    Ok(residual_variance_to_r_list(&genes, &variance, &hvg))
+    Ok(residual_variance_to_r_list(&res))
 }
 
 /// Calculates PCA on Pearson residuals for meta cells
@@ -557,57 +459,25 @@ fn rs_mc_pca_residuals(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_u32(sparse_data)?;
-    let sparse = to_csc(sparse);
-
-    let cell_set: Vec<usize> = (0..sparse.shape.0).collect();
-    let gene_set = gene_indices.r_int_convert();
-
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+    let fit = parse_residual_fit(residual_fit)?;
 
-    let reader = InMemorySparseReader::new(&sparse, None).to_extendr()?;
-    let fit = parse_residual_fit(residual_fit, &cell_set)?;
-
-    let res = with_residual_source(&fit, |source| {
-        pca_on_sc_residuals(
-            &reader,
-            &cell_set,
-            &gene_set,
-            no_pcs,
-            &pca_params,
-            source,
-            seed,
-            false,
-            verbose,
-        )
-    })?;
+    let (scores, loadings, singular_values) = pca_residuals_in_memory(
+        &sparse,
+        &fit,
+        &gene_indices.r_int_convert(),
+        no_pcs,
+        &pca_params,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
 
     Ok(list!(
-        scores = faer_to_r_matrix(res.0.as_ref()),
-        loadings = faer_to_r_matrix(res.1.as_ref()),
-        singular_values = res.2.r_float_convert()
+        scores = faer_to_r_matrix(scores.as_ref()),
+        loadings = faer_to_r_matrix(loadings.as_ref()),
+        singular_values = singular_values.r_float_convert()
     ))
-}
-
-/// Ensure the meta cell matrix is CSC over (metacells, genes)
-///
-/// The R side hands over CSR, and [InMemorySparseReader] wants the gene-major
-/// layout of the same matrix. `transform` converts the format and leaves the
-/// shape alone, which is exactly that; `transpose_and_convert` would swap the
-/// axes instead.
-///
-/// ### Params
-///
-/// * `sparse` - The matrix as it arrived from R.
-///
-/// ### Returns
-///
-/// The same matrix, CSC.
-fn to_csc(sparse: CompressedSparseData2<u32, f32>) -> CompressedSparseData2<u32, f32> {
-    if sparse.cs_type.is_csc() {
-        sparse
-    } else {
-        sparse.transform()
-    }
 }
 
 ///////////////////
