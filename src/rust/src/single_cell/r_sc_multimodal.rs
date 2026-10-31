@@ -4,7 +4,7 @@ use bixverse_r::single_cell::sc_batch_correction::batch_utils::cosine_normalise;
 use extendr_api::*;
 use faer::Mat;
 
-use crate::single_cell::utils::pad_knn_rows;
+use crate::single_cell::utils::pad_knn_rows_warn;
 
 ////////////////////
 // extendr Module //
@@ -98,7 +98,7 @@ fn rs_wnn(
     .to_extendr()?;
 
     let mut dist_1 = dist_1.unwrap();
-    pad_knn_rows(&mut indices_1, Some(&mut dist_1), k_min);
+    pad_knn_rows_warn(&mut indices_1, Some(&mut dist_1), k_min);
 
     // second modality
     if verbosity.normal_verbosity() {
@@ -119,7 +119,7 @@ fn rs_wnn(
     .to_extendr()?;
 
     let mut dist_2 = dist_2.unwrap();
-    pad_knn_rows(&mut indices_2, Some(&mut dist_2), k_min);
+    pad_knn_rows_warn(&mut indices_2, Some(&mut dist_2), k_min);
 
     let wnn_modality_1 = ModalityInput::new(modality_emb_one.as_ref(), &indices_1, &dist_1);
     let wnn_modality_2 = ModalityInput::new(modality_emb_two.as_ref(), &indices_2, &dist_2);

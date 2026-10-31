@@ -54,10 +54,10 @@ Defaults to \code{list()}.}
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{extract_knn}, \code{m}, \code{ef_construction},
-\code{ef_search}, \code{n_list} and \code{n_probe}. Note: this function defaults to \code{k = 0L}
-(automatic neighbour detection). See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the
-available elements. Defaults to \code{list(k = 0L)}.}
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
+and \code{n_probe}. Note: this function defaults to \code{k = 0L} (automatic neighbour
+detection). See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the available elements. Defaults
+to \code{list(k = 0L)}.}
 }
 \value{
 A named list with the following elements:

@@ -228,16 +228,12 @@ pub fn r_list_to_index_vecs(r_list: List, what: &str) -> Result<Vec<Vec<usize>>>
 // kNN //
 /////////
 
-/// Pad a possibly ragged kNN graph out to a rectangular `k` columns.
+/// Pad a possibly ragged kNN graph out to `k` columns and warn about it.
 ///
-/// The NN-Descent `extract_knn` path hands back the graph the descent built
-/// rather than beam searching it, and rows can come back shorter than `k`
-/// where the descent never filled them. Everything that crosses into R as a
-/// matrix needs a rectangle, so short rows are padded by repeating their last
-/// neighbour, and an empty row falls back to the node itself at distance zero.
-///
-/// The padding is a duplicate edge, not a new one, so anything downstream that
-/// deduplicates neighbours sees the true, shorter neighbourhood.
+/// Wraps the crate's `pad_knn_rows`, which is silent. Only
+/// `knn_method = "nndescent_graph"` leaves rows short. The padding repeats
+/// the last neighbour, so anything that deduplicates neighbours sees the
+/// true, shorter neighbourhood.
 ///
 /// ### Params
 ///
@@ -248,34 +244,17 @@ pub fn r_list_to_index_vecs(r_list: List, what: &str) -> Result<Vec<Vec<usize>>>
 /// ### Returns
 ///
 /// The number of rows that needed padding.
-pub fn pad_knn_rows(
+pub fn pad_knn_rows_warn(
     indices: &mut [Vec<usize>],
-    mut distances: Option<&mut [Vec<f32>]>,
+    distances: Option<&mut [Vec<f32>]>,
     k: usize,
 ) -> usize {
-    let mut padded = 0;
-
-    for (i, idx_row) in indices.iter_mut().enumerate() {
-        if idx_row.len() >= k {
-            continue;
-        }
-        padded += 1;
-
-        let (fill_idx, fill_dist) = match (idx_row.last(), distances.as_ref()) {
-            (Some(&last), Some(dists)) => (last, dists[i].last().copied().unwrap_or(0.0)),
-            (Some(&last), None) => (last, 0.0),
-            (None, _) => (i, 0.0),
-        };
-
-        idx_row.resize(k, fill_idx);
-        if let Some(dists) = distances.as_mut() {
-            dists[i].resize(k, fill_dist);
-        }
-    }
+    let padded =
+        bixverse_r::single_cell::sc_processing::knn::pad_knn_rows(indices, distances, k);
 
     if padded > 0 {
         println!(
-            "[WARNING!] {} of {} rows came back with fewer than {} neighbours and were padded with duplicate edges. This is expected with 'extract_knn'; lower 'k' or turn it off to avoid it.",
+            "[WARNING!] {} of {} rows came back with fewer than {} neighbours and were padded with duplicate edges. This is expected with 'nndescent_graph'; lower 'k' or use 'nndescent' to avoid it.",
             padded,
             indices.len(),
             k

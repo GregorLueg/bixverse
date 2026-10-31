@@ -105,7 +105,7 @@ spec_scrublet <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`.",
         "Note: this function defaults to `k = 0L` (automatic",
         "neighbour detection)."
@@ -218,7 +218,7 @@ spec_boost <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`.",
         "Note: this function defaults to `k = 0L` (automatic",
         "neighbour detection)."
@@ -457,7 +457,7 @@ spec_sc_neighbours <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -657,7 +657,7 @@ spec_sc_vision <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -895,7 +895,7 @@ spec_sc_hotspot <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1179,7 +1179,7 @@ spec_sc_bt_metacells <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1257,7 +1257,7 @@ spec_sc_seacells <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1319,7 +1319,7 @@ spec_sc_supercell <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1602,7 +1602,7 @@ spec_sc_bbknn <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1644,7 +1644,7 @@ spec_sc_fastmnn <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     ),
@@ -1994,7 +1994,7 @@ spec_sc_seurat_cca <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`. Note",
         "that `k` is unused here, the neighbourhood sizes come from",
         "`k_anchor`, `k_filter`, `k_score` and `k_weight`."
@@ -2067,7 +2067,7 @@ spec_sc_seurat_rpca <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`. Note",
         "that `k` is unused here, the neighbourhood sizes come from",
         "`k_anchor`, `k_score` and `k_weight`."
@@ -2454,7 +2454,7 @@ spec_sc_wnn <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )

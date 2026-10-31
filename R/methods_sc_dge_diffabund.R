@@ -511,7 +511,7 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
 #'   \item refinement_strategy - String. Strategy for refining sampled indices.
 #'   One of `c("approximate", "bruteforce", "index")`.
 #'   \item index_type - String. Type of kNN index to use. One of
-#'   `c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")`.
+#'   `c("nndescent", "hnsw", "annoy", "exhaustive")`.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }

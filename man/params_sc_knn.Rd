@@ -6,14 +6,14 @@
 \usage{
 params_sc_knn(
   k = 15L,
-  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf",
+    "exhaustive"),
   ann_dist = c("euclidean", "cosine"),
   n_trees = 50L,
   search_budget = NULL,
   delta = 0.001,
   diversify_prob = 0,
   ef_budget = NULL,
-  extract_knn = FALSE,
   m = 16L,
   ef_construction = 200L,
   ef_search = 100L,
@@ -25,7 +25,10 @@ params_sc_knn(
 \item{k}{Integer. Number of neighbours. Defaults to \code{15L}.}
 
 \item{knn_method}{String. Which method to use for the approximate nearest
-neighbour search. One of \code{c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}.}
+neighbour search. \code{"nndescent_graph"} hands back the graph the NN-Descent
+built instead of beam searching an index: much faster, at the cost of some
+recall. Rows the descent never filled come back padded with duplicate edges.
+One of \code{c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}.}
 
 \item{ann_dist}{String. Distance metric to use. One of \code{c("euclidean", "cosine")}. Defaults to \code{"euclidean"}.}
 
@@ -43,12 +46,6 @@ applied at the end of index construction. Defaults to \code{0.0}.}
 
 \item{ef_budget}{Integer or \code{NULL}. NNDescent param: optional query budget.
 Higher values improve recall at the cost of speed. Defaults to \code{NULL}.}
-
-\item{extract_knn}{Boolean. NNDescent param: hand back the graph the descent
-already built instead of beam searching it. Skips the query pass entirely, so
-it is much faster, at the cost of some recall. Rows the descent never filled
-come back padded with duplicate edges. Ignored by every other method.
-Defaults to \code{FALSE}.}
 
 \item{m}{Integer. HNSW param: number of connections between layers. Defaults
 to \code{16L}.}
@@ -70,7 +67,10 @@ A named list with the following elements:
 \itemize{
 \item k - Integer. Number of neighbours. Defaults to \code{15L}.
 \item knn_method - String. Which method to use for the approximate nearest
-neighbour search. One of \code{c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}.
+neighbour search. \code{"nndescent_graph"} hands back the graph the NN-Descent
+built instead of beam searching an index: much faster, at the cost of some
+recall. Rows the descent never filled come back padded with duplicate edges.
+One of \code{c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}.
 \item ann_dist - String. Distance metric to use. One of \code{c("euclidean", "cosine")}. Defaults to \code{"euclidean"}.
 \item n_trees - Integer. Annoy param: number of trees. Defaults to \code{50L}.
 \item search_budget - Integer or \code{NULL}. Annoy param: optional search budget
@@ -82,11 +82,6 @@ Defaults to \code{0.001}.
 applied at the end of index construction. Defaults to \code{0.0}.
 \item ef_budget - Integer or \code{NULL}. NNDescent param: optional query budget.
 Higher values improve recall at the cost of speed. Defaults to \code{NULL}.
-\item extract_knn - Boolean. NNDescent param: hand back the graph the
-descent already built instead of beam searching it. Skips the query pass
-entirely, so it is much faster, at the cost of some recall. Rows the descent
-never filled come back padded with duplicate edges. Ignored by every other
-method. Defaults to \code{FALSE}.
 \item m - Integer. HNSW param: number of connections between layers.
 Defaults to \code{16L}.
 \item ef_construction - Integer. HNSW param: size of the dynamic candidate

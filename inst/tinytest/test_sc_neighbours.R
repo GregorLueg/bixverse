@@ -653,16 +653,15 @@ expect_true(
 
 ### nndescent graph extraction -------------------------------------------------
 
-# `extract_knn` hands back the graph the descent built rather than beam
+# `nndescent_graph` hands back the graph the descent built rather than beam
 # searching it. Cheaper, lower recall, and rows the descent never filled come
 # back padded, so this deliberately does not demand the recall == 1 the beam
 # search above gets.
 rs_nndescent_extract <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(
-    knn_method = "nndescent",
-    ann_dist = "euclidean",
-    extract_knn = TRUE
+    knn_method = "nndescent_graph",
+    ann_dist = "euclidean"
   ),
   validate_index = FALSE,
   verbose = 0L,
@@ -691,9 +690,8 @@ nndescent_extract_data <- generate_knn_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
     knn = list(
-      knn_method = "nndescent",
-      ann_dist = "euclidean",
-      extract_knn = TRUE
+      knn_method = "nndescent_graph",
+      ann_dist = "euclidean"
     )
   ),
   .verbose = FALSE

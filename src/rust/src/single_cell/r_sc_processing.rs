@@ -1222,67 +1222,14 @@ fn rs_sc_knn(
 
     let start_knn = Instant::now();
 
-    let knn_method = parse_knn_method(&knn_params.knn_method).unwrap_or_default();
-
-    let mut knn = match knn_method {
-        KnnSearch::Hnsw => generate_knn_hnsw(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.m,
-            knn_params.ef_construction,
-            knn_params.ef_search,
-            seed,
-            validate_index,
-            verbosity.normal_verbosity(),
-        ),
-        KnnSearch::Annoy => generate_knn_annoy(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.n_tree,
-            knn_params.search_budget,
-            seed,
-            validate_index,
-            verbosity.normal_verbosity(),
-        ),
-        KnnSearch::NNDescent => generate_knn_nndescent(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.diversify_prob,
-            knn_params.ef_budget,
-            knn_params.delta,
-            knn_params.extract_knn,
-            seed,
-            validate_index,
-            verbosity.normal_verbosity(),
-        ),
-        KnnSearch::Exhaustive => generate_knn_exhaustive(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            verbosity.normal_verbosity(),
-        ),
-        KnnSearch::Ivf => generate_knn_ivf(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.n_list,
-            knn_params.n_probe,
-            seed,
-            validate_index,
-            verbosity.normal_verbosity(),
-        ),
-        KnnSearch::KmKnn => generate_knn_kmknn(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.n_list,
-            seed,
-            verbosity.normal_verbosity(),
-        ),
-    }
+    let (mut knn, _) = generate_knn_with_dist(
+        embd.as_ref(),
+        &knn_params,
+        false,
+        validate_index,
+        seed,
+        verbosity.normal_verbosity(),
+    )
     .to_extendr()?;
 
     let end_knn = start_knn.elapsed();
@@ -1291,7 +1238,7 @@ fn rs_sc_knn(
         println!("KNN generation done : {:.2?}", end_knn);
     }
 
-    pad_knn_rows(&mut knn, None, knn_params.k);
+    pad_knn_rows_warn(&mut knn, None, knn_params.k);
 
     let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn[i][j] as i32);
 
@@ -1352,7 +1299,7 @@ fn rs_sc_knn_w_dist(
     .to_extendr()?;
 
     let mut knn_dist = knn_dist.unwrap();
-    pad_knn_rows(&mut knn_indices, Some(&mut knn_dist), knn_params.k);
+    pad_knn_rows_warn(&mut knn_indices, Some(&mut knn_dist), knn_params.k);
 
     let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_indices[i][j] as i32);
     let dist_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_dist[i][j] as f64);

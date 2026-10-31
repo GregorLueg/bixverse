@@ -196,10 +196,10 @@ params_blitzgsea <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. Note: this function defaults to `k = 0L`
-#' (automatic neighbour detection). See [params_knn_defaults()] for the
-#' available elements. Defaults to `list(k = 0L)`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note: this function defaults to `k = 0L` (automatic neighbour
+#' detection). See [params_knn_defaults()] for the available elements. Defaults
+#' to `list(k = 0L)`.
 #' @param fast_cluster_params List. Optional overrides for the fast clustering
 #' parameters. Only relevant if `fast_cluster = TRUE`. See
 #' [params_fast_cluster_default()] for available parameters: `km_type`,
@@ -1508,7 +1508,10 @@ params_kmeans_defaults <- function() {
 #' \itemize{
 #'  \item k - Integer. Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - String. Which method to use for the approximate nearest
-#'  neighbour search. One of `c("kmknn", "hnsw", "annoy", "nndescent", "ivf",
+#'  neighbour search. `"nndescent_graph"` hands back the graph the NN-Descent
+#'  built instead of beam searching an index: much faster, at the cost of some
+#'  recall. Rows the descent never filled come back padded with duplicate edges.
+#'  One of `c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf",
 #'  "exhaustive")`. Defaults to `"kmknn"`.
 #'  \item ann_dist - String. Which distance metric to use for the approximate
 #'  nearest neighbour search. One of `c("euclidean", "cosine")`. Defaults to
@@ -1526,11 +1529,6 @@ params_kmeans_defaults <- function() {
 #'  \item ef_budget - Integer or `NULL`. NNDescent param: optional query budget
 #'  parameter. Can accelerate querying, but at the cost of Recall. Defaults to
 #'  `NULL`.
-#'  \item extract_knn - Boolean. NNDescent param: hand back the graph the
-#'  descent already built instead of beam searching it. Skips the query pass
-#'  entirely, so it is much faster, at the cost of some recall. Rows the descent
-#'  never filled come back padded with duplicate edges. Ignored by every other
-#'  method. Defaults to `FALSE`.
 #'  \item m - Integer. HNSW param: number of connections between layers for
 #'  HNSW. Defaults to `16L`.
 #'  \item ef_construction - Integer. HNSW param: size of dynamic candidate list
@@ -1554,7 +1552,6 @@ params_knn_defaults <- function() {
     delta = 0.001,
     diversify_prob = 0.0,
     ef_budget = NULL,
-    extract_knn = FALSE,
     m = 16L,
     ef_construction = 200L,
     ef_search = 100L,
@@ -2744,9 +2741,9 @@ params_sc_aucell <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3016,9 +3013,9 @@ params_sc_branch_selection <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3650,9 +3647,9 @@ params_sc_fast_cluster <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list(k = 20L)`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list(k = 20L)`.
 #' @param pca List. Parameters to feed through to the optional recalculation of
 #' the PCA, see [params_sc_pca()]. See [params_sc_pca()] for the available
 #' elements. Defaults to `params_sc_pca()`.
@@ -4088,9 +4085,9 @@ params_sc_harmony_v2 <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -4224,7 +4221,10 @@ params_sc_hvg <- function(
 #'
 #' @param k Integer. Number of neighbours. Defaults to `15L`.
 #' @param knn_method String. Which method to use for the approximate nearest
-#' neighbour search. One of `c("kmknn", "hnsw", "annoy", "nndescent", "ivf",
+#' neighbour search. `"nndescent_graph"` hands back the graph the NN-Descent
+#' built instead of beam searching an index: much faster, at the cost of some
+#' recall. Rows the descent never filled come back padded with duplicate edges.
+#' One of `c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf",
 #' "exhaustive")`. Defaults to `"kmknn"`.
 #' @param ann_dist String. Distance metric to use. One of `c("euclidean",
 #' "cosine")`. Defaults to `"euclidean"`.
@@ -4238,11 +4238,6 @@ params_sc_hvg <- function(
 #' applied at the end of index construction. Defaults to `0.0`.
 #' @param ef_budget Integer or `NULL`. NNDescent param: optional query budget.
 #' Higher values improve recall at the cost of speed. Defaults to `NULL`.
-#' @param extract_knn Boolean. NNDescent param: hand back the graph the descent
-#' already built instead of beam searching it. Skips the query pass entirely, so
-#' it is much faster, at the cost of some recall. Rows the descent never filled
-#' come back padded with duplicate edges. Ignored by every other method.
-#' Defaults to `FALSE`.
 #' @param m Integer. HNSW param: number of connections between layers. Defaults
 #' to `16L`.
 #' @param ef_construction Integer. HNSW param: size of the dynamic candidate
@@ -4258,7 +4253,10 @@ params_sc_hvg <- function(
 #' \itemize{
 #'  \item k - Integer. Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - String. Which method to use for the approximate nearest
-#'  neighbour search. One of `c("kmknn", "hnsw", "annoy", "nndescent", "ivf",
+#'  neighbour search. `"nndescent_graph"` hands back the graph the NN-Descent
+#'  built instead of beam searching an index: much faster, at the cost of some
+#'  recall. Rows the descent never filled come back padded with duplicate edges.
+#'  One of `c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf",
 #'  "exhaustive")`. Defaults to `"kmknn"`.
 #'  \item ann_dist - String. Distance metric to use. One of `c("euclidean",
 #'  "cosine")`. Defaults to `"euclidean"`.
@@ -4272,11 +4270,6 @@ params_sc_hvg <- function(
 #'  applied at the end of index construction. Defaults to `0.0`.
 #'  \item ef_budget - Integer or `NULL`. NNDescent param: optional query budget.
 #'  Higher values improve recall at the cost of speed. Defaults to `NULL`.
-#'  \item extract_knn - Boolean. NNDescent param: hand back the graph the
-#'  descent already built instead of beam searching it. Skips the query pass
-#'  entirely, so it is much faster, at the cost of some recall. Rows the descent
-#'  never filled come back padded with duplicate edges. Ignored by every other
-#'  method. Defaults to `FALSE`.
 #'  \item m - Integer. HNSW param: number of connections between layers.
 #'  Defaults to `16L`.
 #'  \item ef_construction - Integer. HNSW param: size of the dynamic candidate
@@ -4292,14 +4285,21 @@ params_sc_hvg <- function(
 #' @export
 params_sc_knn <- function(
   k = 15L,
-  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
+  knn_method = c(
+    "kmknn",
+    "hnsw",
+    "annoy",
+    "nndescent",
+    "nndescent_graph",
+    "ivf",
+    "exhaustive"
+  ),
   ann_dist = c("euclidean", "cosine"),
   n_trees = 50L,
   search_budget = NULL,
   delta = 0.001,
   diversify_prob = 0.0,
   ef_budget = NULL,
-  extract_knn = FALSE,
   m = 16L,
   ef_construction = 200L,
   ef_search = 100L,
@@ -4313,7 +4313,15 @@ params_sc_knn <- function(
   checkmate::qassert(k, "I1[1,)")
   checkmate::assertChoice(
     knn_method,
-    c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")
+    c(
+      "kmknn",
+      "hnsw",
+      "annoy",
+      "nndescent",
+      "nndescent_graph",
+      "ivf",
+      "exhaustive"
+    )
   )
   checkmate::assertChoice(ann_dist, c("euclidean", "cosine"))
   checkmate::qassert(n_trees, "I1[1,)")
@@ -4321,7 +4329,6 @@ params_sc_knn <- function(
   checkmate::qassert(delta, "N1(0,)")
   checkmate::qassert(diversify_prob, "N1[0,1]")
   checkmate::qassert(ef_budget, c("I1[1,)", "0"))
-  checkmate::qassert(extract_knn, "B1")
   checkmate::qassert(m, "I1[1,)")
   checkmate::qassert(ef_construction, "I1[1,)")
   checkmate::qassert(ef_search, "I1[1,)")
@@ -4338,7 +4345,6 @@ params_sc_knn <- function(
     delta = delta,
     diversify_prob = diversify_prob,
     ef_budget = ef_budget,
-    extract_knn = extract_knn,
     m = m,
     ef_construction = ef_construction,
     ef_search = ef_search,
@@ -4814,9 +4820,9 @@ params_sc_mtx_io <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -5179,9 +5185,9 @@ params_sc_sctransform <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -5283,11 +5289,10 @@ params_sc_seacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. Note that `k` is unused here, the
-#' neighbourhood sizes come from `k_anchor`, `k_filter`, `k_score` and
-#' `k_weight`. See [params_knn_defaults()] for the available elements. Defaults
-#' to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
+#' from `k_anchor`, `k_filter`, `k_score` and `k_weight`. See
+#' [params_knn_defaults()] for the available elements. Defaults to `list()`.
 #' @param pca List. Parameters to feed through to the optional recalculation of
 #' the PCA, see [params_sc_pca()]. See [params_sc_pca()] for the available
 #' elements. Defaults to `params_sc_pca()`.
@@ -5390,10 +5395,10 @@ params_sc_seurat_cca <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. Note that `k` is unused here, the
-#' neighbourhood sizes come from `k_anchor`, `k_score` and `k_weight`. See
-#' [params_knn_defaults()] for the available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
+#' from `k_anchor`, `k_score` and `k_weight`. See [params_knn_defaults()] for
+#' the available elements. Defaults to `list()`.
 #' @param pca List. Parameters to feed through to the optional recalculation of
 #' the PCA, see [params_sc_pca()]. See [params_sc_pca()] for the available
 #' elements. Defaults to `params_sc_pca()`.
@@ -5482,9 +5487,9 @@ params_sc_seurat_rpca <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -5906,9 +5911,9 @@ params_sc_synthetic_dialogue <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -5968,9 +5973,9 @@ params_sc_vision <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. See [params_knn_defaults()] for the
-#' available elements. Defaults to `list()`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. See [params_knn_defaults()] for the available elements.
+#' Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -6519,10 +6524,10 @@ params_scenic_random_forest_defaults <- function() {
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
-#' `ef_search`, `n_list` and `n_probe`. Note: this function defaults to `k = 0L`
-#' (automatic neighbour detection). See [params_knn_defaults()] for the
-#' available elements. Defaults to `list(k = 0L)`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note: this function defaults to `k = 0L` (automatic neighbour
+#' detection). See [params_knn_defaults()] for the available elements. Defaults
+#' to `list(k = 0L)`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{

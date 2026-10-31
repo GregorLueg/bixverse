@@ -31,7 +31,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-r = { version = "0.9.5", default-features = false, features = [
+bixverse-r = { version = "0.10.0", default-features = false, features = [
     "single-cell",
     "multi-modal",
     "dge",
@@ -40,7 +40,7 @@ bixverse-r = { version = "0.9.5", default-features = false, features = [
     "h5",
     "parquet"
 ] }
-edge-rs = "0.3.0"
+edge-rs = "0.3.2"
 extendr-api = "0.9.0"
 faer = { version = "0.24.4", default-features = false, features = ["std", "rayon", "sparse-linalg", "rand"] }
 half = { version = "2.7.1", features = ["serde"] }
@@ -56,7 +56,7 @@ thousands = "*"
 # c-blosc compiles its own win32 pthread shim into blosc.o, which clashes with
 # the winpthread that Rust std links on windows-gnu. No Blosc/LZF on Windows.
 [target.'cfg(not(windows))'.dependencies]
-bixverse-r = { version = "0.9.4", default-features = false, features = [
+bixverse-r = { version = "0.10.0", default-features = false, features = [
     "hdf5-filters",
 ] }
 
@@ -65,4 +65,4 @@ name = "document"
 path = "document.rs"
 
 [patch.crates-io]
-bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "jax-wiring" }
+bixverse-r = { path = "../../../../../../bixverse-rs/crates/bixverse-r" }

@@ -107,17 +107,27 @@ spec_knn_defaults <- param_defaults(
   hint = paste(
     "k must be >= 0; n_trees, m, ef_construction and ef_search must be",
     ">= 1; search_budget, ef_budget, n_list and n_probe must be NULL or",
-    ">= 1; delta and diversify_prob must be in [0, 1]; extract_knn must be",
-    "a single boolean."
+    ">= 1; delta and diversify_prob must be in [0, 1]."
   ),
   fields = list(
     k = p_int(15L, range = "[0,)", doc = "Number of neighbours."),
     knn_method = p_choice(
       "kmknn",
-      c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
+      c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "nndescent_graph",
+        "ivf",
+        "exhaustive"
+      ),
       doc = paste(
         "Which method to use for the approximate nearest neighbour",
-        "search."
+        "search. `\"nndescent_graph\"` hands back the graph the",
+        "NN-Descent built instead of beam searching an index: much",
+        "faster, at the cost of some recall. Rows the descent never",
+        "filled come back padded with duplicate edges."
       )
     ),
     ann_dist = p_choice(
@@ -163,16 +173,6 @@ spec_knn_defaults <- param_defaults(
       doc = paste(
         "NNDescent param: optional query budget parameter. Can",
         "accelerate querying, but at the cost of Recall."
-      )
-    ),
-    extract_knn = p_lgl(
-      FALSE,
-      doc = paste(
-        "NNDescent param: hand back the graph the descent already built",
-        "instead of beam searching it. Skips the query pass entirely, so",
-        "it is much faster, at the cost of some recall. Rows the descent",
-        "never filled come back padded with duplicate edges. Ignored by",
-        "every other method."
       )
     ),
     m = p_int(

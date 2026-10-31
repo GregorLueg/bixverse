@@ -361,7 +361,7 @@ sce <- find_neighbours_sc(
   object = sce,
   embd_to_use = "pca",
   neighbours_params = params_sc_neighbours(
-    knn = list(knn_method = "nndescent", extract_knn = TRUE)
+    knn = list(knn_method = "nndescent_graph")
   )
 )
 ```
