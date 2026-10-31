@@ -3387,8 +3387,8 @@ params_sc_dsb <- function(
 #' One of `c("supplied", "umi_cutoff", "expected_cells", "knee")`. Defaults to
 #' `"supplied"`.
 #' @param is_empty_column String or `NULL`. Name of the logical obs column
-#' holding the mask. Required for `method = "supplied"`, ignored otherwise.
-#' Defaults to `NULL`.
+#' holding the mask, `TRUE` for an empty droplet. Used by `method = "supplied"`,
+#' ignored otherwise. Defaults to `"is_empty"`.
 #' @param umi_cutoff Integer or `NULL`. Barcodes with a library size strictly
 #' below this are empty. Required for `method = "umi_cutoff"`, ignored
 #' otherwise. Defaults to `NULL`.
@@ -3402,8 +3402,8 @@ params_sc_dsb <- function(
 #'  description. One of `c("supplied", "umi_cutoff", "expected_cells", "knee")`.
 #'  Defaults to `"supplied"`.
 #'  \item is_empty_column - String or `NULL`. Name of the logical obs column
-#'  holding the mask. Required for `method = "supplied"`, ignored otherwise.
-#'  Defaults to `NULL`.
+#'  holding the mask, `TRUE` for an empty droplet. Used by `method =
+#'  "supplied"`, ignored otherwise. Defaults to `"is_empty"`.
 #'  \item umi_cutoff - Integer or `NULL`. Barcodes with a library size strictly
 #'  below this are empty. Required for `method = "umi_cutoff"`, ignored
 #'  otherwise. Defaults to `NULL`.
@@ -3415,7 +3415,7 @@ params_sc_dsb <- function(
 #' @export
 params_sc_empty_droplets <- function(
   method = c("supplied", "umi_cutoff", "expected_cells", "knee"),
-  is_empty_column = NULL,
+  is_empty_column = "is_empty",
   umi_cutoff = NULL,
   expected_cells = NULL
 ) {
@@ -4888,7 +4888,7 @@ params_sc_neighbours <- function(
 #' once during the diffusion-map eigendecomposition. If `NULL`, derived from the
 #' requested component count. Defaults to `NULL`.
 #' @param lanczos_max_restarts Integer. Maximum restart cycles for the Lanczos
-#' solver. Defaults to `16L`.
+#' solver. Defaults to `64L`.
 #' @param lanczos_tol Numeric. Relative residual tolerance for the Lanczos
 #' solver. Defaults to `1e-08`.
 #' @param knn_params List. Optional overrides for the kNN parameters of the
@@ -4923,7 +4923,7 @@ params_sc_neighbours <- function(
 #'  once during the diffusion-map eigendecomposition. If `NULL`, derived from
 #'  the requested component count. Defaults to `NULL`.
 #'  \item lanczos_max_restarts - Integer. Maximum restart cycles for the Lanczos
-#'  solver. Defaults to `16L`.
+#'  solver. Defaults to `64L`.
 #'  \item lanczos_tol - Numeric. Relative residual tolerance for the Lanczos
 #'  solver. Defaults to `1e-08`.
 #'  \item The elements of [params_knn_defaults()], overridden by `knn_params`,
@@ -4943,7 +4943,7 @@ params_sc_palantir <- function(
   max_iterations = 25L,
   branch_prob_threshold = 0.01,
   lanczos_basis_size = NULL,
-  lanczos_max_restarts = 16L,
+  lanczos_max_restarts = 64L,
   lanczos_tol = 1e-08,
   knn_params = list()
 ) {

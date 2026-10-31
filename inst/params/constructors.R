@@ -2551,7 +2551,7 @@ spec_sc_palantir <- param_spec(
       )
     ),
     lanczos_max_restarts = p_int(
-      16L,
+      64L,
       range = "[1,)",
       doc = "Maximum restart cycles for the Lanczos solver."
     ),
@@ -3460,11 +3460,12 @@ spec_sc_empty_droplets <- param_spec(
       doc = "How the empty droplets are called, see the description."
     ),
     is_empty_column = p_chr(
-      NULL,
+      "is_empty",
       null_ok = TRUE,
       doc = paste(
-        "Name of the logical obs column holding the mask. Required",
-        "for `method = \"supplied\"`, ignored otherwise."
+        "Name of the logical obs column holding the mask, `TRUE` for",
+        "an empty droplet. Used by `method = \"supplied\"`, ignored",
+        "otherwise."
       )
     ),
     umi_cutoff = p_int(

@@ -18,9 +18,7 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
 #' testable on an obs table alone.
 #'
 #' @param obs data.table. The unfiltered obs table, with `lib_size`.
-#' @param empty_params List. See [params_sc_empty_droplets()]. Required: there
-#' is no safe default, since the recommended `method = "supplied"` needs the
-#' name of the obs column holding the mask.
+#' @param empty_params List. See [params_sc_empty_droplets()].
 #' @param .verbose Logical. Controls verbosity.
 #'
 #' @returns Logical vector, `TRUE` where the barcode is an empty droplet.
@@ -30,7 +28,17 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
   if (identical(empty_params$method, "supplied")) {
     col <- empty_params$is_empty_column
     if (!col %in% names(obs)) {
-      stop(sprintf("'%s' is not a column in the obs table.", col))
+      stop(sprintf(
+        paste(
+          "`method = \"supplied\"` reads the empty droplet mask from the obs",
+          "column '%s', which does not exist. Add it with",
+          "set_sc_new_obs_col(), point `is_empty_column` at your own",
+          "column, or call the empty droplets from the counts with",
+          "params_sc_empty_droplets(method = \"umi_cutoff\",",
+          "\"expected_cells\" or \"knee\")."
+        ),
+        col
+      ))
     }
     is_empty <- obs[[col]]
     if (!is.logical(is_empty)) {
@@ -177,9 +185,8 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
 #' @param celltype_column String. Obs column with the cell-type labels.
 #' @param sample_column String. Obs column identifying the emulsion. One
 #' independent fit per level.
-#' @param empty_params List. See [params_sc_empty_droplets()]. Required: there
-#' is no safe default, since the recommended `method = "supplied"` needs the
-#' name of the obs column holding the mask.
+#' @param empty_params List. See [params_sc_empty_droplets()]. The default
+#' `method = "supplied"` reads the logical obs column `is_empty`.
 #' @param cellsweep_params List. See [params_sc_cellsweep()].
 #' @param sc_qc_param List. See [params_sc_min_quality()]. Only `target_size` is
 #' used, to scale the new normalised layer.

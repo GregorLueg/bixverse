@@ -32,9 +32,8 @@ it.}
 \item{sample_column}{String. Obs column identifying the emulsion. One
 independent fit per level.}
 
-\item{empty_params}{List. See \code{\link[=params_sc_empty_droplets]{params_sc_empty_droplets()}}. Required: there
-is no safe default, since the recommended \code{method = "supplied"} needs the
-name of the obs column holding the mask.}
+\item{empty_params}{List. See \code{\link[=params_sc_empty_droplets]{params_sc_empty_droplets()}}. The default
+\code{method = "supplied"} reads the logical obs column \code{is_empty}.}
 
 \item{cellsweep_params}{List. See \code{\link[=params_sc_cellsweep]{params_sc_cellsweep()}}.}
 

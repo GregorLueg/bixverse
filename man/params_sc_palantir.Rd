@@ -14,7 +14,7 @@ params_sc_palantir(
   max_iterations = 25L,
   branch_prob_threshold = 0.01,
   lanczos_basis_size = NULL,
-  lanczos_max_restarts = 16L,
+  lanczos_max_restarts = 64L,
   lanczos_tol = 1e-08,
   knn_params = list()
 )
@@ -52,7 +52,7 @@ once during the diffusion-map eigendecomposition. If \code{NULL}, derived from t
 requested component count. Defaults to \code{NULL}.}
 
 \item{lanczos_max_restarts}{Integer. Maximum restart cycles for the Lanczos
-solver. Defaults to \code{16L}.}
+solver. Defaults to \code{64L}.}
 
 \item{lanczos_tol}{Numeric. Relative residual tolerance for the Lanczos
 solver. Defaults to \code{1e-08}.}
@@ -90,7 +90,7 @@ zeroed. Defaults to \code{0.01}.
 once during the diffusion-map eigendecomposition. If \code{NULL}, derived from
 the requested component count. Defaults to \code{NULL}.
 \item lanczos_max_restarts - Integer. Maximum restart cycles for the Lanczos
-solver. Defaults to \code{16L}.
+solver. Defaults to \code{64L}.
 \item lanczos_tol - Numeric. Relative residual tolerance for the Lanczos
 solver. Defaults to \code{1e-08}.
 \item The elements of \code{\link[=params_knn_defaults]{params_knn_defaults()}}, overridden by \code{knn_params},
