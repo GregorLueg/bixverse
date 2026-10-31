@@ -3032,7 +3032,7 @@ rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(
 #' @param max_rank Integer. Maximum rank to consider for the recovery curves
 #' (at most `nrow(rankings)`).
 #' @param method String. Recovery curve calculation method, one of
-#' `c("approx", "icistarget")`. Anything else falls back to `"approx"`.
+#' `c("approx", "icistarget")`.
 #' @param n_mean Integer. Window size for the smoothing in the approximate
 #' method.
 #' @param verbose Boolean. Report progress per decile of gene sets.
@@ -7273,8 +7273,7 @@ rs_adt_clr <- function(counts, seurat_clr) .Call(wrap__rs_adt_clr, counts, seura
 #' @param scale_factor String. One of `"standardise"` or `"mean_subtract"`.
 #' Only used when `background_counts` is provided. `"standardise"` subtracts
 #' the per-protein background mean and divides by the per-protein background
-#' SD. `"mean_subtract"` subtracts the mean only. Unrecognised values fall
-#' back to `"standardise"`.
+#' SD. `"mean_subtract"` subtracts the mean only.
 #' @param seed Integer. Random seed for the k-means initialisations.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.

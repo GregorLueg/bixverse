@@ -1,10 +1,7 @@
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::multi_modal::wnn::*;
-use bixverse_r::single_cell::sc_batch_correction::batch_utils::cosine_normalise;
 use extendr_api::*;
 use faer::Mat;
-
-use crate::single_cell::utils::pad_knn_rows_warn;
 
 ////////////////////
 // extendr Module //
@@ -64,68 +61,18 @@ fn rs_wnn(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let verbosity = parse_verbosity_level(verbose);
-    let mut wnn_params = WnnParams::from_r_list(wnn_params)?;
-
-    let k_min = wnn_params.knn_range;
-
-    wnn_params.knn_params.k = k_min;
-
+    let wnn_params = WnnParams::from_r_list(wnn_params)?;
     let modality_emb_one = r_matrix_to_faer_fp32(&modality_emb_one);
     let modality_emb_two = r_matrix_to_faer_fp32(&modality_emb_two);
 
-    let modality_emb_one = cosine_normalise(&modality_emb_one);
-    let modality_emb_two = cosine_normalise(&modality_emb_two);
-
-    // deal with the knn graphs
-    // first modality
-
-    if verbosity.normal_verbosity() {
-        println!(
-            "Running the kNN generation for the first modality with {:?} neighbours.",
-            k_min
-        )
-    }
-
-    let (mut indices_1, dist_1) = generate_knn_with_dist(
+    let wnn_res = run_wnn(
         modality_emb_one.as_ref(),
-        &wnn_params.knn_params,
-        true,
-        false,
-        seed,
-        verbosity.detailed_verbosity(),
-    )
-    .to_extendr()?;
-
-    let mut dist_1 = dist_1.unwrap();
-    pad_knn_rows_warn(&mut indices_1, Some(&mut dist_1), k_min);
-
-    // second modality
-    if verbosity.normal_verbosity() {
-        println!(
-            "Running the kNN generation for the second modality with {:?} neighbours.",
-            k_min
-        )
-    }
-
-    let (mut indices_2, dist_2) = generate_knn_with_dist(
         modality_emb_two.as_ref(),
-        &wnn_params.knn_params,
-        true,
-        false,
+        &wnn_params,
         seed,
-        verbosity.detailed_verbosity(),
+        verbose,
     )
     .to_extendr()?;
-
-    let mut dist_2 = dist_2.unwrap();
-    pad_knn_rows_warn(&mut indices_2, Some(&mut dist_2), k_min);
-
-    let wnn_modality_1 = ModalityInput::new(modality_emb_one.as_ref(), &indices_1, &dist_1);
-    let wnn_modality_2 = ModalityInput::new(modality_emb_two.as_ref(), &indices_2, &dist_2);
-
-    let wnn_res: WnnResult =
-        compute_wnn([wnn_modality_1, wnn_modality_2], &wnn_params, verbose).to_extendr()?;
 
     let index_mat = Mat::from_fn(
         wnn_res.wnn_indices.len(),

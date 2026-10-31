@@ -1,4 +1,3 @@
-use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::enrichment::lm_activity::LmActivityParams;
 use bixverse_r::enrichment_r_wrapper::r_list_to_feature_set_weights;
 use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
@@ -26,14 +25,15 @@ use bixverse_r::single_cell::sc_analysis::{
 };
 use extendr_api::*;
 use faer::{Mat, MatRef};
-use rand::prelude::*;
 use rayon::prelude::*;
 use std::cmp::Ordering;
 
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
-    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, nebula_res_to_r_list,
-    panel_size_from_mem, prep_nichenet_network, r_list_to_index_vecs,
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_indices_processing,
+    nebula_res_to_r_list,
+    optional_knn, panel_size_from_mem, prep_nichenet_network, r_list_to_index_vecs,
+    random_sig_genes, vision_autocor_to_r_list,
 };
 
 ////////////////////
@@ -822,115 +822,50 @@ fn rs_vision_with_autocorrelation(
     verbose: usize,
     seed: usize,
 ) -> extendr_api::Result<List> {
-    assert!(
-        embd.nrows() == cells_to_keep.len(),
-        "The embedding matrix need to have the same nrow as the the cells to use"
-    );
+    if embd.nrows() != cells_to_keep.len() {
+        return Err(Error::Other(format!(
+            "The embedding has {} rows but {} cells were selected",
+            embd.nrows(),
+            cells_to_keep.len()
+        )));
+    }
 
     let verbosity = parse_verbosity_level(verbose);
-    let knn_provided = knn_data != extendr_api::Nullable::Null;
-
-    if verbosity.normal_verbosity() {
-        println!("Calculating the VISION scores of the actual gene sets.")
-    }
     let cells_to_keep = cells_to_keep.r_int_convert();
-    let gene_signatures = r_list_to_sig_genes(gs_list).unwrap();
+    let signatures = r_list_to_sig_genes(gs_list)?;
+    let random_by_cluster = random_sig_genes(random_gs_list)?;
+    let knn_params = KnnParams::from_r_list(vision_params)?;
+    let embd = r_matrix_to_faer_fp32(&embd);
+
+    let knn = knn_or_generate(
+        optional_knn(knn_data)?,
+        embd.as_ref(),
+        &knn_params,
+        seed,
+        verbosity.normal_verbosity(),
+    )
+    .to_extendr()?;
 
     let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
-
-    let res = if streaming {
-        calculate_vision_streaming(&reader, &gene_signatures, &cells_to_keep, verbose)
-            .to_extendr()?
-    } else {
-        calculate_vision(&reader, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
-    };
-
-    if verbosity.normal_verbosity() {
-        println!("Calculating the VISION scores of the permuted gene sets.")
-    }
-
-    let mut random_scores_by_cluster: Vec<Vec<Vec<f32>>> = Vec::with_capacity(random_gs_list.len());
-
-    for cluster_idx in 0..random_gs_list.len() {
-        let cluster_sigs = random_gs_list
-            .elt(cluster_idx)?
-            .as_list()
-            .ok_or("Cluster element not a list")?;
-
-        let cluster_signatures = r_list_to_sig_genes(cluster_sigs).unwrap();
-
-        let cluster_random_scores = if streaming {
-            calculate_vision_streaming(&reader, &cluster_signatures, &cells_to_keep, verbose)
-                .to_extendr()?
+    let score = |sigs: &[SignatureGenes]| {
+        if streaming {
+            calculate_vision_streaming(&reader, sigs, &cells_to_keep, verbose)
         } else {
-            calculate_vision(&reader, &cluster_signatures, &cells_to_keep, verbose).to_extendr()?
-        };
-
-        random_scores_by_cluster.push(cluster_random_scores);
-
-        if verbosity.normal_verbosity() {
-            println!(
-                "Completed random signatures for cluster {} / {}",
-                cluster_idx + 1,
-                random_gs_list.len()
-            );
+            calculate_vision(&reader, sigs, &cells_to_keep, verbose)
         }
-    }
-
-    let embd = r_matrix_to_faer_fp32(&embd);
-    let knn_params = KnnParams::from_r_list(vision_params)?;
-
-    let (knn_indices, knn_dist) = if knn_provided {
-        if verbosity.normal_verbosity() {
-            println!("Using provided kNN graph.")
-        }
-
-        let knn_data = knn_data
-            .into_robj()
-            .as_list()
-            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
-
-        (knn_indices, knn_dist)
-    } else {
-        if verbosity.normal_verbosity() {
-            println!("Generating a kNN graph from scratch.")
-        }
-
-        let (knn_indices, knn_dist) = generate_knn_with_dist(
-            embd.as_ref(),
-            &knn_params,
-            true,
-            false,
-            seed,
-            verbosity.detailed_verbosity(),
-        )
-        .to_extendr()?;
-
-        (knn_indices, knn_dist.unwrap())
     };
 
-    let cluster_membership = cluster_membership.r_int_convert_shift();
-
-    let auto_cor_res = calc_autocorr_with_clusters(
-        &res,
-        &random_scores_by_cluster,
-        &cluster_membership,
-        knn_indices,
-        knn_dist,
+    let res = vision_with_autocorrelation(
+        score,
+        &signatures,
+        &random_by_cluster,
+        &cluster_membership.r_int_convert_shift(),
+        knn,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    let gaery_c = auto_cor_res.0;
-    let p_val = auto_cor_res.1;
-    let fdr = p_adjust_fdr(&p_val);
-
-    let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
-
-    Ok(list!(
-        autocor_res = list!(auto_cor = gaery_c, p_val = p_val, fdr = fdr),
-        vision_mat = faer_to_r_matrix(vision_mat.as_ref())
-    ))
+    Ok(vision_autocor_to_r_list(res))
 }
 
 ///////////////////////
@@ -993,13 +928,15 @@ fn rs_hotspot_autocor(
     verbose: usize,
     seed: usize,
 ) -> extendr_api::Result<List> {
-    assert!(
-        embd.nrows() == cells_to_keep.len(),
-        "The embedding matrix need to have the same nrow as the the cells to use."
-    );
+    if embd.nrows() != cells_to_keep.len() {
+        return Err(Error::Other(format!(
+            "The embedding has {} rows but {} cells were selected",
+            embd.nrows(),
+            cells_to_keep.len()
+        )));
+    }
 
     let verbosity = parse_verbosity_level(verbose);
-    let knn_provided = knn_data != extendr_api::Nullable::Null;
 
     let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
@@ -1007,34 +944,14 @@ fn rs_hotspot_autocor(
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let (knn_indices, knn_dist) = if knn_provided {
-        if verbosity.normal_verbosity() {
-            println!("Using provided kNN graph...")
-        }
-        let knn_data = knn_data
-            .into_robj()
-            .as_list()
-            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
-
-        (knn_indices, knn_dist)
-    } else {
-        if verbosity.normal_verbosity() {
-            println!("Generating a kNN graph from scratch")
-        }
-
-        let (knn_indices, knn_dist) = generate_knn_with_dist(
-            embd.as_ref(),
-            &hotspot_params.knn_params,
-            true,
-            false,
-            seed,
-            verbosity.detailed_verbosity(),
-        )
-        .to_extendr()?;
-
-        (knn_indices, knn_dist.unwrap())
-    };
+    let (knn_indices, knn_dist) = knn_or_generate(
+        optional_knn(knn_data)?,
+        embd.as_ref(),
+        &hotspot_params.knn_params,
+        seed,
+        verbosity.normal_verbosity(),
+    )
+    .to_extendr()?;
 
     let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
     let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
@@ -1144,36 +1061,15 @@ fn rs_hotspot_gene_cor(
     let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let verbosity = parse_verbosity_level(verbose);
-    let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let (knn_indices, knn_dist) = if knn_provided {
-        if verbosity.normal_verbosity() {
-            println!("Using provided kNN graph...")
-        }
-        let knn_data = knn_data
-            .into_robj()
-            .as_list()
-            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
-
-        (knn_indices, knn_dist)
-    } else {
-        if verbosity.normal_verbosity() {
-            println!("Generating a kNN graph from scratch")
-        }
-
-        let (knn_indices, knn_dist) = generate_knn_with_dist(
-            embd.as_ref(),
-            &hotspot_params.knn_params,
-            true,
-            false,
-            seed,
-            verbosity.detailed_verbosity(),
-        )
-        .to_extendr()?;
-
-        (knn_indices, knn_dist.unwrap())
-    };
+    let (knn_indices, knn_dist) = knn_or_generate(
+        optional_knn(knn_data)?,
+        embd.as_ref(),
+        &hotspot_params.knn_params,
+        seed,
+        verbosity.normal_verbosity(),
+    )
+    .to_extendr()?;
 
     let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
     let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
@@ -1302,126 +1198,33 @@ fn rs_make_milor_nhoods(
 ) -> Result<List> {
     let milor_params = MiloRParams::from_r_list(milor_params)?;
     let embd = r_matrix_to_faer_fp32(&embd);
-    let k_original = knn_indices.ncols();
-    let n_cells = embd.nrows();
-    let knn_data = knn_indices.data();
 
-    let verbosity = parse_verbosity_level(verbose);
-
-    let knn_indices: Vec<Vec<usize>> = (0..n_cells)
-        .map(|i| {
-            (0..k_original)
-                .map(|j| knn_data[i + j * n_cells] as usize)
-                .collect()
-        })
-        .collect();
-
-    let refinement_strategy = parse_refinement_strategy(&milor_params.refinement_strategy)
-        .unwrap_or(RefinementStrategy::Approximate);
-
-    let knn_idx = if matches!(refinement_strategy, RefinementStrategy::IndexBased) {
-        let index_type =
-            parse_index_type(&milor_params.index_type).unwrap_or(KnnIndexType::AnnoyIndex);
-
-        Some(
-            KnnIndex::new(
-                embd.as_ref(),
-                index_type,
-                &milor_params.knn_params,
-                seed,
-                verbosity.detailed_verbosity(),
-            )
-            .to_extendr()?,
-        )
-    } else {
-        None
-    };
-
-    // random sampling
-    let n_cells = embd.nrows();
-    let n_sample = ((n_cells as f64) * milor_params.prop).floor() as usize;
-    let mut rng = StdRng::seed_from_u64(seed as u64);
-
-    let mut random_indices: Vec<usize> = (0..n_cells).collect();
-    random_indices.shuffle(&mut rng);
-    random_indices.truncate(n_sample);
-
-    if verbosity.normal_verbosity() {
-        println!("Sampled {} vertices from {} cells", n_sample, n_cells);
-    }
-
-    // refinement
-    let indices_refined = refine_sampling_with_strategy(
+    let res = make_milor_nhoods(
         embd.as_ref(),
-        &knn_indices,
-        &random_indices,
-        milor_params.k_refine,
-        &milor_params.knn_params,
-        &refinement_strategy,
-        knn_idx.as_ref(),
+        &knn_indices_processing(knn_indices),
+        &sample_ids.r_int_convert(),
+        n_samples,
+        &milor_params,
+        seed,
         verbose,
     )
     .to_extendr()?;
 
-    // deduplicate
-    let mut unique_indices = indices_refined;
-    unique_indices.sort_unstable();
-    unique_indices.dedup();
-
-    let len_unique_indices = unique_indices.len();
-
-    if verbosity.normal_verbosity() {
-        println!(
-            "Refined to {} unique neighbourhood indices",
-            unique_indices.len()
-        );
-    }
-
-    // build neighbourhood matrix
-    let nhoods_triplets = build_nhood_matrix(&knn_indices, &unique_indices);
-
-    // compute k-th distance
-    let kth_distances = compute_kth_distances_from_matrix(
-        embd.as_ref(),
-        &knn_indices,
-        &unique_indices,
-        knn_indices[0].len() - 1,
-    );
-
-    // Both weightings for the spatial FDR are functions of the COO alone, and
-    // both are two passes over the non-zeros, so they are cheaper to take here
-    // than to hand the COO back to R and rebuild it at test time.
-    let sample_ids: Vec<usize> = sample_ids.r_int_convert();
-    let counts = count_nhood_cells(
-        &nhoods_triplets.0,
-        &nhoods_triplets.1,
-        &sample_ids,
-        len_unique_indices,
-        n_samples,
-    )
-    .to_extendr()?;
-    let overlap = nhood_overlap(
-        &nhoods_triplets.0,
-        &nhoods_triplets.1,
-        len_unique_indices,
-        n_cells,
-    )
-    .to_extendr()?;
-
-    let sample_counts = RMatrix::new_matrix(len_unique_indices, n_samples, |r, c| {
-        counts[r * n_samples + c]
+    let n_nhoods = res.index_cells.len();
+    let sample_counts = RMatrix::new_matrix(n_nhoods, n_samples, |r, c| {
+        res.sample_counts[r * n_samples + c]
     });
 
     Ok(list!(
-        index_cell = unique_indices.r_int_convert(),
-        nhoods_i = nhoods_triplets.0,
-        nhoods_j = nhoods_triplets.1,
-        nhoods_x = nhoods_triplets.2,
-        nrows = n_cells as i32,
-        ncols = len_unique_indices,
-        kth_distances = kth_distances,
+        index_cell = res.index_cells.r_int_convert(),
+        nhoods_i = res.nhoods_i.r_int_convert(),
+        nhoods_j = res.nhoods_j.r_int_convert(),
+        nhoods_x = res.nhoods_x,
+        nrows = res.n_cells as i32,
+        ncols = n_nhoods as i32,
+        kth_distances = res.kth_distances,
         sample_counts = sample_counts,
-        nhood_overlap = overlap
+        nhood_overlap = res.nhood_overlap
     ))
 }
 
@@ -1915,37 +1718,15 @@ fn rs_meld_sc(
     let labels = labels.r_int_convert_shift();
     let verbosity = parse_verbosity_level(verbose);
 
-    // deal with kNN
-    let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let (knn_indices, knn_dist) = if knn_provided {
-        if verbosity.normal_verbosity() {
-            println!("Using provided kNN graph...")
-        }
-        let knn_data = knn_data
-            .into_robj()
-            .as_list()
-            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
-
-        (knn_indices, knn_dist)
-    } else {
-        if verbosity.normal_verbosity() {
-            println!("Generating a kNN graph from scratch")
-        }
-
-        let (knn_indices, knn_dist) = generate_knn_with_dist(
-            embd.as_ref(),
-            &meld_params.knn_params,
-            true,
-            false,
-            seed,
-            verbosity.detailed_verbosity(),
-        )
-        .to_extendr()?;
-
-        (knn_indices, knn_dist.unwrap())
-    };
+    let (knn_indices, knn_dist) = knn_or_generate(
+        optional_knn(knn_data)?,
+        embd.as_ref(),
+        &meld_params.knn_params,
+        seed,
+        verbosity.normal_verbosity(),
+    )
+    .to_extendr()?;
 
     let (meld_raw, meld_norm) = meld(
         &knn_indices,
@@ -2611,36 +2392,24 @@ fn rs_sc_cellphonedb(
         }
     };
 
+    let deg_genes = match deg_genes {
+        Nullable::NotNull(deg) => Some(r_list_to_index_vecs(deg, "deg_genes")?),
+        Nullable::Null => None,
+    };
     let params = CellPhoneDbParams::<f64>::from_r_list(params)?;
     let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
 
-    let (mut obs, pvals) = if statistical {
-        let res = cellphonedb_statistical(
-            &reader,
-            &interactions,
-            &clusters,
-            pairs.as_deref(),
-            Some(params),
-            verbose,
-        )
-        .to_extendr()?;
-        (res.obs, Some(res.pvals))
-    } else {
-        let obs = cellphonedb_observed(
-            &reader,
-            &interactions,
-            &clusters,
-            pairs.as_deref(),
-            params.threshold,
-        )
-        .to_extendr()?;
-        (obs, None)
-    };
-
-    if let Nullable::NotNull(deg_genes) = deg_genes {
-        let deg_genes = r_list_to_index_vecs(deg_genes, "deg_genes")?;
-        obs.gate = cpdb_deg_gate(&interactions, &deg_genes, &obs).to_extendr()?;
-    }
+    let CellPhoneDbRun { obs, pvals } = cellphonedb_run(
+        &reader,
+        &interactions,
+        &clusters,
+        pairs.as_deref(),
+        deg_genes.as_deref(),
+        statistical,
+        params,
+        verbose,
+    )
+    .to_extendr()?;
 
     // the gate comes back row-major (interactions, pairs)
     let n_pairs = obs.pairs.len();

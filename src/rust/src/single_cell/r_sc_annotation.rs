@@ -10,7 +10,7 @@ use bixverse_r::single_cell::sc_processing::pca::SingleCellPcaParams;
 use extendr_api::*;
 
 use crate::graph::r_sparse_graph::GraphPtr;
-use crate::single_cell::utils::process_cell_markers;
+use crate::single_cell::utils::{process_cell_markers, r_list_to_index_vecs};
 
 ////////////////////
 // extendr Module //
@@ -501,19 +501,10 @@ fn rs_build_symphony_ref(
     seed: usize,
     verbose: usize,
 ) -> extendr_api::Result<List> {
-    let verbosity = parse_verbosity_level(verbose);
     let cell_indices: Vec<usize> = cell_indices.r_int_convert();
     let hvg_indices: Vec<usize> = hvg_indices.r_int_convert();
-
-    let mut batch_indices: Vec<Vec<usize>> = Vec::new();
-    for i in 0..batch_labels.len() {
-        let batch_indices_i = batch_labels.elt(i)?;
-        let batch_indices_i = batch_indices_i.as_integer_vector().unwrap();
-        batch_indices.push(batch_indices_i.r_int_convert());
-    }
-
+    let batch_indices = r_list_to_index_vecs(batch_labels, "batch_labels")?;
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
-    let gene_reader = ParallelSparseReader::new(&f_path_gene).to_extendr()?;
 
     let harmony_backend = match harmony_version.as_str() {
         "v1" => HarmonyBackend::V1(HarmonyParams::from_r_list(harmony_params)?),
@@ -525,29 +516,15 @@ fn rs_build_symphony_ref(
         }
     };
 
-    let offsets = if pca_params.clr {
-        if verbosity.normal_verbosity() {
-            println!("PFlogPF-transformation requested. Loading offsets from disk.")
-        }
-
-        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
-
-        Some(offsets)
-    } else {
-        None
-    };
-
-    let reference = build_symphony_reference(
-        &gene_reader,
+    let reference = build_symphony_reference_on_store(
+        &f_path_gene,
+        f_path_cell,
         &cell_indices,
         &hvg_indices,
         &batch_indices,
         &pca_params,
         no_pcs,
         harmony_backend,
-        offsets.as_deref(),
         seed,
         verbose,
     )
@@ -639,12 +616,7 @@ fn rs_symphony_map_query(
         })
         .collect();
 
-    let mut batch_indices: Vec<Vec<usize>> = Vec::new();
-    for i in 0..batch_labels_query.len() {
-        let batch_indices_i = batch_labels_query.elt(i)?;
-        let batch_indices_i = batch_indices_i.as_integer_vector().unwrap();
-        batch_indices.push(batch_indices_i.r_int_convert());
-    }
+    let batch_indices = r_list_to_index_vecs(batch_labels_query, "batch_labels_query")?;
 
     let gene_means_f32: Vec<f32> = gene_means.iter().map(|&x| x as f32).collect();
     let gene_sds_f32: Vec<f32> = gene_sds.iter().map(|&x| x as f32).collect();

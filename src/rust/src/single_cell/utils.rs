@@ -9,6 +9,7 @@ use bixverse_r::single_cell::sc_data::data_io::{ParallelSparseReader, SingleCell
 use bixverse_r::single_cell::sc_data::in_memory_io::{
     prefer_cell_subset, read_cell_subset_csc, InMemorySparseReader,
 };
+use bixverse_r::single_cell::sc_analysis::vision::{SignatureGenes, VisionAutocorRes};
 use bixverse_r::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgRes, HvgScranRes};
 use std::collections::HashMap;
 
@@ -323,6 +324,53 @@ pub fn optional_knn(knn_data: Nullable<List>) -> Result<Option<KnnRows>> {
             Ok(Some((idx, dist)))
         }
     }
+}
+
+////////////
+// VISION //
+////////////
+
+/// Parse the permuted VISION signatures, one list per signature cluster.
+///
+/// ### Params
+///
+/// * `random_gs_list` - Double-nested list: clusters, then signatures with
+///   `pos` and `neg` gene indices (0-indexed).
+///
+/// ### Returns
+///
+/// The signatures per cluster.
+pub fn random_sig_genes(random_gs_list: List) -> Result<Vec<Vec<SignatureGenes>>> {
+    random_gs_list
+        .values()
+        .map(|cluster| {
+            let cluster = cluster
+                .as_list()
+                .ok_or_else(|| Error::Other("Each random_gs_list cluster must be a list.".into()))?;
+            r_list_to_sig_genes(cluster)
+        })
+        .collect()
+}
+
+/// The VISION autocorrelation result as the R list the wrappers expect.
+///
+/// ### Params
+///
+/// * `res` - The scores and autocorrelation statistics.
+///
+/// ### Returns
+///
+/// A list with `autocor_res` (`auto_cor`, `p_val`, `fdr`) and `vision_mat`,
+/// cells x signatures.
+pub fn vision_autocor_to_r_list(res: VisionAutocorRes) -> List {
+    let n_cells = res.scores.len();
+    let n_sigs = res.scores.first().map_or(0, |row| row.len());
+    let vision_mat = faer::Mat::from_fn(n_cells, n_sigs, |i, j| res.scores[i][j] as f64);
+
+    list!(
+        autocor_res = list!(auto_cor = res.auto_cor, p_val = res.p_val, fdr = res.fdr),
+        vision_mat = faer_to_r_matrix(vision_mat.as_ref())
+    )
 }
 
 /// Convert an R kNN index matrix into per-sample neighbour vectors.
