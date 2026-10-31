@@ -4,7 +4,14 @@
 \alias{.manifold_inputs}
 \title{Resolve the kNN and input embedding for a manifold method}
 \usage{
-.manifold_inputs(object, use_knn, embd_to_use, no_embd_to_use, modality)
+.manifold_inputs(
+  object,
+  use_knn,
+  embd_to_use,
+  no_embd_to_use,
+  modality,
+  k = NULL
+)
 }
 \arguments{
 \item{object}{\code{SingleCells}, \code{MetaCells} or \code{SingleCellsSubset} class.}

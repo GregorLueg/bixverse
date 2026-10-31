@@ -567,6 +567,14 @@ run_cell_qc <- function(
 
   n <- length(metrics[[1]])
   metric_names <- names(metrics)
+  checkmate::assertTRUE(all(lengths(metrics) == n))
+  if (length(cells_to_keep) != n) {
+    stop(sprintf(
+      "`cells_to_keep` has %i entries but the metrics cover %i cells.",
+      length(cells_to_keep),
+      n
+    ))
+  }
 
   if (is.null(groups)) {
     groups <- rep("all", n)
@@ -579,6 +587,7 @@ run_cell_qc <- function(
     directions <- setNames(rep("twosided", length(metrics)), metric_names)
   }
   checkmate::assertNames(names(directions), must.include = metric_names)
+  checkmate::assertSubset(directions, c("twosided", "below", "above"))
   directions <- directions[metric_names]
 
   if (!is.null(hard_thresholds)) {
@@ -856,6 +865,8 @@ prepare_cell_markers <- function(obj, marker_df) {
     must.include = c("gene_id", "cell_type")
   )
 
+  # copy: `:=` would add the column to the caller's table
+  marker_df <- data.table::copy(marker_df)
   marker_df[, gene_idx := get_sc_map(obj)$gene_mapping[marker_df$gene_id] - 1L]
 
   res <- marker_df[
@@ -1323,11 +1334,11 @@ extract_feature_plot_data <- function(
     object,
     embedding = embedding,
     modality = embd_modality,
-    obs_col = obs_col,
+    obs_cols = obs_col,
     ...
   )
 
-  dt <- merge(expr, embd, by = "cell_id")
+  dt <- merge(expr, embd, by = "cell_id", sort = FALSE)
   dim_cols <- grep("^dim_", names(dt), value = TRUE)
   feature_cols <- setdiff(names(expr), "cell_id")
   add_cols <- setdiff(names(dt), c(dim_cols, feature_cols, "cell_id"))
@@ -1494,7 +1505,7 @@ extract_feature_pair <- function(
     feature_2 = expr_2[[f2$id]]
   )
 
-  dt <- merge(expr_1, v2, by = "cell_id")
+  dt <- merge(expr_1, v2, by = "cell_id", sort = FALSE)
   data.table::setcolorder(dt, c("cell_id", "feature_1", "feature_2"))
   data.table::setattr(dt, "features", c(feature_1, feature_2))
 

@@ -2,10 +2,9 @@ spec_scrublet <- param_spec(
   name = "scrublet",
   title = "Wrapper function for Scrublet doublet detection parameters",
   description = paste(
-    "Constructor for the various Scrublet parameters. In this",
-    "case, the default for the kNN graph generation was set to",
-    "`\"hnsw\"` as this algorithm showed the best performance in",
-    "different empirical benchmarks."
+    "Constructor for the various Scrublet parameters. The kNN graph",
+    "uses the [bixverse::params_knn_defaults()] search (`\"kmknn\"`)",
+    "with automatic neighbour detection (`k = 0L`)."
   ),
   return_order = c(
     "normalisation",
@@ -508,7 +507,7 @@ spec_sc_fast_cluster <- param_spec(
       null_ok = TRUE,
       doc = paste(
         "Number of k-means centroids. If `NULL`, defaults to",
-        "`floor(sqrt(n_cells))`."
+        "`floor(4 * sqrt(n_cells))`."
       )
     ),
     km_type = p_choice(
@@ -652,7 +651,7 @@ spec_sc_vision <- param_spec(
     ),
     knn = p_merge(
       "knn_defaults",
-      overrides = list(k = 15L, nn_max_iter = 15L),
+      overrides = list(k = 15L),
       doc = paste(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
@@ -1685,7 +1684,7 @@ spec_sc_harmony <- param_spec(
     ),
     sigma = p_dbl(
       0.1,
-      range = "[0,)",
+      range = "(0,)",
       len = "+",
       doc = paste(
         "Per-cluster diversity weights. Either a single value",
@@ -1797,7 +1796,7 @@ spec_sc_harmony_v2 <- param_spec(
     ),
     sigma = p_dbl(
       0.1,
-      range = "[0,)",
+      range = "(0,)",
       len = "+",
       doc = paste(
         "Per-cluster diversity weights. Either a single value",

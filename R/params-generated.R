@@ -3459,7 +3459,7 @@ params_sc_empty_droplets <- function(
 #' centroid is handed back to its cells.
 #'
 #' @param n_centroids Integer or `NULL`. Number of k-means centroids. If `NULL`,
-#' defaults to `floor(sqrt(n_cells))`. Defaults to `NULL`.
+#' defaults to `floor(4 * sqrt(n_cells))`. Defaults to `NULL`.
 #' @param km_type String. Which k-means to run for the coarsening. One of
 #' `c("standard", "minibatch")`. Defaults to `"standard"`.
 #' @param k_means_iter Integer. Number of k-means iterations. Defaults to
@@ -3508,7 +3508,7 @@ params_sc_empty_droplets <- function(
 #' @returns A named list with the following elements:
 #' \itemize{
 #'  \item n_centroids - Integer or `NULL`. Number of k-means centroids. If
-#'  `NULL`, defaults to `floor(sqrt(n_cells))`. Defaults to `NULL`.
+#'  `NULL`, defaults to `floor(4 * sqrt(n_cells))`. Defaults to `NULL`.
 #'  \item km_type - String. Which k-means to run for the coarsening. One of
 #'  `c("standard", "minibatch")`. Defaults to `"standard"`.
 #'  \item k_means_iter - Integer. Number of k-means iterations. Defaults to
@@ -3876,7 +3876,7 @@ params_sc_harmony <- function(
 ) {
   # Checks
   checkmate::qassert(k, c("I1[1,)", "0"))
-  checkmate::qassert(sigma, "N+[0,)")
+  checkmate::qassert(sigma, "N+(0,)")
   checkmate::qassert(theta, "N+[0,)")
   checkmate::qassert(lambda, "N+[0,)")
   checkmate::qassert(block_size, "N1(0,1]")
@@ -4021,7 +4021,7 @@ params_sc_harmony_v2 <- function(
 ) {
   # Checks
   checkmate::qassert(k, c("I1[1,)", "0"))
-  checkmate::qassert(sigma, "N+[0,)")
+  checkmate::qassert(sigma, "N+(0,)")
   checkmate::qassert(theta, "N+[0,)")
   checkmate::qassert(lambda, "N+[0,)")
   checkmate::qassert(block_size, "N1(0,1]")
@@ -4992,8 +4992,6 @@ params_sc_palantir <- function(
 #' `TRUE`.
 #' @param normalise_variance Boolean. Shall the data have normalised variance
 #' Defaults to `TRUE`.
-#' @param randomised Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE`
-#' maps to `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 #' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
 #' et al. Defaults to `FALSE`.
 #' @param size_factor Numeric. The used size factor during I/O. It needs to be
@@ -5014,8 +5012,6 @@ params_sc_palantir <- function(
 #'  `TRUE`.
 #'  \item normalise_variance - Boolean. Shall the data have normalised variance
 #'  Defaults to `TRUE`.
-#'  \item randomised - Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE`
-#'  maps to `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 #'  \item clr - Boolean. Shall the CLR-type `PFlogPF` be applied, see
 #'  Booeshaghi, et al. Defaults to `FALSE`.
 #'  \item size_factor - Numeric. The used size factor during I/O. It needs to be
@@ -5035,7 +5031,6 @@ params_sc_palantir <- function(
 params_sc_pca <- function(
   mean_center = TRUE,
   normalise_variance = TRUE,
-  randomised = NULL,
   clr = FALSE,
   size_factor = 10000.0,
   svd_solver = c("auto", "covariance", "randomised", "exact")
@@ -5045,7 +5040,6 @@ params_sc_pca <- function(
   # Checks
   checkmate::qassert(mean_center, "B1")
   checkmate::qassert(normalise_variance, "B1")
-  checkmate::qassert(randomised, c("B1", "0"))
   checkmate::qassert(clr, "B1")
   checkmate::qassert(size_factor, "N1")
   checkmate::assertChoice(
@@ -5053,23 +5047,10 @@ params_sc_pca <- function(
     c("auto", "covariance", "randomised", "exact")
   )
 
-  if (!is.null(randomised)) {
-    svd_solver <- c("exact", "randomised")[randomised + 1L]
-    warning(sprintf(
-      paste(
-        "`randomised` is deprecated, use `svd_solver` instead.",
-        "Mapping randomised = %s to svd_solver = \"%s\"."
-      ),
-      randomised,
-      svd_solver
-    ))
-  }
-
   # Return
   list(
     mean_center = mean_center,
     normalise_variance = normalise_variance,
-    randomised = randomised,
     clr = clr,
     size_factor = size_factor,
     svd_solver = svd_solver
@@ -5938,7 +5919,7 @@ params_sc_vision <- function(
   # Merge
   knn <- utils::modifyList(
     params_knn_defaults(),
-    utils::modifyList(list(k = 15L, nn_max_iter = 15L), knn, keep.null = TRUE),
+    utils::modifyList(list(k = 15L), knn, keep.null = TRUE),
     keep.null = TRUE
   )
 
@@ -6491,9 +6472,9 @@ params_scenic_random_forest_defaults <- function() {
 
 #' Wrapper function for Scrublet doublet detection parameters
 #'
-#' @description Constructor for the various Scrublet parameters. In this case,
-#' the default for the kNN graph generation was set to `"hnsw"` as this
-#' algorithm showed the best performance in different empirical benchmarks.
+#' @description Constructor for the various Scrublet parameters. The kNN graph
+#' uses the [bixverse::params_knn_defaults()] search (`"kmknn"`) with automatic
+#' neighbour detection (`k = 0L`).
 #'
 #' @param sim_doublet_ratio Numeric. Number of doublets to simulate relative to
 #' the number of observed cells. For example, 2.0 simulates twice as many

@@ -603,6 +603,13 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
   checkmate::qassert(residuals, "B1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  if (isTRUE(sparse_svd)) {
+    warning(paste(
+      "MetaCells have no sparse SVD path; the dense solver from `pca_params`",
+      "is used and `sparse_svd` is ignored."
+    ))
+  }
+
   if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
     warning(paste(
       "No HVGs identified in the object nor provided.",

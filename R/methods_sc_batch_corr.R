@@ -90,7 +90,7 @@ S7::method(calculate_kbet_sc, ScOrScSubset) <- function(
 
   rs_res <- rs_kbet(
     knn_mat = knn_mat,
-    batch_vector = as.integer(factor(batch_index)),
+    batch_vector = .group_codes(batch_index, batch_column) + 1L,
     verbose = .verbose
   )
 
@@ -247,7 +247,7 @@ S7::method(calculate_batch_asw_sc, ScOrScSubset) <- function(
 
   rs_res <- rs_batch_silhouette_width(
     embedding = embd,
-    batch_vector = as.integer(factor(batch_index)),
+    batch_vector = .group_codes(batch_index, batch_column) + 1L,
     max_cells = max_cells,
     seed = seed,
     verbose = .verbose
@@ -400,7 +400,7 @@ S7::method(calculate_lisi_sc, ScOrScSubset) <- function(
   rs_res <- rs_lisi(
     knn_mat = knn_mat,
     knn_dist = knn_dist,
-    labels = as.integer(factor(labels)),
+    labels = .group_codes(labels, "labels") + 1L,
     perplexity = perplexity,
     verbose = .verbose
   )
@@ -522,7 +522,11 @@ S7::method(calculate_pcr_sc, ScOrScSubset) <- function(
     return(NULL)
   }
 
-  batch_vector <- as.integer(factor(batch_index))
+  if (.verbose) {
+    message(sprintf("Calculating the PCR on `%s` and on the PCA.", embd_to_use))
+  }
+
+  batch_vector <- .group_codes(batch_index, batch_column) + 1L
   pca_res <- rs_pcr(
     embedding = get_embedding(x = object, embd_name = "pca"),
     batch_vector = batch_vector
@@ -670,7 +674,7 @@ S7::method(calculate_cell_type_asw_sc, ScOrScSubset) <- function(
 
   rs_res <- rs_cell_type_asw(
     embedding = get_embedding(x = object, embd_name = embd_to_use),
-    labels = as.integer(factor(labels)),
+    labels = .group_codes(labels, "labels") + 1L,
     max_cells = max_cells,
     verbose = .verbose,
     seed = seed
@@ -769,11 +773,26 @@ S7::method(calculate_graph_connectivity_sc, ScOrScSubset) <- function(
 
   labels <- factor(unlist(object[[cell_type_column]]))
 
+  if (nlevels(labels) < 2L) {
+    warning(paste(
+      "The cell type column only has one label; connectivity is trivially 1.",
+      "Returning NULL"
+    ))
+    return(NULL)
+  }
+
   knn_mat <- get_knn_mat(object)
 
   if (is.null(knn_mat)) {
     warning("No kNN matrix found to calculate connectivity. Returning NULL")
     return(NULL)
+  }
+
+  if (.verbose) {
+    message(sprintf(
+      "Calculating graph connectivity over %i cell types.",
+      nlevels(labels)
+    ))
   }
 
   rs_res <- rs_graph_connectivity(
@@ -1109,8 +1128,8 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
   )
 
   batch_indices <- unlist(object[[batch_column]])
-  batch_factor <- factor(batch_indices)
-  batch_indices <- as.integer(batch_factor) - 1L
+  batch_levels <- sort(unique(as.character(batch_indices)), method = "radix")
+  batch_indices <- .group_codes(batch_indices, batch_column)
 
   batch_hvgs <- with(
     hvg_params,
@@ -1131,7 +1150,7 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
   )
 
   batch_hvgs_dt <- data.table::as.data.table(batch_hvgs)
-  batch_hvgs_dt[, batch := levels(batch_factor)[batch + 1L]]
+  batch_hvgs_dt[, batch := batch_levels[batch + 1L]]
 
   sort_col <- hvg_rank_col(hvg_params$method)
 
@@ -1289,9 +1308,9 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
   if (is.null(embd)) {
     warning(paste(
       "The desired embedding was not found. Please check the parameters.",
-      "Returning NULL."
+      "Returning object as is."
     ))
-    return(NULL)
+    return(object)
   }
 
   if (!is.null(no_embd_to_use)) {
@@ -1299,9 +1318,7 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
     embd <- embd[, 1:to_take]
   }
 
-  batch_index <- object[[batch_column]][[1]]
-  batch_factor <- factor(batch_index)
-  batch_index <- as.integer(batch_factor) - 1L
+  batch_index <- .group_codes(object[[batch_column]][[1]], batch_column)
 
   if (!length(levels(factor(batch_index))) > 1) {
     warning("The batch column only has one batch. Returning object as is.")
@@ -1516,9 +1533,12 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  batch_indices <- object[[batch_column]][[1]]
-  batch_factor <- factor(batch_indices)
-  batch_indices <- as.integer(batch_factor) - 1L
+  batch_indices <- .group_codes(object[[batch_column]][[1]], batch_column)
+
+  if (length(unique(batch_indices)) < 2L) {
+    warning("The batch column only has one batch. Returning object as is.")
+    return(object)
+  }
 
   # hard tier, but only on the branch that actually consumes the PCA
   if (use_precomputed_pca) {
@@ -1647,17 +1667,22 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
 
   batch_index_ls <- list()
 
-  batch_indices <- object[[batch_column]][[1]]
-  batch_factor <- factor(batch_indices)
-  batch_indices <- as.integer(batch_factor) - 1L
+  batch_indices <- .group_codes(object[[batch_column]][[1]], batch_column)
+
+  if (length(unique(batch_indices)) < 2L) {
+    warning("The batch column only has one batch. Returning object as is.")
+    return(object)
+  }
 
   batch_index_ls[[1]] <- batch_indices
 
   if (!is.null(additional_batch_columns)) {
     for (i in seq_along(additional_batch_columns)) {
       batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
-      batch_factor_i <- factor(batch_indices_i)
-      batch_indices_i <- as.integer(batch_factor_i) - 1L
+      batch_indices_i <- .group_codes(
+        batch_indices_i,
+        additional_batch_columns[[i]]
+      )
       batch_index_ls[[i + 1]] <- batch_indices_i
     }
   }
@@ -1667,7 +1692,9 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
   ))
 
   if (is.null(harmony_params$k)) {
-    harmony_params$k <- as.integer(min(round(nrow(pca_data) / 30), 100L))
+    harmony_params$k <- as.integer(
+      max(1L, min(round(nrow(pca_data) / 30), 100L))
+    )
     if (.verbose) {
       message(sprintf(
         " Auto-determined number of Harmony clusters: %d",
@@ -1790,17 +1817,22 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
 
   batch_index_ls <- list()
 
-  batch_indices <- object[[batch_column]][[1]]
-  batch_factor <- factor(batch_indices)
-  batch_indices <- as.integer(batch_factor) - 1L
+  batch_indices <- .group_codes(object[[batch_column]][[1]], batch_column)
+
+  if (length(unique(batch_indices)) < 2L) {
+    warning("The batch column only has one batch. Returning object as is.")
+    return(object)
+  }
 
   batch_index_ls[[1]] <- batch_indices
 
   if (!is.null(additional_batch_columns)) {
     for (i in seq_along(additional_batch_columns)) {
       batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
-      batch_factor_i <- factor(batch_indices_i)
-      batch_indices_i <- as.integer(batch_factor_i) - 1L
+      batch_indices_i <- .group_codes(
+        batch_indices_i,
+        additional_batch_columns[[i]]
+      )
       batch_index_ls[[i + 1]] <- batch_indices_i
     }
   }
@@ -1810,7 +1842,9 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
   ))
 
   if (is.null(harmony_params$k)) {
-    harmony_params$k <- as.integer(min(round(nrow(pca_data) / 30), 100L))
+    harmony_params$k <- as.integer(
+      max(1L, min(round(nrow(pca_data) / 30), 100L))
+    )
     if (.verbose) {
       message(sprintf(
         " Auto-determined number of Harmony clusters: %d",
@@ -1958,11 +1992,9 @@ S7::method(seurat_cca_sc, SingleCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function body
-  batch_indices <- object[[batch_column]][[1]]
-  batch_factor <- factor(batch_indices)
-  batch_indices <- as.integer(batch_factor) - 1L
+  batch_indices <- .group_codes(object[[batch_column]][[1]], batch_column)
 
-  if (!length(levels(batch_factor)) > 1) {
+  if (length(unique(batch_indices)) < 2L) {
     warning("The batch column only has one batch. Returning object as is.")
     return(object)
   }
@@ -2115,11 +2147,9 @@ S7::method(seurat_rpca_sc, SingleCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function body
-  batch_indices <- object[[batch_column]][[1]]
-  batch_factor <- factor(batch_indices)
-  batch_indices <- as.integer(batch_factor) - 1L
+  batch_indices <- .group_codes(object[[batch_column]][[1]], batch_column)
 
-  if (!length(levels(batch_factor)) > 1) {
+  if (length(unique(batch_indices)) < 2L) {
     warning("The batch column only has one batch. Returning object as is.")
     return(object)
   }

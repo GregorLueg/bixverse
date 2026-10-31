@@ -72,11 +72,29 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
   checkmate::qassert(randomised_svd, "B1")
   checkmate::qassert(seed, "I1")
 
-  norm_counts <- get_sc_counts(
-    object = object,
-    assay = "norm",
-    modality = "adt"
-  )
+  adt <- S7::prop(object, "adt_counts")
+  if (is.null(adt)) {
+    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
+  }
+  kept <- get_cell_names(object, filtered = TRUE)
+  n_missing <- sum(!kept %in% rownames(adt$norm_counts))
+  if (n_missing > 0L) {
+    stop(sprintf(
+      paste(
+        "%i kept cells are not in the ADT counts. Restrict the cells with",
+        "set_cells_to_keep() first."
+      ),
+      n_missing
+    ))
+  }
+
+  norm_counts <- adt$norm_counts[kept, , drop = FALSE]
+  if (!is.null(features)) {
+    norm_counts <- norm_counts[,
+      .match_features(features, colnames(norm_counts)),
+      drop = FALSE
+    ]
+  }
 
   # force scaling
   zeallot::`%<-%`(
@@ -94,6 +112,12 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
       rs_prcomp(x = norm_counts, scale = TRUE, top_pcs = no_pcs)
     }
   )
+  # rs_prcomp returns component SDs; store singular values on both paths, as
+  # the RNA PCA does
+  if (!randomised_svd) {
+    singular_values <- singular_values * sqrt(nrow(norm_counts) - 1)
+  }
+  rownames(pca_loadings) <- colnames(norm_counts)
 
   object <- set_pca_factors(
     x = object,

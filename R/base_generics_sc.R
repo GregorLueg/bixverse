@@ -1518,11 +1518,14 @@ find_neighbours_sc <- S7::new_generic(
 #' @param cluster_algorithm String. One of `c("leiden", "louvain")`.
 #' @param res Numeric. The modularity resolution parameter, see
 #' [leiden_clustering()].
-#' @param name String. The name to add to the obs table in the DuckDB.
-#' @param modality String. On which modality to run the UMAP. One of
+#' @param name Optional string. The name of the obs column to add. `NULL`
+#' gives `"leiden_clustering"` or `"louvain_clustering"`, following
+#' `cluster_algorithm`.
+#' @param modality String. On which modality to cluster. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean or integer. Controls verbosity.
 #' @param ... Further parameters for [leiden_clustering()]: `n_iterations`,
 #' `beta`, `min_gain` and `local_moving`.
 #'
@@ -1544,9 +1547,10 @@ find_clusters_sc <- S7::new_generic(
     object,
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
-    name = "leiden_clustering",
+    name = NULL,
     modality = c("rna", "adt", "wnn"),
     seed = 42L,
+    .verbose = TRUE,
     ...
   ) {
     S7::S7_dispatch()

@@ -4,10 +4,14 @@
 \alias{step_metacells_sc}
 \title{Pipeline step: generate meta cells}
 \usage{
-step_metacells_sc(method = c("bootstrapped", "seacells", "supercells"), ...)
+step_metacells_sc(
+  method = c("bootstrapped", "seacells", "supercells", "metacells2"),
+  ...
+)
 }
 \arguments{
-\item{method}{String. One of \code{c("bootstrapped", "seacells", "supercells")}.}
+\item{method}{String. One of
+\code{c("bootstrapped", "seacells", "supercells", "metacells2")}.}
 
 \item{...}{Arguments passed on to the generator, e.g.
 \code{sc_meta_cell_params}, \code{target_size} or \code{.verbose}.}

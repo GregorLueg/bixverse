@@ -223,11 +223,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       }
 
       sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM var_adt", col_part)
+        sprintf("SELECT %s FROM var_adt ORDER BY feature_idx", col_part)
       } else {
         placeholders <- paste(rep("?", length(indices)), collapse = ", ")
         sprintf(
-          "SELECT %s FROM var_adt WHERE gene_idx IN (%s)",
+          "SELECT %s FROM var_adt WHERE feature_idx IN (%s) ORDER BY feature_idx",
           col_part,
           placeholders
         )

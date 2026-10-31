@@ -506,18 +506,6 @@ expect_error(
   info = "test_nhoods rejects an unknown normalisation method"
 )
 
-## deprecated model getter -----------------------------------------------------
-
-expect_warning(
-  current = get_model_fit(miloR_obj_index),
-  info = "get_model_fit is deprecated now that the fit lives in Rust"
-)
-
-expect_null(
-  current = suppressWarnings(get_model_fit(miloR_obj_index)),
-  info = "get_model_fit returns NULL"
-)
-
 ## neighbour information -------------------------------------------------------
 
 # this one does not have the neighbourhood data, so should warn

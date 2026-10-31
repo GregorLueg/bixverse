@@ -83,7 +83,7 @@ function with `filter = FALSE`.
 
 Getters: `get_outputs()` (a list holding `norm_factors`, `dge_counts`,
 `sample_info`, `pca_anova`), `get_dge_list()`, `get_dge_limma_voom()`,
-`get_dge_effect_sizes()`, `get_model_fit()`, `get_tpm_counts()`,
+`get_dge_effect_sizes()`, `get_tpm_counts()`,
 `get_fpkm_counts()`, `get_dge_qc_plot()`.
 
 Plots: `plot_pca_res()` on the object. Several other `plot_*` helpers exist in

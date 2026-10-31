@@ -141,8 +141,8 @@ calculate_effect_size <- function(
 #' find_threshold_otsu(c(rnorm(100), rnorm(100, mean = 5)))
 find_threshold_otsu <- function(x, bins = 100L) {
   checkmate::qassert(x, "N+")
-  checkmate::qassert(bins, "I+")
-  checkmate::assertTRUE(length(x) > length(bins))
+  checkmate::qassert(bins, "I1[2,)")
+  checkmate::assertTRUE(length(x) > bins)
 
   rs_sc_otsu_method(scores = x, bins = bins)
 }

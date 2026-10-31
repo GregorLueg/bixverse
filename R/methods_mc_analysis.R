@@ -342,6 +342,8 @@ S7::method(hotspot_gene_cor_sc, MetaCells) <- function(
       cells_to_take = cells_to_take,
       genes_to_take = genes_to_take
     )
+  # unknown genes would be dropped by get_gene_indices() and shift the labels
+  genes_to_take <- .match_features(genes_to_take, get_gene_names(object))
 
   hotspot_gene_cor <- rs_mc_hotspot_gene_cor(
     sparse_data = mc_counts_to_list(object, assay = "raw"),

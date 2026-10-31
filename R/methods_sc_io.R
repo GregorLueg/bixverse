@@ -1677,7 +1677,7 @@ S7::method(save_h5ad, SingleCells) <- function(
   # today (#252), so bixverse could no longer read back what it writes.
   purrr::map(as.list(dt), function(x) {
     if (is.character(x) && data.table::uniqueN(x) < length(x)) {
-      x <- factor(x)
+      x <- factor(x, levels = sort(unique(x), method = "radix"))
     }
     if (is.factor(x)) {
       if (nlevels(x) == 0L) as.character(x) else x

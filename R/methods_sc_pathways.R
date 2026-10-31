@@ -119,10 +119,9 @@ S7::method(module_scores_sc, SingleCells) <- function(
 
 ## aucell ----------------------------------------------------------------------
 
-#' @method aucell_sc SingleCells
+#' @method aucell_sc ScOrScSubset
 #'
-#' @export
-S7::method(aucell_sc, SingleCells) <- function(
+S7::method(aucell_sc, ScOrScSubset) <- function(
   object,
   gs_list,
   aucell_params = params_sc_aucell(),
@@ -130,7 +129,10 @@ S7::method(aucell_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   checkmate::assertList(gs_list, types = "character", names = "named")
   assertScAucellParams(aucell_params)
   checkmate::qassert(streaming, c("B1", "0"))
@@ -240,6 +242,7 @@ S7::method(aucell_sc, SingleCells) <- function(
       n_comp <- nrow(unique(sig_vars))
     }
 
+    set.seed(random_seed)
     km <- kmeans(sig_vars, n_comp)
     centers <- km$centers
 
@@ -284,17 +287,19 @@ S7::method(aucell_sc, SingleCells) <- function(
 
 # generics found in base_generics_sc.R
 
-#' @method vision_sc SingleCells
+#' @method vision_sc ScOrScSubset
 #'
-#' @export
-S7::method(vision_sc, SingleCells) <- function(
+S7::method(vision_sc, ScOrScSubset) <- function(
   object,
   gs_list,
   streaming = NULL,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   checkmate::assertList(gs_list, types = "list", names = "named")
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -386,10 +391,9 @@ S7::method(lm_activity_sc, SingleCells) <- function(
 
 # generics found in base_generics_sc.R
 
-#' @method vision_w_autocor_sc SingleCells
+#' @method vision_w_autocor_sc ScOrScSubset
 #'
-#' @export
-S7::method(vision_w_autocor_sc, SingleCells) <- function(
+S7::method(vision_w_autocor_sc, ScOrScSubset) <- function(
   object,
   gs_list,
   embd_to_use,
@@ -401,7 +405,11 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
+  checkmate::assertList(gs_list, types = "list", names = "named")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(use_knn, "B1")
@@ -498,10 +506,9 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
 
 # generics found in base_generics_sc.R
 
-#' @method hotspot_autocor_sc SingleCells
+#' @method hotspot_autocor_sc ScOrScSubset
 #'
-#' @export
-S7::method(hotspot_autocor_sc, SingleCells) <- function(
+S7::method(hotspot_autocor_sc, ScOrScSubset) <- function(
   object,
   embd_to_use = "pca",
   use_knn = TRUE,
@@ -514,7 +521,10 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   checkmate::qassert(embd_to_use, "S1")
   assertScHotspotParams(hotspot_params)
   checkmate::qassert(no_embd_to_use, c("0", "I1"))
@@ -549,6 +559,8 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
   if (is.null(genes_to_take)) {
     genes_to_take <- get_gene_names(object)
   }
+  # unknown genes would be dropped by get_gene_indices() and shift the labels
+  genes_to_take <- .match_features(genes_to_take, get_gene_names(object))
 
   if (length(intersect(rownames(embd), cells_to_take)) == 0) {
     stop(
@@ -601,10 +613,9 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
 
 # generics found in base_generics_sc.R
 
-#' @method hotspot_gene_cor_sc SingleCells
+#' @method hotspot_gene_cor_sc ScOrScSubset
 #'
-#' @export
-S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
+S7::method(hotspot_gene_cor_sc, ScOrScSubset) <- function(
   object,
   embd_to_use = "pca",
   use_knn = TRUE,
@@ -618,7 +629,10 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   checkmate::qassert(embd_to_use, "S1")
   assertScHotspotParams(hotspot_params)
   checkmate::qassert(no_embd_to_use, c("0", "I1"))
@@ -653,6 +667,8 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   if (is.null(genes_to_take)) {
     genes_to_take <- get_gene_names(object)
   }
+  # unknown genes would be dropped by get_gene_indices() and shift the labels
+  genes_to_take <- .match_features(genes_to_take, get_gene_names(object))
 
   if (length(intersect(rownames(embd), cells_to_take)) == 0) {
     stop(
@@ -839,10 +855,8 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   if (length(tf_indices_red) == 0) {
     stop(
       "No TFs remain after intersecting with target gene indices. ",
-      "Consider relaxing min_counts / min_cells thresholds.",
-      "Returning NULL"
+      "Consider relaxing min_counts / min_cells thresholds."
     )
-    return(NULL)
   }
 
   if (.verbose) {

@@ -461,7 +461,7 @@
   if (boost_params$fast_cluster & is.null(boost_params$n_centroids)) {
     message(paste(
       "Fast clustering activated without any n_centroids set.",
-      "Setting n_centroids to sqrt(N) * 2"
+      "Setting n_centroids to floor(4 * sqrt(N))"
     ))
     boost_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
   }
@@ -517,7 +517,7 @@
   ) {
     message(paste(
       "Fast clustering activated without any n_centroids set.",
-      "Setting n_centroids to sqrt(N) * 2"
+      "Setting n_centroids to floor(4 * sqrt(N))"
     ))
     scdblfinder_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
   }
@@ -536,7 +536,7 @@
   features <- if (return_features) {
     feature_matrix <- res$features$feature_mat
     colnames(feature_matrix) <- res$features$feature_names
-    rownames(feature_matrix) <- get_cell_names(object, filtered = TRUE)[
+    rownames(feature_matrix) <- get_cell_names(object, filtered = FALSE)[
       cells_to_use + 1L
     ]
     feature_matrix
@@ -1577,13 +1577,17 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
-  name = "leiden_clustering",
+  name = NULL,
   modality = c("rna", "adt", "wnn"),
   seed = 42L,
+  .verbose = TRUE,
   ...
 ) {
   cluster_algorithm <- match.arg(cluster_algorithm)
   modality <- match.arg(modality)
+  if (is.null(name)) {
+    name <- sprintf("%s_clustering", cluster_algorithm)
+  }
 
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) ||
@@ -1594,6 +1598,7 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   checkmate::qassert(name, "S1")
   checkmate::assertChoice(cluster_algorithm, c("leiden", "louvain"))
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
     stop(sprintf(
@@ -1615,6 +1620,14 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
       )
     )
     return(object)
+  }
+
+  if (.verbose) {
+    message(sprintf(
+      "Running %s clustering at resolution %s.",
+      cluster_algorithm,
+      res
+    ))
   }
 
   clusters <- leiden_clustering(
@@ -1950,8 +1963,12 @@ S7::method(generate_knn_sc, SingleCells) <- function(
     return(NULL)
   }
 
+  if (!is.null(no_embd_to_use)) {
+    embd <- embd[, seq_len(min(no_embd_to_use, ncol(embd))), drop = FALSE]
+  }
+
   if (!is.null(cells_to_use)) {
-    embd <- embd[which(rownames(embd) %in% cells_to_use), ]
+    embd <- embd[which(rownames(embd) %in% cells_to_use), , drop = FALSE]
   }
 
   knn_data <- rs_sc_knn_w_dist(

@@ -6,7 +6,7 @@
 \usage{
 generate_seacells_sc(
   object,
-  seacell_params = params_sc_seacells(),
+  seacell_params,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   cells_to_use = NULL,
@@ -20,7 +20,7 @@ generate_seacells_sc(
 \item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
 
 \item{seacell_params}{List. Output of \code{\link[=params_sc_seacells]{params_sc_seacells()}}.
-A list with the following items:
+Required, as \code{n_sea_cells} has no default. A list with the following items:
 \itemize{
 \item n_sea_cells - Number of SEA cells to detect.
 \item max_fw_iters - Maximum iterations for the Franke-Wolfe algorithm per

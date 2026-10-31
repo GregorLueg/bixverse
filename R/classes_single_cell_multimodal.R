@@ -1087,10 +1087,12 @@ S7::method(get_pca_loadings, SingleCellsMultiModal) <- function(
     return(NULL)
   }
   colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
-  rownames(res) <- if (modality == "rna") {
-    get_gene_names(x)[get_hvg(x) + 1]
-  } else {
-    .adt_feature_names(x)
+  # the ADT PCA stores its features as row names; a `features` subset makes
+  # them shorter than the full ADT panel
+  if (modality == "rna") {
+    rownames(res) <- get_gene_names(x)[get_hvg(x) + 1]
+  } else if (is.null(rownames(res))) {
+    rownames(res) <- .adt_feature_names(x)
   }
   res
 }

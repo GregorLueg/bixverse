@@ -87,7 +87,8 @@
   use_knn,
   embd_to_use,
   no_embd_to_use,
-  modality
+  modality,
+  k = NULL
 ) {
   # checks
   checkmate::assertTRUE(
@@ -99,6 +100,7 @@
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
+  checkmate::qassert(k, c("0", "I1"))
 
   if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
     stop(sprintf(
@@ -123,6 +125,18 @@
     .get_manifoldsr_knn(x = object, modality = modality)
   } else {
     NULL
+  }
+
+  # the cached graph's width wins over `k`, which then only feeds a check
+  if (!is.null(knn) && !is.null(k) && !is.null(knn$k) && k != knn$k) {
+    warning(sprintf(
+      paste(
+        "Using the cached kNN graph with %i neighbours; `k = %i`,",
+        "`knn_method` and `nn_params` only apply with `use_knn = FALSE`."
+      ),
+      as.integer(knn$k),
+      as.integer(k)
+    ))
   }
 
   checkmate::assertTRUE(
@@ -311,7 +325,8 @@ S7::method(umap_sc, ScOrMc) <- function(
     use_knn = use_knn,
     embd_to_use = embd_to_use,
     no_embd_to_use = no_embd_to_use,
-    modality = modality
+    modality = modality,
+    k = k
   )
 
   if (.verbose) {
@@ -480,7 +495,8 @@ S7::method(densmap_sc, ScOrMc) <- function(
     use_knn = use_knn,
     embd_to_use = embd_to_use,
     no_embd_to_use = no_embd_to_use,
-    modality = modality
+    modality = modality,
+    k = k
   )
 
   if (.verbose) {
@@ -1176,7 +1192,8 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
       use_knn = use_knn,
       embd_to_use = embd_to_use,
       no_embd_to_use = no_embd_to_use,
-      modality = modality
+      modality = modality,
+      k = k
     )
 
     if (.verbose) {

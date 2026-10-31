@@ -661,7 +661,7 @@ compute_expression_info_sc <- function(
   }
 
   cluster_labels <- obs_keep[[celltype_colname]]
-  cluster_levels <- sort(unique(cluster_labels))
+  cluster_levels <- sort(unique(cluster_labels), method = "radix")
   clusters <- lapply(cluster_levels, function(cl) {
     as.integer(obs_keep[cluster_labels == cl, .cell_idx])
   })
@@ -998,13 +998,15 @@ prioritise_interactions <- function(
   )
 
   out[, prioritisation_score := score / as.numeric(sum_w)]
+  # an undefined activity gives an NA score: no rank, sorted last
   out[,
     prioritisation_rank := data.table::frank(
       -prioritisation_score,
-      ties.method = "min"
+      ties.method = "min",
+      na.last = "keep"
     )
   ]
-  data.table::setorder(out, -prioritisation_score)
+  data.table::setorder(out, -prioritisation_score, na.last = TRUE)
 
   id_cols <- c("sender", "receiver", "ligand", "receptor")
   data.table::setcolorder(out, c(id_cols, setdiff(names(out), id_cols)))
@@ -1093,7 +1095,7 @@ get_cellphonedb_db <- function(dir = tempdir(), .verbose = TRUE) {
   )[, .(multidata_id, gene_name)]
 
   partners <- data.table::rbindlist(list(protein_genes, complex_genes))[,
-    .(genes = list(sort(unique(gene_name)))),
+    .(genes = list(sort(unique(gene_name), method = "radix"))),
     by = multidata_id
   ]
   partners <- merge(
@@ -1267,7 +1269,7 @@ cellphonedb_sc <- function(
   )
   obs <- obs[!is.na(obs[[celltype_colname]])]
   labels <- as.character(obs[[celltype_colname]])
-  cluster_levels <- sort(unique(labels))
+  cluster_levels <- sort(unique(labels), method = "radix")
   clusters <- purrr::map(cluster_levels, \(cl) {
     as.integer(obs$cell_idx[labels == cl] - 1L)
   })

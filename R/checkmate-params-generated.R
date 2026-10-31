@@ -3492,7 +3492,6 @@ checkScFastmnnParams <- function(x) {
       "n_probe",
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -3522,7 +3521,6 @@ checkScFastmnnParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -3693,7 +3691,7 @@ checkScHarmonyParams <- function(x) {
     x,
     list(
       k = c("I1[1,)", "0"),
-      sigma = "N+[0,)",
+      sigma = "N+(0,)",
       theta = "N+[0,)",
       lambda = "N+[0,)",
       block_size = "N1(0,1]",
@@ -3795,7 +3793,7 @@ checkScHarmonyV2Params <- function(x) {
     x,
     list(
       k = c("I1[1,)", "0"),
-      sigma = "N+[0,)",
+      sigma = "N+(0,)",
       theta = "N+[0,)",
       lambda = "N+[0,)",
       block_size = "N1(0,1]",
@@ -4812,7 +4810,6 @@ checkScPcaParams <- function(x) {
     c(
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -4827,7 +4824,6 @@ checkScPcaParams <- function(x) {
     list(
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -5114,7 +5110,6 @@ checkScSeuratCcaParams <- function(x) {
       "n_probe",
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -5149,7 +5144,6 @@ checkScSeuratCcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -5233,7 +5227,6 @@ checkScSeuratRpcaParams <- function(x) {
       "n_probe",
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -5265,7 +5258,6 @@ checkScSeuratRpcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),

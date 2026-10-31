@@ -442,7 +442,10 @@ calc_meta_cell_separation <- function(dcs, assignment) {
 
   # one factor pass up front, so each meta cell becomes a tabulate() over
   # integer codes instead of a table() rebuilding the level set every time
-  labels_fct <- factor(original_cell_type)
+  labels_fct <- factor(
+    original_cell_type,
+    levels = sort(unique(original_cell_type), method = "radix")
+  )
   codes <- as.integer(labels_fct)
   lvls <- levels(labels_fct)
   n_labels <- length(lvls)

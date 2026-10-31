@@ -307,7 +307,6 @@ reference:
       - get_dge_qc_plot
       - get_fpkm_counts
       - get_gene_lengths
-      - get_model_fit
       - get_tpm_counts
   # Ontologies
   - title: Biomedical ontologies

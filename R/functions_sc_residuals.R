@@ -251,7 +251,7 @@ print.ScResidualFit <- function(x, ...) {
         group_column
       ))
     }
-    as.integer(factor(unlist(obs[[group_column]]))) - 1L
+    .group_codes(obs[[group_column]], group_column)
   }
 
   covariates <- .residual_covariates(obs, covariate_columns, method)

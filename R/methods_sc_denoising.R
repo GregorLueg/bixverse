@@ -86,6 +86,9 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
 
   out <- data.table::rbindlist(parts)
   stopifnot(nrow(out) == length(res$cell_order))
+  # the obs copied from the source carry the raw counts' statistics; replace
+  # them with those of the denoised counts
+  out[, `:=`(lib_size = res$lib_size, nnz = res$nnz)]
   out
 }
 
@@ -315,7 +318,7 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   }
 
   sample_id <- as.character(obs[[sample_column]])
-  sample_levels <- sort(unique(sample_id[real_mask]))
+  sample_levels <- sort(unique(sample_id[real_mask]), method = "radix")
 
   samples <- lapply(sample_levels, function(sid) {
     in_sample <- sample_id == sid

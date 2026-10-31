@@ -215,7 +215,7 @@ S7::method(generate_bt_meta_cells_sc, ScOrScSubset) <- function(
 #'
 #' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param seacell_params List. Output of [bixverse::params_sc_seacells()].
-#' A list with the following items:
+#' Required, as `n_sea_cells` has no default. A list with the following items:
 #' \itemize{
 #'   \item n_sea_cells - Number of SEA cells to detect.
 #'   \item max_fw_iters - Maximum iterations for the Franke-Wolfe algorithm per
@@ -278,7 +278,7 @@ generate_seacells_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    seacell_params = params_sc_seacells(),
+    seacell_params,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     cells_to_use = NULL,
@@ -297,7 +297,7 @@ generate_seacells_sc <- S7::new_generic(
 #' @importFrom magrittr %>%
 S7::method(generate_seacells_sc, ScOrScSubset) <- function(
   object,
-  seacell_params = params_sc_seacells(),
+  seacell_params,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   cells_to_use = NULL,
@@ -337,6 +337,13 @@ S7::method(generate_seacells_sc, ScOrScSubset) <- function(
       cell_ids = cells_to_use,
       rust_index = TRUE
     )
+  }
+
+  if (!is.null(cells_to_use) && !regenerate_knn) {
+    warning(paste(
+      "The cached kNN graph is ignored with `cells_to_use`; it is rebuilt on",
+      "the selected cells."
+    ))
   }
 
   knn_data <- if (regenerate_knn) {

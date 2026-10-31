@@ -138,7 +138,6 @@ milo <- test_nhoods(milo, ...)
 
 get_differential_abundance_res(milo)
 get_index_cells(milo)
-get_model_fit(milo)
 ```
 
 The parameter bundle is `params_sc_miloR()`, with the capital R.

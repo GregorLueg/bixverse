@@ -7,7 +7,7 @@
 step_clusters_sc(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
-  name = "leiden_clustering",
+  name = NULL,
   modality = c("rna", "adt", "wnn"),
   seed = 42L,
   ...
@@ -19,9 +19,11 @@ step_clusters_sc(
 \item{res}{Numeric. The modularity resolution parameter, see
 \code{\link[=leiden_clustering]{leiden_clustering()}}.}
 
-\item{name}{String. The name to add to the obs table in the DuckDB.}
+\item{name}{Optional string. The name of the obs column to add. \code{NULL}
+gives \code{"leiden_clustering"} or \code{"louvain_clustering"}, following
+\code{cluster_algorithm}.}
 
-\item{modality}{String. On which modality to run the UMAP. One of
+\item{modality}{String. On which modality to cluster. One of
 \code{c("rna", "adt", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
 

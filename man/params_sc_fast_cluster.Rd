@@ -27,7 +27,7 @@ params_sc_fast_cluster(
 }
 \arguments{
 \item{n_centroids}{Integer or \code{NULL}. Number of k-means centroids. If \code{NULL},
-defaults to \code{floor(sqrt(n_cells))}. Defaults to \code{NULL}.}
+defaults to \code{floor(4 * sqrt(n_cells))}. Defaults to \code{NULL}.}
 
 \item{km_type}{String. Which k-means to run for the coarsening. One of
 \code{c("standard", "minibatch")}. Defaults to \code{"standard"}.}
@@ -94,7 +94,7 @@ in units of the number of nodes. Defaults to \code{10L}.}
 A named list with the following elements:
 \itemize{
 \item n_centroids - Integer or \code{NULL}. Number of k-means centroids. If
-\code{NULL}, defaults to \code{floor(sqrt(n_cells))}. Defaults to \code{NULL}.
+\code{NULL}, defaults to \code{floor(4 * sqrt(n_cells))}. Defaults to \code{NULL}.
 \item km_type - String. Which k-means to run for the coarsening. One of
 \code{c("standard", "minibatch")}. Defaults to \code{"standard"}.
 \item k_means_iter - Integer. Number of k-means iterations. Defaults to

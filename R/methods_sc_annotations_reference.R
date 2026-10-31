@@ -357,8 +357,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   # batch labels (same pattern as harmony_sc)
   batch_columns_all <- c(batch_column, additional_batch_columns)
   batch_index_ls <- lapply(batch_columns_all, function(col) {
-    vals <- unlist(object[[col]])
-    as.integer(factor(vals)) - 1L
+    .group_codes(object[[col]], col)
   })
 
   cells_to_keep <- get_cells_to_keep(object)
@@ -615,9 +614,12 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
   hvg_names <- S7::prop(reference, "hvg_gene_names")
   query_idx_1based <- match(hvg_names, query_gene_names)
   n_missing <- sum(is.na(query_idx_1based))
-  if (n_missing > 0L && .verbose) {
-    message(sprintf(
-      " %d / %d reference HVGs not found in query; treated as zero columns.",
+  if (n_missing == length(hvg_names)) {
+    stop("None of the reference HVGs are in the query. Check the gene ids.")
+  }
+  if (n_missing > 0L) {
+    warning(sprintf(
+      "%d / %d reference HVGs not found in query; treated as zero columns.",
       n_missing,
       length(hvg_names)
     ))
@@ -630,8 +632,7 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
   } else {
     batch_columns_all <- c(batch_column, additional_batch_columns)
     lapply(batch_columns_all, function(col) {
-      vals <- unlist(query[[col]])
-      as.integer(factor(vals)) - 1L
+      .group_codes(query[[col]], col)
     })
   }
 

@@ -391,7 +391,7 @@ prescan_h5ad_files <- function(
     Reduce(union, all_gene_sets)
   }
 
-  universe <- sort(universe)
+  universe <- sort(universe, method = "radix")
   universe_lookup <- setNames(seq_along(universe) - 1L, universe)
 
   file_tasks <- lapply(file_meta, function(fm) {
@@ -901,7 +901,7 @@ prescan_tenx_h5_files <- function(
     stop("Gene universe across inputs is empty.")
   }
 
-  universe <- sort(universe)
+  universe <- sort(universe, method = "radix")
   universe_lookup <- setNames(seq_along(universe) - 1L, universe)
 
   file_tasks <- lapply(file_meta, function(fm) {

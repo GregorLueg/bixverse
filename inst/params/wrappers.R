@@ -1659,35 +1659,11 @@ spec_sc_pca <- param_spec(
     "svd_solver must be one of auto, covariance, randomised or exact;",
     "size_factor must be a single numeric."
   ),
-  # randomised stays in its old position so positional calls keep working.
-  # Plain warning(): lifecycle::deprecate_warn() inspects the caller frames and
-  # errors when this constructor is itself a lazily evaluated argument.
-  extra_ctor = quote({
-    if (!is.null(randomised)) {
-      svd_solver <- c("exact", "randomised")[randomised + 1L]
-      warning(sprintf(
-        paste(
-          "`randomised` is deprecated, use `svd_solver` instead.",
-          "Mapping randomised = %s to svd_solver = \"%s\"."
-        ),
-        randomised,
-        svd_solver
-      ))
-    }
-  }),
   fields = list(
     mean_center = p_lgl(TRUE, doc = "Shall the data be mean centred"),
     normalise_variance = p_lgl(
       TRUE,
       doc = "Shall the data have normalised variance"
-    ),
-    randomised = p_lgl(
-      NULL,
-      null_ok = TRUE,
-      doc = paste(
-        "Deprecated, use `svd_solver`. `TRUE` maps to",
-        "`\"randomised\"`, `FALSE` to `\"exact\"`."
-      )
     ),
     clr = p_lgl(
       FALSE,

@@ -148,7 +148,6 @@ Methods to help out with differential gene expression analyses in a structured w
 - `get_dge_qc_plot`: Return QC plots
 - `get_fpkm_counts`: Return the FPKM-normalised counts
 - `get_gene_lengths`: Get the gene lengths
-- `get_model_fit`: Get the fitted model
 - `get_tpm_counts`: Return the TPM-normalised counts
 
 ## Biomedical ontologies

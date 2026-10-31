@@ -311,6 +311,9 @@ S7::method(get_sc_counts, SingleCellsSubset) <- function(
     } else if (length(cells_to_keep) > 0L) {
       original_cell_indices <- as.integer(cells_to_keep + 1L)
     }
+  } else if (is.null(original_cell_indices)) {
+    # without indices the read is still scoped to the subset, never the parent
+    original_cell_indices <- subset_to_original
   }
 
   count_data <- get_counts_from_rust(
@@ -1141,7 +1144,9 @@ merge_subset_obs <- function(
     if (prefix_values) {
       grp <- S7::prop(sub, "group")
       dt[,
-        (cols) := lapply(.SD, \(v) sprintf("%s_%s", grp, v)),
+        (cols) := lapply(.SD, \(v) {
+          data.table::fifelse(is.na(v), NA_character_, sprintf("%s_%s", grp, v))
+        }),
         .SDcols = cols
       ]
     }

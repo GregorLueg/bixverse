@@ -110,7 +110,7 @@ MetaCells <- S7::new_class(
     obs_data <- data.table::data.table(
       meta_cell_idx = seq_len(n_metacells),
       meta_cell_id = meta_cell_ids,
-      no_originating_cells = purrr::map_dbl(
+      no_originating_cells = purrr::map_int(
         meta_cell_data$assignments$metacells,
         length
       ),
@@ -611,6 +611,21 @@ S7::method(get_hvg, MetaCells) <- function(
   }
 
   return(hvg_indices)
+}
+
+#' @name get_cell_names.MetaCells
+#'
+#' @rdname get_cell_names
+#'
+#' @method get_cell_names MetaCells
+S7::method(get_cell_names, MetaCells) <- function(x, filtered = FALSE) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(filtered, "B1")
+
+  # meta cells have no cell filter; `filtered` is accepted for the shared
+  # signature
+  x@obs_table[["meta_cell_id"]]
 }
 
 #' @name get_cell_indices.MetaCells

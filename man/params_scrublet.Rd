@@ -86,7 +86,7 @@ doublet score distribution. Defaults to \code{NULL}.
 }
 }
 \description{
-Constructor for the various Scrublet parameters. In this case,
-the default for the kNN graph generation was set to \code{"hnsw"} as this
-algorithm showed the best performance in different empirical benchmarks.
+Constructor for the various Scrublet parameters. The kNN graph
+uses the \code{\link[=params_knn_defaults]{params_knn_defaults()}} search (\code{"kmknn"}) with automatic
+neighbour detection (\code{k = 0L}).
 }
