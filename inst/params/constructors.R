@@ -67,8 +67,8 @@ spec_scrublet <- param_spec(
       null_ok = TRUE,
       doc = paste(
         "Manual doublet score threshold. If `NULL` (default),",
-        "threshold is automatically detected from simulated doublet",
-        "score distribution."
+        "the threshold comes from Otsu's method on the observed doublet",
+        "scores."
       )
     ),
     normalisation = p_merge(
@@ -2423,7 +2423,7 @@ spec_sc_wnn <- param_spec(
       19L,
       range = "[0,)",
       doc = paste(
-        "`\"sigma_idx\"` only: 0-based kNN index for bandwidth.e.",
+        "`\"sigma_idx\"` only: 0-based kNN index for the bandwidth (i.e.",
         "`k_nn - 1`)."
       )
     ),
@@ -2454,7 +2454,8 @@ spec_sc_wnn <- param_spec(
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
         "`delta`, `diversify_prob`, `ef_budget`, `m`,",
-        "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
+        "`ef_construction`, `ef_search`, `n_list` and `n_probe`. Note",
+        "that `k` is unused here, `knn_range` sets the neighbour pool."
       )
     )
   )

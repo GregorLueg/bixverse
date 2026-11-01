@@ -118,16 +118,14 @@ spec_knn_defaults <- param_defaults(
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
       doc = paste(
         "Which method to use for the approximate nearest neighbour",
-        "search. `\"nndescent_graph\"` hands back the graph the",
-        "NN-Descent built instead of beam searching an index: much",
-        "faster, at the cost of some recall. Rows the descent never",
-        "filled come back padded with duplicate edges."
+        "search. `\"nndescent\"` hands back the graph the NN-Descent",
+        "built, with no index and no query pass. Rows the descent left",
+        "short are re-queried exactly."
       )
     ),
     ann_dist = p_choice(
@@ -161,9 +159,9 @@ spec_knn_defaults <- param_defaults(
       0.0,
       range = "[0,1]",
       doc = paste(
-        "NNDescent param: diversification probability for the",
-        "NNDescent index. This will diversify the index at the end and",
-        "identify potentially better edges."
+        "NNDescent param: diversification probability. Only used where a",
+        "query runs against an NN-Descent index, not for the graph of a",
+        "self kNN."
       )
     ),
     ef_budget = p_int(
@@ -171,8 +169,9 @@ spec_knn_defaults <- param_defaults(
       range = "[1,)",
       null_ok = TRUE,
       doc = paste(
-        "NNDescent param: optional query budget parameter. Can",
-        "accelerate querying, but at the cost of Recall."
+        "NNDescent param: optional query budget. Only used where a query",
+        "runs against an NN-Descent index, not for the graph of a self",
+        "kNN."
       )
     ),
     m = p_int(

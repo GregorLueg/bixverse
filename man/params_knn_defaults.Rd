@@ -11,10 +11,9 @@ A named list with the following elements:
 \itemize{
 \item k - Integer. Number of neighbours. Defaults to \code{15L}.
 \item knn_method - String. Which method to use for the approximate nearest
-neighbour search. \code{"nndescent_graph"} hands back the graph the NN-Descent
-built instead of beam searching an index: much faster, at the cost of some
-recall. Rows the descent never filled come back padded with duplicate edges.
-One of \code{c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}.
+neighbour search. \code{"nndescent"} hands back the graph the NN-Descent built,
+with no index and no query pass. Rows the descent left short are re-queried
+exactly. One of \code{c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")}. Defaults to \code{"kmknn"}.
 \item ann_dist - String. Which distance metric to use for the approximate
 nearest neighbour search. One of \code{c("euclidean", "cosine")}. Defaults to
 \code{"euclidean"}.
@@ -25,12 +24,12 @@ per tree for Annoy. If not provided, it will default to \code{n_tree * k * 20L}.
 Defaults to \code{NULL}.
 \item delta - Numeric. NNDescent param: early termination criterium for
 NNDescent. Defaults to \code{0.001}.
-\item diversify_prob - Numeric. NNDescent param: diversification probability
-for the NNDescent index. This will diversify the index at the end and
-identify potentially better edges. Defaults to \code{0.0}.
-\item ef_budget - Integer or \code{NULL}. NNDescent param: optional query budget
-parameter. Can accelerate querying, but at the cost of Recall. Defaults to
-\code{NULL}.
+\item diversify_prob - Numeric. NNDescent param: diversification
+probability. Only used where a query runs against an NN-Descent index, not
+for the graph of a self kNN. Defaults to \code{0.0}.
+\item ef_budget - Integer or \code{NULL}. NNDescent param: optional query budget.
+Only used where a query runs against an NN-Descent index, not for the graph
+of a self kNN. Defaults to \code{NULL}.
 \item m - Integer. HNSW param: number of connections between layers for
 HNSW. Defaults to \code{16L}.
 \item ef_construction - Integer. HNSW param: size of dynamic candidate list

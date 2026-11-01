@@ -215,7 +215,7 @@ cellsweep_sc <- S7::new_generic(
     input,
     celltype_column,
     sample_column,
-    empty_params,
+    empty_params = params_sc_empty_droplets(),
     cellsweep_params = params_sc_cellsweep(),
     sc_qc_param = params_sc_min_quality(),
     csc_mem_gb = NULL,
@@ -239,7 +239,7 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   input,
   celltype_column,
   sample_column,
-  empty_params,
+  empty_params = params_sc_empty_droplets(),
   cellsweep_params = params_sc_cellsweep(),
   sc_qc_param = params_sc_min_quality(),
   csc_mem_gb = NULL,
@@ -304,7 +304,13 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   keep_mask <- logical(n_barcodes)
   keep_mask[as.integer(get_cells_to_keep(input)) + 1L] <- TRUE
 
-  celltype <- as.factor(obs[[celltype_column]])
+  celltype <- obs[[celltype_column]]
+  if (!is.factor(celltype)) {
+    celltype <- factor(
+      celltype,
+      levels = sort(unique(celltype), method = "radix")
+    )
+  }
   celltype_levels <- levels(celltype)
   annotated <- !is.na(celltype)
 

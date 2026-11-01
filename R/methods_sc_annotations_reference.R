@@ -795,7 +795,15 @@ S7::method(transfer_labels_symphony, SymphonyReference) <- function(
   ref_labels_raw <- unlist(labels[[label_column]])
   # NA (e.g. scType Unknown) becomes its own class, otherwise it reaches Rust
   # as NA_integer_ and panics as an out of bounds index
-  ref_label_factor <- factor(ref_labels_raw, exclude = NULL)
+  ref_label_factor <- factor(
+    ref_labels_raw,
+    levels = sort(
+      unique(as.character(ref_labels_raw)),
+      method = "radix",
+      na.last = TRUE
+    ),
+    exclude = NULL
+  )
   ref_label_idx <- as.integer(ref_label_factor) - 1L
 
   res <- rs_transfer_labels_symphony(

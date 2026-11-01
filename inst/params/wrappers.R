@@ -1865,16 +1865,14 @@ spec_sc_knn <- param_spec(
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
       doc = paste(
         "Which method to use for the approximate nearest neighbour",
-        "search. `\"nndescent_graph\"` hands back the graph the",
-        "NN-Descent built instead of beam searching an index: much",
-        "faster, at the cost of some recall. Rows the descent never",
-        "filled come back padded with duplicate edges."
+        "search. `\"nndescent\"` hands back the graph the NN-Descent",
+        "built, with no index and no query pass. Rows the descent left",
+        "short are re-queried exactly."
       )
     ),
     ann_dist = p_choice(
@@ -1901,8 +1899,9 @@ spec_sc_knn <- param_spec(
       0,
       range = "[0,1]",
       doc = paste(
-        "NNDescent param: diversification probability applied at the",
-        "end of index construction."
+        "NNDescent param: diversification probability. Only used where a",
+        "query runs against an NN-Descent index, not for the graph of a",
+        "self kNN."
       )
     ),
     ef_budget = p_int(
@@ -1910,8 +1909,9 @@ spec_sc_knn <- param_spec(
       range = "[1,)",
       null_ok = TRUE,
       doc = paste(
-        "NNDescent param: optional query budget. Higher values",
-        "improve recall at the cost of speed."
+        "NNDescent param: optional query budget. Only used where a query",
+        "runs against an NN-Descent index, not for the graph of a self",
+        "kNN."
       )
     ),
     m = p_int(
@@ -2105,12 +2105,12 @@ spec_symphony_map <- param_spec(
   title = "Default parameters for Symphony query mapping",
   checker = "SymphonyMap",
   label = "Symphony map params",
-  hint = "sigma and lambda must be non-negative numerics.",
+  hint = "sigma must be a positive numeric; lambda must be non-negative.",
   class_tag = "params_symphony_map",
   fields = list(
     sigma = p_dbl(
       0.1,
-      range = "[0,)",
+      range = "(0,)",
       doc = paste(
         "Soft-clustering fuzziness for query -> reference centroid",
         "assignment. Symphony R default is 0.1."

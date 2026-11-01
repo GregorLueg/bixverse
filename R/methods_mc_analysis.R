@@ -390,7 +390,7 @@ S7::method(scenic_gene_filter_sc, MetaCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   assertScenicParams(scenic_params)
   checkmate::qassert(cells_to_take, c("S+", "0"))
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   cell_indices <- if (is.null(cells_to_take)) {
     NULL

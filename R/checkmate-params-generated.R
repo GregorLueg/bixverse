@@ -252,7 +252,6 @@ checkScBoostParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -1579,7 +1578,6 @@ checkKnnParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -2159,7 +2157,6 @@ checkMeldParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -2753,7 +2750,6 @@ checkScBbknnParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -3013,7 +3009,6 @@ checkScBootstrappedMetacellsParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -3544,7 +3539,6 @@ checkScFastmnnParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -3937,7 +3931,6 @@ checkScHotspotParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -4125,7 +4118,6 @@ checkScKnnParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -4637,7 +4629,6 @@ checkScNeighboursParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -4758,7 +4749,6 @@ checkScPalantirParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -5035,7 +5025,6 @@ checkScSeacellsParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -5161,7 +5150,6 @@ checkScSeuratCcaParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -5275,7 +5263,6 @@ checkScSeuratRpcaParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -5383,7 +5370,6 @@ checkScSupercellParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -5815,7 +5801,6 @@ checkScVisionParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -5929,7 +5914,6 @@ checkScWnnParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -6080,7 +6064,6 @@ checkScDblFinderParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -6427,7 +6410,6 @@ checkScScrubletParams <- function(x) {
         "hnsw",
         "annoy",
         "nndescent",
-        "nndescent_graph",
         "ivf",
         "exhaustive"
       ),
@@ -6688,11 +6670,11 @@ checkSymphonyMapParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
-      sigma = "N1[0,)",
+      sigma = "N1(0,)",
       lambda = "N1[0,)"
     ),
     label = "Symphony map params",
-    hint = "sigma and lambda must be non-negative numerics."
+    hint = "sigma must be a positive numeric; lambda must be non-negative."
   )
   if (!isTRUE(res)) {
     return(res)

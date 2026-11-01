@@ -67,10 +67,8 @@ approximate nearest neighbour search algorithm; works well on large data
 sets. A benign race condition is leveraged during index build, making the
 build non-deterministic. Bigger impact on smaller data sets.
 \item \code{nndescent} - Nearest neighbour descent. Leverages concepts from
-\code{PyNNDescent} and works well on very large data sets similar to \code{hnsw}.
-\item \code{nndescent_graph} - Hands back the NN-Descent graph directly
-instead of beam searching an index. That drops the query pass
-altogether, so it is much faster, but recall goes down a little.
+\code{PyNNDescent}. Hands back the graph the descent built, with no index and
+no query pass, and works well on very large data sets.
 \item \code{ivf} - Inverted file index. Uses first k-means clustering to
 identify Voronoi cells and leverages these during querying. Works well
 on large data sets with high dimensionality and when you need to return

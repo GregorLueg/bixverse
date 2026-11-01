@@ -154,7 +154,11 @@ new_adt_counts_dsb <- function(
   if (!is.null(isotype_names)) {
     checkmate::assertSubset(isotype_names, colnames(raw_counts))
   }
-  if (isTRUE(dsb_params$use_isotype_controls) && is.null(isotype_names)) {
+  if (
+    isTRUE(dsb_params$denoise_counts) &&
+      isTRUE(dsb_params$use_isotype_controls) &&
+      is.null(isotype_names)
+  ) {
     stop(
       "dsb_params$use_isotype_controls = TRUE but isotype_names is NULL."
     )

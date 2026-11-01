@@ -115,7 +115,9 @@ fn rs_fast_ica(
     let x = r_matrix_to_faer(&whiten);
     let w_init = r_matrix_to_faer(&w_init);
 
-    let ica_type = parse_ica_type(ica_type).unwrap_or_default();
+    let ica_type = parse_ica_type(ica_type).ok_or_else(|| {
+        extendr_api::Error::Other(format!("Unknown ica_type '{ica_type}'."))
+    })?;
 
     let a = match ica_type {
         IcaType::Exp => fast_ica_exp(

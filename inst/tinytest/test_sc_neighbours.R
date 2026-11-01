@@ -651,16 +651,14 @@ expect_true(
   info = "sc_knn class - expected overlap nndescent euclidean"
 )
 
-### nndescent graph extraction -------------------------------------------------
+### nndescent graph ------------------------------------------------------------
 
-# `nndescent_graph` hands back the graph the descent built rather than beam
-# searching it. Cheaper, lower recall, and rows the descent never filled come
-# back padded, so this deliberately does not demand the recall == 1 the beam
-# search above gets.
+# `nndescent` hands back the graph the descent built, so this does not demand
+# the recall == 1 of an exact search.
 rs_nndescent_extract <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(
-    knn_method = "nndescent_graph",
+    knn_method = "nndescent",
     ann_dist = "euclidean"
   ),
   validate_index = FALSE,
@@ -671,39 +669,19 @@ rs_nndescent_extract <- rs_sc_knn(
 expect_equal(
   current = dim(rs_nndescent_extract),
   target = dim(rs_exhaustive_euc),
-  info = "nndescent extraction - rectangular output of the expected shape"
+  info = "nndescent graph - rectangular output of the expected shape"
 )
 
 expect_true(
   current = all(
     rs_nndescent_extract != (seq_len(nrow(rs_nndescent_extract)) - 1L)
   ),
-  info = "nndescent extraction - no self edges"
+  info = "nndescent graph - no self edges"
 )
 
 expect_true(
   current = calc_recall_exh(rs_exhaustive_euc, rs_nndescent_extract) >= 0.8,
-  info = "nndescent extraction <> exhaustive search - decent overlap"
-)
-
-nndescent_extract_data <- generate_knn_sc(
-  sc_object,
-  neighbours_params = params_sc_neighbours(
-    knn = list(
-      knn_method = "nndescent_graph",
-      ann_dist = "euclidean"
-    )
-  ),
-  .verbose = FALSE
-)
-
-expect_true(
-  current = calc_recall_exh(
-    rs_nndescent_extract,
-    get_knn_mat(nndescent_extract_data)
-  ) ==
-    1,
-  info = "sc_knn class - expected overlap nndescent graph extraction"
+  info = "nndescent graph <> exhaustive search - decent overlap"
 )
 
 ### ivf ------------------------------------------------------------------------

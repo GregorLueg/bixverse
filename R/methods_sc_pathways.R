@@ -80,7 +80,7 @@ S7::method(module_scores_sc, SingleCells) <- function(
   checkmate::qassert(n_ctrl, "I1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, c("B1", "0"))
-  checkmate::qassert(.verbose, c("B1", "I1[0,1]"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   streaming <- auto_streaming(
     n_cells = nrow(object),

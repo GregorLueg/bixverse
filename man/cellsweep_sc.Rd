@@ -9,7 +9,7 @@ cellsweep_sc(
   input,
   celltype_column,
   sample_column,
-  empty_params,
+  empty_params = params_sc_empty_droplets(),
   cellsweep_params = params_sc_cellsweep(),
   sc_qc_param = params_sc_min_quality(),
   csc_mem_gb = NULL,

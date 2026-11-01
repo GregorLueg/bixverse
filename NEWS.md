@@ -8,10 +8,9 @@ some results to move against 0.8.3, see Changes.
 ## Features
 
 * `bixverse-r` 0.10.0 under the hood.
-* `knn_method = "nndescent_graph"` hands back the graph NN-Descent built instead
-  of beam searching an index. It replaces `extract_knn`. Faster, at the cost of
-  some recall; rows the descent never filled come back padded with duplicate
-  edges.
+* `knn_method = "nndescent"` is graph-only now: it hands back the graph the
+  descent built, with no index and no query pass. Rows the descent left short
+  are re-queried exactly. It replaces `extract_knn`.
 * The cell filter is a set now. `set_cells_to_keep()` stores unique, ascending
   indices and errors on cells it can't find, so every result follows the store's
   cell order. DuckDB `obs.to_keep` is the source of truth: if it disagrees with
@@ -72,8 +71,8 @@ some results to move against 0.8.3, see Changes.
   read in one pass with its entries bucketed on disk next to the store.
 * `prescan_mtx_dirs()` no longer returns `temp_files`, there are none to clean
   up.
-* `extract_knn` is gone from every kNN parameter block, use
-  `knn_method = "nndescent_graph"`. `ivf` is gone from `index_type` in
+* `extract_knn` is gone from every kNN parameter block, `knn_method =
+  "nndescent"` always hands back the graph now. `ivf` is gone from `index_type` in
   `params_sc_miloR()`: Rust has no IVF index there and silently ran Annoy.
 * `randomised` is gone from `params_sc_pca()`, use `svd_solver`. Check any
   positional calls, the arguments after it moved up one.
@@ -82,6 +81,7 @@ some results to move against 0.8.3, see Changes.
   Louvain now writes `louvain_clustering` rather than `leiden_clustering`.
 * `generate_seacells_sc()` has no default for `seacell_params`. The old default
   always errored, as `n_sea_cells` has no default.
+* `cellsweep_sc()` defaults to `empty_params = params_sc_empty_droplets()`.
 * `params_sc_empty_droplets()` defaults to `is_empty_column = "is_empty"`, so
   the defaults now pass their own checks.
 * The Hotspot result field `module_memership` is now `module_membership`. Use
@@ -106,6 +106,10 @@ Results that move against 0.8.3:
 * Group labels sort by code point (`method = "radix"`), not by locale: batch
   codes, gene universes, cluster and sample levels. Mixed-case labels can change
   order.
+* `knn_method = "nndescent"` no longer beam searches an index, so recall can
+  drop against 0.8.3.
+* `transfer_labels_symphony()` and `cellsweep_sc()` sort label levels by code
+  point too.
 * `lanczos_max_restarts` in `params_sc_palantir()` went from 16 to 64.
 * `params_sc_wnn(sigma_method = "sigma_idx")` is honoured. It silently fell back
   to the SNN bandwidth.
@@ -137,8 +141,15 @@ Silent behaviour that's now loud:
   object on a single batch, like the others. `bbknn_sc()` returns the object
   rather than `NULL` on a missing embedding. `calculate_graph_connectivity_sc()`
   warns and returns `NULL` on a single label.
-* `sigma` in the Harmony parameters must be above 0. `find_threshold_otsu()` now
-  actually checks `length(x) > bins`.
+* `generate_wnn_graph_sc()` errors on a stale embedding, like
+  `find_neighbours_sc()`. `generate_seacells_sc()` warns when there's no cached
+  kNN to use with `regenerate_knn = FALSE`.
+* A pipeline step missing a required argument errors when it's built, e.g.
+  `step_metacells_sc("seacells")` without `seacell_params`.
+* `rs_mad_outlier()` and `rs_fast_ica()` error on an unknown `direction` or
+  `ica_type`.
+* `sigma` in the Harmony parameters and `params_symphony_map()` must be above
+  0. `find_threshold_otsu()` now actually checks `length(x) > bins`.
 
 ## Fixes
 
@@ -165,6 +176,15 @@ Silent behaviour that's now loud:
 * `prepare_cell_markers()` and `add_nhoods_info()` no longer modify the caller's
   table by reference.
 * `apply_pipeline_per_group()` errored on numeric group columns.
+* `new_adt_counts_dsb()` no longer demands `isotype_names` with
+  `denoise_counts = FALSE`, where isotypes are unused.
+* `forceatlas2_sc()` only checks `k` for `graph = "knn"`.
+* Grouped doublet detection dropped `cells_to_use` entries that weren't kept;
+  plain mode kept them. Both keep them now.
+* `compute_expression_info_sc()` de-duplicates genes every time, not only when
+  some are missing.
+* `module_scores_sc()` and `scenic_gene_filter_sc()` on `MetaCells` accept the
+  same `.verbose` values as everything else.
 * `meta_cells_per_group()` rejects a pipeline ending on `step_metacells_sc()` up
   front, not after the first group ran.
 * Harmony's automatic `k` could hit 0 below 15 cells.

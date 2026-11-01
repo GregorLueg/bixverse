@@ -267,6 +267,8 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
   checkmate::assertTRUE(
     embd_to_use_2 %in% get_available_embeddings(object, modality = modality_2)
   )
+  assert_sc_state(object, artefacts = embd_to_use_1, modality = modality_1)
+  assert_sc_state(object, artefacts = embd_to_use_2, modality = modality_2)
 
   embd_1 <- get_embedding(
     x = object,

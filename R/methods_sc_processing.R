@@ -70,7 +70,7 @@
   obs <- get_sc_obs(
     object,
     cols = c("cell_idx", group_by),
-    filtered = TRUE
+    filtered = FALSE
   )
 
   obs <- obs[obs$cell_idx %in% (cells_to_use + 1L), ]
@@ -1853,10 +1853,8 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 #'   sets. A benign race condition is leveraged during index build, making the
 #'   build non-deterministic. Bigger impact on smaller data sets.
 #'   \item `nndescent` - Nearest neighbour descent. Leverages concepts from
-#'   `PyNNDescent` and works well on very large data sets similar to `hnsw`.
-#'   \item `nndescent_graph` - Hands back the NN-Descent graph directly
-#'   instead of beam searching an index. That drops the query pass
-#'   altogether, so it is much faster, but recall goes down a little.
+#'   `PyNNDescent`. Hands back the graph the descent built, with no index and
+#'   no query pass, and works well on very large data sets.
 #'   \item `ivf` - Inverted file index. Uses first k-means clustering to
 #'   identify Voronoi cells and leverages these during querying. Works well
 #'   on large data sets with high dimensionality and when you need to return

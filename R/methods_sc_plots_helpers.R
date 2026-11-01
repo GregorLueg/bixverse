@@ -1176,11 +1176,11 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
   # checks
   checkmate::qassert(slot_name, "S1")
   checkmate::qassert(init_embd, c("0", "S1"))
-  checkmate::qassert(k, "I1[2,)")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
   if (graph == "knn") {
+    checkmate::qassert(k, "I1[2,)")
     if (!is.null(init_embd)) {
       warning(
         "`init_embd` only applies to graph = 'connectivities'. Ignoring it."

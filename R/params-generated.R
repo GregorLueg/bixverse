@@ -1508,10 +1508,9 @@ params_kmeans_defaults <- function() {
 #' \itemize{
 #'  \item k - Integer. Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - String. Which method to use for the approximate nearest
-#'  neighbour search. `"nndescent_graph"` hands back the graph the NN-Descent
-#'  built instead of beam searching an index: much faster, at the cost of some
-#'  recall. Rows the descent never filled come back padded with duplicate edges.
-#'  One of `c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf",
+#'  neighbour search. `"nndescent"` hands back the graph the NN-Descent built,
+#'  with no index and no query pass. Rows the descent left short are re-queried
+#'  exactly. One of `c("kmknn", "hnsw", "annoy", "nndescent", "ivf",
 #'  "exhaustive")`. Defaults to `"kmknn"`.
 #'  \item ann_dist - String. Which distance metric to use for the approximate
 #'  nearest neighbour search. One of `c("euclidean", "cosine")`. Defaults to
@@ -1523,12 +1522,12 @@ params_kmeans_defaults <- function() {
 #'  Defaults to `NULL`.
 #'  \item delta - Numeric. NNDescent param: early termination criterium for
 #'  NNDescent. Defaults to `0.001`.
-#'  \item diversify_prob - Numeric. NNDescent param: diversification probability
-#'  for the NNDescent index. This will diversify the index at the end and
-#'  identify potentially better edges. Defaults to `0.0`.
-#'  \item ef_budget - Integer or `NULL`. NNDescent param: optional query budget
-#'  parameter. Can accelerate querying, but at the cost of Recall. Defaults to
-#'  `NULL`.
+#'  \item diversify_prob - Numeric. NNDescent param: diversification
+#'  probability. Only used where a query runs against an NN-Descent index, not
+#'  for the graph of a self kNN. Defaults to `0.0`.
+#'  \item ef_budget - Integer or `NULL`. NNDescent param: optional query budget.
+#'  Only used where a query runs against an NN-Descent index, not for the graph
+#'  of a self kNN. Defaults to `NULL`.
 #'  \item m - Integer. HNSW param: number of connections between layers for
 #'  HNSW. Defaults to `16L`.
 #'  \item ef_construction - Integer. HNSW param: size of dynamic candidate list
@@ -4221,10 +4220,9 @@ params_sc_hvg <- function(
 #'
 #' @param k Integer. Number of neighbours. Defaults to `15L`.
 #' @param knn_method String. Which method to use for the approximate nearest
-#' neighbour search. `"nndescent_graph"` hands back the graph the NN-Descent
-#' built instead of beam searching an index: much faster, at the cost of some
-#' recall. Rows the descent never filled come back padded with duplicate edges.
-#' One of `c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf",
+#' neighbour search. `"nndescent"` hands back the graph the NN-Descent built,
+#' with no index and no query pass. Rows the descent left short are re-queried
+#' exactly. One of `c("kmknn", "hnsw", "annoy", "nndescent", "ivf",
 #' "exhaustive")`. Defaults to `"kmknn"`.
 #' @param ann_dist String. Distance metric to use. One of `c("euclidean",
 #' "cosine")`. Defaults to `"euclidean"`.
@@ -4234,10 +4232,12 @@ params_sc_hvg <- function(
 #' `NULL`.
 #' @param delta Numeric. NNDescent param: early termination criterion. Defaults
 #' to `0.001`.
-#' @param diversify_prob Numeric. NNDescent param: diversification probability
-#' applied at the end of index construction. Defaults to `0.0`.
+#' @param diversify_prob Numeric. NNDescent param: diversification probability.
+#' Only used where a query runs against an NN-Descent index, not for the graph
+#' of a self kNN. Defaults to `0.0`.
 #' @param ef_budget Integer or `NULL`. NNDescent param: optional query budget.
-#' Higher values improve recall at the cost of speed. Defaults to `NULL`.
+#' Only used where a query runs against an NN-Descent index, not for the graph
+#' of a self kNN. Defaults to `NULL`.
 #' @param m Integer. HNSW param: number of connections between layers. Defaults
 #' to `16L`.
 #' @param ef_construction Integer. HNSW param: size of the dynamic candidate
@@ -4253,10 +4253,9 @@ params_sc_hvg <- function(
 #' \itemize{
 #'  \item k - Integer. Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - String. Which method to use for the approximate nearest
-#'  neighbour search. `"nndescent_graph"` hands back the graph the NN-Descent
-#'  built instead of beam searching an index: much faster, at the cost of some
-#'  recall. Rows the descent never filled come back padded with duplicate edges.
-#'  One of `c("kmknn", "hnsw", "annoy", "nndescent", "nndescent_graph", "ivf",
+#'  neighbour search. `"nndescent"` hands back the graph the NN-Descent built,
+#'  with no index and no query pass. Rows the descent left short are re-queried
+#'  exactly. One of `c("kmknn", "hnsw", "annoy", "nndescent", "ivf",
 #'  "exhaustive")`. Defaults to `"kmknn"`.
 #'  \item ann_dist - String. Distance metric to use. One of `c("euclidean",
 #'  "cosine")`. Defaults to `"euclidean"`.
@@ -4266,10 +4265,12 @@ params_sc_hvg <- function(
 #'  `NULL`.
 #'  \item delta - Numeric. NNDescent param: early termination criterion.
 #'  Defaults to `0.001`.
-#'  \item diversify_prob - Numeric. NNDescent param: diversification probability
-#'  applied at the end of index construction. Defaults to `0.0`.
+#'  \item diversify_prob - Numeric. NNDescent param: diversification
+#'  probability. Only used where a query runs against an NN-Descent index, not
+#'  for the graph of a self kNN. Defaults to `0.0`.
 #'  \item ef_budget - Integer or `NULL`. NNDescent param: optional query budget.
-#'  Higher values improve recall at the cost of speed. Defaults to `NULL`.
+#'  Only used where a query runs against an NN-Descent index, not for the graph
+#'  of a self kNN. Defaults to `NULL`.
 #'  \item m - Integer. HNSW param: number of connections between layers.
 #'  Defaults to `16L`.
 #'  \item ef_construction - Integer. HNSW param: size of the dynamic candidate
@@ -4285,15 +4286,7 @@ params_sc_hvg <- function(
 #' @export
 params_sc_knn <- function(
   k = 15L,
-  knn_method = c(
-    "kmknn",
-    "hnsw",
-    "annoy",
-    "nndescent",
-    "nndescent_graph",
-    "ivf",
-    "exhaustive"
-  ),
+  knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
   ann_dist = c("euclidean", "cosine"),
   n_trees = 50L,
   search_budget = NULL,
@@ -4313,15 +4306,7 @@ params_sc_knn <- function(
   checkmate::qassert(k, "I1[1,)")
   checkmate::assertChoice(
     knn_method,
-    c(
-      "kmknn",
-      "hnsw",
-      "annoy",
-      "nndescent",
-      "nndescent_graph",
-      "ivf",
-      "exhaustive"
-    )
+    c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")
   )
   checkmate::assertChoice(ann_dist, c("euclidean", "cosine"))
   checkmate::qassert(n_trees, "I1[1,)")
@@ -5941,8 +5926,8 @@ params_sc_vision <- function(
 #' input must contain at least this many neighbours. Defaults to `200L`.
 #' @param sigma_method String. Bandwidth method. One of `c("snn_farthest",
 #' "sigma_idx")`. Defaults to `"snn_farthest"`.
-#' @param sigma_idx Integer. `"sigma_idx"` only: 0-based kNN index for
-#' bandwidth.e. `k_nn - 1`). Defaults to `19L`.
+#' @param sigma_idx Integer. `"sigma_idx"` only: 0-based kNN index for the
+#' bandwidth (i.e. `k_nn - 1`). Defaults to `19L`.
 #' @param s_nn Integer. `"snn_farthest"` only: kNN size used to build the SNN
 #' graph. Defaults to `20L`.
 #' @param sd_scale Numeric. Multiplier on sigma. Defaults to `1.0`.
@@ -5955,8 +5940,9 @@ params_sc_vision <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. See [params_knn_defaults()] for the available elements.
-#' Defaults to `list()`.
+#' and `n_probe`. Note that `k` is unused here, `knn_range` sets the neighbour
+#' pool. See [params_knn_defaults()] for the available elements. Defaults to
+#' `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -5966,8 +5952,8 @@ params_sc_vision <- function(
 #'  input must contain at least this many neighbours. Defaults to `200L`.
 #'  \item sigma_method - String. Bandwidth method. One of `c("snn_farthest",
 #'  "sigma_idx")`. Defaults to `"snn_farthest"`.
-#'  \item sigma_idx - Integer. `"sigma_idx"` only: 0-based kNN index for
-#'  bandwidth.e. `k_nn - 1`). Defaults to `19L`.
+#'  \item sigma_idx - Integer. `"sigma_idx"` only: 0-based kNN index for the
+#'  bandwidth (i.e. `k_nn - 1`). Defaults to `19L`.
 #'  \item s_nn - Integer. `"snn_farthest"` only: kNN size used to build the SNN
 #'  graph. Defaults to `20L`.
 #'  \item sd_scale - Numeric. Multiplier on sigma. Defaults to `1.0`.
@@ -6487,8 +6473,8 @@ params_scenic_random_forest_defaults <- function() {
 #' @param n_bins_histogram Integer. Number of bins for histogram-based automatic
 #' threshold detection. Typically 50-100. Defaults to `100L`.
 #' @param manual_threshold Numeric or `NULL`. Manual doublet score threshold. If
-#' `NULL` (default), threshold is automatically detected from simulated doublet
-#' score distribution. Defaults to `NULL`.
+#' `NULL` (default), the threshold comes from Otsu's method on the observed
+#' doublet scores. Defaults to `NULL`.
 #' @param normalisation List. Optional overrides for normalisation parameters.
 #' See [bixverse::params_norm_doublets_defaults()] for available parameters:
 #' `log_transform`, `mean_center`, `normalise_variance`, `target_size`. See
@@ -6531,8 +6517,8 @@ params_scenic_random_forest_defaults <- function() {
 #'  \item n_bins_histogram - Integer. Number of bins for histogram-based
 #'  automatic threshold detection. Typically 50-100. Defaults to `100L`.
 #'  \item manual_threshold - Numeric or `NULL`. Manual doublet score threshold.
-#'  If `NULL` (default), threshold is automatically detected from simulated
-#'  doublet score distribution. Defaults to `NULL`.
+#'  If `NULL` (default), the threshold comes from Otsu's method on the observed
+#'  doublet scores. Defaults to `NULL`.
 #' }
 #'
 #' @export
@@ -6787,7 +6773,7 @@ params_symphony_map <- function(
   lambda = 1.0
 ) {
   # Checks
-  checkmate::qassert(sigma, "N1[0,)")
+  checkmate::qassert(sigma, "N1(0,)")
   checkmate::qassert(lambda, "N1[0,)")
 
   # Return

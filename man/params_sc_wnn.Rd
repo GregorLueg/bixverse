@@ -26,8 +26,8 @@ input must contain at least this many neighbours. Defaults to \code{200L}.}
 
 \item{sigma_method}{String. Bandwidth method. One of \code{c("snn_farthest", "sigma_idx")}. Defaults to \code{"snn_farthest"}.}
 
-\item{sigma_idx}{Integer. \code{"sigma_idx"} only: 0-based kNN index for
-bandwidth.e. \code{k_nn - 1}). Defaults to \code{19L}.}
+\item{sigma_idx}{Integer. \code{"sigma_idx"} only: 0-based kNN index for the
+bandwidth (i.e. \code{k_nn - 1}). Defaults to \code{19L}.}
 
 \item{s_nn}{Integer. \code{"snn_farthest"} only: kNN size used to build the SNN
 graph. Defaults to \code{20L}.}
@@ -46,8 +46,9 @@ Defaults to \code{1e-08}.}
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
 \code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
-and \code{n_probe}. See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the available elements.
-Defaults to \code{list()}.}
+and \code{n_probe}. Note that \code{k} is unused here, \code{knn_range} sets the neighbour
+pool. See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the available elements. Defaults to
+\code{list()}.}
 }
 \value{
 A named list with the following elements:
@@ -57,8 +58,8 @@ Defaults to \code{20L}.
 \item knn_range - Integer. Candidate pool size per modality. Each cell's kNN
 input must contain at least this many neighbours. Defaults to \code{200L}.
 \item sigma_method - String. Bandwidth method. One of \code{c("snn_farthest", "sigma_idx")}. Defaults to \code{"snn_farthest"}.
-\item sigma_idx - Integer. \code{"sigma_idx"} only: 0-based kNN index for
-bandwidth.e. \code{k_nn - 1}). Defaults to \code{19L}.
+\item sigma_idx - Integer. \code{"sigma_idx"} only: 0-based kNN index for the
+bandwidth (i.e. \code{k_nn - 1}). Defaults to \code{19L}.
 \item s_nn - Integer. \code{"snn_farthest"} only: kNN size used to build the SNN
 graph. Defaults to \code{20L}.
 \item sd_scale - Numeric. Multiplier on sigma. Defaults to \code{1.0}.

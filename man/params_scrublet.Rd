@@ -32,8 +32,8 @@ Defaults to \code{0.02}.}
 threshold detection. Typically 50-100. Defaults to \code{100L}.}
 
 \item{manual_threshold}{Numeric or \code{NULL}. Manual doublet score threshold. If
-\code{NULL} (default), threshold is automatically detected from simulated doublet
-score distribution. Defaults to \code{NULL}.}
+\code{NULL} (default), the threshold comes from Otsu's method on the observed
+doublet scores. Defaults to \code{NULL}.}
 
 \item{normalisation}{List. Optional overrides for normalisation parameters.
 See \code{\link[=params_norm_doublets_defaults]{params_norm_doublets_defaults()}} for available parameters:
@@ -81,8 +81,8 @@ rate. Defaults to \code{0.02}.
 \item n_bins_histogram - Integer. Number of bins for histogram-based
 automatic threshold detection. Typically 50-100. Defaults to \code{100L}.
 \item manual_threshold - Numeric or \code{NULL}. Manual doublet score threshold.
-If \code{NULL} (default), threshold is automatically detected from simulated
-doublet score distribution. Defaults to \code{NULL}.
+If \code{NULL} (default), the threshold comes from Otsu's method on the observed
+doublet scores. Defaults to \code{NULL}.
 }
 }
 \description{

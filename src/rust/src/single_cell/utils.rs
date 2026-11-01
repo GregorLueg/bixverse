@@ -273,8 +273,7 @@ pub fn r_list_to_index_vecs(r_list: List, what: &str) -> Result<Vec<Vec<usize>>>
 
 /// Pad a possibly ragged kNN graph out to `k` columns and warn about it.
 ///
-/// Wraps the crate's `pad_knn_rows`, which is silent. Only
-/// `knn_method = "nndescent_graph"` leaves rows short. The padding repeats
+/// Wraps the crate's `pad_knn_rows`, which is silent. The padding repeats
 /// the last neighbour, so anything that deduplicates neighbours sees the
 /// true, shorter neighbourhood.
 ///
@@ -297,7 +296,7 @@ pub fn pad_knn_rows_warn(
 
     if padded > 0 {
         println!(
-            "[WARNING!] {} of {} rows came back with fewer than {} neighbours and were padded with duplicate edges. This is expected with 'nndescent_graph'; lower 'k' or use 'nndescent' to avoid it.",
+            "[WARNING!] {} of {} rows came back with fewer than {} neighbours and were padded with duplicate edges. Lower 'k' to avoid it.",
             padded,
             indices.len(),
             k

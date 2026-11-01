@@ -635,6 +635,7 @@ compute_expression_info_sc <- function(
   var <- get_sc_var(object)
   checkmate::assertNames(names(var), must.include = "gene_id")
   gene_to_idx <- setNames(seq_along(var$gene_id) - 1L, var$gene_id)
+  genes <- unique(genes)
   missing_genes <- setdiff(genes, var$gene_id)
   if (length(missing_genes) > 0L) {
     warning(sprintf(

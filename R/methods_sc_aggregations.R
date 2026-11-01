@@ -351,6 +351,12 @@ S7::method(generate_seacells_sc, ScOrScSubset) <- function(
   } else {
     get_knn_obj(object)
   }
+  if (!regenerate_knn && is.null(cells_to_use) && is.null(knn_data)) {
+    warning(paste(
+      "No cached kNN graph found, it is built from the embedding. Run",
+      "find_neighbours_sc() first or set `regenerate_knn = TRUE`."
+    ))
+  }
 
   seacell_data <- rs_get_seacells(
     f_path = get_rust_count_cell_f_path(object),

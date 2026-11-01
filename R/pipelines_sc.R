@@ -53,6 +53,22 @@ new_sc_step <- function(
     }
   }
 
+  # same for a required argument nobody supplied; the object goes in first
+  fn_formals <- formals(fn)[-1L]
+  has_no_default <- purrr::map_lgl(
+    seq_along(fn_formals),
+    \(i) identical(fn_formals[[i]], quote(expr = ))
+  )
+  required <- setdiff(names(fn_formals)[has_no_default], "...")
+  absent <- setdiff(required, names(args))
+  if (length(absent) > 0L && length(args) == length(names(args))) {
+    stop(sprintf(
+      "Step `%s` is missing required argument(s): %s.",
+      name,
+      paste(sprintf("`%s`", absent), collapse = ", ")
+    ))
+  }
+
   structure(
     list(
       name = name,
