@@ -96,15 +96,14 @@ sce <- load_mtx(object = sce, sc_mtx_io_param = load_params, csc_mem_gb = 8)
 
 This step is one of the slowest... A lot of things are actually happening here.
 
-- First, (streaming) scan to understand in how many cells a gene is expressed.
-  Only keep genes that are expressed in whatever you set to `min_cells`.
-- Second, (streaming) scan, given the genes from the first step, which cells to
-  include based on minimum library size and minimum features.
-- Third, now that it's clear which cells/genes to include, create quick temp
-  files with the cells to keep with the genes already re-indexed. This way we
-  avoid loading in the massive MTX file in one go into memory. These files are
-  automatically cleaned up at the end and loaded sequentially and written to the
-  CSR-type file (while the normalisation is also done on the fly).
+- First, a single pass over the MTX file. Entries get bucketed per cell on disk
+  next to the store, and the gene counts accumulate on the way.
+- Second, decide which genes pass `min_cells` and which cells pass the minimum
+  library size and features. The cell QC subtracts the dropped genes, so it
+  doesn't need another scan.
+- Third, write the kept cells from the buckets to the CSR-type file, with the
+  genes re-indexed and the normalisation done on the fly. The buckets get cleaned
+  up at the end.
 - Lastly, load in the cell data in small chunks and do a transpose to a CSC
   style format for easy gene retrieval.
 
@@ -361,7 +360,7 @@ sce <- find_neighbours_sc(
   object = sce,
   embd_to_use = "pca",
   neighbours_params = params_sc_neighbours(
-    knn = list(knn_method = "nndescent_graph")
+    knn = list(knn_method = "nndescent")
   )
 )
 ```
@@ -373,7 +372,6 @@ sce <- find_neighbours_gpu_sc(
   object = sce,
   embd_to_use = "pca",
   knn_method = "nndescent",
-  nn_params = params_nn_gpu(extract_knn = TRUE),
   .verbose = TRUE
 )
 ```
@@ -511,7 +509,6 @@ sce <- find_neighbours_gpu_sc(
   object = sce,
   embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
   knn_method = "nndescent",
-  nn_params = params_nn_gpu(extract_knn = TRUE),
   .verbose = TRUE
 )
 ```

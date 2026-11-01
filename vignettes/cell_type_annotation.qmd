@@ -437,9 +437,9 @@ plot_overlap(
   ggtitle("Full vs fast clustering")
 ```
 
-With ~5.8k cells there are only ~76 centroids, so the partitions come out
-coarse: about 5 communities at resolution 1 against 14 for Leiden on the full
-graph. For data sets of this size, stick with `find_clusters_sc()`. The fast
+At this size `floor(4 * sqrt(N))` only gives a few hundred centroids, so the
+partitions come out coarser than Leiden on the full graph. For data sets of this
+size, stick with `find_clusters_sc()`. The fast
 path earns its keep once you are in the hundreds of thousands of cells, see the
 [1 million cells vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html).
 

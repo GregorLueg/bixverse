@@ -311,7 +311,7 @@ about 20 times the counts, so its error bars are much tighter, and Bonsai
 weights by them. The same `bonsai_sc()` call works on `MetaCells`; every
 metacell becomes a leaf.
 
-Here SEACells compresses the PBMCs to 100 metacells, and each metacell gets
+Here SuperCells compresses the PBMCs to metacells, and each metacell gets
 the cell type most of its cells carry.
 
 ```{r}

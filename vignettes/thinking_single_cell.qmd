@@ -31,7 +31,7 @@ library(bixverse)
 
 Let's start with some synthetic data that is powering all the tests in the
 package. It's very simple data with 1,000 cells, 100 genes and three very
-cleary defined cell groups. Genes 1 to 10 defined cell_type 1, genes 11 to 20
+clearly defined cell groups. Genes 1 to 10 define cell_type 1, genes 11 to 20
 the next cell type and 21 to 30 the last cell type. The remaining genes are
 noise genes.
 

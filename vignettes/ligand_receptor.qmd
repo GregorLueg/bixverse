@@ -229,8 +229,8 @@ specificity, not just expression. PPIA-BSG passes the expression gate in
 `r cpdb_res[partner_a == "PPIA" & partner_b == "BSG", sum(gate)]` of the
 `r uniqueN(cpdb_res[, .(sender, receiver)])` cluster pairs, but is significant
 in only `r cpdb_sig[partner_a == "PPIA" & partner_b == "BSG", .N]` of them.
-Second, the top of that list is dominated by clusters 6 to 8, which hold
-`r paste(celltype_counts[celltype %in% c("cluster_6", "cluster_7", "cluster_8"), N], collapse = ", ")`
+Second, the top of that list is dominated by clusters 5 and 6, which hold
+`r paste(celltype_counts[celltype %in% c("cluster_5", "cluster_6"), N], collapse = ", ")`
 cells. Means over a handful of cells are noisy, so treat hits from tiny
 clusters with care.
 
