@@ -1,8 +1,34 @@
-# bixverse 0.8.4
+# bixverse 0.9.0
+
+A breaking release. Porting the single cell suite to Python shook out a long
+list of bugs and silent fallbacks, and most of the logic that lived in the R
+bindings now sits in `bixverse-rs`, shared with the Python front end. Expect
+some results to move against 0.8.3, see Changes.
 
 ## Features
 
-* `bixverse-r` 0.9.4 under the hood.
+* `bixverse-r` 0.10.0 under the hood.
+* `knn_method = "nndescent_graph"` hands back the graph NN-Descent built instead
+  of beam searching an index. It replaces `extract_knn`. Faster, at the cost of
+  some recall; rows the descent never filled come back padded with duplicate
+  edges.
+* The cell filter is a set now. `set_cells_to_keep()` stores unique, ascending
+  indices and errors on cells it can't find, so every result follows the store's
+  cell order. DuckDB `obs.to_keep` is the source of truth: if it disagrees with
+  the memory file, `load_existing()` warns and takes the DuckDB one.
+* `aucell_sc()`, `vision_sc()`, `vision_w_autocor_sc()`, `hotspot_autocor_sc()`
+  and `hotspot_gene_cor_sc()` work on `SingleCellsSubset`.
+* `get_cell_names()` and `get_gene_names()` work on `MetaCells`, which gets
+  `run_gene_trends_sc()` and `hotspot_gene_cor_sc()` going there.
+* Pipelines: `step_metacells_sc()` and `meta_cells_per_group()` take
+  `method = "metacells2"`, `step_pca_sc()` takes `residuals`, and
+  `SingleCellsMultiModal` objects are accepted. A misspelt step argument errors
+  when the step is built, not after the expensive steps ran. A step returning
+  `NULL` stops the pipeline.
+* `find_clusters_sc()` has a `.verbose` argument. Before, `.verbose = FALSE` got
+  forwarded to `leiden_clustering()` and errored.
+* `find_hvg_sc()` on a `SingleCellsSubset` keeps the HVG statistics in the
+  subset's var table. The parent's DuckDB isn't touched.
 * The neighbour graph now stays in Rust. `get_connectivities()` returns a
   `SingleCellConnectivity`, an S3 list holding a pointer to the Rust graph plus
   its size and build method. It prints, converts with `as_igraph()` and
@@ -46,6 +72,108 @@
   read in one pass with its entries bucketed on disk next to the store.
 * `prescan_mtx_dirs()` no longer returns `temp_files`, there are none to clean
   up.
+* `extract_knn` is gone from every kNN parameter block, use
+  `knn_method = "nndescent_graph"`. `ivf` is gone from `index_type` in
+  `params_sc_miloR()`: Rust has no IVF index there and silently ran Annoy.
+* `randomised` is gone from `params_sc_pca()`, use `svd_solver`. Check any
+  positional calls, the arguments after it moved up one.
+* `get_model_fit()` is gone, use `get_differential_abundance_res()`.
+* `find_clusters_sc()` and `step_clusters_sc()` default to `name = NULL`, so
+  Louvain now writes `louvain_clustering` rather than `leiden_clustering`.
+* `generate_seacells_sc()` has no default for `seacell_params`. The old default
+  always errored, as `n_sea_cells` has no default.
+* `params_sc_empty_droplets()` defaults to `is_empty_column = "is_empty"`, so
+  the defaults now pass their own checks.
+* The Hotspot result field `module_memership` is now `module_membership`. Use
+  `get_hotspot_membership()` rather than the field. Modules on a Hotspot object
+  saved with the old spelling need regenerating.
+* `rs_sc_pca_residuals()` lost `return_scaled`. `rs_bbknn_filtering()` returns
+  integer indices and pads short rows instead of filling them with `NaN`.
+
+Results that move against 0.8.3:
+
+* `params_scdblfinder(gbm_n_trees = )` now does something. Rust read the GBM
+  rounds from `n_trees`, the Annoy key, so the effective default goes from 50
+  rounds to 200.
+* Z-scores use the sample SD on every path. `scale = TRUE` on RNA shifts by
+  `sqrt(n / (n - 1)) - 1`, 5e-5 at 10,000 cells.
+* BBKNN keeps the k nearest neighbours rather than the k lowest cell indices.
+  The connectivity graph doesn't change; the stored kNN does, and so do kBET and
+  LISI computed on it.
+* Sparse Lanczos PCA has a sign convention now, the largest loading per
+  component is positive. Signs were random between runs before, so stored
+  factors can flip against 0.8.3. Distances, kNN and clusters don't change.
+* Group labels sort by code point (`method = "radix"`), not by locale: batch
+  codes, gene universes, cluster and sample levels. Mixed-case labels can change
+  order.
+* `lanczos_max_restarts` in `params_sc_palantir()` went from 16 to 64.
+* `params_sc_wnn(sigma_method = "sigma_idx")` is honoured. It silently fell back
+  to the SNN bandwidth.
+* `params_dialogue_pmd(seed = )` is honoured. Every run used 1234.
+* Symphony `knn_majority_vote` ties go to the lowest label, as documented.
+* `generate_knn_sc()` applies `no_embd_to_use`, and the VISION null seeds its
+  k-means with `random_seed`.
+* `calculate_pca_adt_sc()` honours `features` and stores singular values on both
+  solver paths. The full SVD path stored component SDs.
+
+Silent behaviour that's now loud:
+
+* NA batch or group labels error instead of reaching Rust as `NA_integer_`:
+  batch correction and its metrics, Symphony, MELD, `fit_residuals_sc()`, PAGA
+  and DIALOGUE samples.
+* Unknown values error rather than falling back: `rcc_method`, the DSB
+  `scale_factor`, Milo's `index_type` and refinement strategy, pseudobulk
+  `assay`, and `directions` in `run_cell_qc()`.
+* `run_cell_qc()` errors when `cells_to_keep` doesn't have one entry per cell.
+  `calculate_pca_adt_sc()` errors when kept cells are missing from the ADT
+  counts.
+* `map_symphony_query()` warns on missing reference HVGs, verbose or not, and
+  errors if all of them are missing.
+* `umap_sc()`, `densmap_sc()` and `forceatlas2_sc()` warn when `k` disagrees
+  with the cached kNN graph, whose width wins. `calculate_pca_sc()` on
+  `MetaCells` warns that `sparse_svd` is ignored. `generate_seacells_sc()` warns
+  when `cells_to_use` discards the cached kNN.
+* `fast_mnn_sc()`, `harmony_sc()` and `harmony_v2_sc()` warn and return the
+  object on a single batch, like the others. `bbknn_sc()` returns the object
+  rather than `NULL` on a missing embedding. `calculate_graph_connectivity_sc()`
+  warns and returns `NULL` on a single label.
+* `sigma` in the Harmony parameters must be above 0. `find_threshold_otsu()` now
+  actually checks `length(x) > bins`.
+
+## Fixes
+
+* `hotspot_gene_cor_sc()` and `hotspot_autocor_sc()`: unknown genes shifted the
+  matrix labels off the values.
+* `extract_gene_expression()` and friends join obs by cell id, not by position.
+  Extractors also respect the cell filter on the ADT paths.
+* `extract_feature_plot_data()` and `extract_feature_pair()` return kept order,
+  not sorted by `cell_id`.
+* `scale = TRUE` on the in-memory paths (ADT, MAGIC, MetaCells) errored on a
+  single cell. It now leaves the value unscaled.
+* `get_vars_adt_table(indices = )` filtered on a column `var_adt` doesn't have,
+  so any `indices` errored.
+* `get_sc_counts()` on a subset without cell indices read the whole parent
+  store.
+* `merge_subset_obs(prefix_values = TRUE)` turned `NA` into `"<group>_NA"`.
+* `params_sc_miloR()` dropped most `knn = list(...)` overrides. It carries the
+  full kNN block now and errors on unknown names.
+* `cellsweep_sc()` output obs carried the raw `lib_size` and `nnz`. They now
+  come from the denoised counts.
+* scDblFinder feature rownames picked the wrong cells once cells were filtered.
+* `prioritise_interactions()` put undefined interactions at the top. They now
+  get an `NA` rank and sort last.
+* `prepare_cell_markers()` and `add_nhoods_info()` no longer modify the caller's
+  table by reference.
+* `apply_pipeline_per_group()` errored on numeric group columns.
+* `meta_cells_per_group()` rejects a pipeline ending on `step_metacells_sc()` up
+  front, not after the first group ran.
+* Harmony's automatic `k` could hit 0 below 15 cells.
+* `meld_sc()`'s warning claimed it would regenerate the kNN while returning
+  `NULL`. It tells you to run `find_neighbours_sc()` now.
+* MetaCells obs `no_originating_cells` is an integer.
+* Stale docs and messages: the scDblFinder and Boost centroid message
+  (`floor(4 * sqrt(N))`), the Scrublet kNN default (`kmknn`), `n_centroids` in
+  `params_sc_fast_cluster()` and dead `meld_sc()` parameters.
 
 # bixverse 0.8.3
 
