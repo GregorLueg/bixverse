@@ -660,6 +660,62 @@ expect_true(
   info = "mc vision w autocor - 4 gene sets and a rebuilt kNN still work"
 )
 
+## hotspot ---------------------------------------------------------------------
+
+expect_equal(
+  current = get_gene_names(mc_object),
+  target = mc_object@var_table[["gene_id"]],
+  info = "mc get_gene_names - reads the var table"
+)
+
+hotspot_genes <- get_gene_names(mc_object)[1:20]
+
+hotspot_res <- hotspot_gene_cor_sc(
+  object = mc_object,
+  genes_to_take = hotspot_genes,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(hotspot_res, "Hotspot"),
+  info = "mc hotspot gene cor - correct class"
+)
+
+expect_equal(
+  current = rownames(hotspot_res$z),
+  target = hotspot_genes,
+  info = "mc hotspot gene cor - z matrix labelled with the requested genes"
+)
+
+expect_equal(
+  current = dim(hotspot_res$cor),
+  target = c(20L, 20L),
+  info = "mc hotspot gene cor - correct shape"
+)
+
+# an unknown gene must not shift the labels off the values
+expect_warning(
+  current = hotspot_gene_cor_sc(
+    object = mc_object,
+    genes_to_take = c("not_a_gene", hotspot_genes),
+    .verbose = FALSE
+  ),
+  pattern = "could not be matched",
+  info = "mc hotspot gene cor - warns on an unknown gene"
+)
+
+hotspot_res_unknown <- suppressWarnings(hotspot_gene_cor_sc(
+  object = mc_object,
+  genes_to_take = c("not_a_gene", hotspot_genes),
+  .verbose = FALSE
+))
+
+expect_equal(
+  current = hotspot_res_unknown$z,
+  target = hotspot_res$z,
+  info = "mc hotspot gene cor - unknown gene dropped, labels stay on the values"
+)
+
 ## scenic ----------------------------------------------------------------------
 
 tfs <- sprintf("gene_%03i", c(1, 2, 11, 12, 21, 22, 50, 60, 70, 80, 90, 100))
