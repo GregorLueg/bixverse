@@ -444,9 +444,9 @@ expect_true(
 )
 
 expect_true(
-  current = mean(hotspot_autocor_danb_res$gaerys_c[1:30]) >=
-    mean(hotspot_autocor_danb_res$gaerys_c[31:nrow(hotspot_autocor_danb_res)]),
-  info = "hotspot - average Gaery's C higher in expected genes - DANB"
+  current = mean(hotspot_autocor_danb_res$gearys_c[1:30]) >=
+    mean(hotspot_autocor_danb_res$gearys_c[31:nrow(hotspot_autocor_danb_res)]),
+  info = "hotspot - average Geary's C higher in expected genes - DANB"
 )
 
 hotspot_autocor_normal_res <- hotspot_autocor_sc(
@@ -461,11 +461,11 @@ expect_true(
 )
 
 expect_true(
-  current = mean(hotspot_autocor_normal_res$gaerys_c[1:30]) >=
-    mean(hotspot_autocor_normal_res$gaerys_c[
+  current = mean(hotspot_autocor_normal_res$gearys_c[1:30]) >=
+    mean(hotspot_autocor_normal_res$gearys_c[
       31:nrow(hotspot_autocor_normal_res)
     ]),
-  info = "hotspot - average Gaery's C higher in expected genes - normal"
+  info = "hotspot - average Geary's C higher in expected genes - normal"
 )
 
 #### weighted graph ------------------------------------------------------------
@@ -485,11 +485,11 @@ expect_true(
 )
 
 expect_true(
-  current = mean(hotspot_autocor_weighted_res$gaerys_c[1:30]) >=
-    mean(hotspot_autocor_weighted_res$gaerys_c[
+  current = mean(hotspot_autocor_weighted_res$gearys_c[1:30]) >=
+    mean(hotspot_autocor_weighted_res$gearys_c[
       31:nrow(hotspot_autocor_weighted_res)
     ]),
-  info = "hotspot - average Gaery's C higher in expected genes - weighted"
+  info = "hotspot - average Geary's C higher in expected genes - weighted"
 )
 
 #### streaming -----------------------------------------------------------------
@@ -535,8 +535,8 @@ hotspot_autocor_danb_res_cell_subset <- hotspot_autocor_sc(
 # the first 10 genes should have much lower spatial correlation and Z-scores
 
 expect_true(
-  current = mean(hotspot_autocor_danb_res$gaerys_c[1:10]) >
-    mean(hotspot_autocor_danb_res_cell_subset$gaerys_c[1:10]),
+  current = mean(hotspot_autocor_danb_res$gearys_c[1:10]) >
+    mean(hotspot_autocor_danb_res_cell_subset$gearys_c[1:10]),
   info = "hotspot - local corr: sample removal as expected impact on gaery's c"
 )
 

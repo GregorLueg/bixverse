@@ -96,8 +96,8 @@ expect_true(
 # the signal genes (1-30) should dominate the HVGs - it's the same signal
 # carried into the meta cells
 expect_true(
-  current = length(intersect(mc_hvg, 1:30)) >=
-    length(intersect(mc_hvg, 31:100)),
+  current = length(intersect(mc_hvg + 1L, 1:30)) >=
+    length(intersect(mc_hvg + 1L, 31:100)),
   info = "mc hvg - bulk of signal genes recovered as HVGs"
 )
 
@@ -127,8 +127,8 @@ expect_true(
 )
 
 expect_true(
-  current = length(intersect(mc_hvg_disp, 1:30)) >=
-    length(intersect(mc_hvg_disp, 31:100)),
+  current = length(intersect(mc_hvg_disp + 1L, 1:30)) >=
+    length(intersect(mc_hvg_disp + 1L, 31:100)),
   info = "mc hvg dispersion - signal genes dominate the HVGs"
 )
 
@@ -158,8 +158,8 @@ expect_true(
 )
 
 expect_true(
-  current = length(intersect(mc_hvg_mvb, 1:30)) >=
-    length(intersect(mc_hvg_mvb, 31:100)),
+  current = length(intersect(mc_hvg_mvb + 1L, 1:30)) >=
+    length(intersect(mc_hvg_mvb + 1L, 31:100)),
   info = "mc hvg meanvarbin - signal genes dominate the HVGs"
 )
 
@@ -202,7 +202,7 @@ mc_hvg_scran <- get_hvg(mc_object)
 
 expect_true(
   current = setequal(
-    mc_hvg_scran,
+    mc_hvg_scran + 1L,
     order(mc_var_scran$scran_residual, decreasing = TRUE)[1:hvg_to_keep]
   ),
   info = "mc hvg scran - HVGs are the top residuals"
@@ -279,7 +279,7 @@ expect_true(
 expect_true(
   current = length(intersect(
     mc_hvg_dt_full[is_hvg == TRUE, gene_idx],
-    mc_current_hvg
+    mc_current_hvg + 1L
   )) ==
     hvg_to_keep,
   info = "mc get_hvg_data_sc - NULL cell_ids matches find_hvg_sc"

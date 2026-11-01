@@ -298,7 +298,7 @@ S7::method(hotspot_autocor_sc, MetaCells) <- function(
 
   hotspot_auto_cor_dt <- data.table::as.data.table(hotspot_auto_cor)[,
     gene_id := gene_ids
-  ][, c("gene_id", "gaerys_c", "z_score", "pval", "fdr")]
+  ][, c("gene_id", "gearys_c", "z_score", "pval", "fdr")]
 
   return(hotspot_auto_cor_dt)
 }
@@ -601,7 +601,7 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
   }
 
   gene_indices_1b <- if (is.null(gene_ids)) {
-    get_hvg(object)
+    get_hvg(object) + 1L
   } else {
     get_gene_indices(object, gene_ids = gene_ids, rust_index = FALSE)
   }

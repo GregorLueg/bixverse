@@ -375,7 +375,7 @@ cores):
 | | Sanity | Bonsai search | total |
 |---|---|---|---|
 | `bonsai_sc()` | 60 s | 80 s | 140 s |
-| `bonsai_gpu_sc()` | 5 s | 80 s | 65 s |
+| `bonsai_gpu_sc()` | 5 s | 80 s | 85 s |
 
 Both kept the same 2,751 genes. With Sanity on the GPU the tree search is the
 clear  cost, and that is where 100k cells will hurt. Metacells are the way 

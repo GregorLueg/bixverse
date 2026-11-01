@@ -443,7 +443,7 @@ fn rs_mc_vision_with_autocorrelation(
 /// @returns A list with the following elements.
 /// \itemize{
 ///   \item gene_idx - 0-based integer indicating the gene index.
-///   \item gaerys_c - Geary's C calculation for the autocorrelation
+///   \item gearys_c - Geary's C calculation for the autocorrelation
 ///   coefficient.
 ///   \item z_score - Z-score of the auto-correlation.
 ///   \item pval - P-value derived from the Z-score.
@@ -502,7 +502,7 @@ fn rs_mc_hotspot_autocor(
 
     Ok(list!(
         gene_idx = res.gene_idx,
-        gaerys_c = res.c,
+        gearys_c = res.c,
         z_score = res.z,
         pval = res.pval,
         fdr = res.fdr

@@ -632,7 +632,7 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
     object <- set_hvg(object, hvg)
     hvg
   } else {
-    get_hvg(object)
+    get_hvg(object) + 1L
   }
 
   if (residuals) {

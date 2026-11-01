@@ -87,6 +87,9 @@ some results to move against 0.8.3, see Changes.
 * The Hotspot result field `module_memership` is now `module_membership`. Use
   `get_hotspot_membership()` rather than the field. Modules on a Hotspot object
   saved with the old spelling need regenerating.
+* `get_hvg()` on `MetaCells` returns 0-based indices like every other class. It
+  was 1-based, so add 1 wherever you index in R with it.
+* The Hotspot autocorrelation column `gaerys_c` is now `gearys_c`.
 * `rs_sc_pca_residuals()` lost `return_scaled`. `rs_bbknn_filtering()` returns
   integer indices and pads short rows instead of filling them with `NaN`.
 

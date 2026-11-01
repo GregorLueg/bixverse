@@ -47,7 +47,7 @@ detailed verbosity.}
 A list with the following elements.
 \itemize{
 \item gene_idx - 0-based integer indicating the gene index.
-\item gaerys_c - Geary's C calculation for the autocorrelation
+\item gearys_c - Geary's C calculation for the autocorrelation
 coefficient.
 \item z_score - Z-score of the auto-correlation.
 \item pval - P-value derived from the Z-score.

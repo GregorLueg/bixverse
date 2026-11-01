@@ -5077,7 +5077,7 @@ rs_regulon_thresholds <- function(auc_matrix, binarise_params) .Call(wrap__rs_re
 #' @returns A list with the following elements.
 #' \itemize{
 #'   \item gene_idx - 0-based integer indicating the gene index.
-#'   \item gaerys_c - Geary's C statistic of the gene.
+#'   \item gearys_c - Geary's C statistic of the gene.
 #'   \item z_score - Z-score of the auto-correlation.
 #'   \item pval - P-value derived from the Z-score.
 #'   \item fdr - False discovery rate based on the p-value.
@@ -6779,7 +6779,7 @@ rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wra
 #' @returns A list with the following elements.
 #' \itemize{
 #'   \item gene_idx - 0-based integer indicating the gene index.
-#'   \item gaerys_c - Geary's C calculation for the autocorrelation
+#'   \item gearys_c - Geary's C calculation for the autocorrelation
 #'   coefficient.
 #'   \item z_score - Z-score of the auto-correlation.
 #'   \item pval - P-value derived from the Z-score.

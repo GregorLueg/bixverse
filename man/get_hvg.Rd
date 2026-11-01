@@ -26,11 +26,13 @@ get_hvg(x)
 \item{x}{An object to get HVG from.}
 }
 \value{
-Indices of the stored HVG genes.
+Integer vector of 0-based gene indices, empty with a warning when no
+HVGs are stored.
 }
 \description{
-Returns the HVG indices. Pending class type this are 1-based (for R) or
-0-based for Rust.
+Returns the positions of the HVGs in the var table. These are 0-based on
+every class, as Rust wants them: add 1 before indexing anything in R, e.g.
+\code{get_gene_names(sc)[get_hvg(sc) + 1L]}.
 }
 \examples{
 # stored 0-based, so map them back through the gene names

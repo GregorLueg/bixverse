@@ -604,7 +604,7 @@ S7::method(hotspot_autocor_sc, ScOrScSubset) <- function(
       gene_idx = as.integer(hotspot_auto_cor$gene_idx),
       rust_based = TRUE
     )
-  ][, c("gene_id", "gaerys_c", "z_score", "pval", "fdr")]
+  ][, c("gene_id", "gearys_c", "z_score", "pval", "fdr")]
 
   return(hotspot_auto_cor_dt)
 }

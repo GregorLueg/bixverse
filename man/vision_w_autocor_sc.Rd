@@ -59,7 +59,7 @@ A list with the following elements:
 \item vision_matrix - Matrix of cells x signatures with the VISION
 pathway scores as values.
 \item auto_cor_dt - data.table with the auto-correlation results per
-gene set, i.e., \code{auto_cor} (1 - Gaery's C), \code{p_val} and \code{fdr}.
+gene set, i.e., \code{auto_cor} (1 - Geary's C), \code{p_val} and \code{fdr}.
 }
 }
 \description{

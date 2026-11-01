@@ -903,7 +903,7 @@ fn rs_vision_with_autocorrelation(
 /// @returns A list with the following elements.
 /// \itemize{
 ///   \item gene_idx - 0-based integer indicating the gene index.
-///   \item gaerys_c - Geary's C statistic of the gene.
+///   \item gearys_c - Geary's C statistic of the gene.
 ///   \item z_score - Z-score of the auto-correlation.
 ///   \item pval - P-value derived from the Z-score.
 ///   \item fdr - False discovery rate based on the p-value.
@@ -988,7 +988,7 @@ fn rs_hotspot_autocor(
 
     Ok(list!(
         gene_idx = res.gene_idx,
-        gaerys_c = res.c,
+        gearys_c = res.c,
         z_score = res.z,
         pval = res.pval,
         fdr = res.fdr

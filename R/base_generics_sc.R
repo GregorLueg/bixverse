@@ -373,12 +373,14 @@ set_hvg <- function(x, hvg) {
 #' Get the HVG
 #'
 #' @description
-#' Returns the HVG indices. Pending class type this are 1-based (for R) or
-#' 0-based for Rust.
+#' Returns the positions of the HVGs in the var table. These are 0-based on
+#' every class, as Rust wants them: add 1 before indexing anything in R, e.g.
+#' `get_gene_names(sc)[get_hvg(sc) + 1L]`.
 #'
 #' @param x An object to get HVG from.
 #'
-#' @returns Indices of the stored HVG genes.
+#' @returns Integer vector of 0-based gene indices, empty with a warning when no
+#' HVGs are stored.
 #'
 #' @export
 #'
@@ -2582,7 +2584,7 @@ lm_activity_sc <- S7::new_generic(
 #'   \item vision_matrix - Matrix of cells x signatures with the VISION
 #'   pathway scores as values.
 #'   \item auto_cor_dt - data.table with the auto-correlation results per
-#'   gene set, i.e., `auto_cor` (1 - Gaery's C), `p_val` and `fdr`.
+#'   gene set, i.e., `auto_cor` (1 - Geary's C), `p_val` and `fdr`.
 #' }
 #'
 #' @references DeTomaso, et al., Nat. Commun., 2019

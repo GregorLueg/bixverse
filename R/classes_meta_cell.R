@@ -605,7 +605,9 @@ S7::method(get_hvg, MetaCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
 
-  hvg_indices <- as.integer(S7::prop(x, "other_data")[["hvg"]])
+  # stored 1-based, which keeps saved objects valid; returned 0-based like
+  # every other class
+  hvg_indices <- as.integer(S7::prop(x, "other_data")[["hvg"]]) - 1L
   if (length(hvg_indices) == 0) {
     warning("No highly variable features found in the class.")
   }
@@ -1048,7 +1050,7 @@ S7::method(get_pca_loadings, MetaCells) <- function(
   }
 
   colnames(res) <- sprintf("PC_%i", 1:ncol(res))
-  rownames(res) <- S7::prop(x, "var_table")$gene_id[get_hvg(x)]
+  rownames(res) <- S7::prop(x, "var_table")$gene_id[get_hvg(x) + 1L]
 
   return(res)
 }
