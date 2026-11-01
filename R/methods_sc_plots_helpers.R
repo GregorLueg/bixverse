@@ -1343,7 +1343,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
 #'
 #' @keywords internal
 .scale_and_clip_expr <- function(x, clip = NULL) {
-  s <- stats::sd(x)
+  s <- if (length(x) > 1L) stats::sd(x) else 0
   if (s > 1e-8) {
     x <- (x - mean(x)) / s
   }

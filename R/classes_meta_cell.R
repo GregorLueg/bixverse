@@ -628,6 +628,18 @@ S7::method(get_cell_names, MetaCells) <- function(x, filtered = FALSE) {
   x@obs_table[["meta_cell_id"]]
 }
 
+#' @name get_gene_names.MetaCells
+#'
+#' @rdname get_gene_names
+#'
+#' @method get_gene_names MetaCells
+S7::method(get_gene_names, MetaCells) <- function(x) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  x@var_table[["gene_id"]]
+}
+
 #' @name get_cell_indices.MetaCells
 #'
 #' @rdname get_cell_indices
