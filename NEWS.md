@@ -106,6 +106,9 @@ Results that move against 0.8.3:
 * Sparse Lanczos PCA has a sign convention now, the largest loading per
   component is positive. Signs were random between runs before, so stored
   factors can flip against 0.8.3. Distances, kNN and clusters don't change.
+* `calculate_pca_adt_sc()` follows the same sign convention, on both solvers. The
+  randomised path also stored every column of the loadings, it now stores
+  `no_pcs` like the exact one.
 * Group labels sort by code point (`method = "radix"`), not by locale: batch
   codes, gene universes, cluster and sample levels. Mixed-case labels can change
   order.

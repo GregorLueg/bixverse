@@ -117,6 +117,16 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
   if (!randomised_svd) {
     singular_values <- singular_values * sqrt(nrow(norm_counts) - 1)
   }
+  # rs_random_svd hands back every column of v, not only the requested rank
+  pca_loadings <- pca_loadings[, seq_len(ncol(pca_factors)), drop = FALSE]
+  # a PC is only defined up to its sign; same rule as the crate's flip_signs:
+  # the largest-magnitude loading of each component is positive
+  flip <- purrr::map_dbl(seq_len(ncol(pca_loadings)), \(j) {
+    v <- pca_loadings[, j]
+    if (v[which.max(abs(v))] < 0) -1 else 1
+  })
+  pca_loadings <- sweep(pca_loadings, 2L, flip, `*`)
+  pca_factors <- sweep(pca_factors, 2L, flip, `*`)
   rownames(pca_loadings) <- colnames(norm_counts)
 
   object <- set_pca_factors(
