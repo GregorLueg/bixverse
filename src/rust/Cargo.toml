@@ -64,5 +64,3 @@ bixverse-r = { version = "0.10.0", default-features = false, features = [
 name = "document"
 path = "document.rs"
 
-[patch.crates-io]
-bixverse-r = { path = "../../../../../../bixverse-rs/crates/bixverse-r" }
