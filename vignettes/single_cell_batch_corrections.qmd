@@ -427,7 +427,7 @@ The intercept is never penalised in either. Let's start with the original:
 
 ```{r}
 #| label: harmony
-sc_object <- harmony_sc(
+sc_object <- harmony_v1_sc(
   object = sc_object,
   batch_column = "exp_id",
   harmony_params = params_sc_harmony()
@@ -435,7 +435,7 @@ sc_object <- harmony_sc(
 
 sc_object <- find_neighbours_sc(
   object = sc_object,
-  embd_to_use = "harmony",
+  embd_to_use = "harmony_v1",
   neighbours_params = params_sc_neighbours()
 )
 ```
@@ -450,13 +450,13 @@ metrics_dt <- rbind(
     sc_object,
     batch_column = "exp_id",
     cell_type_column = "cell_type",
-    embd_to_use = "harmony",
+    embd_to_use = "harmony_v1",
     .verbose = FALSE
   ) %>%
-    .[, method := "Harmony"]
+    .[, method := "Harmony v1"]
 )
 
-metrics_dt[method == "Harmony"]
+metrics_dt[method == "Harmony v1"]
 ```
 
 Also here, we observe improvements across the board.
@@ -511,7 +511,7 @@ reproduce an old v1 result, go with v2.
 
 ```{r}
 #| label: harmony (v2)
-sc_object <- harmony_v2_sc(
+sc_object <- harmony_sc(
   object = sc_object,
   batch_column = "exp_id",
   harmony_params = params_sc_harmony_v2()
@@ -519,7 +519,7 @@ sc_object <- harmony_v2_sc(
 
 sc_object <- find_neighbours_sc(
   object = sc_object,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   neighbours_params = params_sc_neighbours()
 )
 ```
@@ -534,7 +534,7 @@ metrics_dt <- rbind(
     sc_object,
     batch_column = "exp_id",
     cell_type_column = "cell_type",
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     .verbose = FALSE
   ) %>%
     .[, method := "Harmony v2"]

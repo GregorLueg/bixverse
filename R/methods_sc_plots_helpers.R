@@ -72,6 +72,8 @@
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param modality String. One of `c("rna", "adt", "wnn")`.
+#' @param k Optional integer. Neighbour count the caller asked for. Only feeds
+#' the mismatch warning and the returned `k`.
 #'
 #' @returns A list with
 #' \itemize{
@@ -79,6 +81,9 @@
 #'   should build its own.
 #'   \item embd - The input embedding, cells x dimensions.
 #'   \item cache_modality - The modality the embedding was read from.
+#'   \item k - The neighbour count to hand to manifoldsR: the cached graph's
+#'   width when one is used, `k` otherwise. manifoldsR cuts a wider graph down
+#'   to `k`, so passing the width keeps the whole cached graph.
 #' }
 #'
 #' @keywords internal
@@ -153,7 +158,11 @@
     embd <- embd[, 1:to_take]
   }
 
-  list(knn = knn, embd = embd, cache_modality = cache_modality)
+  if (!is.null(knn) && !is.null(knn$k)) {
+    k <- as.integer(knn$k)
+  }
+
+  list(knn = knn, embd = embd, cache_modality = cache_modality, k = k)
 }
 
 #' Name a manifold embedding and write it back onto the object
@@ -213,6 +222,11 @@
 #' and `spread` together control how tightly points are packed in the
 #' embedding. For `MetaCells`, smaller `k` values are often appropriate given
 #' the reduced number of points.
+#'
+#' The optimiser is set via `optimiser` in [manifoldsR::params_umap()], one of
+#' `"adam_parallel"` (the default), `"sgd"`, `"sgd_parallel"` or `"adam"`.
+#' `"sgd_parallel"` is lock-free (Hogwild!) SGD and not reproducible run to run
+#' with more than one thread.
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
@@ -337,7 +351,7 @@ S7::method(umap_sc, ScOrMc) <- function(
     data = inputs$embd,
     n_dim = n_dim,
     knn = inputs$knn,
-    k = k,
+    k = inputs$k,
     min_dist = min_dist,
     spread = spread,
     knn_method = knn_method,
@@ -374,9 +388,10 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' densMAP it does. Setting `lambda = 0` in [manifoldsR::params_densmap()]
 #' gives you back plain UMAP.
 #'
-#' Neighbour handling is the same as in [bixverse::umap_sc()]: with
-#' `use_knn = TRUE` (the default) the cached kNN graph is reused, otherwise
-#' neighbours are computed from the chosen embedding.
+#' Neighbour handling and the optimiser choice in `umap_params` are the same
+#' as in [bixverse::umap_sc()]: with `use_knn = TRUE` (the default) the cached
+#' kNN graph is reused, otherwise neighbours are computed from the chosen
+#' embedding.
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
@@ -507,7 +522,7 @@ S7::method(densmap_sc, ScOrMc) <- function(
     data = inputs$embd,
     knn = inputs$knn,
     n_dim = n_dim,
-    k = k,
+    k = inputs$k,
     min_dist = min_dist,
     spread = spread,
     knn_method = knn_method,
@@ -892,9 +907,13 @@ S7::method(densne_sc, ScOrMc) <- function(
 #' progressions and branching structure, making it the preferred choice for data
 #' with developmental or trajectory-like organisation.
 #'
-#' When `use_knn = TRUE` (the default), the kNN graph already stored on the
-#' object is reused; otherwise neighbours are computed from the chosen
-#' embedding. The algorithm then constructs a diffusion operator, raises it to a
+#' By default (`use_knn = FALSE`) neighbours are computed from the chosen
+#' embedding. PHATE searches `6 * k + 5` neighbours so that every point whose
+#' affinity clears the kernel threshold can join, which the kNN graph stored on
+#' the object (usually 15 wide) cannot supply. `use_knn = TRUE` reuses that
+#' graph anyway and gives a narrower kernel. `modality = "wnn"` always uses the
+#' integrated WNN graph. The algorithm then constructs a diffusion operator,
+#' raises it to a
 #' power (the diffusion time `t`, see [manifoldsR::params_phate()]) that
 #' denoises the manifold, and computes potential distances that are finally
 #' embedded via metric MDS.
@@ -905,7 +924,7 @@ S7::method(densne_sc, ScOrMc) <- function(
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
-#' `TRUE`. If not available, will default to the embedding.
+#' `FALSE`, see the description.
 #' @param embd_to_use String. The embedding to use for PHATE. Must be available
 #' in the object.
 #' @param slot_name String. The name of this embedding within the object.
@@ -944,7 +963,7 @@ phate_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    use_knn = TRUE,
+    use_knn = FALSE,
     embd_to_use = "pca",
     slot_name = "phate",
     no_embd_to_use = NULL,
@@ -971,7 +990,7 @@ phate_sc <- S7::new_generic(
 
 S7::method(phate_sc, ScOrMc) <- function(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   slot_name = "phate",
   no_embd_to_use = NULL,
@@ -1203,7 +1222,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     fa2_embd <- manifoldsR::forceatlas2(
       data = inputs$embd,
       knn = inputs$knn,
-      k = k,
+      k = inputs$k,
       knn_method = knn_method,
       nn_params = nn_params,
       fa2_params = fa2_params,

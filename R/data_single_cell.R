@@ -1048,45 +1048,25 @@ write_tenx_h5_sc <- function(
     as(counts, "RsparseMatrix")
   }
 
-  indptr <- as.integer(counts_r@p)
-  indices <- as.integer(counts_r@j)
-  data <- as.integer(counts_r@x)
-  shape <- as.integer(c(ncol(counts), nrow(counts)))
-
-  rhdf5::h5createFile(f_path)
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
-
-  if (version == "v3") {
-    rhdf5::h5createGroup(f_path, "matrix")
-    rhdf5::h5createGroup(f_path, "matrix/features")
-
-    rhdf5::h5write(data, f_path, "matrix/data")
-    rhdf5::h5write(indices, f_path, "matrix/indices")
-    rhdf5::h5write(indptr, f_path, "matrix/indptr")
-    rhdf5::h5write(shape, f_path, "matrix/shape")
-    rhdf5::h5write(barcodes, f_path, "matrix/barcodes")
-    rhdf5::h5write(as.character(features$id), f_path, "matrix/features/id")
-    rhdf5::h5write(
-      as.character(features$name),
-      f_path,
-      "matrix/features/name"
-    )
-
-    feature_type <- if ("feature_type" %in% names(features)) {
-      as.character(features$feature_type)
-    } else {
-      rep("Gene Expression", nrow(features))
-    }
-    rhdf5::h5write(feature_type, f_path, "matrix/features/feature_type")
+  feature_types <- if ("feature_type" %in% names(features)) {
+    as.character(features$feature_type)
   } else {
-    rhdf5::h5write(data, f_path, "data")
-    rhdf5::h5write(indices, f_path, "indices")
-    rhdf5::h5write(indptr, f_path, "indptr")
-    rhdf5::h5write(shape, f_path, "shape")
-    rhdf5::h5write(barcodes, f_path, "barcodes")
-    rhdf5::h5write(as.character(features$id), f_path, "genes")
-    rhdf5::h5write(as.character(features$name), f_path, "gene_names")
+    NULL
   }
+
+  rs_write_tenx_h5(
+    f_path = f_path,
+    version = version,
+    indptr = as.integer(counts_r@p),
+    indices = as.integer(counts_r@j),
+    data = as.integer(counts_r@x),
+    n_cells = nrow(counts),
+    n_features = ncol(counts),
+    barcodes = barcodes,
+    feature_ids = as.character(features$id),
+    feature_names = as.character(features$name),
+    feature_types = feature_types
+  )
 
   invisible()
 }

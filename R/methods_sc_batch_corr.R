@@ -1380,54 +1380,14 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
 
   object <- set_connectivities(
     object,
-    connectivities = .bbknn_to_connectivity(bbknn_res$connectivities),
+    connectivities = .new_sc_connectivity(
+      bbknn_res$connectivities,
+      method = "bbknn"
+    ),
     from = "knn"
   )
 
   object
-}
-
-#' Symmetrise the BBKNN connectivities into the neighbour graph
-#'
-#' @description
-#' Keeps the larger of the two directed weights per cell pair, as
-#' `igraph::graph_from_adjacency_matrix(mode = "max")` does, and moves the
-#' result into Rust.
-#'
-#' @param conn List. The `connectivities` CSR from `rs_bbknn()` with `indptr`,
-#' `indices` (0-indexed), `data` and `nrow`.
-#'
-#' @returns A `SingleCellConnectivity` with method `"bbknn"`.
-#'
-#' @keywords internal
-.bbknn_to_connectivity <- function(conn) {
-  # checks
-  checkmate::assertList(conn)
-  checkmate::assertNames(
-    names(conn),
-    must.include = c("indptr", "indices", "data", "nrow")
-  )
-
-  # data.table NSE
-  i <- j <- w <- NULL
-
-  from <- rep(seq_len(conn$nrow), diff(conn$indptr))
-  to <- as.integer(conn$indices) + 1L
-  pairs <- data.table::data.table(
-    i = pmin(from, to),
-    j = pmax(from, to),
-    w = as.numeric(conn$data)
-  )
-  pairs <- pairs[, list(w = max(w)), by = list(i, j)]
-  data.table::setorder(pairs, i, j)
-
-  ptr <- rs_graph_from_edges(
-    edges = as.integer(rbind(pairs$i, pairs$j)),
-    weights = pairs$w,
-    n_nodes = as.integer(conn$nrow)
-  )
-
-  .new_sc_connectivity(ptr, method = "bbknn")
 }
 
 ## fastMNN ---------------------------------------------------------------------
@@ -1581,9 +1541,10 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
 #' Run Harmony
 #'
 #' @description
-#' A version of Harmony by Korsunsky et al., implemented in Rust. Performs
-#' batch correction on PCA embeddings and stores the result as a `"harmony"`
-#' embedding in the object.
+#' Harmony v2 by Patikas et al., 2026, implemented in Rust. Performs batch
+#' correction on PCA embeddings and stores the result as a `"harmony"`
+#' embedding in the object. The original Harmony by Korsunsky et al. is
+#' [harmony_v1_sc()].
 #'
 #' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. Column name in the object containing the primary
@@ -1592,14 +1553,14 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
 #' columns to regress out. If `NULL`, only the primary batch column is used.
 #' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
 #' on `SingleCellsMultiModal` class.
-#' @param harmony_params List. Output of [bixverse::params_sc_harmony()].
+#' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()].
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @returns The object with a `"harmony"` embedding added. If no PCA embeddings
-#' are found, returns the object unchanged with a warning.
+#' @returns The object with a `"harmony"` embedding added. If no PCA
+#' embeddings are found, returns the object unchanged with a warning.
 #'
 #' @export
 #'
@@ -1622,7 +1583,7 @@ harmony_sc <- S7::new_generic(
     batch_column,
     additional_batch_columns = NULL,
     modality = c("rna", "adt"),
-    harmony_params = params_sc_harmony(),
+    harmony_params = params_sc_harmony_v2(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -1632,156 +1593,6 @@ harmony_sc <- S7::new_generic(
 
 #' @method harmony_sc ScOrScSubset
 S7::method(harmony_sc, ScOrScSubset) <- function(
-  object,
-  batch_column,
-  additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony(),
-  seed = 42L,
-  .verbose = TRUE
-) {
-  modality <- match.arg(modality)
-
-  checkmate::qassert(batch_column, "S1")
-  checkmate::qassert(additional_batch_columns, c("S+", "0"))
-  assertScHarmonyParams(harmony_params)
-  checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
-
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
-
-  # hard tier: the corrected embedding is written back onto the object, so a
-  # stale PCA would silently produce a mis-aligned one
-  assert_sc_state(object, artefacts = "pca", modality = modality)
-
-  if (is.null(get_pca_factors(object, modality = modality))) {
-    warning("No PCA embeddings found in the object. Returning class as is")
-    return(object)
-  }
-  pca_data <- get_pca_factors(object, modality = modality)
-
-  batch_index_ls <- list()
-
-  batch_indices <- .group_codes(object[[batch_column]][[1]], batch_column)
-
-  if (length(unique(batch_indices)) < 2L) {
-    warning("The batch column only has one batch. Returning object as is.")
-    return(object)
-  }
-
-  batch_index_ls[[1]] <- batch_indices
-
-  if (!is.null(additional_batch_columns)) {
-    for (i in seq_along(additional_batch_columns)) {
-      batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
-      batch_indices_i <- .group_codes(
-        batch_indices_i,
-        additional_batch_columns[[i]]
-      )
-      batch_index_ls[[i + 1]] <- batch_indices_i
-    }
-  }
-
-  checkmate::assertTRUE(all(
-    purrr::map_dbl(batch_index_ls, length) == nrow(pca_data)
-  ))
-
-  if (is.null(harmony_params$k)) {
-    harmony_params$k <- as.integer(
-      max(1L, min(round(nrow(pca_data) / 30), 100L))
-    )
-    if (.verbose) {
-      message(sprintf(
-        " Auto-determined number of Harmony clusters: %d",
-        harmony_params$k
-      ))
-    }
-  }
-
-  harmony_embd <- rs_harmony(
-    pca = pca_data,
-    harmony_params = harmony_params,
-    batch_labels = batch_index_ls,
-    seed = seed,
-    verbose = parse_verbosity(.verbose)
-  )
-
-  colnames(harmony_embd) <- sprintf("harmony_%s", 1:ncol(harmony_embd))
-
-  set_embedding(
-    x = object,
-    embd = harmony_embd,
-    name = "harmony",
-    modality = modality,
-    from = "pca"
-  )
-}
-
-## harmony v2 ------------------------------------------------------------------
-
-#' Run Harmony v2
-#'
-#' @description
-#' A version of Harmony v2 by Patikas et al., 2026, implemented in Rust.
-#' Performs batch correction on PCA embeddings and stores the result as a
-#' `"harmony_v2"` embedding in the object.
-#'
-#' @param object `SingleCells` or `SingleCellsSubset` class.
-#' @param batch_column String. Column name in the object containing the primary
-#' batch labels.
-#' @param additional_batch_columns Optional character vector. Additional batch
-#' columns to regress out. If `NULL`, only the primary batch column is used.
-#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
-#' on `SingleCellsMultiModal` class.
-#' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()].
-#' @param seed Integer. For reproducibility.
-#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
-#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
-#' verbosity.
-#'
-#' @returns The object with a `"harmony_v2"` embedding added. If no PCA
-#' embeddings are found, returns the object unchanged with a warning.
-#'
-#' @export
-#'
-#' @examples
-#' # the reimplemented Harmony, writing its own embedding
-#' sc <- demo_single_cells(
-#'   syn_data_params = params_sc_synthetic_data(
-#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
-#'   )
-#' )
-#' sc <- harmony_v2_sc(
-#'   sc,
-#'   batch_column = "batch_index",
-#'   .verbose = FALSE
-#' )
-#' dim(get_embedding(sc, "harmony_v2"))
-#'
-#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
-harmony_v2_sc <- S7::new_generic(
-  name = "harmony_v2_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    batch_column,
-    additional_batch_columns = NULL,
-    modality = c("rna", "adt"),
-    harmony_params = params_sc_harmony_v2(),
-    seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @method harmony_v2_sc ScOrScSubset
-S7::method(harmony_v2_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
@@ -1861,12 +1672,159 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
     verbose = parse_verbosity(.verbose)
   )
 
-  colnames(harmony_embd) <- sprintf("harmony_v2_%s", 1:ncol(harmony_embd))
+  colnames(harmony_embd) <- sprintf("harmony_%s", 1:ncol(harmony_embd))
 
   set_embedding(
     x = object,
     embd = harmony_embd,
-    name = "harmony_v2",
+    name = "harmony",
+    modality = modality,
+    from = "pca"
+  )
+}
+
+## harmony v1 ------------------------------------------------------------------
+
+#' Run Harmony v1
+#'
+#' @description
+#' The original Harmony by Korsunsky et al., implemented in Rust. Performs
+#' batch correction on PCA embeddings and stores the result as a
+#' `"harmony_v1"` embedding in the object. [harmony_sc()] runs Harmony v2,
+#' which is the default.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param batch_column String. Column name in the object containing the primary
+#' batch labels.
+#' @param additional_batch_columns Optional character vector. Additional batch
+#' columns to regress out. If `NULL`, only the primary batch column is used.
+#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' on `SingleCellsMultiModal` class.
+#' @param harmony_params List. Output of [bixverse::params_sc_harmony()].
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns The object with a `"harmony_v1"` embedding added. If no PCA
+#' embeddings are found, returns the object unchanged with a warning.
+#'
+#' @export
+#'
+#' @examples
+#' # the original Harmony, writing its own embedding
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' sc <- harmony_v1_sc(sc, batch_column = "batch_index", .verbose = FALSE)
+#' dim(get_embedding(sc, "harmony_v1"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+harmony_v1_sc <- S7::new_generic(
+  name = "harmony_v1_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    additional_batch_columns = NULL,
+    modality = c("rna", "adt"),
+    harmony_params = params_sc_harmony(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method harmony_v1_sc ScOrScSubset
+S7::method(harmony_v1_sc, ScOrScSubset) <- function(
+  object,
+  batch_column,
+  additional_batch_columns = NULL,
+  modality = c("rna", "adt"),
+  harmony_params = params_sc_harmony(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  modality <- match.arg(modality)
+
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(additional_batch_columns, c("S+", "0"))
+  assertScHarmonyParams(harmony_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  # hard tier: the corrected embedding is written back onto the object, so a
+  # stale PCA would silently produce a mis-aligned one
+  assert_sc_state(object, artefacts = "pca", modality = modality)
+
+  if (is.null(get_pca_factors(object, modality = modality))) {
+    warning("No PCA embeddings found in the object. Returning class as is")
+    return(object)
+  }
+  pca_data <- get_pca_factors(object, modality = modality)
+
+  batch_index_ls <- list()
+
+  batch_indices <- .group_codes(object[[batch_column]][[1]], batch_column)
+
+  if (length(unique(batch_indices)) < 2L) {
+    warning("The batch column only has one batch. Returning object as is.")
+    return(object)
+  }
+
+  batch_index_ls[[1]] <- batch_indices
+
+  if (!is.null(additional_batch_columns)) {
+    for (i in seq_along(additional_batch_columns)) {
+      batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
+      batch_indices_i <- .group_codes(
+        batch_indices_i,
+        additional_batch_columns[[i]]
+      )
+      batch_index_ls[[i + 1]] <- batch_indices_i
+    }
+  }
+
+  checkmate::assertTRUE(all(
+    purrr::map_dbl(batch_index_ls, length) == nrow(pca_data)
+  ))
+
+  if (is.null(harmony_params$k)) {
+    harmony_params$k <- as.integer(
+      max(1L, min(round(nrow(pca_data) / 30), 100L))
+    )
+    if (.verbose) {
+      message(sprintf(
+        " Auto-determined number of Harmony clusters: %d",
+        harmony_params$k
+      ))
+    }
+  }
+
+  harmony_embd <- rs_harmony(
+    pca = pca_data,
+    harmony_params = harmony_params,
+    batch_labels = batch_index_ls,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  colnames(harmony_embd) <- sprintf("harmony_v1_%s", 1:ncol(harmony_embd))
+
+  set_embedding(
+    x = object,
+    embd = harmony_embd,
+    name = "harmony_v1",
     modality = modality,
     from = "pca"
   )

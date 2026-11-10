@@ -82,8 +82,8 @@ used in round selection. Defaults to \code{1.0}.}
 classifier features. Defaults to \code{19L}.}
 
 \item{expected_doublet_rate}{Numeric or \code{NULL}. Expected doublet rate as a
-percentage. If not provided, will be calculated internally. Defaults to
-\code{NULL}.}
+fraction, e.g. 0.12 for 12 \%. If not provided, will be calculated internally.
+Defaults to \code{NULL}.}
 
 \item{cxds_genes}{Integer or \code{NULL}. Number of CXDS genes to consider. If not
 provided, defaults to \code{500L}. Defaults to \code{NULL}.}
@@ -158,8 +158,8 @@ rule used in round selection. Defaults to \code{1.0}.
 \item include_pcs - Any. Number of leading principal components to include
 as classifier features. Defaults to \code{19L}.
 \item expected_doublet_rate - Numeric or \code{NULL}. Expected doublet rate as a
-percentage. If not provided, will be calculated internally. Defaults to
-\code{NULL}.
+fraction, e.g. 0.12 for 12 \%. If not provided, will be calculated
+internally. Defaults to \code{NULL}.
 \item manual_threshold - Numeric or \code{NULL}. Manual score threshold. If
 \code{NULL} (default), expected-rate thresholding is used. Defaults to \code{NULL}.
 \item cxds_genes - Integer or \code{NULL}. Number of CXDS genes to consider. If

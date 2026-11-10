@@ -25,6 +25,9 @@ available in the object.}
 use. If \code{NULL} all will be used.}
 
 \item{modality}{String. One of \code{c("rna", "adt", "wnn")}.}
+
+\item{k}{Optional integer. Neighbour count the caller asked for. Only feeds
+the mismatch warning and the returned \code{k}.}
 }
 \value{
 A list with
@@ -33,6 +36,9 @@ A list with
 should build its own.
 \item embd - The input embedding, cells x dimensions.
 \item cache_modality - The modality the embedding was read from.
+\item k - The neighbour count to hand to manifoldsR: the cached graph's
+width when one is used, \code{k} otherwise. manifoldsR cuts a wider graph down
+to \code{k}, so passing the width keeps the whole cached graph.
 }
 }
 \description{

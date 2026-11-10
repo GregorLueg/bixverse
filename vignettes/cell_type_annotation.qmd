@@ -147,7 +147,7 @@ sc_ref <- set_cells_to_keep(sc_ref, cells_to_keep)
 ### HVGs, PCA, Harmony v2
 
 This block is the Harmony v2 path of the batch correction vignette: pick HVGs,
-run PCA, run Harmony v2. Version 1 is still available via `harmony_sc()` and
+run PCA, run Harmony v2. Version 1 is still available via `harmony_v1_sc()` and
 `params_sc_harmony()`, but v2 is preferable in most settings (see the batch
 correction vignette for the reasoning).
 
@@ -164,7 +164,7 @@ sc_ref <- calculate_pca_sc(
   no_pcs = 30L
 )
 
-sc_ref <- harmony_v2_sc(
+sc_ref <- harmony_sc(
   object = sc_ref,
   batch_column = "exp_id",
   harmony_params = params_sc_harmony_v2()
@@ -198,7 +198,7 @@ resolutions <- c(0.5, 1, 1.5, 2)
 n_clusters <- purrr::map(graph_types, \(graph_type) {
   sc_ref <- find_neighbours_sc(
     object = sc_ref,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     neighbours_params = params_sc_neighbours(
       graph = list(knn_sym = graph_type)
     ),
@@ -235,7 +235,7 @@ For the rest of the vignette we work on the sNN graph.
 #| label: reference neighbours
 sc_ref <- find_neighbours_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   neighbours_params = params_sc_neighbours()
 )
 
@@ -373,14 +373,14 @@ fc_resolutions <- c(2, 1.5, 1, 0.5)
 
 fc_knn <- fast_cluster_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   resolutions = fc_resolutions,
   n_seeds = 10L
 )
 
 fc_cell_med <- fast_cluster_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   resolutions = fc_resolutions,
   fc_params = params_sc_fast_cluster(cell_mediated = TRUE),
   n_seeds = 10L

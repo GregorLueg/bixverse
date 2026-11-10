@@ -156,60 +156,6 @@
   list(cols = cols, idx = idx_info$idx)
 }
 
-#' Read a sample of values from a matrix slot in an h5ad file
-#'
-#' Handles both sparse (group with a `data` dataset) and dense (direct dataset)
-#' storage. Returns NULL if the slot does not exist.
-#'
-#' @param f_path String. Path to the h5ad file.
-#' @param slot_path String. Full path of the slot inside the file.
-#' @param h5_content data.table. Output of [rhdf5::h5ls()] on `f_path`.
-#' @param n_sample Integer. Maximum number of values to read.
-#'
-#' @returns Numeric vector of sampled values, or `NULL` if the slot is absent.
-#'
-#' @keywords internal
-.read_slot_value_sample <- function(
-  f_path,
-  slot_path,
-  h5_content,
-  n_sample = 10000L
-) {
-  full <- data.table::fifelse(
-    h5_content$group == "/",
-    paste0("/", h5_content$name),
-    paste0(h5_content$group, "/", h5_content$name)
-  )
-
-  if (!slot_path %in% full) {
-    return(NULL)
-  }
-
-  otype <- h5_content$otype[full == slot_path][1L]
-
-  if (otype == "H5I_GROUP") {
-    data_path <- paste0(slot_path, "/data")
-    if (!data_path %in% full) {
-      return(NULL)
-    }
-    len <- as.numeric(
-      strsplit(h5_content$dim[full == data_path][1L], " x ", fixed = TRUE)[[
-        1L
-      ]][1L]
-    )
-    idx <- seq_len(min(len, n_sample))
-    return(as.vector(rhdf5::h5read(f_path, data_path, index = list(idx))))
-  }
-
-  # dense dataset
-  dims <- as.integer(
-    strsplit(h5_content$dim[full == slot_path][1L], " x ", fixed = TRUE)[[1L]]
-  )
-  side <- max(1L, as.integer(ceiling(sqrt(n_sample))))
-  idx <- lapply(dims, function(d) seq_len(min(d, side)))
-  as.vector(rhdf5::h5read(f_path, slot_path, index = idx))
-}
-
 #' Detect which slot holds raw integer counts in an h5ad file
 #'
 #' Samples the non-zero values of each candidate slot and returns the first one
@@ -246,31 +192,20 @@ detect_raw_count_slot <- function(
   threshold = 0.99
 ) {
   checkmate::assertFileExists(f_path)
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+  candidates <- match.arg(
+    candidates,
+    c("layers.counts", "raw.X", "X"),
+    several.ok = TRUE
+  )
+  checkmate::qassert(n_sample, "X1[1,)")
+  checkmate::qassert(threshold, "N1[0,1]")
 
-  slot_paths <- c(X = "/X", raw.X = "/raw/X", layers.counts = "/layers/counts")
-  candidates <- match.arg(candidates, names(slot_paths), several.ok = TRUE)
-
-  h5_content <- rhdf5::h5ls(f_path) |> data.table::setDT()
-
-  for (slot in candidates) {
-    vals <- .read_slot_value_sample(
-      f_path,
-      slot_paths[[slot]],
-      h5_content,
-      n_sample
-    )
-    if (is.null(vals) || length(vals) == 0L) {
-      next
-    }
-    nz <- vals[vals != 0]
-    if (length(nz) == 0L) {
-      next
-    }
-    if (mean(nz == floor(nz)) >= threshold) return(slot)
-  }
-
-  NULL
+  rs_h5ad_raw_slot(
+    f_path = f_path,
+    candidates = candidates,
+    n_sample = as.integer(n_sample),
+    threshold = threshold
+  )
 }
 
 ## scan multiple files for ingestion -------------------------------------------
@@ -422,50 +357,6 @@ prescan_h5ad_files <- function(
 
 ### dimensions -----------------------------------------------------------------
 
-#' Number of rows of an h5ad dataframe group
-#'
-#' @description
-#' Reads the length of the index named by the `_index` attribute. The index is
-#' a plain dataset for older writers, or a group holding `values` (nullable
-#' strings, as written with pandas >= 3) or `codes` (categoricals). Files
-#' without an `_index` attribute fall back to the first plain dataset in the
-#' group.
-#'
-#' @param f_path File path to the `.h5ad` file.
-#' @param h5_content data.table. Output of `rhdf5::h5ls()` on `f_path`.
-#' @param group String. One of `"/obs"` or `"/var"`.
-#'
-#' @returns The number of rows as numeric, `NA` if it cannot be resolved.
-#'
-#' @keywords internal
-.h5ad_frame_length <- function(f_path, h5_content, group) {
-  checkmate::assertFileExists(f_path)
-  checkmate::assertDataTable(h5_content)
-  checkmate::assertChoice(group, c("/obs", "/var"))
-
-  frame <- group
-  index_name <- rhdf5::h5readAttributes(f_path, frame)[["_index"]]
-
-  if (is.null(index_name)) {
-    return(h5_content[
-      group == frame & otype == "H5I_DATASET"
-    ][1, as.numeric(dim)])
-  }
-
-  index_path <- paste0(frame, "/", index_name)
-  index_row <- h5_content[group == frame & name == index_name]
-
-  if (nrow(index_row) == 1L && index_row$otype == "H5I_DATASET") {
-    return(as.numeric(index_row$dim))
-  }
-
-  h5_content[
-    group == index_path &
-      name %in% c("values", "codes") &
-      otype == "H5I_DATASET"
-  ][1, as.numeric(dim)]
-}
-
 #' Helper function to get the dimensions and storage format
 #'
 #' Distinguishes sparse (`CSR`/`CSC`) from dense storage. For dense `X` the
@@ -493,69 +384,11 @@ prescan_h5ad_files <- function(
 get_h5ad_dimensions <- function(f_path) {
   checkmate::assertFileExists(f_path)
 
-  h5_content <- rhdf5::h5ls(f_path) %>%
-    data.table::setDT()
-
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
-
-  no_obs <- .h5ad_frame_length(f_path, h5_content, "/obs")
-  no_var <- .h5ad_frame_length(f_path, h5_content, "/var")
-
-  x_row <- h5_content[group == "/" & name == "X"]
-
-  if (nrow(x_row) == 0L) {
-    stop("Could not locate /X in the h5ad file.")
-  }
-
-  cs_format <- if (x_row$otype == "H5I_GROUP") {
-    indptr <- h5_content[
-      group == "/X" & name == "indptr",
-      as.numeric(dim)
-    ]
-    if (length(indptr) == 0L) {
-      stop("/X is a group but contains no indptr dataset.")
-    }
-    encoding <- rhdf5::h5readAttributes(f_path, "X")[["encoding-type"]]
-    if (identical(encoding, "csr_matrix")) {
-      "CSR"
-    } else if (identical(encoding, "csc_matrix")) {
-      "CSC"
-    } else {
-      ifelse(no_var + 1 == indptr, "CSC", "CSR")
-    }
-  } else {
-    # h5ls dim is R-view; read native order directly
-    fid <- rhdf5::H5Fopen(f_path)
-    did <- rhdf5::H5Dopen(fid, "X")
-    sid <- rhdf5::H5Dget_space(did)
-    x_dims <- rhdf5::H5Sget_simple_extent_dims(sid)$size
-    rhdf5::H5Sclose(sid)
-    rhdf5::H5Dclose(did)
-    rhdf5::H5Fclose(fid)
-
-    if (length(x_dims) != 2L) {
-      stop(sprintf("Unexpected /X rank: %d", length(x_dims)))
-    }
-    if (x_dims[1] == no_obs && x_dims[2] == no_var) {
-      "DENSE_COL"
-    } else if (x_dims[1] == no_var && x_dims[2] == no_obs) {
-      "DENSE_ROW"
-    } else if (no_obs == no_var) {
-      "DENSE_ROW"
-    } else {
-      stop(sprintf(
-        "/X dense dims (%d x %d) match neither obs/var (%d / %d) ordering.",
-        x_dims[1],
-        x_dims[2],
-        no_obs,
-        no_var
-      ))
-    }
-  }
+  res <- rs_h5ad_dimensions(f_path = f_path)
 
   list(
-    dims = setNames(c(as.integer(no_obs), as.integer(no_var)), c("obs", "var")),
-    type = cs_format
+    dims = c(obs = as.integer(res$n_obs), var = as.integer(res$n_var)),
+    type = res$format
   )
 }
 

@@ -9,7 +9,7 @@ harmony_sc(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -26,7 +26,7 @@ columns to regress out. If \code{NULL}, only the primary batch column is used.}
 \item{modality}{String. One of \code{c("rna", "adt")}. You can only use \code{"adt"}
 on \code{SingleCellsMultiModal} class.}
 
-\item{harmony_params}{List. Output of \code{\link[=params_sc_harmony]{params_sc_harmony()}}.}
+\item{harmony_params}{List. Output of \code{\link[=params_sc_harmony_v2]{params_sc_harmony_v2()}}.}
 
 \item{seed}{Integer. For reproducibility.}
 
@@ -35,13 +35,14 @@ on \code{SingleCellsMultiModal} class.}
 verbosity.}
 }
 \value{
-The object with a \code{"harmony"} embedding added. If no PCA embeddings
-are found, returns the object unchanged with a warning.
+The object with a \code{"harmony"} embedding added. If no PCA
+embeddings are found, returns the object unchanged with a warning.
 }
 \description{
-A version of Harmony by Korsunsky et al., implemented in Rust. Performs
-batch correction on PCA embeddings and stores the result as a \code{"harmony"}
-embedding in the object.
+Harmony v2 by Patikas et al., 2026, implemented in Rust. Performs batch
+correction on PCA embeddings and stores the result as a \code{"harmony"}
+embedding in the object. The original Harmony by Korsunsky et al. is
+\code{\link[=harmony_v1_sc]{harmony_v1_sc()}}.
 }
 \examples{
 # Harmony correction of the PCA embedding

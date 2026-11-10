@@ -299,8 +299,8 @@ which you then hand to `find_neighbours_sc(embd_to_use = ...)`.
 
 | Function | Embedding | Params |
 |---|---|---|
-| `harmony_sc()` | `"harmony"` | `params_sc_harmony()` |
-| `harmony_v2_sc()` | `"harmony_v2"` | `params_sc_harmony_v2()` |
+| `harmony_sc()` (v2) | `"harmony"` | `params_sc_harmony_v2()` |
+| `harmony_v1_sc()` | `"harmony_v1"` | `params_sc_harmony()` |
 | `fast_mnn_sc()` | `"mnn"` | `params_sc_fastmnn()` |
 | `seurat_cca_sc()` | `"cca"` | `params_sc_seurat_cca()` |
 | `seurat_rpca_sc()` | `"rpca"` | `params_sc_seurat_rpca()` |
@@ -478,7 +478,7 @@ per_group <- apply_pipeline_per_group(pipe, obj, group_col = "sample_id")
 ```
 
 Nine steps: `step_hvg_sc`, `step_pca_sc`, `step_neighbours_sc`,
-`step_clusters_sc`, `step_harmony_sc`, `step_harmony_v2_sc`, `step_bbknn_sc`,
+`step_clusters_sc`, `step_harmony_sc`, `step_harmony_v1_sc`, `step_bbknn_sc`,
 `step_fast_mnn_sc`, `step_metacells_sc`.
 
 `apply_pipeline()` runs `validate_pipeline()` up front. Be clear on what that

@@ -1067,7 +1067,7 @@ assess_harmony_impact <- function(object) {
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
     length(kbet_original$pval)
 
-  object <- harmony_sc(
+  object <- harmony_v1_sc(
     object = object,
     batch_column = "batch_index",
     harmony_params = params_sc_harmony(),
@@ -1076,7 +1076,7 @@ assess_harmony_impact <- function(object) {
 
   object <- find_neighbours_sc(
     object,
-    embd_to_use = "harmony",
+    embd_to_use = "harmony_v1",
     neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
     .verbose = FALSE
   )
@@ -1159,7 +1159,7 @@ assess_harmony_impact_v2 <- function(object) {
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
     length(kbet_original$pval)
 
-  object <- harmony_v2_sc(
+  object <- harmony_sc(
     object = object,
     batch_column = "batch_index",
     harmony_params = params_sc_harmony_v2(),
@@ -1168,7 +1168,7 @@ assess_harmony_impact_v2 <- function(object) {
 
   object <- find_neighbours_sc(
     object,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
     .verbose = FALSE
   )

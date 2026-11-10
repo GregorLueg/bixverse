@@ -485,7 +485,7 @@ seconds)
 ```{r}
 #| label: harmony cpu
 #| eval: false
-sce <- harmony_v2_sc(object = sce, batch_column = "sample")
+sce <- harmony_sc(object = sce, batch_column = "sample")
 ```
 
 If you have a GPU at hand, you can also just use the GPU version (also 4 seconds
@@ -507,7 +507,7 @@ Let's overwrite the kNN graph with the now batch-corrected embedding:
 #| eval: false
 sce <- find_neighbours_gpu_sc(
   object = sce,
-  embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
+  embd_to_use = "harmony_gpu", # or harmony if you just did the CPU version
   knn_method = "nndescent",
   .verbose = TRUE
 )
@@ -538,7 +538,7 @@ community membership back.
 #| eval: false
 fast_cluster_res <- fast_cluster_sc(
   object = sce,
-  embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
+  embd_to_use = "harmony_gpu", # or harmony if you just did the CPU version
   return_kmeans = FALSE,
   n_seeds = 10L,
   .verbose = 2L

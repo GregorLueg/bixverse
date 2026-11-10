@@ -682,7 +682,7 @@ step_clusters_sc <- function(
 #' Pipeline step: Harmony batch correction
 #'
 #' @description
-#' Wraps [harmony_sc()] as an `ScStep`.
+#' Wraps [harmony_sc()] (Harmony v2) as an `ScStep`.
 #'
 #' @inheritParams harmony_sc
 #'
@@ -698,7 +698,7 @@ step_harmony_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -716,32 +716,32 @@ step_harmony_sc <- function(
   )
 }
 
-#' Pipeline step: Harmony v2 batch correction
+#' Pipeline step: Harmony v1 batch correction
 #'
 #' @description
-#' Wraps [harmony_v2_sc()] as an `ScStep`.
+#' Wraps [harmony_v1_sc()] as an `ScStep`.
 #'
-#' @inheritParams harmony_v2_sc
+#' @inheritParams harmony_v1_sc
 #'
 #' @returns An `ScStep`.
 #'
 #' @export
 #'
 #' @examples
-#' # the v2 implementation writes its own embedding name
-#' step_harmony_v2_sc(batch_column = "batch_index") %>>%
-#'   step_neighbours_sc(embd_to_use = "harmony_v2")
-step_harmony_v2_sc <- function(
+#' # the original Harmony writes its own embedding name
+#' step_harmony_v1_sc(batch_column = "batch_index") %>>%
+#'   step_neighbours_sc(embd_to_use = "harmony_v1")
+step_harmony_v1_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony_v2(),
+  harmony_params = params_sc_harmony(),
   seed = 42L,
   .verbose = TRUE
 ) {
   new_sc_step(
-    "harmony_v2",
-    harmony_v2_sc,
+    "harmony_v1",
+    harmony_v1_sc,
     list(
       batch_column = batch_column,
       additional_batch_columns = additional_batch_columns,

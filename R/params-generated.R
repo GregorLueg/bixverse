@@ -4148,7 +4148,8 @@ params_sc_hotspot <- function(
 #' @param loess_span Numeric. The span parameter for the loess function that is
 #' used to standardise the variance for `method = "vst"`, and the lowess span of
 #' the trend for `method = "scran"`. Defaults to `0.3`.
-#' @param num_bin Integer. Not yet implemented. Defaults to `20L`.
+#' @param num_bin Integer. Number of bins for the `meanvarbin` and `dispersion`
+#' methods. Defaults to `20L`.
 #' @param bin_method String. The binning method. One of `c("equal_width",
 #' "equal_freq")`. Defaults to `"equal_width"`.
 #' @param scran List. Optional overrides for the `method = "scran"` trend. See
@@ -4170,7 +4171,8 @@ params_sc_hotspot <- function(
 #'  \item loess_span - Numeric. The span parameter for the loess function that
 #'  is used to standardise the variance for `method = "vst"`, and the lowess
 #'  span of the trend for `method = "scran"`. Defaults to `0.3`.
-#'  \item num_bin - Integer. Not yet implemented. Defaults to `20L`.
+#'  \item num_bin - Integer. Number of bins for the `meanvarbin` and
+#'  `dispersion` methods. Defaults to `20L`.
 #'  \item bin_method - String. The binning method. One of `c("equal_width",
 #'  "equal_freq")`. Defaults to `"equal_width"`.
 #'  \item The elements of [params_hvg_scran_defaults()], overridden by `scran`,
@@ -6053,8 +6055,8 @@ params_sc_wnn <- function(
 #' @param include_pcs Any. Number of leading principal components to include as
 #' classifier features. Defaults to `19L`.
 #' @param expected_doublet_rate Numeric or `NULL`. Expected doublet rate as a
-#' percentage. If not provided, will be calculated internally. Defaults to
-#' `NULL`.
+#' fraction, e.g. 0.12 for 12 %. If not provided, will be calculated internally.
+#' Defaults to `NULL`.
 #' @param cxds_genes Integer or `NULL`. Number of CXDS genes to consider. If not
 #' provided, defaults to `500L`. Defaults to `NULL`.
 #' @param manual_threshold Numeric or `NULL`. Manual score threshold. If `NULL`
@@ -6122,8 +6124,8 @@ params_sc_wnn <- function(
 #'  \item include_pcs - Any. Number of leading principal components to include
 #'  as classifier features. Defaults to `19L`.
 #'  \item expected_doublet_rate - Numeric or `NULL`. Expected doublet rate as a
-#'  percentage. If not provided, will be calculated internally. Defaults to
-#'  `NULL`.
+#'  fraction, e.g. 0.12 for 12 %. If not provided, will be calculated
+#'  internally. Defaults to `NULL`.
 #'  \item manual_threshold - Numeric or `NULL`. Manual score threshold. If
 #'  `NULL` (default), expected-rate thresholding is used. Defaults to `NULL`.
 #'  \item cxds_genes - Integer or `NULL`. Number of CXDS genes to consider. If

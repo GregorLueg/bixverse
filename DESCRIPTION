@@ -54,7 +54,7 @@ Imports:
     jsonlite,
     lifecycle,
     magrittr,
-    manifoldsR (>= 0.4.0),
+    manifoldsR (>= 0.6.0),
     matrixStats,
     Matrix,
     mirai,

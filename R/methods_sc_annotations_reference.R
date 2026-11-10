@@ -244,8 +244,8 @@ S7::method(assign_sc_type, SingleCells) <- function(
 #' @param additional_batch_columns Optional character vector.
 #' @param hvg Integer vector. R-style 1-based HVG indices into the gene
 #' universe of `object`. Must be provided explicitly.
-#' @param harmony_params List. Output of [bixverse::params_sc_harmony()] or
-#' [bixverse::params_sc_harmony_v2()].
+#' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()]
+#' (Harmony v2, the default) or [bixverse::params_sc_harmony()] (v1).
 #' @param pca_params List. Output of [bixverse::params_sc_pca()].
 #' @param no_pcs Integer. Number of principal components.
 #' @param slim Boolean. If `TRUE`, drops `z_orig` and `r` from the returned
@@ -275,7 +275,7 @@ S7::method(assign_sc_type, SingleCells) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE
@@ -291,7 +291,7 @@ build_symphony_ref <- S7::new_generic(
     batch_column,
     additional_batch_columns = NULL,
     hvg,
-    harmony_params = params_sc_harmony(),
+    harmony_params = params_sc_harmony_v2(),
     pca_params = params_sc_pca(),
     no_pcs = 30L,
     slim = FALSE,
@@ -311,7 +311,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   batch_column,
   additional_batch_columns = NULL,
   hvg,
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   pca_params = params_sc_pca(),
   no_pcs = 30L,
   slim = FALSE,
@@ -456,7 +456,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   .verbose = FALSE
 #' )
@@ -568,7 +568,7 @@ S7::method(add_symphony_labels, SymphonyReference) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   .verbose = FALSE
 #' )
@@ -716,7 +716,7 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE

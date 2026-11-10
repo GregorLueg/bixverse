@@ -374,8 +374,8 @@ spec_scdblfinder <- param_spec(
       range = "(0,1]",
       null_ok = TRUE,
       doc = paste(
-        "Expected doublet rate as a percentage. If not provided, will",
-        "be calculated internally."
+        "Expected doublet rate as a fraction, e.g. 0.12 for 12 %. If not",
+        "provided, will be calculated internally."
       )
     ),
     cxds_genes = p_int(

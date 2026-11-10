@@ -9,7 +9,7 @@ build_symphony_ref(
   batch_column,
   additional_batch_columns = NULL,
   hvg,
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   pca_params = params_sc_pca(),
   no_pcs = 30L,
   slim = FALSE,
@@ -28,8 +28,8 @@ build_symphony_ref(
 \item{hvg}{Integer vector. R-style 1-based HVG indices into the gene
 universe of \code{object}. Must be provided explicitly.}
 
-\item{harmony_params}{List. Output of \code{\link[=params_sc_harmony]{params_sc_harmony()}} or
-\code{\link[=params_sc_harmony_v2]{params_sc_harmony_v2()}}.}
+\item{harmony_params}{List. Output of \code{\link[=params_sc_harmony_v2]{params_sc_harmony_v2()}}
+(Harmony v2, the default) or \code{\link[=params_sc_harmony]{params_sc_harmony()}} (v1).}
 
 \item{pca_params}{List. Output of \code{\link[=params_sc_pca]{params_sc_pca()}}.}
 
@@ -71,7 +71,7 @@ symphony_ref <- build_symphony_ref(
   ref,
   batch_column = "batch_index",
   hvg = get_hvg(ref) + 1L,
-  harmony_params = params_sc_harmony(k = 10L),
+  harmony_params = params_sc_harmony_v2(k = 10L),
   no_pcs = 10L,
   label_columns = "cell_grp",
   .verbose = FALSE

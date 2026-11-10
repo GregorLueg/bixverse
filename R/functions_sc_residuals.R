@@ -691,6 +691,7 @@ print.ScResidualFit <- function(x, ...) {
     verbose = parse_verbosity(.verbose)
   )
 
+  rownames(res$loadings) <- get_gene_names(object)[selected_hvg + 1L]
   object <- set_pca_factors(object, res$scores, from = "residuals")
   object <- set_pca_loadings(object, res$loadings)
   object <- set_pca_singular_vals(object, res$singular_values[1:no_pcs])

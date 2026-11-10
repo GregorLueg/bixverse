@@ -284,6 +284,33 @@ expect_true(
   info = "h5ad export - non-HVG loading rows are zero"
 )
 
+### loadings after the HVGs moved ----------------------------------------------
+
+# re-running the HVGs after the PCA must not move the loadings onto the new
+# HVG set; they belong to the genes the PCA ran on
+sc_rehvg <- find_hvg_sc(
+  sc_object,
+  hvg_no = length(hvg_idx) - 5L,
+  .verbose = FALSE
+)
+
+h5_rehvg <- file.path(test_temp_dir, "export_rehvg.h5ad")
+
+save_h5ad(object = sc_rehvg, h5_path = h5_rehvg, .verbose = FALSE)
+
+loadings_rehvg <- t(rhdf5::h5read(h5_rehvg, "varm/PCs"))
+
+expect_equal(
+  current = loadings_rehvg[hvg_idx, ],
+  target = unname(get_pca_loadings(sc_object)),
+  info = "h5ad export - loadings stay on the PCA genes after new HVGs"
+)
+
+expect_true(
+  current = all(loadings_rehvg[-hvg_idx, ] == 0),
+  info = "h5ad export - no loadings on genes outside the PCA"
+)
+
 expect_equal(
   current = rhdf5::h5readAttributes(
     h5_out,

@@ -5,7 +5,6 @@
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::mc_analysis::metrics::pairwise_gene_correlations_in_memory;
 use bixverse_r::single_cell::mc_processing::hvg_pca::*;
-use bixverse_r::single_cell::sc_processing::hvg::*;
 use bixverse_r::single_cell::sc_processing::pca::SingleCellPcaParams;
 use bixverse_r::single_cell::sc_processing::residual_fit::{
     fit_residuals_in_memory, pca_residuals_in_memory, residual_variance_in_memory,
@@ -15,6 +14,7 @@ use extendr_api::*;
 use std::time::Instant;
 
 use crate::meta_cell::utils::{mc_list_to_sparse_f32, mc_list_to_sparse_u32};
+use crate::single_cell::r_sc_processing::{hvg_params_from_args, hvg_stats_to_list};
 use crate::single_cell::r_sc_residuals::{
     parse_residual_fit, residual_covariates, residual_fit_to_r_list, residual_params,
     residual_variance_to_r_list, resolve_groups, stream_opts,
@@ -122,52 +122,15 @@ fn rs_mc_hvg(
         )
     }
 
-    let hvg_type = parse_hvg_method(hvg_method)
-        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))?;
-
-    let res = match hvg_type {
-        HvgMethod::Vst => {
-            let res = get_hvg_vst_from_sparse(&sparse, loess_span as f32, clip_max);
-            Ok(list!(
-                mean = res.mean,
-                var = res.var,
-                var_exp = res.var_exp,
-                var_std = res.var_std
-            ))
-        }
-        HvgMethod::MeanVarBin => {
-            let res = get_hvg_mvb_from_sparse(&sparse, &binning, n_bins);
-            Ok(list!(
-                mean = res.mean,
-                dispersion = res.dispersion,
-                dispersion_scaled = res.dispersion_scaled,
-                bin = res.bin
-            ))
-        }
-        HvgMethod::Dispersion => {
-            let res = get_hvg_dispersion_from_sparse(&sparse, &binning, n_bins);
-            Ok(list!(
-                mean = res.mean,
-                dispersion = res.dispersion,
-                dispersion_scaled = res.dispersion_scaled,
-                bin = res.bin
-            ))
-        }
-        HvgMethod::Scran => {
-            let params = ScranTrendParams {
-                span: loess_span,
-                ..ScranTrendParams::from_r_list(scran_params)?
-            };
-            let (mean, var) = mc_log2_gene_stats(&sparse);
-            let (fitted, residual) = fit_variance_trend(&mean, &var, &params).to_extendr()?;
-            Ok(list!(
-                scran_mean = mean,
-                scran_var = var,
-                scran_fitted = fitted,
-                scran_residual = residual
-            ))
-        }
-    };
+    let params = hvg_params_from_args(
+        hvg_method,
+        loess_span,
+        binning,
+        n_bins,
+        clip_max,
+        scran_params,
+    )?;
+    let res = hvg_stats_to_list(hvg_on_metacells(&sparse, &params).to_extendr()?);
 
     if verbosity.detailed_verbosity() {
         println!(
@@ -176,52 +139,7 @@ fn rs_mc_hvg(
         )
     }
 
-    res
-}
-
-/// Per-gene mean and variance of the log2-expression of a metacell matrix.
-///
-/// The metacell `"norm"` assay is `log1p` on the natural scale, the same as
-/// the single cell `data_norm` layer, so the sums go through
-/// [log2_stats_from_sums] exactly like the streaming scran driver. Zero
-/// entries contribute nothing to either sum.
-///
-/// ### Params
-///
-/// * `matrix` - Log-normalised data in `data`, shape (metacells, genes), CSR
-///   or CSC.
-///
-/// ### Returns
-///
-/// `(mean, var)` per gene on the log2 scale.
-fn mc_log2_gene_stats(matrix: &CompressedSparseData2<f32>) -> (Vec<f64>, Vec<f64>) {
-    let (n_cells, n_genes) = matrix.shape;
-    let mut sums = vec![(0.0_f64, 0.0_f64); n_genes];
-
-    let mut add = |gene: usize, value: f32| {
-        let value = value as f64;
-        sums[gene].0 += value;
-        sums[gene].1 += value * value;
-    };
-
-    match matrix.cs_type {
-        CompressedSparseFormat::Csr => {
-            for (&gene, &value) in matrix.indices.iter().zip(&matrix.data) {
-                add(gene as usize, value);
-            }
-        }
-        CompressedSparseFormat::Csc => {
-            for (gene, window) in matrix.indptr.windows(2).enumerate() {
-                for &value in &matrix.data[window[0] as usize..window[1] as usize] {
-                    add(gene, value);
-                }
-            }
-        }
-    }
-
-    sums.into_iter()
-        .map(|(sum, sum_sq)| log2_stats_from_sums(sum, sum_sq, n_cells))
-        .unzip()
+    Ok(res)
 }
 
 /////////

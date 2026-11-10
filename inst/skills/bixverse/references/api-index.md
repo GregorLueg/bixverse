@@ -261,7 +261,7 @@ Sub-clustering a group of cells and running the same chain per group.
 - `step_bbknn_sc`: Pipeline step: BBKNN batch correction
 - `step_fast_mnn_sc`: Pipeline step: fastMNN batch correction
 - `step_harmony_sc`: Pipeline step: Harmony batch correction
-- `step_harmony_v2_sc`: Pipeline step: Harmony v2 batch correction
+- `step_harmony_v1_sc`: Pipeline step: Harmony v1 batch correction
 - `step_metacells_sc`: Pipeline step: generate meta cells
 
 ## Single cell class for multi-modal data and getters
@@ -392,7 +392,7 @@ Batch correction methods and metrics for single cell
 
 - `fast_mnn_sc`: Run fastMNN
 - `harmony_sc`: Run Harmony
-- `harmony_v2_sc`: Run Harmony v2
+- `harmony_v1_sc`: Run Harmony v1
 - `bbknn_sc`: Run BBKNN
 - `seurat_cca_sc`: Run Seurat CCA integration
 - `seurat_rpca_sc`: Run Seurat rPCA integration
@@ -658,7 +658,7 @@ All types of other random helpers without a clear pattern
 
 Everything Rusty - only use this if you know what you are doing... Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood...
 
-115 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
+118 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
 
 ## Not on the package website
 
@@ -718,7 +718,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_adt_clr`: Applies CLR normalisation on ADT counts
 - `rs_aucell`: Calculate AUCell in Rust
 - `rs_bbknn`: BBKNN implementation in Rust
-- `rs_bbknn_filtering`: Reduce BBKNN results to Top X neighbours
+- `rs_bbknn_filtering`: Reduce BBKNN results to the k nearest neighbours
 - `rs_bonsai_layout`: Lay out an existing Bonsai tree
 - `rs_build_symphony_ref`: Build a Symphony reference (Rust)
 - `rs_calc_es`: Calculates the traditional GSEA enrichment score

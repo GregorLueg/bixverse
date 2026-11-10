@@ -1099,6 +1099,81 @@ rs_synthetic_sc_cellsweep_data <- function(n_real, n_empty, n_genes, n_celltypes
 #' @export
 rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 
+#' Dimensions and storage layout of an h5ad file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the obs and var lengths and how `X` is stored, without touching the
+#' counts. Sparse `X` takes its layout from the `encoding-type` attribute,
+#' dense `X` from comparing its shape against the obs and var lengths.
+#'
+#' @param f_path String. Path to the h5ad file.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item n_obs - Integer. Number of cells (rows of obs).
+#'   \item n_var - Integer. Number of genes (rows of var).
+#'   \item format - String. One of `c("CSR", "CSC", "DENSE_ROW",
+#'   "DENSE_COL")`.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5ad_dimensions <- function(f_path) .Call(wrap__rs_h5ad_dimensions, f_path)
+
+#' Detect which slot of an h5ad file holds raw integer counts
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Samples each candidate slot in turn and returns the first whose non-zero
+#' values are whole numbers at a rate of at least `threshold`. A missing slot,
+#' or one sampled to all zeros, is skipped.
+#'
+#' @param f_path String. Path to the h5ad file.
+#' @param candidates Character vector. Slots to test, in priority order. Any of
+#' `c("layers.counts", "raw.X", "X")`.
+#' @param n_sample Integer. Values to sample per slot.
+#' @param threshold Numeric. Minimum fraction of whole numbers among the
+#' non-zero values.
+#'
+#' @returns The first qualifying entry of `candidates`, or `NULL`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5ad_raw_slot <- function(f_path, candidates, n_sample, threshold) .Call(wrap__rs_h5ad_raw_slot, f_path, candidates, n_sample, threshold)
+
+#' Write a cells x features count matrix as a CellRanger style h5 file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The cells x features CSR buffers are the features x cells CSC buffers 10x
+#' stores, so they are written as they are. Counts, indices, pointers and
+#' shape go out as `int32`, strings as variable-length UTF-8. An existing file
+#' is truncated.
+#'
+#' @param f_path String. Path of the file to create.
+#' @param version String. One of `c("v3", "v2")`.
+#' @param indptr Integer vector. Row pointers of the cells x features CSR
+#' matrix (0-indexed).
+#' @param indices Integer vector. Feature indices (0-indexed).
+#' @param data Integer vector. The counts. Must be non-negative.
+#' @param n_cells Integer. Number of cells.
+#' @param n_features Integer. Number of features.
+#' @param barcodes Character vector. One barcode per cell.
+#' @param feature_ids Character vector. One id per feature.
+#' @param feature_names Character vector. One name per feature.
+#' @param feature_types Optional character vector. One type per feature, v3
+#' only. `NULL` writes `"Gene Expression"` for every feature.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_write_tenx_h5 <- function(f_path, version, indptr, indices, data, n_cells, n_features, barcodes, feature_ids, feature_names, feature_types) .Call(wrap__rs_write_tenx_h5, f_path, version, indptr, indices, data, n_cells, n_features, barcodes, feature_ids, feature_names, feature_types)
+
 #' Calibrate the blitzGSEA gamma null for a signature
 #'
 #' @description
@@ -3736,8 +3811,9 @@ rs_graph_connectivity <- function(knn_mat, labels) .Call(wrap__rs_graph_connecti
 #' @returns A list with
 #' \itemize{
 #'   \item distances - Sparse list representation of the kNN distances.
-#'   \item connectivities - Sparse list representation of the
-#'   connectivities.
+#'   \item connectivities - External pointer to the undirected neighbour
+#'   graph. Each cell pair keeps the larger of its two directed connectivity
+#'   weights.
 #' }
 #'
 #' @export

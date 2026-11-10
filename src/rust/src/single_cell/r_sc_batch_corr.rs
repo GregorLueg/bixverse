@@ -3,6 +3,7 @@ use bixverse_r::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
 use extendr_api::*;
 use faer::Mat;
 
+use bixverse_r::graph::graph_structures::max_symmetrise_to_sparse_graph;
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::sc_batch_correction::bbknn::*;
 use bixverse_r::single_cell::sc_batch_correction::fast_mnn::*;
@@ -373,8 +374,9 @@ fn rs_graph_connectivity(knn_mat: RMatrix<i32>, labels: Vec<i32>) -> Result<List
 /// @returns A list with
 /// \itemize{
 ///   \item distances - Sparse list representation of the kNN distances.
-///   \item connectivities - Sparse list representation of the
-///   connectivities.
+///   \item connectivities - External pointer to the undirected neighbour
+///   graph. Each cell pair keeps the larger of its two directed connectivity
+///   weights.
 /// }
 ///
 /// @export
@@ -402,7 +404,7 @@ fn rs_bbknn(
 
     Ok(list!(
         distances = sparse_data_to_list(distances),
-        connectivities = sparse_data_to_list(connectivities)
+        connectivities = ExternalPtr::new(max_symmetrise_to_sparse_graph(&connectivities))
     ))
 }
 

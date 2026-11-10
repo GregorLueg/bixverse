@@ -615,7 +615,21 @@ fn rs_sc_hvg(
     )
     .to_extendr()?;
 
-    Ok(match stats {
+    Ok(hvg_stats_to_list(stats))
+}
+
+/// Turn the HVG statistics of one method into the R list `rs_sc_hvg()` and
+/// `rs_mc_hvg()` return.
+///
+/// ### Params
+///
+/// * `stats` - The statistics, one entry per gene.
+///
+/// ### Returns
+///
+/// A named list whose elements depend on the method, see `rs_sc_hvg()`.
+pub(crate) fn hvg_stats_to_list(stats: HvgStats) -> List {
+    match stats {
         HvgStats::Vst(res) => list!(
             mean = res.mean,
             var = res.var,
@@ -634,7 +648,7 @@ fn rs_sc_hvg(
             scran_fitted = res.fitted,
             scran_residual = res.residual
         ),
-    })
+    }
 }
 
 /// Build the crate's HVG parameters from the loose `rs_sc_hvg*` arguments.
@@ -651,7 +665,7 @@ fn rs_sc_hvg(
 /// ### Returns
 ///
 /// The `HvgParams`, or an error on an unknown method.
-fn hvg_params_from_args(
+pub(crate) fn hvg_params_from_args(
     hvg_method: &str,
     loess_span: f64,
     binning: String,

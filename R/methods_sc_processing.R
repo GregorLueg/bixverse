@@ -1414,6 +1414,9 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
       )
     )
 
+    # the gene names travel with the loadings, so the h5ad export can place
+    # them even if the HVGs are re-run later
+    rownames(pca_loadings) <- get_gene_names(object)[selected_hvg + 1L]
     object <- set_pca_factors(object, pca_factors)
     object <- set_pca_loadings(object, pca_loadings)
     object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
@@ -1443,6 +1446,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
       )
     )
 
+    rownames(sparse_pca_loadings) <- get_gene_names(object)[selected_hvg + 1L]
     object <- set_pca_factors(object, sparse_pca_factors)
     object <- set_pca_loadings(object, sparse_pca_loadings)
     object <- set_pca_singular_vals(

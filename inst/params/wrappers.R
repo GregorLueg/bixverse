@@ -1631,7 +1631,10 @@ spec_sc_hvg <- param_spec(
         "span of the trend for `method = \"scran\"`."
       )
     ),
-    num_bin = p_int(20L, doc = "Not yet implemented."),
+    num_bin = p_int(
+      20L,
+      doc = "Number of bins for the `meanvarbin` and `dispersion` methods."
+    ),
     bin_method = p_choice(
       "equal_width",
       c("equal_width", "equal_freq"),

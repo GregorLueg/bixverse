@@ -1758,23 +1758,29 @@ S7::method(save_h5ad, SingleCells) <- function(
   }
 
   loadings <- .drop_stamp(get_pca_loadings(sc_cache))
-  if (is.matrix(loadings)) {
-    # the loadings only cover the HVGs, so they are padded back out to every
-    # gene; ScanPy expects varm to be aligned with var. `get_hvg()` is 0-based
-    # for Rust.
-    hvg <- get_hvg(object)
-    if (length(hvg) == nrow(loadings)) {
+  # without a written X_pca the loadings describe a PCA that no longer matches
+  # the cells, so they go too
+  if (is.matrix(loadings) && !is.null(obsm[["X_pca"]])) {
+    # the loadings only cover the PCA genes, so they are padded back out to
+    # every gene; ScanPy expects varm to be aligned with var. Rows are named by
+    # gene since 0.9.0; older loadings fall back to the current HVGs, which
+    # `get_hvg()` returns 0-based.
+    pca_genes <- if (is.null(rownames(loadings))) {
+      get_hvg(object) + 1L
+    } else {
+      match(rownames(loadings), get_gene_names(object))
+    }
+    if (length(pca_genes) == nrow(loadings) && !anyNA(pca_genes)) {
       padded <- matrix(0, nrow = no_genes, ncol = ncol(loadings))
-      padded[hvg + 1L, ] <- loadings
+      padded[pca_genes, ] <- unname(loadings)
       varm[["PCs"]] <- padded
     } else {
       warning(sprintf(
         paste(
-          "The cached PCA loadings cover %i genes but %i HVGs are set.",
-          "Skipping varm/PCs in the h5ad export."
+          "The cached PCA loadings cover %i genes, which cannot be matched",
+          "to the genes of the object. Skipping varm/PCs in the h5ad export."
         ),
-        nrow(loadings),
-        length(hvg)
+        nrow(loadings)
       ))
     }
   }

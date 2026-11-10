@@ -419,9 +419,9 @@ assess_subset_harmony <- function(
 
 h1.weak <- assess_subset_harmony(
   subset.weak,
-  harmony_sc,
+  harmony_v1_sc,
   params_sc_harmony,
-  "harmony"
+  "harmony_v1"
 )
 
 expect_true(
@@ -433,9 +433,9 @@ expect_true(
 
 h2.weak <- assess_subset_harmony(
   subset.weak,
-  harmony_v2_sc,
+  harmony_sc,
   params_sc_harmony_v2,
-  "harmony_v2"
+  "harmony"
 )
 
 expect_true(
@@ -449,9 +449,9 @@ expect_true(
 
 h1.medium <- assess_subset_harmony(
   subset.medium,
-  harmony_sc,
+  harmony_v1_sc,
   params_sc_harmony,
-  "harmony"
+  "harmony_v1"
 )
 
 expect_true(
@@ -463,9 +463,9 @@ expect_true(
 
 h2.medium <- assess_subset_harmony(
   subset.medium,
-  harmony_v2_sc,
+  harmony_sc,
   params_sc_harmony_v2,
-  "harmony_v2"
+  "harmony"
 )
 
 expect_true(
@@ -479,9 +479,9 @@ expect_true(
 
 h1.strong <- assess_subset_harmony(
   subset.strong,
-  harmony_sc,
+  harmony_v1_sc,
   params_sc_harmony,
-  "harmony"
+  "harmony_v1"
 )
 
 expect_true(
@@ -493,9 +493,9 @@ expect_true(
 
 h2.strong <- assess_subset_harmony(
   subset.strong,
-  harmony_v2_sc,
+  harmony_sc,
   params_sc_harmony_v2,
-  "harmony_v2"
+  "harmony"
 )
 
 expect_true(
@@ -507,7 +507,7 @@ expect_true(
 
 expect_true(
   current = checkmate::testMatrix(
-    get_embedding(h1.medium$corrected, "harmony"),
+    get_embedding(h1.medium$corrected, "harmony_v1"),
     mode = "numeric",
     nrows = nrow(get_sc_obs(subset.medium))
   ),
@@ -516,7 +516,7 @@ expect_true(
 
 expect_true(
   current = checkmate::testMatrix(
-    get_embedding(h2.medium$corrected, "harmony_v2"),
+    get_embedding(h2.medium$corrected, "harmony"),
     mode = "numeric",
     nrows = nrow(get_sc_obs(subset.medium))
   ),
