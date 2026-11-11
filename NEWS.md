@@ -7,7 +7,7 @@ some results to move against 0.8.3, see Changes.
 
 ## Features
 
-* `bixverse-r` 0.10.0 under the hood.
+* `bixverse-r` 0.10.1 under the hood.
 * Harmony v2 is the default. `harmony_sc()` and `step_harmony_sc()` run v2 and
   store `"harmony"`. v1 lives on as `harmony_v1_sc()` and
   `step_harmony_v1_sc()`, stored as `"harmony_v1"`. `build_symphony_ref()`
@@ -104,9 +104,9 @@ some results to move against 0.8.3, see Changes.
   was 1-based, so add 1 wherever you index in R with it.
 * The Hotspot autocorrelation column `gaerys_c` is now `gearys_c`.
 * `rs_sc_pca_residuals()` lost `return_scaled`. `rs_bbknn_filtering()` returns
-  integer indices and pads short rows instead of filling them with `NaN`.
-  `rs_bbknn()` returns the connectivities as a pointer to the Rust graph, not
-  a CSR list.
+  integer indices, pads short rows instead of filling them with `NaN` and takes
+  `batch_labels`. `rs_bbknn()` returns the connectivities as a pointer to the
+  Rust graph, not a CSR list.
 
 Results that move against 0.8.3:
 
@@ -120,9 +120,10 @@ Results that move against 0.8.3:
   rounds to 200.
 * Z-scores use the sample SD on every path. `scale = TRUE` on RNA shifts by
   `sqrt(n / (n - 1)) - 1`, 5e-5 at 10,000 cells.
-* BBKNN keeps the k nearest neighbours rather than the k lowest cell indices.
-  The connectivity graph doesn't change; the stored kNN does, and so do kBET and
-  LISI computed on it.
+* BBKNN's stored kNN keeps the nearest neighbours balanced per batch rather
+  than the k lowest cell indices, so kBET and LISI computed on it change. The
+  default `trim` is now `10 * neighbours_within_batch * n_batches`, as in the
+  reference implementation.
 * Sparse Lanczos PCA has a sign convention now, the largest loading per
   component is positive. Signs were random between runs before, so stored
   factors can flip against 0.8.3. Distances, kNN and clusters don't change.
