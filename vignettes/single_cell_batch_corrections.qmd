@@ -290,7 +290,8 @@ sc_object <- tsne_sc(object = sc_object, approx_type = "bh_qd")
 ```
 
 tSNE plot (tSNE's usually look prettier... It's anyway not a good way to assess
-batch effect correction, so at least let's make it pleasant on the eye).
+batch effect correction, so at least let's make it pleasant on the eye. We use
+the quick-and-dirty version which is fast).
 
 ```{r}
 #| label: uncorrected plot
@@ -794,7 +795,7 @@ cell to its nearest neighbour in its own batch and in the other one.
 batch <- get_sc_obs(sc_object, filtered = TRUE)$exp_id
 
 # kNN indices are 1-based on the R side
-knn_idx <- get_knn_mat(sc_object)
+knn_idx <- get_knn_mat(sc_object) + 1L
 knn_dist <- get_knn_dist(sc_object)
 other_batch <- matrix(batch[knn_idx] != batch, nrow = nrow(knn_idx))
 
