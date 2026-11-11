@@ -87,7 +87,7 @@ door.
 |---|---|---|
 | [bixverse.plots](https://github.com/GregorLueg/bixverse.plots) | plotting, heavily single cell | any `*_plot_sc()` function: `embedding_plot_sc`, `feature_plot_sc`, `dot_plot_sc`, `stacked_violin_plot_sc`, `violin_plot_sc`, `joint_plot_sc` |
 | [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) | GPU methods via cubecl/Burn on wgpu, so any GPU | large data. GPU Harmony, PCA and kNN searches. Worth it above a few hundred thousand cells |
-| [manifoldsR](https://github.com/GregorLueg/manifoldsR) | UMAP, tSNE, diffusion maps, EVoC clustering | it's already an `Imports`, and all 2D embeddings route through it. `umap_sc()` takes `manifoldsR::params_umap()` |
+| [manifoldsR](https://github.com/GregorLueg/manifoldsR) | UMAP, densMAP, tSNE, PHATE, ForceAtlas2, diffusion maps, EVoC clustering | it's already an `Imports` (0.6.0 or later), and all 2D embeddings route through it. `umap_sc()` takes `manifoldsR::params_umap()` |
 | [genewalkR](https://github.com/GregorLueg/genewalkR) | gene-gene interaction and regulatory network database | you need a network to diffuse over or to seed a GRN analysis |
 
 `manifoldsR` (an `Imports`) and `bixverse.plots` (a `Suggests`) live on

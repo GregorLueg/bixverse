@@ -106,6 +106,12 @@ unlink(dir_sc, recursive = TRUE, force = TRUE)
   `get_cells_to_keep()` and `get_hvg()` return 0-based. Most setters take
   1-based or character names. Details in `references/single-cell.md`, and get
   this wrong and you silently analyse the wrong cells.
+- **`get_connectivities()` is not an igraph.** It returns a
+  `SingleCellConnectivity` pointing at the Rust graph. Wrap it in `as_igraph()`
+  before calling igraph functions on it.
+- **Harmony v2 is the default.** `harmony_sc()` runs v2 and writes `"harmony"`;
+  `harmony_v1_sc()` writes `"harmony_v1"`. `harmony_v2_sc()` no longer exists,
+  so pre-0.9.0 scripts calling it need updating.
 - **Old snake_case constructors are deprecated** since 0.3.0: `single_cell_exp`,
   `bulk_coexp`, `bulk_dge`, `network_diffusions`, `rbh_graph`, `snf`,
   `gene_ontology_data`, `ontology`, `meta_cells`. Use the UpperCamelCase S7 ones
