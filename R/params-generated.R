@@ -2736,7 +2736,8 @@ params_sc_aucell <- function(
 #' @param trim Integer or `NULL`. Trim the neighbours of each cell to these many
 #' top connectivities. May help with population independence and improve the
 #' tidiness of clustering. If `NULL`, it defaults to `10 *
-#' neighbours_within_batch`. Defaults to `NULL`.
+#' neighbours_within_batch * n_batches`, as in the reference implementation.
+#' Defaults to `NULL`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -2756,7 +2757,8 @@ params_sc_aucell <- function(
 #'  \item trim - Integer or `NULL`. Trim the neighbours of each cell to these
 #'  many top connectivities. May help with population independence and improve
 #'  the tidiness of clustering. If `NULL`, it defaults to `10 *
-#'  neighbours_within_batch`. Defaults to `NULL`.
+#'  neighbours_within_batch * n_batches`, as in the reference implementation.
+#'  Defaults to `NULL`.
 #'  \item The elements of [params_knn_defaults()], overridden by `knn`, spliced
 #'  in at this position.
 #' }

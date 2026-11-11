@@ -412,14 +412,19 @@ fn rs_bbknn(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Sorts each row of the BBKNN distance CSR by distance (ties by index) and
-/// keeps the first `no_neighbours_to_keep`. Rows with fewer stored entries
-/// are padded by repeating their last neighbour; an empty row points at the
-/// cell itself at distance zero.
+/// Keeps the batch-balanced `no_neighbours_to_keep` nearest neighbours of
+/// each row of the BBKNN distance CSR: the nearest
+/// `ceil(no_neighbours_to_keep / n_batches)` per batch, with slots a batch
+/// cannot fill going to the nearest remaining neighbours. Rows come back
+/// sorted by distance (ties by index). Rows with fewer stored entries are
+/// padded by repeating their last neighbour; an empty row points at the cell
+/// itself at distance zero.
 ///
 /// @param indptr Integer vector. The index pointers of the underlying data.
 /// @param indices Integer vector. The indices of the nearest neighbours.
 /// @param data Numeric vector. The distances to the nearest neighbours.
+/// @param batch_labels Integer vector. The batch of each cell, as passed to
+/// [bixverse::rs_bbknn()].
 /// @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 ///
 /// @returns A list with `indices` (integer, 0-indexed) and `dist` (numeric)
@@ -433,27 +438,30 @@ fn rs_bbknn_filtering(
     indptr: Vec<i32>,
     indices: Vec<i32>,
     data: Vec<f64>,
+    batch_labels: Vec<i32>,
     no_neighbours_to_keep: usize,
-) -> List {
+) -> Result<List> {
     let nrow = indptr.len() - 1;
     let k = no_neighbours_to_keep;
 
     let data: Vec<f32> = data.iter().map(|&d| d as f32).collect();
     let indices: Vec<u32> = indices.iter().map(|&i| i as u32).collect();
     let indptr: Vec<u32> = indptr.iter().map(|&i| i as u32).collect();
+    let batch_labels: Vec<usize> = batch_labels.iter().map(|&x| x as usize).collect();
     let distances: CompressedSparseData2<f32> =
         CompressedSparseData2::new_csr(&data, &indices, &indptr, None, (nrow, nrow));
 
-    let (mut knn_idx, mut knn_dist) = bbknn_nearest_neighbours(&distances, k);
+    let (mut knn_idx, mut knn_dist) =
+        bbknn_balanced_neighbours(&distances, &batch_labels, k).to_extendr()?;
     pad_knn_rows_warn(&mut knn_idx, Some(&mut knn_dist), k);
 
     let idx_mat = Mat::from_fn(nrow, k, |i, j| knn_idx[i][j] as i32);
     let dist_mat = Mat::from_fn(nrow, k, |i, j| knn_dist[i][j] as f64);
 
-    list!(
+    Ok(list!(
         indices = faer_to_r_matrix(idx_mat.as_ref()),
         dist = faer_to_r_matrix(dist_mat.as_ref())
-    )
+    ))
 }
 
 /////////////

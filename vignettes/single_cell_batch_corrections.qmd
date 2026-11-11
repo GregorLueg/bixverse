@@ -456,6 +456,9 @@ sc_object <- find_neighbours_sc(
   embd_to_use = "harmony",
   neighbours_params = params_sc_neighbours()
 )
+
+# for the cluster comparison in the BBKNN section
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_harmony")
 ```
 
 Let's calculate the batch correction-related scores
@@ -739,19 +742,19 @@ Check your uncorrected metrics before reaching for them.
 
 ### BBKNN
 
-BBKNN constructs a batch-balanced kNN graph rather than correcting an
-embedding. The key parameter is `neighbours_within_batch`, which controls how
-many neighbours are found per batch. Setting `no_neighbours_to_keep` below the
-total generated neighbours (here 10 from 2 batches = 20 total) ensures the
-distance-based filtering introduces genuine variation, making downstream
-metrics informative.
+BBKNN doesn't touch the embedding. It builds a batch-balanced neighbour graph
+instead: `neighbours_within_batch` nearest neighbours from every batch, turned
+into UMAP-style connectivities. Here that's 10 per batch, so 20 neighbours per
+cell feed the connectivities. `no_neighbours_to_keep` only cuts the stored kNN,
+and the cut stays balanced: each batch keeps its nearest `ceil(15 / 2) = 8`, so
+a cell ends up with 8 from one batch and 7 from the other.
 
-Note that kBET and the embedding metrics are not well suited for evaluating
-BBKNN: kBET compares neighbourhood proportions against global proportions,
-which BBKNN manipulates by design, and ASW and PCR need an embedding. BBKNN only
-hands back a graph, so we pass `embd_to_use = NULL` and those columns come back
-`NA`. iLISI, cLISI and graph connectivity on the stored kNN are the ones to
-read here.
+That makes BBKNN awkward to score. kBET and iLISI read the stored kNN, which is
+balanced by construction, so they come out near perfect whatever the data looks
+like. That's the method grading its own homework, not a sign of mixing. ASW and
+PCR need an embedding, and BBKNN doesn't have one, so we pass
+`embd_to_use = NULL` and those come back `NA`. cLISI and graph connectivity are
+still fair, since they only look at cell types.
 
 ```{r}
 #| label: bbknn
@@ -780,6 +783,81 @@ metrics_dt <- rbind(
 metrics_dt[method == "BBKNN"]
 ```
 
+So what does the graph actually look like? Counting edges is not enough: the
+connectivities are weighted, and everything downstream (clustering, t-SNE,
+UMAP) follows the weights. Below: the cross-batch share of the stored kNN, of
+the graph's edges and of its total weight, plus the median distance from each
+cell to its nearest neighbour in its own batch and in the other one.
+
+```{r}
+#| label: bbknn graph
+batch <- get_sc_obs(sc_object, filtered = TRUE)$exp_id
+
+# kNN indices are 1-based on the R side
+knn_idx <- get_knn_mat(sc_object)
+knn_dist <- get_knn_dist(sc_object)
+other_batch <- matrix(batch[knn_idx] != batch, nrow = nrow(knn_idx))
+
+graph <- as_igraph(get_connectivities(sc_object))
+edge_ends <- igraph::ends(graph, igraph::E(graph), names = FALSE)
+cross_edge <- batch[edge_ends[, 1]] != batch[edge_ends[, 2]]
+weights <- igraph::E(graph)$weight
+
+data.table(
+  cross_batch_share_knn = mean(other_batch),
+  cross_batch_share_edges = mean(cross_edge),
+  cross_batch_share_weight = sum(weights[cross_edge]) / sum(weights),
+  median_nearest_same_batch = median(
+    matrixStats::rowMins(ifelse(other_batch, Inf, knn_dist))
+  ),
+  median_nearest_other_batch = median(
+    matrixStats::rowMins(ifelse(other_batch, knn_dist, Inf))
+  )
+)
+```
+
+Half the edges cross batches, but they carry only a few percent of the weight.
+The nearest cell in the other batch sits about twice as far away as the nearest
+one in the cell's own batch, and the UMAP connectivities decay with distance, so
+the cross-batch edges end up with next to no weight. This isn't an
+implementation detail: the reference `bbknn` package behaves the same on this
+data. pbmc3k and pbmc4k were run on different 10x chemistries (GemCode v1
+against v2), and that gap is real.
+
+The fair test of a graph method is clustering, so let's run Leiden on the BBKNN
+graph and compare its clusters against the uncorrected ones and Harmony v2. A
+cluster where one batch holds more than 90% of the cells counts as unmixed.
+
+```{r}
+#| label: bbknn clusters
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_bbknn")
+
+# share of a cluster's cells from one batch above which it counts as unmixed
+single_batch_cutoff <- 0.9
+
+batch_composition <- function(cluster_col) {
+  obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
+    cluster = get(cluster_col),
+    exp_id
+  )]
+  per_cluster <- obs[, .N, .(cluster, exp_id)] %>%
+    .[, share := N / sum(N), cluster] %>%
+    .[, .(n_cells = sum(N), top_batch_share = max(share)), cluster]
+  unmixed <- per_cluster[top_batch_share > single_batch_cutoff]
+  data.table(
+    clustering = cluster_col,
+    n_clusters = nrow(per_cluster),
+    n_unmixed_clusters = nrow(unmixed),
+    share_cells_in_unmixed = sum(unmixed$n_cells) / nrow(obs)
+  )
+}
+
+rbindlist(purrr::map(
+  c("leiden_uncorrected", "leiden_harmony", "leiden_bbknn"),
+  batch_composition
+))
+```
+
 ```{r}
 #| label: bbknn tsne
 sc_object <- tsne_sc(object = sc_object, use_knn = TRUE, approx_type = "bh_qd")
@@ -801,6 +879,13 @@ embedding_plot_sc(
     colour = "Batch:"
   )
 ```
+
+The clusters and the t-SNE tell the same story. Leiden on the BBKNN graph still
+puts most cells into single-batch clusters, barely better than doing nothing,
+while Harmony mixes nearly all of them. The t-SNE follows the same weights and
+stays split by batch. On a batch effect this strong, BBKNN on its own doesn't
+correct much. It's built for milder effects, where the cross-batch neighbours
+sit close enough to keep real weight.
 
 ## Choosing a method
 
@@ -832,6 +917,8 @@ metrics_long <- melt(
   variable.name = "metric",
   value.name = "score"
 ) %>%
+  # BBKNN's kBET and iLISI read its own balanced kNN, so they are greyed out
+  .[method == "BBKNN" & metric %in% c("kbet_accept", "ilisi"), score := NA] %>%
   .[, `:=`(
     method = factor(method, levels = rev(unique(metrics_dt$method))),
     type = fifelse(metric %in% bio_metrics, "Bio conservation", "Batch mixing"),
@@ -870,8 +957,8 @@ method: six coarse, well separated cell types keep their neighbourhoods pure no
 matter what. Batch ASW barely moves either, since two PBMC batches of the same
 tissue never separate much on silhouette to begin with. Both earn their keep on
 finer labels and nastier batch effects. On two PBMC runs, kBET, iLISI and PCR
-do the talking. And BBKNN's perfect kBET is the artefact mentioned above, not a
-win.
+do the talking. BBKNN's row is greyed out on the batch side: its kBET and iLISI
+in the table above are the artefact from its section, not a win.
 
 There is no universally best batch correction method. Some practical guidance:
 
@@ -894,15 +981,16 @@ that already mixes well they can make the batch metrics slightly worse. rPCA is
 the cheaper and gentler of the two and a sensible default; go to CCA when the
 batches genuinely don't share their cell types.
 
-- **BBKNN** is useful when you want to avoid modifying the embedding at all.
-The batch-balanced graph can be passed directly to graph-based clustering
-algorithms. It is the lightest-touch approach but provides less control over
-the degree of correction.
+- **BBKNN** leaves the embedding alone and hands a batch-balanced graph straight
+to clustering. It's the lightest touch of the lot, and that cuts both ways: when
+the batches sit far apart, as here, the cross-batch edges carry next to no
+weight and the clusters stay split by batch. Judge it on clustering, not on kBET
+or iLISI.
 
 In practice, running multiple methods and looking at quantitative metrics is the
 most reliable approach. No single metric captures everything: kBET and PCR only
-see batch, cLISI and cell type ASW only see biology, and the ones built on the
-kNN graph are the only fair comparison for graph-based methods like BBKNN. UMAPs
+see batch, cLISI and cell type ASW only see biology, and the kNN metrics can't
+score a method that builds the kNN to look balanced. UMAPs
 and tSNE assessments should be taken with a big pinch of salt, see
 [Chari, et al.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288) 
 Admittedly, they do look pretty however.

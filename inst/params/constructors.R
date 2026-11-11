@@ -1591,7 +1591,8 @@ spec_sc_bbknn <- param_spec(
         "Trim the neighbours of each cell to these many top",
         "connectivities. May help with population independence and",
         "improve the tidiness of clustering. If `NULL`, it defaults",
-        "to `10 * neighbours_within_batch`."
+        "to `10 * neighbours_within_batch * n_batches`, as in the",
+        "reference implementation."
       )
     ),
     knn = p_merge(

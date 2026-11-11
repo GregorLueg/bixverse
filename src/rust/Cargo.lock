@@ -509,9 +509,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-core"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9bc9a25fe0ede470586dc7a90b5abcf0b735390a6b2055fc3baf13de792d115"
+checksum = "c68bbe1dce377aefe5dc33c89e46246a441d920a31532dcc8af4e313cbdc6208"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -533,9 +533,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-gpu"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4962fb0849ce4e2dffa80528b36db65a2251c0d49c7b8695538908efdeb3bc4"
+checksum = "b9fc2e4a11456ab8811f45e04b28f9e12fd98ba5436d3abae85811cb76c3cc20"
 dependencies = [
  "ann-search-rs",
  "bixverse-core",
@@ -554,9 +554,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-methods"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a3f88f9929f3a4463ce54a46ada2a311585c420d0350f4024697f41bb1e8629"
+checksum = "42bdead35f8a4538fe6cff5743b32f578a4d4e00a93f1347543c38f88f592bd4"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -578,9 +578,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-r"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c48d28fb340ecf69603f331ca3a2f73fc92e3a208857b54055fb4c7269f33a7"
+checksum = "0ed8f434f384441b79c200ab597e3ee455c62945a7657574702730517564d433"
 dependencies = [
  "ann-search-rs",
  "bixverse-rs",
@@ -598,9 +598,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b44a6620c76c7907b9e65d7b42bf2c28443f6087ed05455b6a0bca3bdd73464"
+checksum = "fcdab6ad9beda37548541a296370bccda39ece88013d76e08ee4cea1373b1310"
 dependencies = [
  "bixverse-core",
  "bixverse-methods",
@@ -613,9 +613,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sc"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58e76077b50070e1ff09757e086952d448922f8635711fa6c0297e8b517ea904"
+checksum = "67a03973b97e3d656dfe18b2cc244bd105a128c126b5468cb809d692016a4832"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -640,9 +640,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sc-data"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a67e5cbdb3edd8711326e50a34545025921708123b4bae3b518951e5a8e6c366"
+checksum = "877d52a4f198a48ebdecc824bc53ad6b9277697face2996f76a150685109bed1"
 dependencies = [
  "approx 0.5.1",
  "bincode",
@@ -673,9 +673,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sc-gpu"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ed3470f2eb262fd7033af90b7d15496cdf9d75b33226f144f899b70ab06daab"
+checksum = "dfb03ebaed6f8c47bf748bdea5eecb579e9d57781ee40975d3d49791d9eb8443"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -702,9 +702,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-sparse"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3108c1720ffb6a4f22fbdc3534f48faeec3437dd5b6cbf8b7a888107e275cba"
+checksum = "fbe6aae3565df9b437b273a3b7be75e4973571b58174c664dc07f7966bbe458b"
 dependencies = [
  "bincode",
  "num-traits",

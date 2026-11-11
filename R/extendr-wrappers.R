@@ -3827,14 +3827,19 @@ rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Sorts each row of the BBKNN distance CSR by distance (ties by index) and
-#' keeps the first `no_neighbours_to_keep`. Rows with fewer stored entries
-#' are padded by repeating their last neighbour; an empty row points at the
-#' cell itself at distance zero.
+#' Keeps the batch-balanced `no_neighbours_to_keep` nearest neighbours of
+#' each row of the BBKNN distance CSR: the nearest
+#' `ceil(no_neighbours_to_keep / n_batches)` per batch, with slots a batch
+#' cannot fill going to the nearest remaining neighbours. Rows come back
+#' sorted by distance (ties by index). Rows with fewer stored entries are
+#' padded by repeating their last neighbour; an empty row points at the cell
+#' itself at distance zero.
 #'
 #' @param indptr Integer vector. The index pointers of the underlying data.
 #' @param indices Integer vector. The indices of the nearest neighbours.
 #' @param data Numeric vector. The distances to the nearest neighbours.
+#' @param batch_labels Integer vector. The batch of each cell, as passed to
+#' [bixverse::rs_bbknn()].
 #' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 #'
 #' @returns A list with `indices` (integer, 0-indexed) and `dist` (numeric)
@@ -3843,7 +3848,7 @@ rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap
 #' @export
 #'
 #' @keywords internal
-rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, data, no_neighbours_to_keep)
+rs_bbknn_filtering <- function(indptr, indices, data, batch_labels, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, data, batch_labels, no_neighbours_to_keep)
 
 #' FastMNN batch correction in Rust
 #'

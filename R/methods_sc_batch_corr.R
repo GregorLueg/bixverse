@@ -1355,6 +1355,7 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
       indptr = bbknn_res$distances$indptr,
       indices = bbknn_res$distances$indices,
       data = bbknn_res$distances$data,
+      batch_labels = as.integer(batch_index),
       no_neighbours_to_keep = no_k
     )
     list(

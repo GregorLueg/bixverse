@@ -492,6 +492,7 @@ assess_bbknn_impact <- function(object) {
     indptr = bbknn_corrected_data$distances$indptr,
     indices = bbknn_corrected_data$distances$indices,
     data = bbknn_corrected_data$distances$data,
+    batch_labels = as.integer(batch_labels),
     no_neighbours_to_keep = 10L
   )
 

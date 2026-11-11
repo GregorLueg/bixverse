@@ -4,7 +4,7 @@
 \alias{rs_bbknn_filtering}
 \title{Reduce BBKNN results to the k nearest neighbours}
 \usage{
-rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
+rs_bbknn_filtering(indptr, indices, data, batch_labels, no_neighbours_to_keep)
 }
 \arguments{
 \item{indptr}{Integer vector. The index pointers of the underlying data.}
@@ -12,6 +12,9 @@ rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 \item{indices}{Integer vector. The indices of the nearest neighbours.}
 
 \item{data}{Numeric vector. The distances to the nearest neighbours.}
+
+\item{batch_labels}{Integer vector. The batch of each cell, as passed to
+\code{\link[=rs_bbknn]{rs_bbknn()}}.}
 
 \item{no_neighbours_to_keep}{Integer. Number of nearest neighbours to keep.}
 }
@@ -21,9 +24,12 @@ matrices of shape (n_cells, no_neighbours_to_keep), nearest first.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Sorts each row of the BBKNN distance CSR by distance (ties by index) and
-keeps the first \code{no_neighbours_to_keep}. Rows with fewer stored entries
-are padded by repeating their last neighbour; an empty row points at the
-cell itself at distance zero.
+Keeps the batch-balanced \code{no_neighbours_to_keep} nearest neighbours of
+each row of the BBKNN distance CSR: the nearest
+\code{ceil(no_neighbours_to_keep / n_batches)} per batch, with slots a batch
+cannot fill going to the nearest remaining neighbours. Rows come back
+sorted by distance (ties by index). Rows with fewer stored entries are
+padded by repeating their last neighbour; an empty row points at the cell
+itself at distance zero.
 }
 \keyword{internal}
