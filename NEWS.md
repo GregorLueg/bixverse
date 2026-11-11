@@ -8,6 +8,13 @@ some results to move against 0.8.3, see Changes.
 ## Features
 
 * `bixverse-r` 0.10.0 under the hood.
+* Harmony v2 is the default. `harmony_sc()` and `step_harmony_sc()` run v2 and
+  store `"harmony"`. v1 lives on as `harmony_v1_sc()` and
+  `step_harmony_v1_sc()`, stored as `"harmony_v1"`. `build_symphony_ref()`
+  defaults to v2 too.
+* Needs `manifoldsR` 0.6.0. `umap_sc()` and `densmap_sc()` take
+  `optimiser = "sgd_parallel"` via `manifoldsR::params_umap()`, which isn't
+  reproducible with more than one thread.
 * `knn_method = "nndescent"` is graph-only now: it hands back the graph the
   descent built, with no index and no query pass. Rows the descent left short
   are re-queried exactly. It replaces `extract_knn`.
@@ -64,6 +71,12 @@ some results to move against 0.8.3, see Changes.
 
 ## Changes
 
+* `harmony_v2_sc()` and `step_harmony_v2_sc()` are gone, use `harmony_sc()`
+  and `step_harmony_sc()`. Code reading the `"harmony_v2"` embedding needs
+  `"harmony"`.
+* `phate_sc()` defaults to `use_knn = FALSE`, so manifoldsR runs its own
+  `6 * k + 5` wide neighbour search. The cached kNN is too narrow for the PHATE
+  kernel.
 * `get_connectivities()` no longer returns an igraph. Code calling igraph
   functions on it needs `as_igraph(get_connectivities(sc))` first.
 * The BBKNN graph's method is now `"bbknn"`.
@@ -92,8 +105,15 @@ some results to move against 0.8.3, see Changes.
 * The Hotspot autocorrelation column `gaerys_c` is now `gearys_c`.
 * `rs_sc_pca_residuals()` lost `return_scaled`. `rs_bbknn_filtering()` returns
   integer indices and pads short rows instead of filling them with `NaN`.
+  `rs_bbknn()` returns the connectivities as a pointer to the Rust graph, not
+  a CSR list.
 
 Results that move against 0.8.3:
+
+* `harmony_sc()`, `step_harmony_sc()` and `build_symphony_ref()` run Harmony
+  v2. `harmony_v1_sc()` gets you the old numbers.
+* `phate_sc()` with default arguments builds its own wider graph, so the
+  embedding changes.
 
 * `params_scdblfinder(gbm_n_trees = )` now does something. Rust read the GBM
   rounds from `n_trees`, the Annoy key, so the effective default goes from 50
@@ -143,7 +163,7 @@ Silent behaviour that's now loud:
   with the cached kNN graph, whose width wins. `calculate_pca_sc()` on
   `MetaCells` warns that `sparse_svd` is ignored. `generate_seacells_sc()` warns
   when `cells_to_use` discards the cached kNN.
-* `fast_mnn_sc()`, `harmony_sc()` and `harmony_v2_sc()` warn and return the
+* `fast_mnn_sc()`, `harmony_sc()` and `harmony_v1_sc()` warn and return the
   object on a single batch, like the others. `bbknn_sc()` returns the object
   rather than `NULL` on a missing embedding. `calculate_graph_connectivity_sc()`
   warns and returns `NULL` on a single label.
@@ -194,6 +214,9 @@ Silent behaviour that's now loud:
 * `meta_cells_per_group()` rejects a pipeline ending on `step_metacells_sc()` up
   front, not after the first group ran.
 * Harmony's automatic `k` could hit 0 below 15 cells.
+* The h5ad export put `varm/PCs` on the current HVGs, which was wrong once HVGs
+  were re-run after the PCA. Loadings now land on the genes the PCA ran on, and
+  only get written alongside `X_pca`.
 * `meld_sc()`'s warning claimed it would regenerate the kNN while returning
   `NULL`. It tells you to run `find_neighbours_sc()` now.
 * MetaCells obs `no_originating_cells` is an integer.
