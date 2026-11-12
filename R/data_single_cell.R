@@ -689,47 +689,22 @@ write_h5ad_sc <- function(
     file.remove(f_path)
   }
 
-  rhdf5::h5createFile(f_path)
-
   if (.verbose) {
-    message("Writing the counts to h5ad.")
-  }
-  # Write X (sparse matrix)
-  rhdf5::h5createGroup(f_path, "X")
-
-  if (inherits(counts, "dgCMatrix")) {
-    # CSC format
-    rhdf5::h5write(counts@x, f_path, "X/data")
-    rhdf5::h5write(counts@i, f_path, "X/indices")
-    rhdf5::h5write(counts@p, f_path, "X/indptr")
-  } else if (inherits(counts, "dgRMatrix")) {
-    # CSR format
-    rhdf5::h5write(counts@x, f_path, "X/data")
-    rhdf5::h5write(counts@j, f_path, "X/indices")
-    rhdf5::h5write(counts@p, f_path, "X/indptr")
+    message("Writing the h5ad file.")
   }
 
-  if (.verbose) {
-    message("Writing the obs to h5ad.")
-  }
-
-  rhdf5::h5createGroup(f_path, "obs")
-  rhdf5::h5write(obs[[1]], f_path, "obs/_index")
-  for (col in names(obs)[-1]) {
-    rhdf5::h5write(obs[[col]], f_path, paste0("obs/", col))
-  }
-
-  if (.verbose) {
-    message("Writing the var to h5ad.")
-  }
-
-  rhdf5::h5createGroup(f_path, "var")
-  rhdf5::h5write(var[[1]], f_path, "var/_index")
-  for (col in names(var)[-1]) {
-    rhdf5::h5write(var[[col]], f_path, paste0("var/", col))
-  }
-
-  rhdf5::h5closeAll()
+  is_csc <- inherits(counts, "dgCMatrix")
+  rs_write_h5ad_plain(
+    f_path = f_path,
+    x_type = if (is_csc) "csc" else "csr",
+    data = as.numeric(counts@x),
+    indices = if (is_csc) counts@i else counts@j,
+    indptr = counts@p,
+    n_obs = nrow(counts),
+    n_var = ncol(counts),
+    obs = as.list(obs),
+    var = as.list(var)
+  )
 
   invisible()
 }
@@ -793,35 +768,22 @@ write_h5ad_sc_dense <- function(
     file.remove(f_path)
   }
 
-  rhdf5::h5createFile(f_path)
-
-  counts_dense <- as.matrix(counts)
-
   if (.verbose) {
-    message("Writing the dense counts to h5ad.")
-  }
-  # Dense X as a 2D dataset directly under /X
-  rhdf5::h5write(counts_dense, f_path, "X", native = TRUE)
-
-  if (.verbose) {
-    message("Writing the obs to h5ad.")
-  }
-  rhdf5::h5createGroup(f_path, "obs")
-  rhdf5::h5write(obs[[1]], f_path, "obs/_index")
-  for (col in names(obs)[-1]) {
-    rhdf5::h5write(obs[[col]], f_path, paste0("obs/", col))
+    message("Writing the dense h5ad file.")
   }
 
-  if (.verbose) {
-    message("Writing the var to h5ad.")
-  }
-  rhdf5::h5createGroup(f_path, "var")
-  rhdf5::h5write(var[[1]], f_path, "var/_index")
-  for (col in names(var)[-1]) {
-    rhdf5::h5write(var[[col]], f_path, paste0("var/", col))
-  }
-
-  rhdf5::h5closeAll()
+  # t() so R's column-major data is the cells x genes row-major layout
+  rs_write_h5ad_plain(
+    f_path = f_path,
+    x_type = "dense",
+    data = as.numeric(t(as.matrix(counts))),
+    indices = integer(),
+    indptr = integer(),
+    n_obs = nrow(counts),
+    n_var = ncol(counts),
+    obs = as.list(obs),
+    var = as.list(var)
+  )
 
   invisible()
 }

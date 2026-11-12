@@ -1,9 +1,9 @@
 # obs / var ingestion via Parquet ----------------------------------------------
 
 # The obs and var DuckDB tables are written from Rust through a Parquet file.
-# They must match what the previous R path (rhdf5 + data.table +
-# dbWriteTable) produced: column names and order, DuckDB types (ENUM levels
-# included) and values. The old path is rebuilt below as the reference.
+# They must match the in-memory path (decoded frame + data.table +
+# dbWriteTable): column names and order, DuckDB types (ENUM levels included)
+# and values. That path is rebuilt below as the reference.
 
 source("helper_sc.R", local = TRUE)
 
@@ -57,12 +57,10 @@ f_rich <- "synthetic_data/anndata_rich.h5ad"
 
 filt <- function(n) as.integer(sort(c(seq(1L, n, by = 3L), n)))
 
-## reference: the previous R path ----------------------------------------------
+## reference: the in-memory path ----------------------------------------------
 
 old_h5ad_frame <- function(h5_path, group, filter, id_col, idx_name, id_name) {
-  h5_content <- data.table::setDT(rhdf5::h5ls(h5_path))
-  on.exit(rhdf5::h5closeAll())
-  frame <- bixverse:::.read_h5ad_frame(h5_path, group, h5_content)
+  frame <- rs_h5ad_frame(h5_path, group)
   dt <- data.table::as.data.table(frame$cols)
   if (!is.null(frame$idx)) {
     dt[, (id_name) := frame$idx]
@@ -84,8 +82,7 @@ old_h5ad_frame <- function(h5_path, group, filter, id_col, idx_name, id_name) {
 }
 
 old_tenx_frame <- function(h5_path, version, frame, filter) {
-  on.exit(rhdf5::h5closeAll())
-  rd <- function(p) as.character(rhdf5::h5read(h5_path, p))
+  rd <- function(p) rs_h5_read(h5_path, p)
   dt <- if (frame == "obs") {
     data.table::data.table(
       cell_id = rd(if (version == "v3") "matrix/barcodes" else "barcodes")

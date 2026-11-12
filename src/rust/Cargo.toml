@@ -60,6 +60,9 @@ bixverse-r = { version = "0.10.1", default-features = false, features = [
     "hdf5-filters",
 ] }
 
+[patch.crates-io]
+bixverse-r = { path = "../../../bixverse-rs/crates/bixverse-r" }
+
 [[bin]]
 name = "document"
 path = "document.rs"
