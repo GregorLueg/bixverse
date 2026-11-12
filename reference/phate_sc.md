@@ -10,10 +10,13 @@ or t-SNE, PHATE is explicitly designed to reveal continuous progressions
 and branching structure, making it the preferred choice for data with
 developmental or trajectory-like organisation.
 
-When `use_knn = TRUE` (the default), the kNN graph already stored on the
-object is reused; otherwise neighbours are computed from the chosen
-embedding. The algorithm then constructs a diffusion operator, raises it
-to a power (the diffusion time `t`, see
+By default (`use_knn = FALSE`) neighbours are computed from the chosen
+embedding. PHATE searches `6 * k + 5` neighbours so that every point
+whose affinity clears the kernel threshold can join, which the kNN graph
+stored on the object (usually 15 wide) cannot supply. `use_knn = TRUE`
+reuses that graph anyway and gives a narrower kernel. `modality = "wnn"`
+always uses the integrated WNN graph. The algorithm then constructs a
+diffusion operator, raises it to a power (the diffusion time `t`, see
 [`manifoldsR::params_phate()`](https://gregorlueg.github.io/manifoldsR/reference/params_phate.html))
 that denoises the manifold, and computes potential distances that are
 finally embedded via metric MDS.
@@ -27,7 +30,7 @@ continuous biological processes on denoised data.
 ``` r
 phate_sc(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   slot_name = "phate",
   no_embd_to_use = NULL,
@@ -50,8 +53,8 @@ phate_sc(
 
 - use_knn:
 
-  Boolean. Use the kNN graph found in the object. Defaults to `TRUE`. If
-  not available, will default to the embedding.
+  Boolean. Use the kNN graph found in the object. Defaults to `FALSE`,
+  see the description.
 
 - embd_to_use:
 

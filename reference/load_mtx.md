@@ -12,7 +12,7 @@ load_mtx(
   object,
   sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
-  mtx_streaming = TRUE,
+  mtx_streaming = deprecated(),
   csc_mem_gb = NULL,
   streaming = deprecated(),
   batch_size = deprecated(),
@@ -40,9 +40,9 @@ load_mtx(
 
 - mtx_streaming:
 
-  Boolean. Shall the .mtx file ingestion itself be streamed (via
-  temp-file bucketing). Recommended for large mtx files. Defaults to
-  `TRUE`.
+  No longer has an effect: the .mtx file is always read in a single pass
+  with its entries bucketed on disk next to the store. Ignored.
+  **\[deprecated\]**
 
 - csc_mem_gb:
 

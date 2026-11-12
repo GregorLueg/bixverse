@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,16 +132,17 @@ Defaults to <code>1.0</code>.</p></dd>
 <dt id="arg-trim">trim<a class="anchor" aria-label="anchor" href="#arg-trim"></a></dt>
 <dd><p>Integer or <code>NULL</code>. Trim the neighbours of each cell to these many
 top connectivities. May help with population independence and improve the
-tidiness of clustering. If <code>NULL</code>, it defaults to <code>10 * neighbours_within_batch</code>. Defaults to <code>NULL</code>.</p></dd>
+tidiness of clustering. If <code>NULL</code>, it defaults to <code>10 * neighbours_within_batch * n_batches</code>, as in the reference implementation.
+Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
 <dd><p>List. Optional overrides for kNN parameters. See
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
-<code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the
-available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
+<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>, <code>n_list</code>
+and <code>n_probe</code>. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the available elements.
+Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -155,7 +156,8 @@ how many nearest neighbours of each cell are assumed to be fully connected.
 Defaults to <code>1.0</code>.</p></li>
 <li><p>trim - Integer or <code>NULL</code>. Trim the neighbours of each cell to these
 many top connectivities. May help with population independence and improve
-the tidiness of clustering. If <code>NULL</code>, it defaults to <code>10 * neighbours_within_batch</code>. Defaults to <code>NULL</code>.</p></li>
+the tidiness of clustering. If <code>NULL</code>, it defaults to <code>10 * neighbours_within_batch * n_batches</code>, as in the reference implementation.
+Defaults to <code>NULL</code>.</p></li>
 <li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn</code>, spliced
 in at this position.</p></li>
 </ul></div>

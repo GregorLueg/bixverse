@@ -15,7 +15,7 @@ into the reference's labels slot for downstream label transfer."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,7 +117,7 @@ into the reference's <code>labels</code> slot for downstream label transfer.</p>
 <span>  <span class="va">batch_column</span>,</span>
 <span>  additional_batch_columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">hvg</span>,</span>
-<span>  harmony_params <span class="op">=</span> <span class="fu"><a href="params_sc_harmony.html">params_sc_harmony</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  harmony_params <span class="op">=</span> <span class="fu"><a href="params_sc_harmony_v2.html">params_sc_harmony_v2</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  pca_params <span class="op">=</span> <span class="fu"><a href="params_sc_pca.html">params_sc_pca</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  no_pcs <span class="op">=</span> <span class="fl">30L</span>,</span>
 <span>  slim <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -149,8 +149,8 @@ universe of <code>object</code>. Must be provided explicitly.</p></dd>
 
 
 <dt id="arg-harmony-params">harmony_params<a class="anchor" aria-label="anchor" href="#arg-harmony-params"></a></dt>
-<dd><p>List. Output of <code><a href="params_sc_harmony.html">params_sc_harmony()</a></code> or
-<code><a href="params_sc_harmony_v2.html">params_sc_harmony_v2()</a></code>.</p></dd>
+<dd><p>List. Output of <code><a href="params_sc_harmony_v2.html">params_sc_harmony_v2()</a></code>
+(Harmony v2, the default) or <code><a href="params_sc_harmony.html">params_sc_harmony()</a></code> (v1).</p></dd>
 
 
 <dt id="arg-pca-params">pca_params<a class="anchor" aria-label="anchor" href="#arg-pca-params"></a></dt>
@@ -168,8 +168,8 @@ reference. <code>z_corr</code> is always kept (needed for kNN label transfer).</
 
 <dt id="arg-label-columns">label_columns<a class="anchor" aria-label="anchor" href="#arg-label-columns"></a></dt>
 <dd><p>Optional character vector of obs column names to
-snapshot into the reference. Read in <code>cells_to_keep</code> order to align with
-<code>z_corr</code>. Required for <code><a href="transfer_labels_symphony.html">transfer_labels_symphony()</a></code> unless populated
+snapshot into the reference. Read in cell index order of the kept cells,
+which is the row order of <code>z_corr</code>. Required for <code><a href="transfer_labels_symphony.html">transfer_labels_symphony()</a></code> unless populated
 later via <code><a href="add_symphony_labels.html">add_symphony_labels()</a></code>.</p></dd>
 
 
@@ -201,14 +201,14 @@ later via <code><a href="add_symphony_labels.html">add_symphony_labels()</a></co
 <span class="r-in"><span>  <span class="va">ref</span>,</span></span>
 <span class="r-in"><span>  batch_column <span class="op">=</span> <span class="st">"batch_index"</span>,</span></span>
 <span class="r-in"><span>  hvg <span class="op">=</span> <span class="fu"><a href="get_hvg.html">get_hvg</a></span><span class="op">(</span><span class="va">ref</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1L</span>,</span></span>
-<span class="r-in"><span>  harmony_params <span class="op">=</span> <span class="fu"><a href="params_sc_harmony.html">params_sc_harmony</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  harmony_params <span class="op">=</span> <span class="fu"><a href="params_sc_harmony_v2.html">params_sc_harmony_v2</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  no_pcs <span class="op">=</span> <span class="fl">10L</span>,</span></span>
 <span class="r-in"><span>  label_columns <span class="op">=</span> <span class="st">"cell_grp"</span>,</span></span>
 <span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">symphony_ref</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Symphony reference</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Harmony backend: v1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Harmony backend: v2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   No HVGs: 30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   No PCs: 10</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   No clusters: 10</span>

@@ -23,7 +23,7 @@ params_sc_palantir(
   max_iterations = 25L,
   branch_prob_threshold = 0.01,
   lanczos_basis_size = NULL,
-  lanczos_max_restarts = 16L,
+  lanczos_max_restarts = 64L,
   lanczos_tol = 1e-08,
   knn_params = list()
 )
@@ -81,7 +81,7 @@ params_sc_palantir(
 - lanczos_max_restarts:
 
   Integer. Maximum restart cycles for the Lanczos solver. Defaults to
-  `16L`.
+  `64L`.
 
 - lanczos_tol:
 
@@ -137,7 +137,7 @@ A named list with the following elements:
   from the requested component count. Defaults to `NULL`.
 
 - lanczos_max_restarts - Integer. Maximum restart cycles for the Lanczos
-  solver. Defaults to `16L`.
+  solver. Defaults to `64L`.
 
 - lanczos_tol - Numeric. Relative residual tolerance for the Lanczos
   solver. Defaults to `1e-08`.

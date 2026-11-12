@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Doublet detection with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -143,7 +143,7 @@
 <p><code>bixverse</code> provides three computational doublet detection methods:</p>
 <ul>
 <li><p><strong>Scrublet</strong> is a simulation-based approach (<a href="https://doi.org/10.1016/j.cels.2018.11.005" class="external-link">Wolock, et al., 2019</a>). It generates synthetic doublets by averaging pairs of randomly selected cells, embeds both real and synthetic cells together, and scores each real cell by the proportion of its nearest neighbours that are synthetic. A bimodal score distribution is expected: singlets cluster near zero, doublets near one. A threshold on this score determines the final calls.</p></li>
-<li><p><strong>Boosted doublet detection</strong> takes a different angle. Rather than simulating doublets, it trains a gradient-boosted tree ensemble to distinguish real cells from synthetic doublets generated in the same way as Scrublet. The classifier produces a probability per cell, and doublet calls are derived from that probability. This can be more robust when the score distribution from Scrublet is not cleanly bimodal, though it introduces its own hyperparameters (and is substantially slower).</p></li>
+<li><p><strong>Boosted doublet detection</strong> takes a different angle. Rather than simulating doublets, it repeatedly clusters real cells together with synthetic doublets (Louvain) and tests each cluster for doublet enrichment, the DoubletDetection approach; the synthetic doublets are generated in the same way as Scrublet. The classifier produces a probability per cell, and doublet calls are derived from that probability. This can be more robust when the score distribution from Scrublet is not cleanly bimodal, though it introduces its own hyperparameters (and is substantially slower).</p></li>
 <li><p><strong>scDblFinder</strong> is a port of the <a href="https://bioconductor.org/packages/release/bioc/html/scDblFinder.html" class="external-link">scDblFinder</a> method from <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9204188/" class="external-link">Germain et al.</a>, with one modification: it uses lightGBM with the histogram trick on the feature space instead of xgboost, which tends to be faster to fit. Like the boosted approach it trains a classifier on real versus synthetic doublets, but it combines the classifier output with cxds co-expression scores (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7703774/" class="external-link">Bais and Kostka</a>) into a weighted final score. Across published benchmarks it tends to be the strongest of the three.</p></li>
 </ul>
 <p>All three methods are purely computational and work without genetic or hashing information. They complement experimental approaches like demuxlet, which require pooled donors or hashtag antibodies. They also have a failure mode if a large number of doublets dominates the original data.</p>
@@ -192,8 +192,8 @@
 <span></span>
 <span><span class="va">sc_object</span></span>
 <span><span class="co">#&gt; Single cell experiment (Single Cells).</span></span>
-<span><span class="co">#&gt;   No cells (original): 14528</span></span>
-<span><span class="co">#&gt;    To keep n: 14528</span></span>
+<span><span class="co">#&gt;   No cells (original): 14537</span></span>
+<span><span class="co">#&gt;    To keep n: 14537</span></span>
 <span><span class="co">#&gt;   No genes: 12622</span></span>
 <span><span class="co">#&gt;   HVG calculated: FALSE</span></span>
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
@@ -235,12 +235,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">scrublet</span></span>
-<span><span class="co">#&gt; ScrubletRes: 14528 cells, 1774 doublets (12.2%)</span></span>
-<span><span class="co">#&gt;   Threshold:              0.2102</span></span>
-<span><span class="co">#&gt;   Detected doublet rate:  12.2%</span></span>
-<span><span class="co">#&gt;   Detectable fraction:    88.1%</span></span>
-<span><span class="co">#&gt;   Overall doublet rate:   13.9%</span></span>
-<span><span class="co">#&gt;   Simulated doublets:     21792</span></span></code></pre></div>
+<span><span class="co">#&gt; ScrubletRes: 14537 cells, 1693 doublets (11.6%)</span></span>
+<span><span class="co">#&gt;   Threshold:              0.2228</span></span>
+<span><span class="co">#&gt;   Detected doublet rate:  11.6%</span></span>
+<span><span class="co">#&gt;   Detectable fraction:    84.4%</span></span>
+<span><span class="co">#&gt;   Overall doublet rate:   13.8%</span></span>
+<span><span class="co">#&gt;   Simulated doublets:     21805</span></span></code></pre></div>
 </div>
 <p>The <code>plot</code> method shows the score distribution for observed and simulated cells. A clean separation between the two modes indicates the threshold is sensible.</p>
 <div class="cell">
@@ -262,13 +262,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6640361</span></span>
+<span><span class="co">#&gt; [1] 0.6639102</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.7556126</span></span>
+<span><span class="co">#&gt; [1] 0.7205128</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.7068707</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6910544</span></span></code></pre></div>
 </div>
 <p>If you want to add the information to the DuckDB within the object, you can just run:</p>
 <div class="cell">
@@ -281,12 +281,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    cell_idx          cell_id   nnz lib_size to_keep doublet doublet_score</span></span>
 <span><span class="co">#&gt;       &lt;num&gt;           &lt;char&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;  &lt;lgcl&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.4036143720</span></span>
-<span><span class="co">#&gt; 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0503597111</span></span>
-<span><span class="co">#&gt; 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0175808705</span></span>
-<span><span class="co">#&gt; 4:        4 AAACATACCAGCTA-1   948     1588    TRUE   FALSE  0.1975089163</span></span>
-<span><span class="co">#&gt; 5:        5 AAACATACCATGCA-1   337      499    TRUE   FALSE  0.0006016847</span></span>
-<span><span class="co">#&gt; 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0391015001</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        1 AAACATACAATGCC-1   851     2190    TRUE    TRUE   0.337701410</span></span>
+<span><span class="co">#&gt; 2:        2 AAACATACATTTCC-1   876     3016    TRUE   FALSE   0.053114705</span></span>
+<span><span class="co">#&gt; 3:        3 AAACATACCAGAAA-1   713     2481    TRUE   FALSE   0.017581267</span></span>
+<span><span class="co">#&gt; 4:        4 AAACATACCAGCTA-1   948     3155    TRUE   FALSE   0.187288731</span></span>
+<span><span class="co">#&gt; 5:        5 AAACATACCATGCA-1   337      703    TRUE   FALSE   0.004369638</span></span>
+<span><span class="co">#&gt; 6:        6 AAACATACCTCGCT-1   849     3419    TRUE   FALSE   0.024590714</span></span></code></pre></div>
 </div>
 <p>As we can see with added now the Scrublet data</p>
 <section class="level4"><h4 id="manual-threshold-adjustment">Manual threshold adjustment<a class="anchor" aria-label="anchor" href="#manual-threshold-adjustment"></a>
@@ -295,10 +295,10 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scrublet_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/call_doublets_manual.html">call_doublets_manual</a></span><span class="op">(</span><span class="va">scrublet</span>, threshold <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Detected doublet rate = 11.3%</span></span>
-<span><span class="co">#&gt; Estimated detectable doublet fraction = 84.7%</span></span>
+<span><span class="co">#&gt; Detected doublet rate = 10.8%</span></span>
+<span><span class="co">#&gt; Estimated detectable doublet fraction = 81.8%</span></span>
 <span><span class="co">#&gt; Overall doublet rate:</span></span>
-<span><span class="co">#&gt;   Estimated = 13.3%</span></span>
+<span><span class="co">#&gt;   Estimated = 13.2%</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">scrublet_adj</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
@@ -319,13 +319,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scrublet_adj_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6823458</span></span>
+<span><span class="co">#&gt; [1] 0.6779553</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.7164849</span></span>
+<span><span class="co">#&gt; [1] 0.6801282</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6989987</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.67904</span></span></code></pre></div>
 </div>
 <p>We have made it worse here, but maybe there are cases where the scores are not very good. Compared to the original version, Otsu’s method is used to identify the perfect threshold, but it might fail in some situations.</p>
 </section><section class="level4"><h4 id="running-with-grouping-variables-or-within-specific-cell-subsets">Running with grouping variables or within specific cell subsets<a class="anchor" aria-label="anchor" href="#running-with-grouping-variables-or-within-specific-cell-subsets"></a>
@@ -333,7 +333,7 @@
 <p>Scrublet (and the other methods) have the two parameters if you wish to run the detection method within a specific set of cells (see the <code>cells_to_use = NULL</code> parameter )and/or want to use a grouping variable (like run the doublet detection within individual samples, see the <code>group_by = NULL</code> parameter).</p>
 </section></section><section class="level3"><h3 id="boosted-doublet-detection">Boosted doublet detection<a class="anchor" aria-label="anchor" href="#boosted-doublet-detection"></a>
 </h3>
-<p>The boosted approach trains a classifier to separate real cells from synthetic doublets. This can work better when the Scrublet score distribution is messy or unimodal. However, in this case we are running 25 iterations of the algorithm, which means 20x generation of synthetic doublets. The initial PCA will be stored in the object for subsequent reprojection - nonetheless, this makes this usually slower than the other methods in this vignette.</p>
+<p>The boosted approach trains a classifier to separate real cells from synthetic doublets. This can work better when the Scrublet score distribution is messy or unimodal. However, in this case we are running 20 iterations of the algorithm (the <code>n_iters</code> default), which means 20x generation of synthetic doublets. The initial PCA will be stored in the object for subsequent reprojection - nonetheless, this makes this usually slower than the other methods in this vignette.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">boosted_doublets</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/doublet_detection_boost_sc.html">doublet_detection_boost_sc</a></span><span class="op">(</span></span>
@@ -350,13 +350,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6506024</span></span>
+<span><span class="co">#&gt; [1] 0.6635638</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.6927518</span></span>
+<span><span class="co">#&gt; [1] 0.6397436</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6710158</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.651436</span></span></code></pre></div>
 </div>
 <p>Overall, it takes longer and has worse performance (in this data set). If you wish to have a partially orthogonal method, it can be worthwhile nonetheless. There is also an option to accelerate the algorithm via fast clustering. This will run k-means clustering with <code>sqrt(n_cells) * 4</code> centroids by default, run the kNN on these subset of centroids, Louvain on the smaller kNN and project back the Louvain membership for final scoring. However, this comes at cost of Recall, as you can see below. Generally speaking, you need to see how many centroids you need to represent your data properly. On smaller data sets, you can get away with <code>n_cells / 10</code> and compress 10 cells into one centroid… On larger data sets, you might want to compress further.</p>
 <div class="cell">
@@ -383,13 +383,13 @@
 <span>  actual <span class="op">=</span> <span class="va">boosted_fast_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.7041825</span></span>
+<span><span class="co">#&gt; [1] 0.7108042</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.5939705</span></span>
+<span><span class="co">#&gt; [1] 0.5608974</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6443981</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6270154</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="scdblfinder">scDblFinder<a class="anchor" aria-label="anchor" href="#scdblfinder"></a>
 </h3>
@@ -418,13 +418,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scdblfinder_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.5851119</span></span>
+<span><span class="co">#&gt; [1] 0.5591443</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.720975</span></span>
+<span><span class="co">#&gt; [1] 0.8544872</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.645977</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6759635</span></span></code></pre></div>
 </div>
 <p>We can also extract the other scores from scDblFinder. We can for example extract the weighted score, identify the threshold via Otsu’s method and check the doublets like this.</p>
 <div class="cell">
@@ -441,8 +441,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         weighted</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 11760   847</span></span>
-<span><span class="co">#&gt;    TRUE     68  1853</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 11647   506</span></span>
+<span><span class="co">#&gt;    TRUE    187  2197</span></span></code></pre></div>
 </div>
 <p>Or alternatively, the cxds scores can also be extracted and used. These scores were originally developed by <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7703774/" class="external-link">Bais and Kostka</a> and are used as an input into the classifier.</p>
 <div class="cell">
@@ -459,8 +459,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         cxds</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 12363   244</span></span>
-<span><span class="co">#&gt;    TRUE    848  1073</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 11981   172</span></span>
+<span><span class="co">#&gt;    TRUE   1247  1137</span></span></code></pre></div>
 </div>
 <p>Should you observe that this is very flat or you only have a few data points (this can occur in low complexity experiments in which the highest expressing genes are VERY similar across all the cells for example in cell culture experiments), you can bump <code>cxds_genes</code> up. The default here is 500L, but you might want to increase this pending your experiment.</p>
 </section><section class="level3"><h3 id="pca-solver-and-hvg-method">PCA solver and HVG method<a class="anchor" aria-label="anchor" href="#pca-solver-and-hvg-method"></a>
@@ -492,7 +492,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -501,8 +502,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -516,6 +578,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

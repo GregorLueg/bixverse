@@ -64,6 +64,7 @@ data.table with the DGE results from the test.
 # one versus rest across the Leiden clusters
 sc <- demo_single_cells()
 sc <- find_clusters_sc(sc, res = 1.0)
+#> Running leiden clustering at resolution 1.
 res <- find_all_markers_sc(
   sc,
   column_of_interest = "leiden_clustering",

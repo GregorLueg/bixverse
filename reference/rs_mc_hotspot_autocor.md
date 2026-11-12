@@ -72,7 +72,7 @@ A list with the following elements.
 
 - gene_idx - 0-based integer indicating the gene index.
 
-- gaerys_c - Geary's C calculation for the autocorrelation coefficient.
+- gearys_c - Geary's C calculation for the autocorrelation coefficient.
 
 - z_score - Z-score of the auto-correlation.
 

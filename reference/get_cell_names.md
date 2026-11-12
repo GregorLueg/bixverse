@@ -7,6 +7,9 @@ Returns the cell names (usually barcodes).
 ``` r
 get_cell_names(x, filtered = FALSE)
 
+## S7 method for class <bixverse::MetaCells>
+get_cell_names(x, filtered = FALSE)
+
 # S3 method for class 'ScMap'
 get_cell_names(x, filtered = FALSE)
 

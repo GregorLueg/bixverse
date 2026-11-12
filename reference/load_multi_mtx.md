@@ -99,9 +99,5 @@ sc <- load_multi_mtx(
 dim(sc)
 #> [1] 400  40
 
-unlink(
-  c(dirs, dir_data, scan_res$temp_files),
-  recursive = TRUE,
-  force = TRUE
-)
+unlink(c(dirs, dir_data), recursive = TRUE, force = TRUE)
 ```

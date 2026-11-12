@@ -5,17 +5,19 @@ stays tight in the embedding and a diffuse one stays diffuse. With plain
 UMAP the relative size of a cluster on the plot tells you nothing, with
 densMAP it does. Setting lambda = 0 in manifoldsR::params_densmap()
 gives you back plain UMAP.
-Neighbour handling is the same as in umap_sc(): with
-use_knn = TRUE (the default) the cached kNN graph is reused, otherwise
-neighbours are computed from the chosen embedding."><meta property="og:description" content="Wrapper around manifoldsR::densmap() for the SingleCells and MetaCells
+Neighbour handling and the optimiser choice in umap_params are the same
+as in umap_sc(): with use_knn = TRUE (the default) the cached
+kNN graph is reused, otherwise neighbours are computed from the chosen
+embedding."><meta property="og:description" content="Wrapper around manifoldsR::densmap() for the SingleCells and MetaCells
 classes. densMAP is UMAP plus a density-preserving term: a tight population
 stays tight in the embedding and a diffuse one stays diffuse. With plain
 UMAP the relative size of a cluster on the plot tells you nothing, with
 densMAP it does. Setting lambda = 0 in manifoldsR::params_densmap()
 gives you back plain UMAP.
-Neighbour handling is the same as in umap_sc(): with
-use_knn = TRUE (the default) the cached kNN graph is reused, otherwise
-neighbours are computed from the chosen embedding."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+Neighbour handling and the optimiser choice in umap_params are the same
+as in umap_sc(): with use_knn = TRUE (the default) the cached
+kNN graph is reused, otherwise neighbours are computed from the chosen
+embedding."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -23,7 +25,7 @@ neighbours are computed from the chosen embedding."><meta property="og:image" co
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,9 +119,10 @@ stays tight in the embedding and a diffuse one stays diffuse. With plain
 UMAP the relative size of a cluster on the plot tells you nothing, with
 densMAP it does. Setting <code>lambda = 0</code> in <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_densmap.html" class="external-link">manifoldsR::params_densmap()</a></code>
 gives you back plain UMAP.</p>
-<p>Neighbour handling is the same as in <code><a href="umap_sc.html">umap_sc()</a></code>: with
-<code>use_knn = TRUE</code> (the default) the cached kNN graph is reused, otherwise
-neighbours are computed from the chosen embedding.</p>
+<p>Neighbour handling and the optimiser choice in <code>umap_params</code> are the same
+as in <code><a href="umap_sc.html">umap_sc()</a></code>: with <code>use_knn = TRUE</code> (the default) the cached
+kNN graph is reused, otherwise neighbours are computed from the chosen
+embedding.</p>
     </div>
 
     <div class="section level2">

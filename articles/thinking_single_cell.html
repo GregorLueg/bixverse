@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Thinking about single cells the bixverse way</h1>
 
       <p class="author">Gregor Lueg and Grant Neilson</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -146,7 +146,7 @@
 </div>
 <section class="level3"><h3 id="synthetic-data">Synthetic data<a class="anchor" aria-label="anchor" href="#synthetic-data"></a>
 </h3>
-<p>Let’s start with some synthetic data that is powering all the tests in the package. It’s very simple data with 1,000 cells, 100 genes and three very cleary defined cell groups. Genes 1 to 10 defined cell_type 1, genes 11 to 20 the next cell type and 21 to 30 the last cell type. The remaining genes are noise genes.</p>
+<p>Let’s start with some synthetic data that is powering all the tests in the package. It’s very simple data with 1,000 cells, 100 genes and three very clearly defined cell groups. Genes 1 to 10 define cell_type 1, genes 11 to 20 the next cell type and 21 to 30 the last cell type. The remaining genes are noise genes.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">single_cell_test_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_single_cell_test_data.html">generate_single_cell_test_data</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -166,11 +166,11 @@
 <span><span class="co">#&gt;   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...</span></span>
 <span><span class="co">#&gt;   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...</span></span>
 <span><span class="co">#&gt;   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x60bf92858e20&gt; </span></span>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x5fa948e24e20&gt; </span></span>
 <span><span class="co">#&gt;  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:</span></span>
 <span><span class="co">#&gt;   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
 <span><span class="co">#&gt;   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x60bf92858e20&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x5fa948e24e20&gt;</span></span></code></pre></div>
 </div>
 <p>We have a count matrix with pseudo raw counts, an obs table and a var table. Let us load this into a <code>bixverse</code> SingleCell class and explore what’s actually happening.</p>
 </section><section class="level3"><h3 id="loading-in-data">Loading in data<a class="anchor" aria-label="anchor" href="#loading-in-data"></a>
@@ -482,14 +482,14 @@
 <span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality       artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 35b9864dff85ee85</span></span>
-<span><span class="co">#&gt; 2:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; cba73da9eb3eec1f</span></span>
-<span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 38ac64ae59694c28</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; f9a97da51976e639</span></span>
+<span><span class="co">#&gt; 2:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 700a79d63787c3e6</span></span>
+<span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; c3e21394ed94994e</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: 35b9864dff85ee85</span></span>
-<span><span class="co">#&gt; 3: cba73da9eb3eec1f</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: f9a97da51976e639</span></span>
+<span><span class="co">#&gt; 3: 700a79d63787c3e6</span></span></code></pre></div>
 </div>
 <p>The <code>from</code> column is what makes this more than a cell counter. The kNN records the id of the PCA it was built on, and the sNN records the kNN. So watch what happens if we re-run the PCA on the <strong>same</strong> cells, just with fewer components, and don’t touch the neighbours:</p>
 <div class="cell">
@@ -504,14 +504,14 @@
 <span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE   TRUE</span></span>
 <span><span class="co">#&gt;                                                         reason               id</span></span>
 <span><span class="co">#&gt;                                                         &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                        &lt;NA&gt; fed0a8d97e8b3fb2</span></span>
-<span><span class="co">#&gt; 2: the artefact it was derived from was re-computed or removed cba73da9eb3eec1f</span></span>
-<span><span class="co">#&gt; 3:                             its upstream `rna:knn` is stale 38ac64ae59694c28</span></span>
+<span><span class="co">#&gt; 1:                                                        &lt;NA&gt; c188f8607e432f60</span></span>
+<span><span class="co">#&gt; 2: the artefact it was derived from was re-computed or removed 700a79d63787c3e6</span></span>
+<span><span class="co">#&gt; 3:                             its upstream `rna:knn` is stale c3e21394ed94994e</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: 35b9864dff85ee85</span></span>
-<span><span class="co">#&gt; 3: cba73da9eb3eec1f</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: f9a97da51976e639</span></span>
+<span><span class="co">#&gt; 3: 700a79d63787c3e6</span></span></code></pre></div>
 </div>
 <p>The PCA is fine. The kNN is stale because the PCA it points at no longer exists, and the sNN is stale through the kNN, even though its own cell set never moved. A row-count check would have waved both of those through. The print says so too:</p>
 <div class="cell">
@@ -545,14 +545,14 @@
 <span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality       artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; fed0a8d97e8b3fb2</span></span>
-<span><span class="co">#&gt; 2:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 360e53d161b318df</span></span>
-<span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 7aec38a6f09ceb6e</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; c188f8607e432f60</span></span>
+<span><span class="co">#&gt; 2:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 5964d5b3eacf235b</span></span>
+<span><span class="co">#&gt; 3:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 4f35b759c3d79848</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: fed0a8d97e8b3fb2</span></span>
-<span><span class="co">#&gt; 3: 360e53d161b318df</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: c188f8607e432f60</span></span>
+<span><span class="co">#&gt; 3: 5964d5b3eacf235b</span></span></code></pre></div>
 </div>
 <p><code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> warns about exactly the same thing, listing what it just invalidated. If you want everything to be an error, set <code>options(bixverse.cache_check = "error")</code>; <code>"none"</code> turns the lot off, at your own risk.</p>
 <p>Two things it deliberately does not do. Artefacts computed before this existed carry no stamp, so they report as <code>unknown</code> and pass, because nothing is known about them either way. And the stamp tracks provenance, not parameters: a kNN built on the first 5 PCs and one built on all 15 of the same PCA look identical to it. Neither of those can produce an index mismatch, which is what this is here to stop.</p>
@@ -616,8 +616,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;               expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;    the_correct_way 1.114406 1.134366 1.189667 1.169157 1.184021 1.475198    10</span></span>
-<span><span class="co">#&gt;  the_incorrect_way 2.095670 2.167406 2.282870 2.206734 2.238308 3.153118    10</span></span></code></pre></div>
+<span><span class="co">#&gt;    the_correct_way 1.088332 1.133128 1.193100 1.172422 1.188360 1.457339    10</span></span>
+<span><span class="co">#&gt;  the_incorrect_way 2.185667 2.205697 2.322719 2.225001 2.230083 3.235873    10</span></span></code></pre></div>
 </div>
 <p>The difference seems marginal here, but it WILL bite you if you do this on large data sets. Also, the memory advantages this approach gives you usually will disappear if you force the wrong format. Also, another thing to REALLY consider… The indices you supply in R should match what the Rust files have and again you need to THINK about the cells to keep. A nasty example here:</p>
 <div class="cell">
@@ -666,14 +666,14 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Number of cells: %i | Number of genes: %i (filtered version - primitive)\n"</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">counts_filtered</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">counts_filtered</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">filtered_counts</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">filtered_counts</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Number of cells: 8 | Number of genes: 10 (filtered version - primitive)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Number of cells: %i | Number of genes: %i (unfiltered version - primitive)\n"</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">counts_unfiltered</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">counts_unfiltered</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">unfiltered_counts</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">unfiltered_counts</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Number of cells: 10 | Number of genes: 10 (unfiltered version - primitive)</span></span></code></pre></div>
 </div>
@@ -702,7 +702,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -711,8 +712,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -726,6 +788,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

@@ -2,7 +2,9 @@
 
 Set the cells to keep. This is used for the single cell-related classes
 with streaming from disk and tells subsequent (Rust) methods which cells
-to include.
+to include. The filter is stored as unique, ascending cell indices: the
+order and any duplicates of `cells_to_keep` are dropped, so every result
+downstream follows the cell order of the store.
 
 ## Usage
 
@@ -24,8 +26,8 @@ set_cells_to_keep(x, cells_to_keep)
 
 - cells_to_keep:
 
-  String or integer. The names or indices of the cells to keep in
-  downstream analysis.
+  String or integer. The names or indices (1-based) of the cells to keep
+  in downstream analysis.
 
 ## Examples
 

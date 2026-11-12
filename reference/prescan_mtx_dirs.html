@@ -23,7 +23,7 @@ error is raised."><meta property="og:image" content="https://gregorlueg.github.i
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -166,8 +166,6 @@ header row. Applied uniformly. Defaults to <code>FALSE</code> (10x convention).<
 order they will appear in the final var table.</p></li>
 <li><p>universe_size - Length of the universe.</p></li>
 <li><p>file_tasks - List of per-input task lists for Rust and DuckDB.</p></li>
-<li><p>temp_files - Character vector of temp files created during
-decompression; the caller should <code><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink()</a></code> these after use.</p></li>
 </ul></div>
 
     <div class="section level2">
@@ -194,7 +192,7 @@ decompression; the caller should <code><a href="https://rdrr.io/r/base/unlink.ht
 <span class="r-in"><span><span class="va">scan_res</span><span class="op">$</span><span class="va">universe_size</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 40</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">dirs</span>, <span class="va">scan_res</span><span class="op">$</span><span class="va">temp_files</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dirs</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

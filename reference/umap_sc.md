@@ -25,6 +25,12 @@ global structure (larger values produce more global layouts), while
 in the embedding. For `MetaCells`, smaller `k` values are often
 appropriate given the reduced number of points.
 
+The optimiser is set via `optimiser` in
+[`manifoldsR::params_umap()`](https://gregorlueg.github.io/manifoldsR/reference/params_umap.html),
+one of `"adam_parallel"` (the default), `"sgd"`, `"sgd_parallel"` or
+`"adam"`. `"sgd_parallel"` is lock-free (Hogwild!) SGD and not
+reproducible run to run with more than one thread.
+
 ## Usage
 
 ``` r

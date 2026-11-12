@@ -21,7 +21,7 @@ subset already carries one."><meta property="og:image" content="https://gregorlu
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,7 +124,7 @@ subset already carries one.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">meta_cells_per_group</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  <span class="va">group_col</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bootstrapped"</span>, <span class="st">"seacells"</span>, <span class="st">"supercells"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bootstrapped"</span>, <span class="st">"seacells"</span>, <span class="st">"supercells"</span>, <span class="st">"metacells2"</span><span class="op">)</span>,</span>
 <span>  mc_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  pipeline <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -146,7 +146,8 @@ subset already carries one.</p>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>String. One of <code>c("bootstrapped", "seacells", "supercells")</code>.
+<dd><p>String. One of
+<code>c("bootstrapped", "seacells", "supercells", "metacells2")</code>.
 Picks the meta cell generator.</p></dd>
 
 

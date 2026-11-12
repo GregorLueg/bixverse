@@ -124,18 +124,8 @@ object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
 object <- calculate_pca_adt_sc(object, no_pcs = 10L)
 object <- generate_wnn_graph_sc(object, .verbose = FALSE)
 get_connectivities(object, modality = "wnn")
-#> IGRAPH c0ec632 U-W- 1000 35379 -- 
-#> + attr: method (g/c), weight (e/n)
-#> + edges from c0ec632:
-#>  [1] 1--  4 1-- 13 1-- 16 1-- 22 1-- 37 1-- 43 1-- 55 1-- 61 1-- 64 1-- 67
-#> [11] 1--118 1--154 1--166 1--178 1--184 1--190 1--214 1--220 1--238 1--259
-#> [21] 1--274 1--277 1--283 1--286 1--289 1--292 1--295 1--301 1--304 1--313
-#> [31] 1--319 1--325 1--340 1--352 1--364 1--367 1--373 1--382 1--388 1--403
-#> [41] 1--415 1--418 1--421 1--454 1--475 1--478 1--505 1--508 1--517 1--532
-#> [51] 1--538 1--541 1--556 1--559 1--577 1--610 1--637 1--655 1--661 1--667
-#> [61] 1--673 1--700 1--760 1--763 1--766 1--778 1--781 1--787 1--790 1--799
-#> [71] 1--811 1--817 1--826 1--832 1--835 1--856 1--883 1--901 1--925 1--928
-#> + ... omitted several edges
+#> SingleCellConnectivity: 1000 cells, 35379 edges
+#>   Method: snn
 
 unlink(dir, recursive = TRUE, force = TRUE)
 ```

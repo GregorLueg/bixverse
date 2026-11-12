@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Clustering, cell type annotation and reference mapping</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -252,7 +252,7 @@
 </div>
 </section><section class="level3"><h3 id="hvgs-pca-harmony-v2">HVGs, PCA, Harmony v2<a class="anchor" aria-label="anchor" href="#hvgs-pca-harmony-v2"></a>
 </h3>
-<p>This block is the Harmony v2 path of the batch correction vignette: pick HVGs, run PCA, run Harmony v2. Version 1 is still available via <code><a href="../reference/harmony_sc.html">harmony_sc()</a></code> and <code><a href="../reference/params_sc_harmony.html">params_sc_harmony()</a></code>, but v2 is preferable in most settings (see the batch correction vignette for the reasoning).</p>
+<p>This block is the Harmony v2 path of the batch correction vignette: pick HVGs, run PCA, run Harmony v2. Version 1 is still available via <code><a href="../reference/harmony_v1_sc.html">harmony_v1_sc()</a></code> and <code><a href="../reference/params_sc_harmony.html">params_sc_harmony()</a></code>, but v2 is preferable in most settings (see the batch correction vignette for the reasoning).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
@@ -267,7 +267,7 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Using sparse SVD solving on scaled data on 2000 HVG.</span></span>
 <span></span>
-<span><span class="va">sc_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span></span>
+<span><span class="va">sc_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_sc.html">harmony_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_ref</span>,</span>
 <span>  batch_column <span class="op">=</span> <span class="st">"exp_id"</span>,</span>
 <span>  harmony_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_harmony_v2.html">params_sc_harmony_v2</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -294,7 +294,7 @@
 <span><span class="va">n_clusters</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">graph_types</span>, \<span class="op">(</span><span class="va">graph_type</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">sc_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>    object <span class="op">=</span> <span class="va">sc_ref</span>,</span>
-<span>    embd_to_use <span class="op">=</span> <span class="st">"harmony_v2"</span>,</span>
+<span>    embd_to_use <span class="op">=</span> <span class="st">"harmony"</span>,</span>
 <span>    neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span></span>
 <span>      graph <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_sym <span class="op">=</span> <span class="va">graph_type</span><span class="op">)</span></span>
 <span>    <span class="op">)</span>,</span>
@@ -313,6 +313,18 @@
 <span>    <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/rbindlist.html" class="external-link">rbindlist</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/rbindlist.html" class="external-link">rbindlist</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 2.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 2.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 2.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/dcast.data.table.html" class="external-link">dcast</a></span><span class="op">(</span><span class="va">n_clusters</span>, <span class="va">resolution</span> <span class="op">~</span> <span class="va">graph</span>, value.var <span class="op">=</span> <span class="st">"n_clusters"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Key: &lt;resolution&gt;</span></span>
@@ -329,7 +341,7 @@
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_ref</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_v2"</span>,</span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony"</span>,</span>
 <span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -341,8 +353,7 @@
 <span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
-<span><span class="co">#&gt; Using n_epochs = 500 (dataset &lt;10k samples or adam_parallel optimiser)</span></span>
-<span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
+<span><span class="co">#&gt; Using n_epochs = 500 (Adam optimiser or dataset &lt;=10k samples)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
 </h2>
@@ -352,13 +363,15 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_ref</span>, res <span class="op">=</span> <span class="fl">1</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.</span></span>
 <span></span>
 <span><span class="va">sc_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_ref</span>,</span>
 <span>  cluster_algorithm <span class="op">=</span> <span class="st">"louvain"</span>,</span>
 <span>  res <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  name <span class="op">=</span> <span class="st">"louvain_clusters"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running louvain clustering at resolution 1.</span></span></code></pre></div>
 </div>
 <p>A few knobs get passed through <code>...</code> to <code><a href="../reference/leiden_clustering.html">leiden_clustering()</a></code>:</p>
 <ul>
@@ -378,7 +391,8 @@
 <span>  n_iterations <span class="op">=</span> <span class="op">-</span><span class="fl">1L</span>,</span>
 <span>  min_gain <span class="op">=</span> <span class="fl">1e-4</span>,</span>
 <span>  local_moving <span class="op">=</span> <span class="st">"coloured"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.</span></span></code></pre></div>
 </div>
 <p>How much do the three labelings agree? A small helper that plots, for each cluster of one labeling, how its cells spread across the clusters of another:</p>
 <div class="cell">
@@ -443,7 +457,7 @@
 </div>
 </section><section class="level3"><h3 id="fast-clustering">Fast clustering<a class="anchor" aria-label="anchor" href="#fast-clustering"></a>
 </h3>
-<p>On a few thousand cells the full graph clustering is instant. On a million it isn’t. <code><a href="../reference/fast_cluster_sc.html">fast_cluster_sc()</a></code> coarsens the cells with k-means first (<code>sqrt(N)</code> centroids by default), builds a graph over the centroids and runs Louvain or Leiden on that. Each cell inherits the community of its centroid. Two options for the centroid graph:</p>
+<p>On a few thousand cells the full graph clustering is instant. On a million it isn’t. <code><a href="../reference/fast_cluster_sc.html">fast_cluster_sc()</a></code> coarsens the cells with k-means first (<code>floor(4 * sqrt(N))</code> centroids by default), builds a graph over the centroids and runs Louvain or Leiden on that. Each cell inherits the community of its centroid. Two options for the centroid graph:</p>
 <ul>
 <li>the default, a symmetrised kNN between the centroids (<code>centroid_k</code>, <code>centroid_graph</code>);</li>
 <li>
@@ -456,14 +470,14 @@
 <span></span>
 <span><span class="va">fc_knn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_ref</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_v2"</span>,</span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony"</span>,</span>
 <span>  resolutions <span class="op">=</span> <span class="va">fc_resolutions</span>,</span>
 <span>  n_seeds <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">fc_cell_med</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_ref</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_v2"</span>,</span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony"</span>,</span>
 <span>  resolutions <span class="op">=</span> <span class="va">fc_resolutions</span>,</span>
 <span>  fc_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_fast_cluster.html">params_sc_fast_cluster</a></span><span class="op">(</span>cell_mediated <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  n_seeds <span class="op">=</span> <span class="fl">10L</span></span>
@@ -541,7 +555,7 @@
 </div>
 </div>
 </div>
-<p>With ~5.8k cells there are only ~76 centroids, so the partitions come out coarse: about 5 communities at resolution 1 against 14 for Leiden on the full graph. For data sets of this size, stick with <code><a href="../reference/find_clusters_sc.html">find_clusters_sc()</a></code>. The fast path earns its keep once you are in the hundreds of thousands of cells, see the <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html">1 million cells vignette</a>.</p>
+<p>At this size <code>floor(4 * sqrt(N))</code> only gives a few hundred centroids, so the partitions come out coarser than Leiden on the full graph. For data sets of this size, stick with <code><a href="../reference/find_clusters_sc.html">find_clusters_sc()</a></code>. The fast path earns its keep once you are in the hundreds of thousands of cells, see the <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html">1 million cells vignette</a>.</p>
 </section></section><section class="level2"><h2 id="cell-type-annotation">Cell type annotation<a class="anchor" aria-label="anchor" href="#cell-type-annotation"></a>
 </h2>
 <section class="level3"><h3 id="sctype-per-cluster">scType per cluster<a class="anchor" aria-label="anchor" href="#sctype-per-cluster"></a>
@@ -837,7 +851,6 @@
 <span><span class="va">sc_query</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_mtx.html">load_mtx</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_query</span>,</span>
 <span>  sc_mtx_io_param <span class="op">=</span> <span class="va">mtx_io_params</span>,</span>
-<span>  mtx_streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;  Converting the cell-based data into the gene-based format.</span></span>
@@ -904,7 +917,9 @@
 <span>  params <span class="op">=</span> <span class="fu"><a href="../reference/params_symphony_map.html">params_symphony_map</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt;  17 / 2000 reference HVGs not found in query; treated as zero columns.</span></span></code></pre></div>
+<span><span class="co">#&gt; Warning in `method(map_symphony_query, bixverse::SymphonyReference)`(reference</span></span>
+<span><span class="co">#&gt; = &lt;object&gt;, : 17 / 2000 reference HVGs not found in query; treated as zero</span></span>
+<span><span class="co">#&gt; columns.</span></span></code></pre></div>
 </div>
 <p>The query now carries three embeddings: <code>"symphony"</code> (z_corr, the corrected embedding), <code>"symphony_pca"</code> (z_pca, pre-correction), and <code>"symphony_r"</code> (soft cluster assignments, one column per reference centroid).</p>
 <p>A neighbour graph and UMAP on the corrected embedding give us something to plot against:</p>
@@ -925,8 +940,7 @@
 <span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
-<span><span class="co">#&gt; Using n_epochs = 500 (dataset &lt;10k samples or adam_parallel optimiser)</span></span>
-<span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
+<span><span class="co">#&gt; Using n_epochs = 500 (Adam optimiser or dataset &lt;=10k samples)</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="transferring-labels">Transferring labels<a class="anchor" aria-label="anchor" href="#transferring-labels"></a>
 </h3>
@@ -1021,7 +1035,7 @@
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">30</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1.025</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Removed 112 rows containing missing values or values outside the scale range</span></span>
+<span><span class="co">#&gt; Warning: Removed 140 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">#&gt; (`geom_point()`).</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -1095,7 +1109,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -1104,8 +1119,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -1119,6 +1195,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

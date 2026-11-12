@@ -18,7 +18,7 @@ barcodes nearest the transition.
 ``` r
 params_sc_empty_droplets(
   method = c("supplied", "umi_cutoff", "expected_cells", "knee"),
-  is_empty_column = NULL,
+  is_empty_column = "is_empty",
   umi_cutoff = NULL,
   expected_cells = NULL
 )
@@ -34,9 +34,9 @@ params_sc_empty_droplets(
 
 - is_empty_column:
 
-  String or `NULL`. Name of the logical obs column holding the mask.
-  Required for `method = "supplied"`, ignored otherwise. Defaults to
-  `NULL`.
+  String or `NULL`. Name of the logical obs column holding the mask,
+  `TRUE` for an empty droplet. Used by `method = "supplied"`, ignored
+  otherwise. Defaults to `"is_empty"`.
 
 - umi_cutoff:
 
@@ -60,8 +60,8 @@ A named list with the following elements:
   `"supplied"`.
 
 - is_empty_column - String or `NULL`. Name of the logical obs column
-  holding the mask. Required for `method = "supplied"`, ignored
-  otherwise. Defaults to `NULL`.
+  holding the mask, `TRUE` for an empty droplet. Used by
+  `method = "supplied"`, ignored otherwise. Defaults to `"is_empty"`.
 
 - umi_cutoff - Integer or `NULL`. Barcodes with a library size strictly
   below this are empty. Required for `method = "umi_cutoff"`, ignored

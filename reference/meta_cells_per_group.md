@@ -18,7 +18,7 @@ every subset already carries one.
 meta_cells_per_group(
   object,
   group_col,
-  method = c("bootstrapped", "seacells", "supercells"),
+  method = c("bootstrapped", "seacells", "supercells", "metacells2"),
   mc_params = list(),
   pipeline = NULL,
   groups = NULL,
@@ -39,8 +39,9 @@ meta_cells_per_group(
 
 - method:
 
-  String. One of `c("bootstrapped", "seacells", "supercells")`. Picks
-  the meta cell generator.
+  String. One of
+  `c("bootstrapped", "seacells", "supercells", "metacells2")`. Picks the
+  meta cell generator.
 
 - mc_params:
 

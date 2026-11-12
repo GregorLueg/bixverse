@@ -75,7 +75,6 @@ attribute as `c(feature_1, feature_2)`.
 sc <- demo_single_cells(prepped = FALSE)
 genes <- get_gene_names(sc)[1:2]
 head(extract_feature_pair(sc, genes[1], genes[2], obs_cols = "cell_grp"))
-#> Key: <cell_id>
 #>     cell_id feature_1 feature_2    cell_grp
 #>      <char>     <num>     <num>      <char>
 #> 1: cell_001  6.222656  6.761719 cell_type_1

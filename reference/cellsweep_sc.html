@@ -17,7 +17,7 @@ matrix."><meta property="og:image" content="https://gregorlueg.github.io/bixvers
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,7 +120,7 @@ matrix.</p>
 <span>  <span class="va">input</span>,</span>
 <span>  <span class="va">celltype_column</span>,</span>
 <span>  <span class="va">sample_column</span>,</span>
-<span>  <span class="va">empty_params</span>,</span>
+<span>  empty_params <span class="op">=</span> <span class="fu"><a href="params_sc_empty_droplets.html">params_sc_empty_droplets</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  cellsweep_params <span class="op">=</span> <span class="fu"><a href="params_sc_cellsweep.html">params_sc_cellsweep</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  csc_mem_gb <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -156,9 +156,8 @@ independent fit per level.</p></dd>
 
 
 <dt id="arg-empty-params">empty_params<a class="anchor" aria-label="anchor" href="#arg-empty-params"></a></dt>
-<dd><p>List. See <code><a href="params_sc_empty_droplets.html">params_sc_empty_droplets()</a></code>. Required: there
-is no safe default, since the recommended <code>method = "supplied"</code> needs the
-name of the obs column holding the mask.</p></dd>
+<dd><p>List. See <code><a href="params_sc_empty_droplets.html">params_sc_empty_droplets()</a></code>. The default
+<code>method = "supplied"</code> reads the logical obs column <code>is_empty</code>.</p></dd>
 
 
 <dt id="arg-cellsweep-params">cellsweep_params<a class="anchor" aria-label="anchor" href="#arg-cellsweep-params"></a></dt>

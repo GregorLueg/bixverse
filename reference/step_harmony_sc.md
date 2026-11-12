@@ -2,7 +2,7 @@
 
 Wraps
 [`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
-as an `ScStep`.
+(Harmony v2) as an `ScStep`.
 
 ## Usage
 
@@ -11,7 +11,7 @@ step_harmony_sc(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -36,7 +36,7 @@ step_harmony_sc(
 - harmony_params:
 
   List. Output of
-  [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md).
+  [`params_sc_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony_v2.md).
 
 - seed:
 
@@ -59,6 +59,6 @@ An `ScStep`.
 step_harmony_sc(batch_column = "batch_index") %>>%
   step_neighbours_sc(embd_to_use = "harmony")
 #> <ScPipeline> 2 steps
-#>   1. harmony     batch_column = "batch_index", additional_batch_columns = NULL, modality = c("rna", "adt"), harmony_params = <params_sc_harmony>, seed = 42L, .verbose = TRUE
+#>   1. harmony     batch_column = "batch_index", additional_batch_columns = NULL, modality = c("rna", "adt"), harmony_params = <params_sc_harmony_v2>, seed = 42L, .verbose = TRUE
 #>   2. neighbours  embd_to_use = "harmony", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
 ```

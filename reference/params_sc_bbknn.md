@@ -36,7 +36,8 @@ params_sc_bbknn(
   Integer or `NULL`. Trim the neighbours of each cell to these many top
   connectivities. May help with population independence and improve the
   tidiness of clustering. If `NULL`, it defaults to
-  `10 * neighbours_within_batch`. Defaults to `NULL`.
+  `10 * neighbours_within_batch * n_batches`, as in the reference
+  implementation. Defaults to `NULL`.
 
 - knn:
 
@@ -44,8 +45,7 @@ params_sc_bbknn(
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
-  `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`. See
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`. See
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for the available elements. Defaults to
   [`list()`](https://rdrr.io/r/base/list.html).
@@ -67,7 +67,8 @@ A named list with the following elements:
 - trim - Integer or `NULL`. Trim the neighbours of each cell to these
   many top connectivities. May help with population independence and
   improve the tidiness of clustering. If `NULL`, it defaults to
-  `10 * neighbours_within_batch`. Defaults to `NULL`.
+  `10 * neighbours_within_batch * n_batches`, as in the reference
+  implementation. Defaults to `NULL`.
 
 - The elements of
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md),

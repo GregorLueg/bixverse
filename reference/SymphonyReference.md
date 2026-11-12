@@ -119,14 +119,14 @@ symphony_ref <- build_symphony_ref(
   ref,
   batch_column = "batch_index",
   hvg = get_hvg(ref) + 1L,
-  harmony_params = params_sc_harmony(k = 10L),
+  harmony_params = params_sc_harmony_v2(k = 10L),
   no_pcs = 10L,
   label_columns = "cell_grp",
   .verbose = FALSE
 )
 symphony_ref
 #> Symphony reference
-#>   Harmony backend: v1
+#>   Harmony backend: v2
 #>   No HVGs: 30
 #>   No PCs: 10
 #>   No clusters: 10

@@ -21,7 +21,7 @@ flatten the very ranking the residuals produce."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -130,7 +130,6 @@ flatten the very ranking the residuals produce.</p>
 <span>  <span class="va">cell_indices</span>,</span>
 <span>  <span class="va">gene_indices</span>,</span>
 <span>  <span class="va">seed</span>,</span>
-<span>  <span class="va">return_scaled</span>,</span>
 <span>  <span class="va">verbose</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -175,10 +174,6 @@ Every one must be covered by the fit.</p></dd>
 <dd><p>Integer. Random seed for the randomised SVD.</p></dd>
 
 
-<dt id="arg-return-scaled">return_scaled<a class="anchor" aria-label="anchor" href="#arg-return-scaled"></a></dt>
-<dd><p>Boolean. Shall the scaled data be returned.</p></dd>
-
-
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Integer. <code>0L</code> - quiet; <code>1L</code> - normal verbosity; <code>2L</code> -
 detailed verbosity.</p></dd>
@@ -189,8 +184,6 @@ detailed verbosity.</p></dd>
     <p>A list with the following items</p><ul><li><p>scores - The samples projected on the PCA space.</p></li>
 <li><p>loadings - The loadings of the features for the PCA.</p></li>
 <li><p>singular_values - The singular values for the PCA.</p></li>
-<li><p>scaled - The scaled matrix if <code>return_scaled = TRUE</code>, otherwise
-<code>NULL</code>.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

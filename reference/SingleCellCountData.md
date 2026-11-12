@@ -318,7 +318,8 @@ Write an mtx file to the cells binary file
 - `mtx_path`:
 
   (`character`)  
-  Path to the mtx file.
+  Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the
+  magic bytes).
 
 - `qc_params`:
 
@@ -350,7 +351,8 @@ Write an mtx file to the cells binary file using streaming
 - `mtx_path`:
 
   (`character`)  
-  Path to the mtx file.
+  Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the
+  magic bytes).
 
 - `qc_params`:
 

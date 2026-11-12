@@ -1,6 +1,6 @@
 # A guide to single-cell plotting functions
 
-### Intro
+## Intro
 
 This vignette gives an overview of the different plotting functions that
 are available when running a single cell analysis.
@@ -19,7 +19,7 @@ library(bixverse.plots)
 library(magrittr)
 ```
 
-### Preparing the data
+## Preparing the data
 
 We run the standard analysis using the same PBMC3k data set. For more
 details on the data analysis itself, please refer to the [introductory
@@ -42,13 +42,13 @@ mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = TRUE
 )
 #>  Converting the cell-based data into the gene-based format.
 #> Loading observations data from flat file into the DuckDB.
 #> Loading variable data from flat file into the DuckDB.
 
+set.seed(42L)
 sc_object[["sample"]] <- sample(
   x = c("sample1", "sample2"),
   size = nrow(sc_object),
@@ -169,7 +169,7 @@ MT proportion.
 Per-donor violin plots for library size, number of non-zero genes, and
 MT proportion.
 
-Alternatively, we can also provide a datatable generate the violins
+Alternatively, we can also provide a data.table to generate the violin
 plots with different variables than those considered in the QC.
 
 ``` r
@@ -249,10 +249,10 @@ sc_object <- find_neighbours_sc(
 #> 
 #> Generating the snn graph.
 sc_object <- find_clusters_sc(sc_object, res = 0.5, name = "leiden_clusters")
+#> Running leiden clustering at resolution 0.5.
 sc_object <- umap_sc(sc_object)
 #> Running UMAP.
-#> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-#> Using provided kNN graph.
+#> Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
 
 cell_markers <- c(
   CD3D = "T cells",
@@ -355,7 +355,7 @@ cluster centroids.
 
 **Colouring by a continuous variable**
 
-Set `discrete = FALSE` to use a continuous colour scale — useful for
+Set `discrete = FALSE` to use a continuous colour scale: useful for
 confidence scores, pseudotime, or gene module scores.
 
 ``` r
@@ -369,7 +369,7 @@ embedding_plot_sc(
 )
 ```
 
-![](single_cell_visualisation_files/figure-html/embedding-sctype-1.png)
+![](single_cell_visualisation_files/figure-html/embedding-ribo-1.png)
 
 UMAP coloured by ribosomal content (continuous scale).
 
@@ -396,14 +396,14 @@ dt <- extract_embedding_data(
   obs_cols = c("sc_type", "leiden_clusters", "Ribo")
 )
 head(dt)
-#>             cell_id     dim_1      dim_2    sc_type leiden_clusters      Ribo
-#>              <char>     <num>      <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -2.812537 -3.1161282    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -5.286569 -4.6104288    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  2.052555  3.9632912 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.611849  0.1051564         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -4.285697 -3.7213485    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -3.275007 -2.9111469         NK               2 0.4165899
+#>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
+#>              <char>     <num>     <num>     <char>           <int>     <num>
+#> 1: AAACATACAACCAC-1  4.236824 -1.036505    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1  6.491835 -3.475420    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1 -5.288665 -1.070349 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1  1.761112 -3.110243         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1  5.371714 -2.743932    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1  4.394455 -2.221142         NK               2 0.4165899
 ```
 
 ## Other 2D embeddings
@@ -512,7 +512,7 @@ patchwork::wrap_plots(fa2_plots, ncol = 2, guides = "collect")
 ForceAtlas2 on the kNN graph (left) and on the neighbour graph (right),
 coloured by cell type.
 
-## Per-Gene Expression plots\`
+## Per-Gene Expression plots
 
 [`feature_plot_sc()`](https://gregorlueg.github.io/bixverse.plots/reference/feature_plot_sc.html)
 projects normalised expression of one or more genes onto the embedding.
@@ -520,13 +520,12 @@ projects normalised expression of one or more genes onto the embedding.
 ``` r
 
 # Select a single feature by Ensembl ID; provide a human-readable label
-features <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
-feature_labels <- ensembl_to_symbol[features]
+ms4a1 <- symbol_to_ensembl[["MS4A1"]]
 
 feature_plot_sc(
   object = sc_object,
-  features = features[8],
-  feature_labels = feature_labels[8],
+  features = ms4a1,
+  feature_labels = ensembl_to_symbol[ms4a1],
   embedding = "umap",
   label_by = "sc_type"
 )
@@ -545,13 +544,12 @@ We can also highlight the genes of interest for clearer visualisation.
 ``` r
 
 # Select a single feature by Ensembl ID; provide a human-readable label
-features <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
-feature_labels <- ensembl_to_symbol[features]
+ms4a1 <- symbol_to_ensembl[["MS4A1"]]
 
 feature_plot_sc(
   object = sc_object,
-  features = features[8],
-  feature_labels = feature_labels[8],
+  features = ms4a1,
+  feature_labels = ensembl_to_symbol[ms4a1],
   embedding = "umap",
   label_by = "sc_type",
   highlight_features = TRUE
@@ -560,8 +558,7 @@ feature_plot_sc(
 
 ![](single_cell_visualisation_files/figure-html/feature-plot-highlight-1.png)
 
-Expression of MS4A1 on the UMAP. High-expressing cells cluster in
-expected B cell cluster.
+Expression of MS4A1 on the UMAP, with the expressing cells highlighted.
 
 **Extracting the plotting data**
 
@@ -573,20 +570,19 @@ customised plots.
 dt <- extract_feature_plot_data(
   sc_object,
   embedding = "umap",
-  obs_cols = c("sc_type", "leiden_clusters", "Ribo"),
-  features = features[8],
-  modality = "rna"
+  obs_col = c("sc_type", "leiden_clusters", "Ribo"),
+  features = ms4a1
 )
 
 head(dt)
-#>             cell_id     dim_1      dim_2    sc_type leiden_clusters      Ribo
-#>              <char>     <num>      <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -2.812537 -3.1161282    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -5.286569 -4.6104288    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  2.052555  3.9632912 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.611849  0.1051564         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -4.285697 -3.7213485    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -3.275007 -2.9111469         NK               2 0.4165899
+#>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
+#>              <char>     <num>     <num>     <char>           <int>     <num>
+#> 1: AAACATACAACCAC-1  4.236824 -1.036505    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1  6.491835 -3.475420    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1 -5.288665 -1.070349 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1  1.761112 -3.110243         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1  5.371714 -2.743932    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1  4.394455 -2.221142         NK               2 0.4165899
 #>               gene expression
 #>             <fctr>      <num>
 #> 1: ENSG00000156738          0

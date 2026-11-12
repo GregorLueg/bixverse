@@ -115,7 +115,7 @@ metric stored on the cached kNN graph, otherwise from `ann_dist` in
 sc <- demo_single_cells()
 res <- hotspot_autocor_sc(sc, .verbose = FALSE)
 head(res, 3)
-#>    gene_id  gaerys_c  z_score          pval           fdr
+#>    gene_id  gearys_c  z_score          pval           fdr
 #>     <char>     <num>    <num>         <num>         <num>
 #> 1: gene_01 0.4152188 29.01265 2.278132e-185 8.136184e-185
 #> 2: gene_02 0.4358798 31.03719 8.494086e-212 5.308804e-211

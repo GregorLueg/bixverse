@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Multicellular programmes with DIALOGUE</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -287,11 +287,11 @@
 <span><span class="co">#&gt;   Cell types:       4 (CD8+ IELs, CD8+ LP, Macrophages, TA2)</span></span>
 <span><span class="co">#&gt;   Shared samples:   30</span></span>
 <span><span class="co">#&gt;   Programmes:       3</span></span>
-<span><span class="co">#&gt;     mcp_01 - worst pair p: 0.6612 | spans 3 cell type(s)</span></span>
-<span><span class="co">#&gt;     mcp_02 - worst pair p: 0.0448 | spans 4 cell type(s)</span></span>
-<span><span class="co">#&gt;     mcp_03 - worst pair p: 0.08834 | spans 4 cell type(s)</span></span>
-<span><span class="co">#&gt;   Genes with a verdict: 1286</span></span>
-<span><span class="co">#&gt;   Signature genes:  1127 permissive | 723 strict</span></span></code></pre></div>
+<span><span class="co">#&gt;     mcp_01 - worst pair p: 0.0448 | spans 4 cell type(s)</span></span>
+<span><span class="co">#&gt;     mcp_02 - worst pair p: 0.5414 | spans 3 cell type(s)</span></span>
+<span><span class="co">#&gt;     mcp_03 - worst pair p: 0.09402 | spans 4 cell type(s)</span></span>
+<span><span class="co">#&gt;   Genes with a verdict: 1278</span></span>
+<span><span class="co">#&gt;   Signature genes:  1115 permissive | 719 strict</span></span></code></pre></div>
 </div>
 <p><code>quality_col = "cell_q"</code> is the per-cell quality score the original paper shipped with this data. Leave it <code>NULL</code> and <code>bixverse</code> falls back to the z-scored log library size instead. That choice matters more than it looks, and we come back to it below.</p>
 </section><section class="level2"><h2 id="reading-the-output">Reading the output<a class="anchor" aria-label="anchor" href="#reading-the-output"></a>
@@ -302,35 +302,35 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_results.html">get_results</a></span><span class="op">(</span><span class="va">dlg_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     programme cell_type_a cell_type_b      emp_p  pair_cor</span></span>
 <span><span class="co">#&gt;         &lt;int&gt;      &lt;char&gt;      &lt;char&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1:         1   CD8+ IELs     CD8+ LP 0.04480159 0.7566875</span></span>
-<span><span class="co">#&gt;  2:         2   CD8+ IELs     CD8+ LP 0.04480159 0.9187146</span></span>
-<span><span class="co">#&gt;  3:         3   CD8+ IELs     CD8+ LP 0.05950722 0.6225727</span></span>
-<span><span class="co">#&gt;  4:         1   CD8+ IELs Macrophages 0.04480159 0.8074391</span></span>
-<span><span class="co">#&gt;  5:         2   CD8+ IELs Macrophages 0.04480159 0.8783387</span></span>
-<span><span class="co">#&gt;  6:         3   CD8+ IELs Macrophages 0.08833696 0.5740290</span></span>
-<span><span class="co">#&gt;  7:         1   CD8+ IELs         TA2 0.24420029 0.5441587</span></span>
-<span><span class="co">#&gt;  8:         2   CD8+ IELs         TA2 0.04480159 0.9215888</span></span>
-<span><span class="co">#&gt;  9:         3   CD8+ IELs         TA2 0.04480159 0.7202389</span></span>
-<span><span class="co">#&gt; 10:         1     CD8+ LP Macrophages 0.04480159 0.8044161</span></span>
-<span><span class="co">#&gt; 11:         2     CD8+ LP Macrophages 0.04480159 0.9440593</span></span>
-<span><span class="co">#&gt; 12:         3     CD8+ LP Macrophages 0.04480159 0.7627764</span></span>
-<span><span class="co">#&gt; 13:         1     CD8+ LP         TA2 0.30165683 0.5201551</span></span>
-<span><span class="co">#&gt; 14:         2     CD8+ LP         TA2 0.04480159 0.9410904</span></span>
-<span><span class="co">#&gt; 15:         3     CD8+ LP         TA2 0.05950722 0.6511170</span></span>
-<span><span class="co">#&gt; 16:         1 Macrophages         TA2 0.66118998 0.4759507</span></span>
-<span><span class="co">#&gt; 17:         2 Macrophages         TA2 0.04480159 0.9132746</span></span>
-<span><span class="co">#&gt; 18:         3 Macrophages         TA2 0.08291775 0.5990783</span></span></code></pre></div>
+<span><span class="co">#&gt;  1:         1   CD8+ IELs     CD8+ LP 0.04480159 0.9185081</span></span>
+<span><span class="co">#&gt;  2:         2   CD8+ IELs     CD8+ LP 0.04817104 0.7528367</span></span>
+<span><span class="co">#&gt;  3:         3   CD8+ IELs     CD8+ LP 0.08291775 0.6247474</span></span>
+<span><span class="co">#&gt;  4:         1   CD8+ IELs Macrophages 0.04480159 0.8783464</span></span>
+<span><span class="co">#&gt;  5:         2   CD8+ IELs Macrophages 0.04480159 0.8080019</span></span>
+<span><span class="co">#&gt;  6:         3   CD8+ IELs Macrophages 0.09401581 0.5708857</span></span>
+<span><span class="co">#&gt;  7:         1   CD8+ IELs         TA2 0.04480159 0.9216401</span></span>
+<span><span class="co">#&gt;  8:         2   CD8+ IELs         TA2 0.13380831 0.5435120</span></span>
+<span><span class="co">#&gt;  9:         3   CD8+ IELs         TA2 0.04480159 0.7228678</span></span>
+<span><span class="co">#&gt; 10:         1     CD8+ LP Macrophages 0.04480159 0.9437770</span></span>
+<span><span class="co">#&gt; 11:         2     CD8+ LP Macrophages 0.04480159 0.8040161</span></span>
+<span><span class="co">#&gt; 12:         3     CD8+ LP Macrophages 0.04480159 0.7623320</span></span>
+<span><span class="co">#&gt; 13:         1     CD8+ LP         TA2 0.04480159 0.9411440</span></span>
+<span><span class="co">#&gt; 14:         2     CD8+ LP         TA2 0.24420029 0.5147142</span></span>
+<span><span class="co">#&gt; 15:         3     CD8+ LP         TA2 0.05551659 0.6520426</span></span>
+<span><span class="co">#&gt; 16:         1 Macrophages         TA2 0.04480159 0.9127734</span></span>
+<span><span class="co">#&gt; 17:         2 Macrophages         TA2 0.54138685 0.4733726</span></span>
+<span><span class="co">#&gt; 18:         3 Macrophages         TA2 0.08833696 0.5975298</span></span></code></pre></div>
 </div>
-<p>A programme is only interesting if it holds up across <em>every</em> pair, so the number to look at is the worst p in each programme, which is what <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> reports. With <code>n_permutations = 100</code> the p-value cannot go below roughly 0.01, so do not read too much into the exact values; raise it for anything you intend to believe.</p>
+<p>A programme is only interesting if it holds up across <em>every</em> pair, so the number to look at is the worst p in each programme, which is what <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> reports. The p-value is a rank-sum test of the observed fit against the permuted ones, so with <code>n_permutations = 100</code> it cannot go below roughly 0.045; do not read too much into the exact values and raise it for anything you intend to believe.</p>
 <p><code>refit_fidelity</code> says how well each cell type’s score survived stage three, i.e. how much of the programme is really carried by the genes that passed the mixed model.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">dlg_res</span><span class="op">$</span><span class="va">refit_fidelity</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             mcp_01 mcp_02 mcp_03</span></span>
-<span><span class="co">#&gt; CD8+ IELs    0.546  0.944  0.796</span></span>
-<span><span class="co">#&gt; CD8+ LP      0.715  0.949  0.755</span></span>
-<span><span class="co">#&gt; Macrophages  0.878  0.985  0.876</span></span>
-<span><span class="co">#&gt; TA2          1.000  0.938  0.875</span></span></code></pre></div>
+<span><span class="co">#&gt; CD8+ IELs    0.944  0.547  0.796</span></span>
+<span><span class="co">#&gt; CD8+ LP      0.949  0.703  0.758</span></span>
+<span><span class="co">#&gt; Macrophages  0.985  0.877  0.877</span></span>
+<span><span class="co">#&gt; TA2          0.938  1.000  0.875</span></span></code></pre></div>
 </div>
 <p>The signatures come in two flavours. <code>permissive</code> and <code>strict</code> are nested by evidence rather than by threshold, and <code>strict</code> is the one to quote.</p>
 <div class="cell">
@@ -347,16 +347,16 @@
 <span><span class="co">#&gt; Key: &lt;cell_type, programme&gt;</span></span>
 <span><span class="co">#&gt;       cell_type programme  down    up</span></span>
 <span><span class="co">#&gt;          &lt;char&gt;     &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1:   CD8+ IELs         1     3    NA</span></span>
-<span><span class="co">#&gt;  2:   CD8+ IELs         2    25    70</span></span>
+<span><span class="co">#&gt;  1:   CD8+ IELs         1    25    70</span></span>
+<span><span class="co">#&gt;  2:   CD8+ IELs         2    NA     3</span></span>
 <span><span class="co">#&gt;  3:   CD8+ IELs         3     6     1</span></span>
-<span><span class="co">#&gt;  4:     CD8+ LP         1     6     6</span></span>
-<span><span class="co">#&gt;  5:     CD8+ LP         2    57    73</span></span>
+<span><span class="co">#&gt;  4:     CD8+ LP         1    57    73</span></span>
+<span><span class="co">#&gt;  5:     CD8+ LP         2     6     5</span></span>
 <span><span class="co">#&gt;  6:     CD8+ LP         3     7     1</span></span>
-<span><span class="co">#&gt;  7: Macrophages         1    20     1</span></span>
-<span><span class="co">#&gt;  8: Macrophages         2   155   183</span></span>
-<span><span class="co">#&gt;  9: Macrophages         3    28     6</span></span>
-<span><span class="co">#&gt; 10:         TA2         2    33    36</span></span>
+<span><span class="co">#&gt;  7: Macrophages         1   154   180</span></span>
+<span><span class="co">#&gt;  8: Macrophages         2     1    20</span></span>
+<span><span class="co">#&gt;  9: Macrophages         3    29     6</span></span>
+<span><span class="co">#&gt; 10:         TA2         1    33    36</span></span>
 <span><span class="co">#&gt; 11:         TA2         3     5     1</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="does-it-track-the-disease">Does it track the disease?<a class="anchor" aria-label="anchor" href="#does-it-track-the-disease"></a>
@@ -384,12 +384,12 @@
 <span>  <span class="fu">.</span><span class="op">(</span>p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/wilcox.test.html" class="external-link">wilcox.test</a></span><span class="op">(</span><span class="va">mcp_01</span> <span class="op">~</span> <span class="va">pathology</span><span class="op">)</span><span class="op">$</span><span class="va">p.value</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  by <span class="op">=</span> <span class="va">cell_type</span></span>
 <span><span class="op">]</span></span>
-<span><span class="co">#&gt;      cell_type     p</span></span>
-<span><span class="co">#&gt;         &lt;char&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         TA2 0.602</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP 0.950</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs 0.134</span></span>
-<span><span class="co">#&gt; 4: Macrophages 0.158</span></span></code></pre></div>
+<span><span class="co">#&gt;      cell_type        p</span></span>
+<span><span class="co">#&gt;         &lt;char&gt;    &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:         TA2 0.000239</span></span>
+<span><span class="co">#&gt; 2:     CD8+ LP 0.000658</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs 0.000296</span></span>
+<span><span class="co">#&gt; 4: Macrophages 0.013200</span></span></code></pre></div>
 </div>
 <p><code>mcp_01</code> separates UC donors from healthy ones in all four cell types at once, which is the thing DIALOGUE exists to find. Plotted:</p>
 <div class="cell">
@@ -403,7 +403,31 @@
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">cell_type</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Ulcerative colitis"</span>, y <span class="op">=</span> <span class="st">"mcp_01 (donor mean)"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Orientation is not uniquely specified when both the x and y aesthetics are</span></span>
+<span><span class="co">#&gt; continuous. Picking default orientation 'x'.</span></span>
+<span><span class="co">#&gt; Warning: Continuous x aesthetic</span></span>
+<span><span class="co">#&gt; ℹ did you forget `aes(group = ...)`?</span></span>
+<span><span class="co">#&gt; Warning: The following aesthetics were dropped during statistical transformation: fill.</span></span>
+<span><span class="co">#&gt; ℹ This can happen when ggplot fails to infer the correct grouping structure in</span></span>
+<span><span class="co">#&gt;   the data.</span></span>
+<span><span class="co">#&gt; ℹ Did you forget to specify a `group` aesthetic or to convert a numerical</span></span>
+<span><span class="co">#&gt;   variable into a factor?</span></span>
+<span><span class="co">#&gt; The following aesthetics were dropped during statistical transformation: fill.</span></span>
+<span><span class="co">#&gt; ℹ This can happen when ggplot fails to infer the correct grouping structure in</span></span>
+<span><span class="co">#&gt;   the data.</span></span>
+<span><span class="co">#&gt; ℹ Did you forget to specify a `group` aesthetic or to convert a numerical</span></span>
+<span><span class="co">#&gt;   variable into a factor?</span></span>
+<span><span class="co">#&gt; The following aesthetics were dropped during statistical transformation: fill.</span></span>
+<span><span class="co">#&gt; ℹ This can happen when ggplot fails to infer the correct grouping structure in</span></span>
+<span><span class="co">#&gt;   the data.</span></span>
+<span><span class="co">#&gt; ℹ Did you forget to specify a `group` aesthetic or to convert a numerical</span></span>
+<span><span class="co">#&gt;   variable into a factor?</span></span>
+<span><span class="co">#&gt; The following aesthetics were dropped during statistical transformation: fill.</span></span>
+<span><span class="co">#&gt; ℹ This can happen when ggplot fails to infer the correct grouping structure in</span></span>
+<span><span class="co">#&gt;   the data.</span></span>
+<span><span class="co">#&gt; ℹ Did you forget to specify a `group` aesthetic or to convert a numerical</span></span>
+<span><span class="co">#&gt;   variable into a factor?</span></span></code></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure><p><img src="dialogue_files/figure-html/mcp-plot-1.png" width="672"></p>
@@ -423,12 +447,12 @@
 <span><span class="op">]</span></span>
 <span><span class="co">#&gt;      cell_type    rho</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;  &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         TA2 -0.111</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP  0.081</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs -0.274</span></span>
-<span><span class="co">#&gt; 4: Macrophages -0.105</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:         TA2 -0.591</span></span>
+<span><span class="co">#&gt; 2:     CD8+ LP -0.555</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs -0.445</span></span>
+<span><span class="co">#&gt; 4: Macrophages -0.586</span></span></code></pre></div>
 </div>
-<p>That is not a small correlation. <code>mcp_01</code> is tracking library size at <code>rho ~ 0.5</code> in every cell type, and library size itself differs between the UC and healthy donors on this subset. So a good chunk of what we just called a disease programme is a depth axis wearing a lab coat.</p>
+<p>That is not a small correlation. <code>mcp_01</code> is tracking library size at <code>|rho| ~ 0.5</code> in every cell type (the sign of a programme is arbitrary), and library size itself differs between the UC and healthy donors on this subset. So a good chunk of what we just called a disease programme is a depth axis wearing a lab coat.</p>
 <p>The fix is to condition on the right covariate. <code>cell_q</code> is the paper’s own quality score and it barely correlates with <code>mcp_01</code> here, so it was never going to absorb this. The library-size covariate will.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
@@ -457,10 +481,10 @@
 <span><span class="op">]</span></span>
 <span><span class="co">#&gt;      cell_type    rho</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;  &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         TA2 -0.082</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP  0.027</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs -0.119</span></span>
-<span><span class="co">#&gt; 4: Macrophages -0.085</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:         TA2 -0.185</span></span>
+<span><span class="co">#&gt; 2:     CD8+ LP -0.242</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs -0.056</span></span>
+<span><span class="co">#&gt; 4: Macrophages -0.274</span></span></code></pre></div>
 </div>
 <p>Much better. Two things to notice about what changed and what did not.</p>
 <p>The programme table and the p-values are <strong>identical</strong> to the first run. That is not a bug: the quality covariate only enters stage two, so stage one’s decomposition and its permutation null never saw it.</p>
@@ -472,7 +496,7 @@
 <span>  lib_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">dlg_lib</span><span class="op">$</span><span class="va">signatures</span><span class="op">[</span><span class="va">list</span> <span class="op">==</span> <span class="st">"strict"</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;   cell_q lib_size </span></span>
-<span><span class="co">#&gt;      723      332</span></span></code></pre></div>
+<span><span class="co">#&gt;      719      328</span></span></code></pre></div>
 </div>
 <p>And the disease association survives.</p>
 <div class="cell">
@@ -485,12 +509,12 @@
 <span>  <span class="fu">.</span><span class="op">(</span>p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/wilcox.test.html" class="external-link">wilcox.test</a></span><span class="op">(</span><span class="va">mcp_01</span> <span class="op">~</span> <span class="va">pathology</span><span class="op">)</span><span class="op">$</span><span class="va">p.value</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  by <span class="op">=</span> <span class="va">cell_type</span></span>
 <span><span class="op">]</span></span>
-<span><span class="co">#&gt;      cell_type     p</span></span>
-<span><span class="co">#&gt;         &lt;char&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:         TA2 0.851</span></span>
-<span><span class="co">#&gt; 2:     CD8+ LP 0.983</span></span>
-<span><span class="co">#&gt; 3:   CD8+ IELs 0.172</span></span>
-<span><span class="co">#&gt; 4: Macrophages 0.267</span></span></code></pre></div>
+<span><span class="co">#&gt;      cell_type        p</span></span>
+<span><span class="co">#&gt;         &lt;char&gt;    &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:         TA2 1.01e-02</span></span>
+<span><span class="co">#&gt; 2:     CD8+ LP 4.29e-03</span></span>
+<span><span class="co">#&gt; 3:   CD8+ IELs 5.99e-05</span></span>
+<span><span class="co">#&gt; 4: Macrophages 7.70e-03</span></span></code></pre></div>
 </div>
 <p>So there is a real coordinated programme here, it is just a good deal smaller than the first run advertised. That is the normal outcome of doing this check, and it is why you do it.</p>
 </section><section class="level2"><h2 id="caveats-and-what-is-next">Caveats and what is next<a class="anchor" aria-label="anchor" href="#caveats-and-what-is-next"></a>
@@ -522,7 +546,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -531,8 +556,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -546,6 +632,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

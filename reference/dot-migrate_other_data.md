@@ -16,4 +16,5 @@ Bring a loaded `other_data` slot into the current shape
 
 ## Value
 
-`other_data` with the `wnn` graph under `connectivities`.
+`other_data` with the `wnn` graph under `connectivities`, as a live
+`SingleCellConnectivity`.

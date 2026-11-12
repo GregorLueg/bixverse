@@ -70,11 +70,6 @@ meld_sc(
   - normalise_indicators - Logical. If `TRUE`, indicator columns are
     divided by their column sum before filtering.
 
-  - landmark - Logical. Whether to use landmark approximation. Useful
-    for large data sets.
-
-  - n_landmarks - Integer. Number of landmarks to use.
-
   - knn - List of kNN parameters. See
     [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
     for available parameters and their defaults.

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,7 +103,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">step_clusters_sc</span><span class="op">(</span></span>
 <span>  cluster_algorithm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leiden"</span>, <span class="st">"louvain"</span><span class="op">)</span>,</span>
 <span>  res <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  name <span class="op">=</span> <span class="st">"leiden_clustering"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"wnn"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -124,11 +124,13 @@
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>String. The name to add to the obs table in the DuckDB.</p></dd>
+<dd><p>Optional string. The name of the obs column to add. <code>NULL</code>
+gives <code>"leiden_clustering"</code> or <code>"louvain_clustering"</code>, following
+<code>cluster_algorithm</code>.</p></dd>
 
 
 <dt id="arg-modality">modality<a class="anchor" aria-label="anchor" href="#arg-modality"></a></dt>
-<dd><p>String. On which modality to run the UMAP. One of
+<dd><p>String. On which modality to cluster. One of
 <code>c("rna", "adt", "wnn")</code>. The two latter options are only available for
 multi-modal versions with the added data.</p></dd>
 
@@ -153,7 +155,7 @@ multi-modal versions with the added data.</p></dd>
 <span class="r-in"><span><span class="fu"><a href="step_neighbours_sc.html">step_neighbours_sc</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span> <span class="fu">step_clusters_sc</span><span class="op">(</span>res <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;ScPipeline&gt; 2 steps</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = &lt;list&gt;, seed = 42L, .verbose = TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = "leiden_clustering", modality = c("rna", "adt", "wnn"), seed = 42L</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = NULL, modality = c("rna", "adt", "wnn"), seed = 42L</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

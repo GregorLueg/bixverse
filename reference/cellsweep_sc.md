@@ -15,7 +15,7 @@ cellsweep_sc(
   input,
   celltype_column,
   sample_column,
-  empty_params,
+  empty_params = params_sc_empty_droplets(),
   cellsweep_params = params_sc_cellsweep(),
   sc_qc_param = params_sc_min_quality(),
   csc_mem_gb = NULL,
@@ -51,9 +51,8 @@ cellsweep_sc(
 
   List. See
   [`params_sc_empty_droplets()`](https://gregorlueg.github.io/bixverse/reference/params_sc_empty_droplets.md).
-  Required: there is no safe default, since the recommended
-  `method = "supplied"` needs the name of the obs column holding the
-  mask.
+  The default `method = "supplied"` reads the logical obs column
+  `is_empty`.
 
 - cellsweep_params:
 

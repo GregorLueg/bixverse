@@ -56,7 +56,6 @@ tempdir_pbmc <- tempdir()
 sc_object <- load_mtx(
   object = SingleCells(dir_data = tempdir_pbmc),
   sc_mtx_io_param = get_cell_ranger_params(pbmc3k_path),
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -118,6 +117,7 @@ sc_object <- find_neighbours_sc(
   .verbose = FALSE
 )
 sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_clusters")
+#> Running leiden clustering at resolution 1.
 sc_object <- umap_sc(sc_object, .verbose = FALSE)
 
 sc_object
@@ -198,7 +198,7 @@ tree
 #>   Genes: 348 used, 10791 dropped
 #>   Loglikelihood: -504754.9
 #>   Layout: equal_angle
-#>   Seconds: sanity 34.0 | ingest 0.0 | bonsai 34.0 | layout 0.0 | total 68.0
+#>   Seconds: sanity 39.4 | ingest 0.0 | bonsai 42.7 | layout 0.0 | total 82.1
 ```
 
 Where did the time go? Every stage is timed, and `total` is the whole
@@ -212,11 +212,11 @@ few hundred that survive.
 tree$timings
 #>     stage      seconds
 #>    <char>        <num>
-#> 1: sanity 33.958581515
-#> 2: ingest  0.012634028
-#> 3: bonsai 34.006549629
-#> 4: layout  0.000144647
-#> 5:  total 67.988689184
+#> 1: sanity 39.443147436
+#> 2: ingest  0.011283227
+#> 3: bonsai 42.666258436
+#> 4: layout  0.000132566
+#> 5:  total 82.134911299
 ```
 
 The search reports its steps too: the loglikelihood after each and what
@@ -230,13 +230,13 @@ behind.
 tree$steps
 #>           step    loglik     seconds
 #>         <char>     <num>       <num>
-#> 1: 1-2 linkage -760924.3  0.22350752
-#> 2:  3 polytomy -760924.3  0.01051888
-#> 3:    4 branch -518298.5  0.72976580
-#> 4:       5 spr -505044.2 30.18418306
-#> 5:       6 nni -505041.8  1.01875348
-#> 6:    7 branch -504756.6  0.80131981
-#> 7:  8 collapse -504754.9  1.02892262
+#> 1: 1-2 linkage -760924.3  0.19824031
+#> 2:  3 polytomy -760924.3  0.01065028
+#> 3:    4 branch -518298.5  0.85211051
+#> 4:       5 spr -505044.2 38.00434522
+#> 5:       6 nni -505041.8  1.41295315
+#> 6:    7 branch -504756.6  1.00761641
+#> 7:  8 collapse -504754.9  1.17244217
 ```
 
 ### Which genes made it?
@@ -352,7 +352,7 @@ are much tighter, and Bonsai weights by them. The same
 [`bonsai_sc()`](https://gregorlueg.github.io/bixverse/reference/bonsai_sc.md)
 call works on `MetaCells`; every metacell becomes a leaf.
 
-Here SEACells compresses the PBMCs to 100 metacells, and each metacell
+Here SuperCells compresses the PBMCs to metacells, and each metacell
 gets the cell type most of its cells carry.
 
 ``` r
@@ -377,7 +377,7 @@ tree_mc
 #>   Genes: 2228 used, 8911 dropped
 #>   Loglikelihood: -145143.8
 #>   Layout: equal_angle
-#>   Seconds: sanity 10.0 | ingest 0.0 | bonsai 3.1 | layout 0.0 | total 13.2
+#>   Seconds: sanity 12.1 | ingest 0.0 | bonsai 4.0 | layout 0.0 | total 16.2
 ```
 
 The same PBMCs as 100 metacells: a few seconds instead of the minutes
@@ -424,7 +424,7 @@ ten cores):
 |  | Sanity | Bonsai search | total |
 |----|----|----|----|
 | [`bonsai_sc()`](https://gregorlueg.github.io/bixverse/reference/bonsai_sc.md) | 60 s | 80 s | 140 s |
-| `bonsai_gpu_sc()` | 5 s | 80 s | 65 s |
+| `bonsai_gpu_sc()` | 5 s | 80 s | 85 s |
 
 Both kept the same 2,751 genes. With Sanity on the GPU the tree search
 is the clear cost, and that is where 100k cells will hurt. Metacells are

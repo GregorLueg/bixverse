@@ -8,7 +8,14 @@ from the one the result is written to.
 ## Usage
 
 ``` r
-.manifold_inputs(object, use_knn, embd_to_use, no_embd_to_use, modality)
+.manifold_inputs(
+  object,
+  use_knn,
+  embd_to_use,
+  no_embd_to_use,
+  modality,
+  k = NULL
+)
 ```
 
 ## Arguments
@@ -35,6 +42,11 @@ from the one the result is written to.
 
   String. One of `c("rna", "adt", "wnn")`.
 
+- k:
+
+  Optional integer. Neighbour count the caller asked for. Only feeds the
+  mismatch warning and the returned `k`.
+
 ## Value
 
 A list with
@@ -45,3 +57,7 @@ A list with
 - embd - The input embedding, cells x dimensions.
 
 - cache_modality - The modality the embedding was read from.
+
+- k - The neighbour count to hand to manifoldsR: the cached graph's
+  width when one is used, `k` otherwise. manifoldsR cuts a wider graph
+  down to `k`, so passing the width keeps the whole cached graph.

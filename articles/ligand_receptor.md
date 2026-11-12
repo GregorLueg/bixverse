@@ -52,7 +52,6 @@ mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -80,6 +79,7 @@ sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
 sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, .verbose = FALSE)
 sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 sc_object <- find_clusters_sc(sc_object, res = 0.5)
+#> Running leiden clustering at resolution 0.5.
 ```
 
 For demonstration purposes we use the Leiden cluster IDs directly as
@@ -267,9 +267,9 @@ head(
 Two things to keep in mind here. First, the permutation test asks for
 specificity, not just expression. PPIA-BSG passes the expression gate in
 49 of the 49 cluster pairs, but is significant in only 20 of them.
-Second, the top of that list is dominated by clusters 6 to 8, which hold
-13 cells. Means over a handful of cells are noisy, so treat hits from
-tiny clusters with care.
+Second, the top of that list is dominated by clusters 5 and 6, which
+hold 32, 13 cells. Means over a handful of cells are noisy, so treat
+hits from tiny clusters with care.
 
 ### DEG-based analysis
 

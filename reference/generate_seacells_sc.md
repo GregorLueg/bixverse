@@ -10,7 +10,7 @@ details, please refer to the publication.
 ``` r
 generate_seacells_sc(
   object,
-  seacell_params = params_sc_seacells(),
+  seacell_params,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   cells_to_use = NULL,
@@ -31,7 +31,8 @@ generate_seacells_sc(
 
   List. Output of
   [`params_sc_seacells()`](https://gregorlueg.github.io/bixverse/reference/params_sc_seacells.md).
-  A list with the following items:
+  Required, as `n_sea_cells` has no default. A list with the following
+  items:
 
   - n_sea_cells - Number of SEA cells to detect.
 

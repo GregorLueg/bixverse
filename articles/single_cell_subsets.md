@@ -54,7 +54,6 @@ sc_object <- SingleCells(dir_data = tempdir_pbmc)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = get_cell_ranger_params(pbmc3k_path),
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -129,6 +128,7 @@ sc_object <- find_neighbours_sc(
 )
 
 sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_global")
+#> Running leiden clustering at resolution 1.
 
 sc_object <- umap_sc(sc_object, .verbose = FALSE)
 ```
@@ -318,6 +318,7 @@ t_cells <- find_neighbours_sc(
 )
 
 t_cells <- find_clusters_sc(t_cells, res = 0.5, name = "t_subcluster")
+#> Running leiden clustering at resolution 0.5.
 
 t_cells <- umap_sc(t_cells, .verbose = FALSE)
 
@@ -526,7 +527,7 @@ subcluster_pipeline <- sc_pipeline() %>>%
 subcluster_pipeline
 #> <ScPipeline> 4 steps
 #>   1. hvg         hvg_no = 2000L, hvg_params = <list>, streaming = NULL, .verbose = FALSE
-#>   2. pca         no_pcs = 20L, pca_params = <list>, sparse_svd = TRUE, hvg = NULL, seed = 42L, .verbose = FALSE
+#>   2. pca         no_pcs = 20L, pca_params = <list>, sparse_svd = TRUE, hvg = NULL, seed = 42L, residuals = FALSE, .verbose = FALSE
 #>   3. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = FALSE
 #>   4. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = "subcluster", modality = c("rna", "adt", "wnn"), seed = 42L
 ```
@@ -544,6 +545,7 @@ b_cells <- SingleCellsSubset(
 )
 
 b_cells <- apply_pipeline(subcluster_pipeline, b_cells)
+#> Running leiden clustering at resolution 0.5.
 
 b_cells
 #> Single cell experiment (subset).
@@ -590,6 +592,10 @@ per_group <- apply_pipeline_per_group(
   group_col = "cell_type",
   groups = groups_to_run
 )
+#> Running leiden clustering at resolution 0.5.
+#> Running leiden clustering at resolution 0.5.
+#> Running leiden clustering at resolution 0.5.
+#> Running leiden clustering at resolution 0.5.
 
 summary_dt <- data.table::rbindlist(purrr::imap(per_group, \(x, name) {
   data.table(

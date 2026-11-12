@@ -52,8 +52,7 @@ Returns the observation table with all the data from the h5ad file.
 #### Returns
 
 data.table. The found observations are returned. The pandas index will
-be named `sample_id`. Remaining columns (if found) will be returned as
-factors due to the way the data is stored in h5.
+be named `sample_id`. Categorical columns are returned as factors.
 
 ------------------------------------------------------------------------
 
@@ -67,9 +66,8 @@ Returns the variable table with all the data from the h5ad file.
 
 #### Returns
 
-data.table. The found observations are returned. The pandas index will
-be named `var_id`. Remaining columns (if found) will be returned as
-factors due to the way the data is stored in h5.
+data.table. The found variables are returned. The pandas index will be
+named `var_id`. Categorical columns are returned as factors.
 
 ------------------------------------------------------------------------
 

@@ -17,7 +17,9 @@ A named list with the following elements:
 - k - Integer. Number of neighbours. Defaults to `15L`.
 
 - knn_method - String. Which method to use for the approximate nearest
-  neighbour search. One of
+  neighbour search. `"nndescent"` hands back the graph the NN-Descent
+  built, with no index and no query pass. Rows the descent left short
+  are re-queried exactly. One of
   `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
   Defaults to `"kmknn"`.
 
@@ -35,19 +37,13 @@ A named list with the following elements:
 - delta - Numeric. NNDescent param: early termination criterium for
   NNDescent. Defaults to `0.001`.
 
-- diversify_prob - Numeric. NNDescent param: diversification probability
-  for the NNDescent index. This will diversify the index at the end and
-  identify potentially better edges. Defaults to `0.0`.
+- diversify_prob - Numeric. NNDescent param: diversification
+  probability. Only used where a query runs against an NN-Descent index,
+  not for the graph of a self kNN. Defaults to `0.0`.
 
-- ef_budget - Integer or `NULL`. NNDescent param: optional query budget
-  parameter. Can accelerate querying, but at the cost of Recall.
-  Defaults to `NULL`.
-
-- extract_knn - Boolean. NNDescent param: hand back the graph the
-  descent already built instead of beam searching it. Skips the query
-  pass entirely, so it is much faster, at the cost of some recall. Rows
-  the descent never filled come back padded with duplicate edges.
-  Ignored by every other method. Defaults to `FALSE`.
+- ef_budget - Integer or `NULL`. NNDescent param: optional query budget.
+  Only used where a query runs against an NN-Descent index, not for the
+  graph of a self kNN. Defaults to `NULL`.
 
 - m - Integer. HNSW param: number of connections between layers for
   HNSW. Defaults to `16L`.

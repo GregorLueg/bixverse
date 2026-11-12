@@ -1,4 +1,4 @@
-# Leiden or Louvain community detection on an igraph
+# Leiden or Louvain community detection
 
 Modularity-based Leiden (Traag et al.) or Louvain (Blondel et al.)
 community detection, run in Rust. Mirrors
@@ -25,8 +25,11 @@ leiden_clustering(
 
 - graph:
 
-  igraph. Undirected. If it has an edge attribute `weight`, it is used,
-  otherwise all edges get weight 1.
+  `SingleCellConnectivity` or undirected igraph. For an igraph, the edge
+  attribute `weight` is used if present, otherwise all edges get
+  weight 1. A `SingleCellConnectivity` is clustered in Rust directly; an
+  igraph is flattened into an edge list first. Both give identical
+  labels for the same graph.
 
 - resolution:
 

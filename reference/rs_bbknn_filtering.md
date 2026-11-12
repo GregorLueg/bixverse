@@ -1,12 +1,17 @@
-# Reduce BBKNN results to Top X neighbours
+# Reduce BBKNN results to the k nearest neighbours
 
-**\[experimental\]** Keeps the first `no_neighbours_to_keep` stored
-entries of each CSR row.
+**\[experimental\]** Keeps the batch-balanced `no_neighbours_to_keep`
+nearest neighbours of each row of the BBKNN distance CSR: the nearest
+`ceil(no_neighbours_to_keep / n_batches)` per batch, with slots a batch
+cannot fill going to the nearest remaining neighbours. Rows come back
+sorted by distance (ties by index). Rows with fewer stored entries are
+padded by repeating their last neighbour; an empty row points at the
+cell itself at distance zero.
 
 ## Usage
 
 ``` r
-rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
+rs_bbknn_filtering(indptr, indices, data, batch_labels, no_neighbours_to_keep)
 ```
 
 ## Arguments
@@ -23,12 +28,16 @@ rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 
   Numeric vector. The distances to the nearest neighbours.
 
+- batch_labels:
+
+  Integer vector. The batch of each cell, as passed to
+  [`rs_bbknn()`](https://gregorlueg.github.io/bixverse/reference/rs_bbknn.md).
+
 - no_neighbours_to_keep:
 
   Integer. Number of nearest neighbours to keep.
 
 ## Value
 
-A list with `indices` and `dist`, both numeric (double) matrices of
-shape (n_cells, no_neighbours_to_keep). Positions without neighbours are
-`NaN` in both.
+A list with `indices` (integer, 0-indexed) and `dist` (numeric) matrices
+of shape (n_cells, no_neighbours_to_keep), nearest first.

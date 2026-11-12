@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Sub-clustering and per-group pipelines</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -169,7 +169,6 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_mtx.html">load_mtx</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  sc_mtx_io_param <span class="op">=</span> <span class="fu"><a href="../reference/get_cell_ranger_params.html">get_cell_ranger_params</a></span><span class="op">(</span><span class="va">pbmc3k_path</span><span class="op">)</span>,</span>
-<span>  mtx_streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -239,6 +238,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">1</span>, name <span class="op">=</span> <span class="st">"leiden_global"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -403,6 +403,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">t_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">t_cells</span>, res <span class="op">=</span> <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"t_subcluster"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
 <span></span>
 <span><span class="va">t_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">t_cells</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
@@ -575,7 +576,7 @@
 <span><span class="va">subcluster_pipeline</span></span>
 <span><span class="co">#&gt; &lt;ScPipeline&gt; 4 steps</span></span>
 <span><span class="co">#&gt;   1. hvg         hvg_no = 2000L, hvg_params = &lt;list&gt;, streaming = NULL, .verbose = FALSE</span></span>
-<span><span class="co">#&gt;   2. pca         no_pcs = 20L, pca_params = &lt;list&gt;, sparse_svd = TRUE, hvg = NULL, seed = 42L, .verbose = FALSE</span></span>
+<span><span class="co">#&gt;   2. pca         no_pcs = 20L, pca_params = &lt;list&gt;, sparse_svd = TRUE, hvg = NULL, seed = 42L, residuals = FALSE, .verbose = FALSE</span></span>
 <span><span class="co">#&gt;   3. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = &lt;list&gt;, seed = 42L, .verbose = FALSE</span></span>
 <span><span class="co">#&gt;   4. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = "subcluster", modality = c("rna", "adt", "wnn"), seed = 42L</span></span></code></pre></div>
 </div>
@@ -589,6 +590,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">b_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/apply_pipeline.html">apply_pipeline</a></span><span class="op">(</span><span class="va">subcluster_pipeline</span>, <span class="va">b_cells</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
 <span></span>
 <span><span class="va">b_cells</span></span>
 <span><span class="co">#&gt; Single cell experiment (subset).</span></span>
@@ -625,6 +627,10 @@
 <span>  group_col <span class="op">=</span> <span class="st">"cell_type"</span>,</span>
 <span>  groups <span class="op">=</span> <span class="va">groups_to_run</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
 <span></span>
 <span><span class="va">summary_dt</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/rbindlist.html" class="external-link">rbindlist</a></span><span class="op">(</span><span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/imap.html" class="external-link">imap</a></span><span class="op">(</span><span class="va">per_group</span>, \<span class="op">(</span><span class="va">x</span>, <span class="va">name</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
@@ -742,7 +748,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -751,8 +758,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -766,6 +834,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

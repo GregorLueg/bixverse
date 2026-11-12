@@ -10,7 +10,7 @@ as an `ScStep`.
 step_clusters_sc(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
-  name = "leiden_clustering",
+  name = NULL,
   modality = c("rna", "adt", "wnn"),
   seed = 42L,
   ...
@@ -30,13 +30,15 @@ step_clusters_sc(
 
 - name:
 
-  String. The name to add to the obs table in the DuckDB.
+  Optional string. The name of the obs column to add. `NULL` gives
+  `"leiden_clustering"` or `"louvain_clustering"`, following
+  `cluster_algorithm`.
 
 - modality:
 
-  String. On which modality to run the UMAP. One of
-  `c("rna", "adt", "wnn")`. The two latter options are only available
-  for multi-modal versions with the added data.
+  String. On which modality to cluster. One of `c("rna", "adt", "wnn")`.
+  The two latter options are only available for multi-modal versions
+  with the added data.
 
 - seed:
 
@@ -59,5 +61,5 @@ An `ScStep`.
 step_neighbours_sc() %>>% step_clusters_sc(res = 0.5)
 #> <ScPipeline> 2 steps
 #>   1. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
-#>   2. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = "leiden_clustering", modality = c("rna", "adt", "wnn"), seed = 42L
+#>   2. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = NULL, modality = c("rna", "adt", "wnn"), seed = 42L
 ```

@@ -21,7 +21,6 @@ rs_sc_pca_residuals(
   cell_indices,
   gene_indices,
   seed,
-  return_scaled,
   verbose
 )
 ```
@@ -65,10 +64,6 @@ rs_sc_pca_residuals(
 
   Integer. Random seed for the randomised SVD.
 
-- return_scaled:
-
-  Boolean. Shall the scaled data be returned.
-
 - verbose:
 
   Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
@@ -83,6 +78,3 @@ A list with the following items
 - loadings - The loadings of the features for the PCA.
 
 - singular_values - The singular values for the PCA.
-
-- scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
-  `NULL`.

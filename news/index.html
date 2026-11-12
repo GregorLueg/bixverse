@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,6 +93,164 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.0" id="bixverse-090">bixverse 0.9.0<a class="anchor" aria-label="anchor" href="#bixverse-090"></a></h2>
+<p>A breaking release. Porting the single cell suite to Python shook out a long list of bugs and silent fallbacks, and most of the logic that lived in the R bindings now sits in <code>bixverse-rs</code>, shared with the Python front end. Expect some results to move against 0.8.3, see Changes.</p>
+<div class="section level3">
+<h3 id="features-0-9-0">Features<a class="anchor" aria-label="anchor" href="#features-0-9-0"></a></h3>
+<ul><li>
+<code>bixverse-r</code> 0.10.1 under the hood.</li>
+<li>Harmony v2 is the default. <code><a href="../reference/harmony_sc.html">harmony_sc()</a></code> and <code><a href="../reference/step_harmony_sc.html">step_harmony_sc()</a></code> run v2 and store <code>"harmony"</code>. v1 lives on as <code><a href="../reference/harmony_v1_sc.html">harmony_v1_sc()</a></code> and <code><a href="../reference/step_harmony_v1_sc.html">step_harmony_v1_sc()</a></code>, stored as <code>"harmony_v1"</code>. <code><a href="../reference/build_symphony_ref.html">build_symphony_ref()</a></code> defaults to v2 too.</li>
+<li>Needs <code>manifoldsR</code> 0.6.0. <code><a href="../reference/umap_sc.html">umap_sc()</a></code> and <code><a href="../reference/densmap_sc.html">densmap_sc()</a></code> take <code>optimiser = "sgd_parallel"</code> via <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_umap.html" class="external-link">manifoldsR::params_umap()</a></code>, which isn’t reproducible with more than one thread.</li>
+<li>
+<code>knn_method = "nndescent"</code> is graph-only now: it hands back the graph the descent built, with no index and no query pass. Rows the descent left short are re-queried exactly. It replaces <code>extract_knn</code>.</li>
+<li>The cell filter is a set now. <code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> stores unique, ascending indices and errors on cells it can’t find, so every result follows the store’s cell order. DuckDB <code>obs.to_keep</code> is the source of truth: if it disagrees with the memory file, <code><a href="../reference/load_existing.html">load_existing()</a></code> warns and takes the DuckDB one.</li>
+<li>
+<code><a href="../reference/aucell_sc.html">aucell_sc()</a></code>, <code><a href="../reference/vision_sc.html">vision_sc()</a></code>, <code><a href="../reference/vision_w_autocor_sc.html">vision_w_autocor_sc()</a></code>, <code><a href="../reference/hotspot_autocor_sc.html">hotspot_autocor_sc()</a></code> and <code><a href="../reference/hotspot_gene_cor_sc.html">hotspot_gene_cor_sc()</a></code> work on <code>SingleCellsSubset</code>.</li>
+<li>
+<code><a href="../reference/get_cell_names.html">get_cell_names()</a></code> and <code><a href="../reference/get_gene_names.html">get_gene_names()</a></code> work on <code>MetaCells</code>, which gets <code><a href="../reference/run_gene_trends_sc.html">run_gene_trends_sc()</a></code> and <code><a href="../reference/hotspot_gene_cor_sc.html">hotspot_gene_cor_sc()</a></code> going there.</li>
+<li>Pipelines: <code><a href="../reference/step_metacells_sc.html">step_metacells_sc()</a></code> and <code><a href="../reference/meta_cells_per_group.html">meta_cells_per_group()</a></code> take <code>method = "metacells2"</code>, <code><a href="../reference/step_pca_sc.html">step_pca_sc()</a></code> takes <code>residuals</code>, and <code>SingleCellsMultiModal</code> objects are accepted. A misspelt step argument errors when the step is built, not after the expensive steps ran. A step returning <code>NULL</code> stops the pipeline.</li>
+<li>
+<code><a href="../reference/find_clusters_sc.html">find_clusters_sc()</a></code> has a <code>.verbose</code> argument. Before, <code>.verbose = FALSE</code> got forwarded to <code><a href="../reference/leiden_clustering.html">leiden_clustering()</a></code> and errored.</li>
+<li>
+<code><a href="../reference/find_hvg_sc.html">find_hvg_sc()</a></code> on a <code>SingleCellsSubset</code> keeps the HVG statistics in the subset’s var table. The parent’s DuckDB isn’t touched.</li>
+<li>The neighbour graph now stays in Rust. <code><a href="../reference/get_connectivities.html">get_connectivities()</a></code> returns a <code>SingleCellConnectivity</code>, an S3 list holding a pointer to the Rust graph plus its size and build method. It prints, converts with <code><a href="../reference/as_igraph.html">as_igraph()</a></code> and <code><a href="../reference/as_sc_connectivity.html">as_sc_connectivity()</a></code>, and serialises with <code><a href="../reference/to_bytes.html">to_bytes()</a></code> / <code><a href="../reference/from_bytes.html">from_bytes()</a></code>. Clustering, ScType smoothing and the h5ad export read it directly, so the graph is never flattened into R vectors on the way.</li>
+<li>
+<code><a href="../reference/set_connectivities.html">set_connectivities()</a></code> still takes an igraph and converts it on entry. <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code> / <code><a href="../reference/load_existing.html">load_existing()</a></code> store the graph as bytes, and caches saved with an igraph are converted on load.</li>
+<li>BBKNN and WNN produce a <code>SingleCellConnectivity</code> too. Louvain runs through the Leiden engine with the refinement switched off.</li>
+<li>
+<code><a href="../reference/load_mtx.html">load_mtx()</a></code> reads <code>.mtx.gz</code> directly, no decompressed copy in R’s temp directory, and <code><a href="../reference/prescan_mtx_dirs.html">prescan_mtx_dirs()</a></code> passes gzipped matrices straight through. <code>real</code> files with integral values and <code>pattern</code> files load (every entry a count of 1). Anything else (fractional or negative values, <code>array</code>, <code>complex</code>, non-<code>general</code> symmetry) errors with a clear message. Before, <code>real</code> values were truncated and <code>pattern</code> files loaded empty.</li>
+<li>More memory-frugal and faster sparse SVDs for single cell.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-0-9-0">Performance<a class="anchor" aria-label="anchor" href="#performance-0-9-0"></a></h3>
+<ul><li>h5ad and 10x h5 counts: 5x faster on a 4.7M cell Tahoe plate.</li>
+<li>obs / var from h5ad and 10x h5: read in Rust and handed to DuckDB as Parquet, 5x faster on the same plate. Categoricals still land as ENUMs with the same levels.</li>
+<li>obs / var from plain text (<code><a href="../reference/load_mtx.html">load_mtx()</a></code> and friends): ~40x faster on the Parse PBMC 1M metadata. The cell filter is a joined table instead of one SQL parameter per cell, and the row order is now guaranteed to follow the file.</li>
+<li>MTX parsing: one text pass, 2x faster on Parse PBMC 1M.</li>
+<li>CSR to CSC conversion: 2x faster, and <code>csc_mem_gb</code> fits 25% more non-zeros per phase.</li>
+<li>
+<code><a href="../reference/find_hvg_sc.html">find_hvg_sc()</a></code> with VST: 2x faster.</li>
+<li>Neighbour graph build plus Leiden: 2x faster on 1M cells, identical labels.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changes-0-9-0">Changes<a class="anchor" aria-label="anchor" href="#changes-0-9-0"></a></h3>
+<ul><li>
+<code>harmony_v2_sc()</code> and <code>step_harmony_v2_sc()</code> are gone, use <code><a href="../reference/harmony_sc.html">harmony_sc()</a></code> and <code><a href="../reference/step_harmony_sc.html">step_harmony_sc()</a></code>. Code reading the <code>"harmony_v2"</code> embedding needs <code>"harmony"</code>.</li>
+<li>
+<code><a href="../reference/phate_sc.html">phate_sc()</a></code> defaults to <code>use_knn = FALSE</code>, so manifoldsR runs its own <code>6 * k + 5</code> wide neighbour search. The cached kNN is too narrow for the PHATE kernel.</li>
+<li>
+<code><a href="../reference/get_connectivities.html">get_connectivities()</a></code> no longer returns an igraph. Code calling igraph functions on it needs <code>as_igraph(get_connectivities(sc))</code> first.</li>
+<li>The BBKNN graph’s method is now <code>"bbknn"</code>.</li>
+<li>
+<code>mtx_streaming</code> in <code><a href="../reference/load_mtx.html">load_mtx()</a></code> is deprecated and ignored. The file is always read in one pass with its entries bucketed on disk next to the store.</li>
+<li>
+<code><a href="../reference/prescan_mtx_dirs.html">prescan_mtx_dirs()</a></code> no longer returns <code>temp_files</code>, there are none to clean up.</li>
+<li>
+<code>extract_knn</code> is gone from every kNN parameter block, <code>knn_method = "nndescent"</code> always hands back the graph now. <code>ivf</code> is gone from <code>index_type</code> in <code><a href="../reference/params_sc_miloR.html">params_sc_miloR()</a></code>: Rust has no IVF index there and silently ran Annoy.</li>
+<li>
+<code>randomised</code> is gone from <code><a href="../reference/params_sc_pca.html">params_sc_pca()</a></code>, use <code>svd_solver</code>. Check any positional calls, the arguments after it moved up one.</li>
+<li>
+<code>get_model_fit()</code> is gone, use <code><a href="../reference/get_differential_abundance_res.html">get_differential_abundance_res()</a></code>.</li>
+<li>
+<code><a href="../reference/find_clusters_sc.html">find_clusters_sc()</a></code> and <code><a href="../reference/step_clusters_sc.html">step_clusters_sc()</a></code> default to <code>name = NULL</code>, so Louvain now writes <code>louvain_clustering</code> rather than <code>leiden_clustering</code>.</li>
+<li>
+<code><a href="../reference/generate_seacells_sc.html">generate_seacells_sc()</a></code> has no default for <code>seacell_params</code>. The old default always errored, as <code>n_sea_cells</code> has no default.</li>
+<li>
+<code><a href="../reference/cellsweep_sc.html">cellsweep_sc()</a></code> defaults to <code>empty_params = params_sc_empty_droplets()</code>.</li>
+<li>
+<code><a href="../reference/params_sc_empty_droplets.html">params_sc_empty_droplets()</a></code> defaults to <code>is_empty_column = "is_empty"</code>, so the defaults now pass their own checks.</li>
+<li>The Hotspot result field <code>module_memership</code> is now <code>module_membership</code>. Use <code><a href="../reference/get_hotspot_membership.html">get_hotspot_membership()</a></code> rather than the field. Modules on a Hotspot object saved with the old spelling need regenerating.</li>
+<li>
+<code><a href="../reference/get_hvg.html">get_hvg()</a></code> on <code>MetaCells</code> returns 0-based indices like every other class. It was 1-based, so add 1 wherever you index in R with it.</li>
+<li>The Hotspot autocorrelation column <code>gaerys_c</code> is now <code>gearys_c</code>.</li>
+<li>
+<code><a href="../reference/rs_sc_pca_residuals.html">rs_sc_pca_residuals()</a></code> lost <code>return_scaled</code>. <code><a href="../reference/rs_bbknn_filtering.html">rs_bbknn_filtering()</a></code> returns integer indices, pads short rows instead of filling them with <code>NaN</code> and takes <code>batch_labels</code>. <code><a href="../reference/rs_bbknn.html">rs_bbknn()</a></code> returns the connectivities as a pointer to the Rust graph, not a CSR list.</li>
+</ul><p>Results that move against 0.8.3:</p>
+<ul><li><p><code><a href="../reference/harmony_sc.html">harmony_sc()</a></code>, <code><a href="../reference/step_harmony_sc.html">step_harmony_sc()</a></code> and <code><a href="../reference/build_symphony_ref.html">build_symphony_ref()</a></code> run Harmony v2. <code><a href="../reference/harmony_v1_sc.html">harmony_v1_sc()</a></code> gets you the old numbers.</p></li>
+<li><p><code><a href="../reference/phate_sc.html">phate_sc()</a></code> with default arguments builds its own wider graph, so the embedding changes.</p></li>
+<li><p><code>params_scdblfinder(gbm_n_trees = )</code> now does something. Rust read the GBM rounds from <code>n_trees</code>, the Annoy key, so the effective default goes from 50 rounds to 200.</p></li>
+<li><p>Z-scores use the sample SD on every path. <code>scale = TRUE</code> on RNA shifts by <code>sqrt(n / (n - 1)) - 1</code>, 5e-5 at 10,000 cells.</p></li>
+<li><p>BBKNN’s stored kNN keeps the nearest neighbours balanced per batch rather than the k lowest cell indices, so kBET and LISI computed on it change. The default <code>trim</code> is now <code>10 * neighbours_within_batch * n_batches</code>, as in the reference implementation.</p></li>
+<li><p>Sparse Lanczos PCA has a sign convention now, the largest loading per component is positive. Signs were random between runs before, so stored factors can flip against 0.8.3. Distances, kNN and clusters don’t change.</p></li>
+<li><p><code><a href="../reference/calculate_pca_adt_sc.html">calculate_pca_adt_sc()</a></code> follows the same sign convention, on both solvers. The randomised path also stored every column of the loadings, it now stores <code>no_pcs</code> like the exact one.</p></li>
+<li><p>Group labels sort by code point (<code>method = "radix"</code>), not by locale: batch codes, gene universes, cluster and sample levels. Mixed-case labels can change order.</p></li>
+<li><p><code>knn_method = "nndescent"</code> no longer beam searches an index, so recall can drop against 0.8.3.</p></li>
+<li><p><code><a href="../reference/transfer_labels_symphony.html">transfer_labels_symphony()</a></code> and <code><a href="../reference/cellsweep_sc.html">cellsweep_sc()</a></code> sort label levels by code point too.</p></li>
+<li><p><code>lanczos_max_restarts</code> in <code><a href="../reference/params_sc_palantir.html">params_sc_palantir()</a></code> went from 16 to 64.</p></li>
+<li><p><code>params_sc_wnn(sigma_method = "sigma_idx")</code> is honoured. It silently fell back to the SNN bandwidth.</p></li>
+<li><p><code>params_dialogue_pmd(seed = )</code> is honoured. Every run used 1234.</p></li>
+<li><p>Symphony <code>knn_majority_vote</code> ties go to the lowest label, as documented.</p></li>
+<li><p><code><a href="../reference/generate_knn_sc.html">generate_knn_sc()</a></code> applies <code>no_embd_to_use</code>, and the VISION null seeds its k-means with <code>random_seed</code>.</p></li>
+<li><p><code><a href="../reference/calculate_pca_adt_sc.html">calculate_pca_adt_sc()</a></code> honours <code>features</code> and stores singular values on both solver paths. The full SVD path stored component SDs.</p></li>
+</ul><p>Silent behaviour that’s now loud:</p>
+<ul><li>NA batch or group labels error instead of reaching Rust as <code>NA_integer_</code>: batch correction and its metrics, Symphony, MELD, <code><a href="../reference/fit_residuals_sc.html">fit_residuals_sc()</a></code>, PAGA and DIALOGUE samples.</li>
+<li>Unknown values error rather than falling back: <code>rcc_method</code>, the DSB <code>scale_factor</code>, Milo’s <code>index_type</code> and refinement strategy, pseudobulk <code>assay</code>, and <code>directions</code> in <code><a href="../reference/run_cell_qc.html">run_cell_qc()</a></code>.</li>
+<li>
+<code><a href="../reference/run_cell_qc.html">run_cell_qc()</a></code> errors when <code>cells_to_keep</code> doesn’t have one entry per cell. <code><a href="../reference/calculate_pca_adt_sc.html">calculate_pca_adt_sc()</a></code> errors when kept cells are missing from the ADT counts.</li>
+<li>
+<code><a href="../reference/map_symphony_query.html">map_symphony_query()</a></code> warns on missing reference HVGs, verbose or not, and errors if all of them are missing.</li>
+<li>
+<code><a href="../reference/umap_sc.html">umap_sc()</a></code>, <code><a href="../reference/densmap_sc.html">densmap_sc()</a></code> and <code><a href="../reference/forceatlas2_sc.html">forceatlas2_sc()</a></code> warn when <code>k</code> disagrees with the cached kNN graph, whose width wins. <code><a href="../reference/calculate_pca_sc.html">calculate_pca_sc()</a></code> on <code>MetaCells</code> warns that <code>sparse_svd</code> is ignored. <code><a href="../reference/generate_seacells_sc.html">generate_seacells_sc()</a></code> warns when <code>cells_to_use</code> discards the cached kNN.</li>
+<li>
+<code><a href="../reference/fast_mnn_sc.html">fast_mnn_sc()</a></code>, <code><a href="../reference/harmony_sc.html">harmony_sc()</a></code> and <code><a href="../reference/harmony_v1_sc.html">harmony_v1_sc()</a></code> warn and return the object on a single batch, like the others. <code><a href="../reference/bbknn_sc.html">bbknn_sc()</a></code> returns the object rather than <code>NULL</code> on a missing embedding. <code><a href="../reference/calculate_graph_connectivity_sc.html">calculate_graph_connectivity_sc()</a></code> warns and returns <code>NULL</code> on a single label.</li>
+<li>
+<code><a href="../reference/generate_wnn_graph_sc.html">generate_wnn_graph_sc()</a></code> errors on a stale embedding, like <code><a href="../reference/find_neighbours_sc.html">find_neighbours_sc()</a></code>. <code><a href="../reference/generate_seacells_sc.html">generate_seacells_sc()</a></code> warns when there’s no cached kNN to use with <code>regenerate_knn = FALSE</code>.</li>
+<li>A pipeline step missing a required argument errors when it’s built, e.g. <code>step_metacells_sc("seacells")</code> without <code>seacell_params</code>.</li>
+<li>
+<code><a href="../reference/rs_mad_outlier.html">rs_mad_outlier()</a></code> and <code><a href="../reference/rs_fast_ica.html">rs_fast_ica()</a></code> error on an unknown <code>direction</code> or <code>ica_type</code>.</li>
+<li>
+<code>sigma</code> in the Harmony parameters and <code><a href="../reference/params_symphony_map.html">params_symphony_map()</a></code> must be above
+<ol start="0" style="list-style-type: decimal"><li>
+<code><a href="../reference/find_threshold_otsu.html">find_threshold_otsu()</a></code> now actually checks <code>length(x) &gt; bins</code>.</li>
+</ol></li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-9-0">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-9-0"></a></h3>
+<ul><li>
+<code><a href="../reference/hotspot_gene_cor_sc.html">hotspot_gene_cor_sc()</a></code> and <code><a href="../reference/hotspot_autocor_sc.html">hotspot_autocor_sc()</a></code>: unknown genes shifted the matrix labels off the values.</li>
+<li>
+<code><a href="../reference/extract_gene_expression.html">extract_gene_expression()</a></code> and friends join obs by cell id, not by position. Extractors also respect the cell filter on the ADT paths.</li>
+<li>
+<code><a href="../reference/extract_feature_plot_data.html">extract_feature_plot_data()</a></code> and <code><a href="../reference/extract_feature_pair.html">extract_feature_pair()</a></code> return kept order, not sorted by <code>cell_id</code>.</li>
+<li>
+<code>scale = TRUE</code> on the in-memory paths (ADT, MAGIC, MetaCells) errored on a single cell. It now leaves the value unscaled.</li>
+<li>
+<code>get_vars_adt_table(indices = )</code> filtered on a column <code>var_adt</code> doesn’t have, so any <code>indices</code> errored.</li>
+<li>
+<code><a href="../reference/get_sc_counts.html">get_sc_counts()</a></code> on a subset without cell indices read the whole parent store.</li>
+<li>
+<code>merge_subset_obs(prefix_values = TRUE)</code> turned <code>NA</code> into <code>"&lt;group&gt;_NA"</code>.</li>
+<li>
+<code><a href="../reference/params_sc_miloR.html">params_sc_miloR()</a></code> dropped most <code>knn = list(...)</code> overrides. It carries the full kNN block now and errors on unknown names.</li>
+<li>
+<code><a href="../reference/cellsweep_sc.html">cellsweep_sc()</a></code> output obs carried the raw <code>lib_size</code> and <code>nnz</code>. They now come from the denoised counts.</li>
+<li>scDblFinder feature rownames picked the wrong cells once cells were filtered.</li>
+<li>
+<code><a href="../reference/prioritise_interactions.html">prioritise_interactions()</a></code> put undefined interactions at the top. They now get an <code>NA</code> rank and sort last.</li>
+<li>
+<code><a href="../reference/prepare_cell_markers.html">prepare_cell_markers()</a></code> and <code><a href="../reference/add_nhoods_info.html">add_nhoods_info()</a></code> no longer modify the caller’s table by reference.</li>
+<li>
+<code><a href="../reference/apply_pipeline_per_group.html">apply_pipeline_per_group()</a></code> errored on numeric group columns.</li>
+<li>
+<code><a href="../reference/new_adt_counts_dsb.html">new_adt_counts_dsb()</a></code> no longer demands <code>isotype_names</code> with <code>denoise_counts = FALSE</code>, where isotypes are unused.</li>
+<li>
+<code><a href="../reference/forceatlas2_sc.html">forceatlas2_sc()</a></code> only checks <code>k</code> for <code>graph = "knn"</code>.</li>
+<li>Grouped doublet detection dropped <code>cells_to_use</code> entries that weren’t kept; plain mode kept them. Both keep them now.</li>
+<li>
+<code><a href="../reference/compute_expression_info_sc.html">compute_expression_info_sc()</a></code> de-duplicates genes every time, not only when some are missing.</li>
+<li>
+<code><a href="../reference/module_scores_sc.html">module_scores_sc()</a></code> and <code><a href="../reference/scenic_gene_filter_sc.html">scenic_gene_filter_sc()</a></code> on <code>MetaCells</code> accept the same <code>.verbose</code> values as everything else.</li>
+<li>
+<code><a href="../reference/meta_cells_per_group.html">meta_cells_per_group()</a></code> rejects a pipeline ending on <code><a href="../reference/step_metacells_sc.html">step_metacells_sc()</a></code> up front, not after the first group ran.</li>
+<li>Harmony’s automatic <code>k</code> could hit 0 below 15 cells.</li>
+<li>The h5ad export put <code>varm/PCs</code> on the current HVGs, which was wrong once HVGs were re-run after the PCA. Loadings now land on the genes the PCA ran on, and only get written alongside <code>X_pca</code>.</li>
+<li>
+<code><a href="../reference/meld_sc.html">meld_sc()</a></code>’s warning claimed it would regenerate the kNN while returning <code>NULL</code>. It tells you to run <code><a href="../reference/find_neighbours_sc.html">find_neighbours_sc()</a></code> now.</li>
+<li>MetaCells obs <code>no_originating_cells</code> is an integer.</li>
+<li>Stale docs and messages: the scDblFinder and Boost centroid message (<code>floor(4 * sqrt(N))</code>), the Scrublet kNN default (<code>kmknn</code>), <code>n_centroids</code> in <code><a href="../reference/params_sc_fast_cluster.html">params_sc_fast_cluster()</a></code> and dead <code><a href="../reference/meld_sc.html">meld_sc()</a></code> parameters.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.3" id="bixverse-083">bixverse 0.8.3<a class="anchor" aria-label="anchor" href="#bixverse-083"></a></h2>
 <ul><li>

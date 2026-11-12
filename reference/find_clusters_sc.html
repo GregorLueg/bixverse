@@ -13,7 +13,7 @@ largest cluster."><meta property="og:image" content="https://gregorlueg.github.i
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,9 +113,10 @@ largest cluster.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  cluster_algorithm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leiden"</span>, <span class="st">"louvain"</span><span class="op">)</span>,</span>
 <span>  res <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  name <span class="op">=</span> <span class="st">"leiden_clustering"</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"wnn"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -138,17 +139,23 @@ largest cluster.</p>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>String. The name to add to the obs table in the DuckDB.</p></dd>
+<dd><p>Optional string. The name of the obs column to add. <code>NULL</code>
+gives <code>"leiden_clustering"</code> or <code>"louvain_clustering"</code>, following
+<code>cluster_algorithm</code>.</p></dd>
 
 
 <dt id="arg-modality">modality<a class="anchor" aria-label="anchor" href="#arg-modality"></a></dt>
-<dd><p>String. On which modality to run the UMAP. One of
+<dd><p>String. On which modality to cluster. One of
 <code>c("rna", "adt", "wnn")</code>. The two latter options are only available for
 multi-modal versions with the added data.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer. For reproducibility.</p></dd>
+
+
+<dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
+<dd><p>Boolean or integer. Controls verbosity.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -166,6 +173,7 @@ multi-modal versions with the added data.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Leiden on the cached neighbour graph</span></span></span>
 <span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu">find_clusters_sc</span><span class="op">(</span><span class="va">sc</span>, res <span class="op">=</span> <span class="fl">1.0</span>, name <span class="op">=</span> <span class="st">"clusters"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Running leiden clustering at resolution 1.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">$</span><span class="va">clusters</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0   1   2 </span>

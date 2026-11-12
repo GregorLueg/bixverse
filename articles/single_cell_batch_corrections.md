@@ -14,7 +14,7 @@ different trade-offs:
 
 - **fastMNN** ([Haghverdi, et al.,
   2018](https://doi.org/10.1038/nbt.4091)) identifies mutual nearest
-  neighbours across batches – pairs of cells from different batches that
+  neighbours across batches: pairs of cells from different batches that
   are each other’s closest match. Correction vectors are computed from
   these pairs and applied to align the embeddings. It is particularly
   effective when cell type composition differs across batches.
@@ -24,12 +24,12 @@ different trade-offs:
   embeddings using iterative soft clustering with diversity penalties.
   It assigns cells to clusters, estimates batch effects per cluster via
   ridge regression, and corrects the embedding. It tends to be fast and
-  works well across a range of scenarios. Additionally, a version 2 has
-  been released, see [Patikas, et al.,
-  2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1)
-  with improvements that increase scalability to larger data sets and
-  modifications to the objective functions to not overcorrect across
-  batches when different cell types are there.
+  works well across a range of scenarios. `bixverse` defaults to version
+  2 ([Patikas, et al.,
+  2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1)),
+  which scales better to large data sets and changes the objective so it
+  doesn’t overcorrect when the batches hold different cell types. The
+  original is still there for reproducing old results.
 
 - **BBKNN** ([Polanski, et al.,
   2020](https://doi.org/10.1093/bioinformatics/btz625)) takes a
@@ -234,6 +234,7 @@ Code
 ``` r
 
 sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_uncorrected")
+#> Running leiden clustering at resolution 1.
 
 cell_markers <- c(
   CD3D = "T cells",
@@ -306,7 +307,7 @@ sc_object <- tsne_sc(object = sc_object, approx_type = "bh_qd")
 
 tSNE plot (tSNE’s usually look prettier… It’s anyway not a good way to
 assess batch effect correction, so at least let’s make it pleasant on
-the eye).
+the eye. We use the quick-and-dirty version which is fast).
 
 ``` r
 
@@ -433,7 +434,6 @@ sc_object <- tsne_sc(
   approx_type = "bh_qd"
 )
 #> Running t-SNE.
-#> Using provided kNN graph.
 ```
 
 ``` r
@@ -459,88 +459,14 @@ Also, visually the batches get mixed now.
 
 Harmony operates on the PCA embedding directly. Leave `k` as `NULL` and
 the number of clusters is set to one per 30 cells, capped at 100. Both
-versions are supported and share one numerical core in Rust. They differ
-in the diversity penalty, the ridge regression and how the ridge penalty
-gets set. The intercept is never penalised in either. Let’s start with
-the original:
+versions are supported and share one numerical core in Rust.
+[`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
+runs v2 and stores `"harmony"`,
+[`harmony_v1_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v1_sc.md)
+runs the original and stores `"harmony_v1"`. The intercept is never
+penalised in either.
 
-#### Version 1
-
-``` r
-
-sc_object <- harmony_sc(
-  object = sc_object,
-  batch_column = "exp_id",
-  harmony_params = params_sc_harmony()
-)
-#>  Auto-determined number of Harmony clusters: 100
-
-sc_object <- find_neighbours_sc(
-  object = sc_object,
-  embd_to_use = "harmony",
-  neighbours_params = params_sc_neighbours()
-)
-#> 
-#> Generating the snn graph.
-```
-
-Let’s calculate the batch correction-related scores
-
-``` r
-
-metrics_dt <- rbind(
-  metrics_dt,
-  calculate_integration_metrics_sc(
-    sc_object,
-    batch_column = "exp_id",
-    cell_type_column = "cell_type",
-    embd_to_use = "harmony",
-    .verbose = FALSE
-  ) %>%
-    .[, method := "Harmony"]
-)
-
-metrics_dt[method == "Harmony"]
-#>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
-#>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8827347 0.9754045 0.6423357      0.9817465     1     0.6671693
-#>    graph_connectivity  method
-#>                 <num>  <char>
-#> 1:          0.9499659 Harmony
-```
-
-Also here, we observe improvements across the board.
-
-``` r
-
-sc_object <- tsne_sc(
-  object = sc_object,
-  slot_name = "tsne_harm",
-  use_knn = TRUE,
-  approx_type = "bh_qd"
-)
-#> Running t-SNE.
-#> Using provided kNN graph.
-```
-
-``` r
-
-embedding_plot_sc(
-  sc_object,
-  embedding = "tsne_harm",
-  colour_by = "exp_id",
-  label_by = "exp_id",
-  discrete = TRUE
-) +
-  labs(
-    title = "Harmony batch correction",
-    colour = "Batch:"
-  )
-```
-
-![](single_cell_batch_corrections_files/figure-html/harmony%20plot-1.png)
-
-#### Version 2
+#### Version 2 (default)
 
 [Patikas, et al.,
 2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1)
@@ -561,12 +487,11 @@ changed four things compared to v1. The last three have knobs in
 
 The paper’s arrowhead matrix inversion for a single batch covariate is
 used by both versions here, so v1 gets that speed-up too. v2 also runs
-only 4 k-means iterations per Harmony round versus 20 in v1. Unless you
-need to reproduce an old v1 result, go with v2.
+only 4 k-means iterations per Harmony round versus 20 in v1.
 
 ``` r
 
-sc_object <- harmony_v2_sc(
+sc_object <- harmony_sc(
   object = sc_object,
   batch_column = "exp_id",
   harmony_params = params_sc_harmony_v2()
@@ -575,11 +500,15 @@ sc_object <- harmony_v2_sc(
 
 sc_object <- find_neighbours_sc(
   object = sc_object,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   neighbours_params = params_sc_neighbours()
 )
 #> 
 #> Generating the snn graph.
+
+# for the cluster comparison in the BBKNN section
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_harmony")
+#> Running leiden clustering at resolution 1.
 ```
 
 Let’s calculate the batch correction-related scores
@@ -592,38 +521,39 @@ metrics_dt <- rbind(
     sc_object,
     batch_column = "exp_id",
     cell_type_column = "cell_type",
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     .verbose = FALSE
   ) %>%
     .[, method := "Harmony v2"]
 )
 
 metrics_dt[method == "Harmony v2"]
-#>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
-#>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v2   0.7982191  0.977846 0.6423357      0.9493217     1
-#>    cell_type_asw graph_connectivity     method
-#>            <num>              <num>     <char>
-#> 1:     0.6677088          0.9499137 Harmony v2
+#>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
+#>       <char>       <num>     <num>     <num>          <num> <num>         <num>
+#> 1:   harmony   0.7982191  0.977846 0.6423357      0.9493217     1     0.6677088
+#>    graph_connectivity     method
+#>                 <num>     <char>
+#> 1:          0.9499137 Harmony v2
 ```
+
+Also here, we observe improvements across the board.
 
 ``` r
 
 sc_object <- tsne_sc(
   object = sc_object,
-  slot_name = "tsne_harm_v2",
+  slot_name = "tsne_harm",
   use_knn = TRUE,
   approx_type = "bh_qd"
 )
 #> Running t-SNE.
-#> Using provided kNN graph.
 ```
 
 ``` r
 
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne_harm_v2",
+  embedding = "tsne_harm",
   colour_by = "exp_id",
   label_by = "exp_id",
   discrete = TRUE
@@ -634,12 +564,89 @@ embedding_plot_sc(
   )
 ```
 
-![](single_cell_batch_corrections_files/figure-html/harmony%20(v2)%20plot-1.png)
+![](single_cell_batch_corrections_files/figure-html/harmony%20plot-1.png)
 
 Got a GPU? `harmony_v2_gpu_sc()` in
 [bixverse.gpu](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html)
 runs the same v2 algorithm and stores the result as `"harmony_gpu"`. It
 takes a single batch column only.
+
+#### Version 1
+
+Need to reproduce an old result? The original lives on as
+[`harmony_v1_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v1_sc.md),
+with its parameters in
+[`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md).
+Otherwise, stick with v2.
+
+``` r
+
+sc_object <- harmony_v1_sc(
+  object = sc_object,
+  batch_column = "exp_id",
+  harmony_params = params_sc_harmony()
+)
+#>  Auto-determined number of Harmony clusters: 100
+
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  embd_to_use = "harmony_v1",
+  neighbours_params = params_sc_neighbours()
+)
+#> 
+#> Generating the snn graph.
+```
+
+``` r
+
+metrics_dt <- rbind(
+  metrics_dt,
+  calculate_integration_metrics_sc(
+    sc_object,
+    batch_column = "exp_id",
+    cell_type_column = "cell_type",
+    embd_to_use = "harmony_v1",
+    .verbose = FALSE
+  ) %>%
+    .[, method := "Harmony v1"]
+)
+
+metrics_dt[method == "Harmony v1"]
+#>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
+#>        <char>       <num>     <num>     <num>          <num> <num>
+#> 1: harmony_v1   0.8827347 0.9754045 0.6423357      0.9817465     1
+#>    cell_type_asw graph_connectivity     method
+#>            <num>              <num>     <char>
+#> 1:     0.6671693          0.9499659 Harmony v1
+```
+
+``` r
+
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_harm_v1",
+  use_knn = TRUE,
+  approx_type = "bh_qd"
+)
+#> Running t-SNE.
+```
+
+``` r
+
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne_harm_v1",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
+  labs(
+    title = "Harmony (version 1) batch correction",
+    colour = "Batch:"
+  )
+```
+
+![](single_cell_batch_corrections_files/figure-html/harmony%20(v1)%20plot-1.png)
 
 ### Seurat CCA
 
@@ -718,7 +725,6 @@ sc_object <- tsne_sc(
   approx_type = "bh_qd"
 )
 #> Running t-SNE.
-#> Using provided kNN graph.
 ```
 
 ``` r
@@ -800,7 +806,6 @@ sc_object <- tsne_sc(
   approx_type = "bh_qd"
 )
 #> Running t-SNE.
-#> Using provided kNN graph.
 ```
 
 ``` r
@@ -828,19 +833,21 @@ them.
 
 ### BBKNN
 
-BBKNN constructs a batch-balanced kNN graph rather than correcting an
-embedding. The key parameter is `neighbours_within_batch`, which
-controls how many neighbours are found per batch. Setting
-`no_neighbours_to_keep` below the total generated neighbours (here 10
-from 2 batches = 20 total) ensures the distance-based filtering
-introduces genuine variation, making downstream metrics informative.
+BBKNN doesn’t touch the embedding. It builds a batch-balanced neighbour
+graph instead: `neighbours_within_batch` nearest neighbours from every
+batch, turned into UMAP-style connectivities. Here that’s 10 per batch,
+so 20 neighbours per cell feed the connectivities.
+`no_neighbours_to_keep` only cuts the stored kNN, and the cut stays
+balanced: each batch keeps its nearest `ceil(15 / 2) = 8`, so a cell
+ends up with 8 from one batch and 7 from the other.
 
-Note that kBET and the embedding metrics are not well suited for
-evaluating BBKNN: kBET compares neighbourhood proportions against global
-proportions, which BBKNN manipulates by design, and ASW and PCR need an
-embedding. BBKNN only hands back a graph, so we pass
-`embd_to_use = NULL` and those columns come back `NA`. iLISI, cLISI and
-graph connectivity on the stored kNN are the ones to read here.
+That makes BBKNN awkward to score. kBET and iLISI read the stored kNN,
+which is balanced by construction, so they come out near perfect
+whatever the data looks like. That’s the method grading its own
+homework, not a sign of mixing. ASW and PCR need an embedding, and BBKNN
+doesn’t have one, so we pass `embd_to_use = NULL` and those come back
+`NA`. cLISI and graph connectivity are still fair, since they only look
+at cell types.
 
 ``` r
 
@@ -871,19 +878,107 @@ metrics_dt <- rbind(
 )
 
 metrics_dt[method == "BBKNN"]
-#>    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw
-#>       <char>       <num>     <num> <num>          <num> <num>         <num>
-#> 1:      <NA>           1        NA   0.8             NA     1            NA
+#>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
+#>       <char>       <num>     <num>     <num>          <num> <num>         <num>
+#> 1:      <NA>           1        NA 0.9911504             NA     1            NA
 #>    graph_connectivity method
 #>                 <num> <char>
-#> 1:          0.9499659  BBKNN
+#> 1:          0.9501534  BBKNN
+```
+
+So what does the graph actually look like? Counting edges is not enough:
+the connectivities are weighted, and everything downstream (clustering,
+t-SNE, UMAP) follows the weights. Below: the cross-batch share of the
+stored kNN, of the graph’s edges and of its total weight, plus the
+median distance from each cell to its nearest neighbour in its own batch
+and in the other one.
+
+``` r
+
+batch <- get_sc_obs(sc_object, filtered = TRUE)$exp_id
+
+# kNN indices are 1-based on the R side
+knn_idx <- get_knn_mat(sc_object) + 1L
+knn_dist <- get_knn_dist(sc_object)
+other_batch <- matrix(batch[knn_idx] != batch, nrow = nrow(knn_idx))
+
+graph <- as_igraph(get_connectivities(sc_object))
+edge_ends <- igraph::ends(graph, igraph::E(graph), names = FALSE)
+cross_edge <- batch[edge_ends[, 1]] != batch[edge_ends[, 2]]
+weights <- igraph::E(graph)$weight
+
+data.table(
+  cross_batch_share_knn = mean(other_batch),
+  cross_batch_share_edges = mean(cross_edge),
+  cross_batch_share_weight = sum(weights[cross_edge]) / sum(weights),
+  median_nearest_same_batch = median(
+    matrixStats::rowMins(ifelse(other_batch, Inf, knn_dist))
+  ),
+  median_nearest_other_batch = median(
+    matrixStats::rowMins(ifelse(other_batch, knn_dist, Inf))
+  )
+)
+#>    cross_batch_share_knn cross_batch_share_edges cross_batch_share_weight
+#>                    <num>                   <num>                    <num>
+#> 1:             0.4668377               0.5072296               0.03727733
+#>    median_nearest_same_batch median_nearest_other_batch
+#>                        <num>                      <num>
+#> 1:                  4.547937                   8.465939
+```
+
+Half the edges cross batches, but they carry only a few percent of the
+weight. The nearest cell in the other batch sits about twice as far away
+as the nearest one in the cell’s own batch, and the UMAP connectivities
+decay with distance, so the cross-batch edges end up with next to no
+weight. This isn’t an implementation detail: the reference `bbknn`
+package behaves the same on this data. pbmc3k and pbmc4k were run on
+different 10x chemistries (GemCode v1 against v2), and that gap is real.
+
+The fair test of a graph method is clustering, so let’s run Leiden on
+the BBKNN graph and compare its clusters against the uncorrected ones
+and Harmony v2. A cluster where one batch holds more than 90% of the
+cells counts as unmixed.
+
+``` r
+
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_bbknn")
+#> Running leiden clustering at resolution 1.
+
+# share of a cluster's cells from one batch above which it counts as unmixed
+single_batch_cutoff <- 0.9
+
+batch_composition <- function(cluster_col) {
+  obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
+    cluster = get(cluster_col),
+    exp_id
+  )]
+  per_cluster <- obs[, .N, .(cluster, exp_id)] %>%
+    .[, share := N / sum(N), cluster] %>%
+    .[, .(n_cells = sum(N), top_batch_share = max(share)), cluster]
+  unmixed <- per_cluster[top_batch_share > single_batch_cutoff]
+  data.table(
+    clustering = cluster_col,
+    n_clusters = nrow(per_cluster),
+    n_unmixed_clusters = nrow(unmixed),
+    share_cells_in_unmixed = sum(unmixed$n_cells) / nrow(obs)
+  )
+}
+
+rbindlist(purrr::map(
+  c("leiden_uncorrected", "leiden_harmony", "leiden_bbknn"),
+  batch_composition
+))
+#>            clustering n_clusters n_unmixed_clusters share_cells_in_unmixed
+#>                <char>      <int>              <int>                  <num>
+#> 1: leiden_uncorrected         22                 17            0.971174162
+#> 2:     leiden_harmony         15                  1            0.005131301
+#> 3:       leiden_bbknn         18                 13            0.876546936
 ```
 
 ``` r
 
 sc_object <- tsne_sc(object = sc_object, use_knn = TRUE, approx_type = "bh_qd")
 #> Running t-SNE.
-#> Using provided kNN graph.
 ```
 
 ``` r
@@ -902,6 +997,14 @@ embedding_plot_sc(
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/bbknn%20plot-1.png)
+
+The clusters and the t-SNE tell the same story. Leiden on the BBKNN
+graph still puts most cells into single-batch clusters, barely better
+than doing nothing, while Harmony mixes nearly all of them. The t-SNE
+follows the same weights and stays split by batch. On a batch effect
+this strong, BBKNN on its own doesn’t correct much. It’s built for
+milder effects, where the cross-batch neighbours sit close enough to
+keep real weight.
 
 ## Choosing a method
 
@@ -923,20 +1026,20 @@ metrics_dt[, .(
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01297917 0.9063555 0.0000000             NA     1
 #> 2:     fastMNN  0.68457591 0.9736488 0.4705881      0.9600038     1
-#> 3:     Harmony  0.88273468 0.9754045 0.6423357      0.9817465     1
-#> 4:  Harmony v2  0.79821914 0.9778460 0.6423357      0.9493217     1
+#> 3:  Harmony v2  0.79821914 0.9778460 0.6423357      0.9493217     1
+#> 4:  Harmony v1  0.88273468 0.9754045 0.6423357      0.9817465     1
 #> 5:  Seurat CCA  0.77377000 0.9569454 0.4705881      0.9784447     1
 #> 6: Seurat rPCA  0.81316028 0.9678163 0.6423357      0.9419804     1
-#> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
+#> 7:       BBKNN  1.00000000        NA 0.9911504             NA     1
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
 #> 1:     0.6508355          0.9501534
 #> 2:     0.6492018          0.9489644
-#> 3:     0.6671693          0.9499659
-#> 4:     0.6677088          0.9499137
+#> 3:     0.6677088          0.9499137
+#> 4:     0.6671693          0.9499659
 #> 5:     0.6653001          0.9499659
 #> 6:     0.6631780          0.9495387
-#> 7:            NA          0.9499659
+#> 7:            NA          0.9501534
 ```
 
 ``` r
@@ -949,6 +1052,8 @@ metrics_long <- melt(
   variable.name = "metric",
   value.name = "score"
 ) %>%
+  # BBKNN's kBET and iLISI read its own balanced kNN, so they are greyed out
+  .[method == "BBKNN" & metric %in% c("kbet_accept", "ilisi"), score := NA] %>%
   .[, `:=`(
     method = factor(method, levels = rev(unique(metrics_dt$method))),
     type = fifelse(metric %in% bio_metrics, "Bio conservation", "Batch mixing"),
@@ -989,8 +1094,9 @@ method: six coarse, well separated cell types keep their neighbourhoods
 pure no matter what. Batch ASW barely moves either, since two PBMC
 batches of the same tissue never separate much on silhouette to begin
 with. Both earn their keep on finer labels and nastier batch effects. On
-two PBMC runs, kBET, iLISI and PCR do the talking. And BBKNN’s perfect
-kBET is the artefact mentioned above, not a win.
+two PBMC runs, kBET, iLISI and PCR do the talking. BBKNN’s row is greyed
+out on the batch side: its kBET and iLISI in the table above are the
+artefact from its section, not a win.
 
 There is no universally best batch correction method. Some practical
 guidance:
@@ -998,10 +1104,12 @@ guidance:
 - **Harmony** is a good default. It is fast, operates on the PCA
   embedding directly, and handles multiple batch variables
   simultaneously. It tends to work well when batch effects are moderate
-  and cell type composition is broadly similar across batches. Version 2
-  is quite an improvement and necessitates less that the same cells are
-  available across the batches and is substantially faster when you
-  provide only one batch effect to regress out.
+  and cell type composition is broadly similar across batches.
+  [`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
+  runs version 2, which cares less about every cell type showing up in
+  every batch and runs 4 k-means iterations per round instead of 20.
+  [`harmony_v1_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v1_sc.md)
+  is only there to reproduce old results.
 
 - **fastMNN** is worth considering when cell type composition differs
   substantially across batches. The mutual nearest neighbour approach is
@@ -1016,17 +1124,18 @@ guidance:
   two and a sensible default; go to CCA when the batches genuinely don’t
   share their cell types.
 
-- **BBKNN** is useful when you want to avoid modifying the embedding at
-  all. The batch-balanced graph can be passed directly to graph-based
-  clustering algorithms. It is the lightest-touch approach but provides
-  less control over the degree of correction.
+- **BBKNN** leaves the embedding alone and hands a batch-balanced graph
+  straight to clustering. It’s the lightest touch of the lot, and that
+  cuts both ways: when the batches sit far apart, as here, the
+  cross-batch edges carry next to no weight and the clusters stay split
+  by batch. Judge it on clustering, not on kBET or iLISI.
 
 In practice, running multiple methods and looking at quantitative
 metrics is the most reliable approach. No single metric captures
 everything: kBET and PCR only see batch, cLISI and cell type ASW only
-see biology, and the ones built on the kNN graph are the only fair
-comparison for graph-based methods like BBKNN. UMAPs and tSNE
-assessments should be taken with a big pinch of salt, see [Chari, et
+see biology, and the kNN metrics can’t score a method that builds the
+kNN to look balanced. UMAPs and tSNE assessments should be taken with a
+big pinch of salt, see [Chari, et
 al.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288)
 Admittedly, they do look pretty however.
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,8 +133,8 @@ input must contain at least this many neighbours. Defaults to <code>200L</code>.
 
 
 <dt id="arg-sigma-idx">sigma_idx<a class="anchor" aria-label="anchor" href="#arg-sigma-idx"></a></dt>
-<dd><p>Integer. <code>"sigma_idx"</code> only: 0-based kNN index for
-bandwidth.e. <code>k_nn - 1</code>). Defaults to <code>19L</code>.</p></dd>
+<dd><p>Integer. <code>"sigma_idx"</code> only: 0-based kNN index for the
+bandwidth (i.e. <code>k_nn - 1</code>). Defaults to <code>19L</code>.</p></dd>
 
 
 <dt id="arg-s-nn">s_nn<a class="anchor" aria-label="anchor" href="#arg-s-nn"></a></dt>
@@ -164,9 +164,10 @@ Defaults to <code>1e-08</code>.</p></dd>
 <dd><p>List. Optional overrides for kNN parameters. See
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
-<code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the
-available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
+<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>, <code>n_list</code>
+and <code>n_probe</code>. Note that <code>k</code> is unused here, <code>knn_range</code> sets the neighbour
+pool. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for the available elements. Defaults to
+<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -176,8 +177,8 @@ Defaults to <code>20L</code>.</p></li>
 <li><p>knn_range - Integer. Candidate pool size per modality. Each cell's kNN
 input must contain at least this many neighbours. Defaults to <code>200L</code>.</p></li>
 <li><p>sigma_method - String. Bandwidth method. One of <code>c("snn_farthest", "sigma_idx")</code>. Defaults to <code>"snn_farthest"</code>.</p></li>
-<li><p>sigma_idx - Integer. <code>"sigma_idx"</code> only: 0-based kNN index for
-bandwidth.e. <code>k_nn - 1</code>). Defaults to <code>19L</code>.</p></li>
+<li><p>sigma_idx - Integer. <code>"sigma_idx"</code> only: 0-based kNN index for the
+bandwidth (i.e. <code>k_nn - 1</code>). Defaults to <code>19L</code>.</p></li>
 <li><p>s_nn - Integer. <code>"snn_farthest"</code> only: kNN size used to build the SNN
 graph. Defaults to <code>20L</code>.</p></li>
 <li><p>sd_scale - Numeric. Multiplier on sigma. Defaults to <code>1.0</code>.</p></li>

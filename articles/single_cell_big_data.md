@@ -84,17 +84,14 @@ sce <- load_mtx(object = sce, sc_mtx_io_param = load_params, csc_mem_gb = 8)
 This step is one of the slowest… A lot of things are actually happening
 here.
 
-- First, (streaming) scan to understand in how many cells a gene is
-  expressed. Only keep genes that are expressed in whatever you set to
-  `min_cells`.
-- Second, (streaming) scan, given the genes from the first step, which
-  cells to include based on minimum library size and minimum features.
-- Third, now that it’s clear which cells/genes to include, create quick
-  temp files with the cells to keep with the genes already re-indexed.
-  This way we avoid loading in the massive MTX file in one go into
-  memory. These files are automatically cleaned up at the end and loaded
-  sequentially and written to the CSR-type file (while the normalisation
-  is also done on the fly).
+- First, a single pass over the MTX file. Entries get bucketed per cell
+  on disk next to the store, and the gene counts accumulate on the way.
+- Second, decide which genes pass `min_cells` and which cells pass the
+  minimum library size and features. The cell QC subtracts the dropped
+  genes, so it doesn’t need another scan.
+- Third, write the kept cells from the buckets to the CSR-type file,
+  with the genes re-indexed and the normalisation done on the fly. The
+  buckets get cleaned up at the end.
 - Lastly, load in the cell data in small chunks and do a transpose to a
   CSC style format for easy gene retrieval.
 
@@ -104,7 +101,7 @@ The DuckDB also gets populated with the metadata in the observations
 the data and processing it - is usually what takes quite a bit of time.
 If you have already loaded in the data and it exists on-disk from a
 previous session, skip the streaming step entirely and reconnect. On a
-MacBook Air with 24 GB and an M3 chip, this takes 90 seconds minutes.
+MacBook Air with 24 GB and an M3 chip, this takes 90 seconds.
 
 ``` r
 
@@ -121,7 +118,7 @@ to flag doublets. Doublets are called per sample via the `group_by`
 argument, which is what you want when sample-level differences in
 capture rates would otherwise distort a single global score. Results are
 merged back onto the cell metadata and the doublets are dropped from the
-set of cells to keep. The runs over the individual samples are occuring
+set of cells to keep. The runs over the individual samples are occurring
 sequentially to not overwhelm memory and each run is massively
 parallelised internally in Rust.
 
@@ -144,7 +141,7 @@ sce <- set_cells_to_keep(x = sce, cells_to_keep = cells_without_doublets)
 
 Due to having run over 24 samples in this case, this will take ~6
 minutes. Ideal moment for a podcast, video of your favourite YouTuber
-and/or coffee - which ever floats your boat. Once you have passed this,
+and/or coffee - whichever floats your boat. Once you have passed this,
 things will get substantially faster.
 
 ### Scrublet on the GPU
@@ -347,7 +344,7 @@ sce <- find_neighbours_sc(
   object = sce,
   embd_to_use = "pca",
   neighbours_params = params_sc_neighbours(
-    knn = list(knn_method = "nndescent", extract_knn = TRUE)
+    knn = list(knn_method = "nndescent")
   )
 )
 ```
@@ -358,7 +355,6 @@ sce <- find_neighbours_gpu_sc(
   object = sce,
   embd_to_use = "pca",
   knn_method = "nndescent",
-  nn_params = params_nn_gpu(extract_knn = TRUE),
   .verbose = TRUE
 )
 ```
@@ -419,7 +415,7 @@ sce <- umap_gpu_sc(
 
 ``` r
 
-sce <- umap_tsne_sc(
+sce <- tsne_gpu_sc(
   sce,
   slot_name = "tsne_prior_gpu"
 )
@@ -463,7 +459,7 @@ CPU version first… (~ 4 seconds)
 
 ``` r
 
-sce <- harmony_v2_sc(object = sce, batch_column = "sample")
+sce <- harmony_sc(object = sce, batch_column = "sample")
 ```
 
 If you have a GPU at hand, you can also just use the GPU version (also 4
@@ -483,9 +479,8 @@ Let’s overwrite the kNN graph with the now batch-corrected embedding:
 
 sce <- find_neighbours_gpu_sc(
   object = sce,
-  embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
+  embd_to_use = "harmony_gpu", # or harmony if you just did the CPU version
   knn_method = "nndescent",
-  nn_params = params_nn_gpu(extract_knn = TRUE),
   .verbose = TRUE
 )
 ```
@@ -513,7 +508,7 @@ and project the community membership back.
 
 fast_cluster_res <- fast_cluster_sc(
   object = sce,
-  embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
+  embd_to_use = "harmony_gpu", # or harmony if you just did the CPU version
   return_kmeans = FALSE,
   n_seeds = 10L,
   .verbose = 2L

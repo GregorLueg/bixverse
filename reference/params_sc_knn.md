@@ -14,7 +14,6 @@ params_sc_knn(
   delta = 0.001,
   diversify_prob = 0,
   ef_budget = NULL,
-  extract_knn = FALSE,
   m = 16L,
   ef_construction = 200L,
   ef_search = 100L,
@@ -32,7 +31,9 @@ params_sc_knn(
 - knn_method:
 
   String. Which method to use for the approximate nearest neighbour
-  search. One of
+  search. `"nndescent"` hands back the graph the NN-Descent built, with
+  no index and no query pass. Rows the descent left short are re-queried
+  exactly. One of
   `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
   Defaults to `"kmknn"`.
 
@@ -58,21 +59,15 @@ params_sc_knn(
 
 - diversify_prob:
 
-  Numeric. NNDescent param: diversification probability applied at the
-  end of index construction. Defaults to `0.0`.
+  Numeric. NNDescent param: diversification probability. Only used where
+  a query runs against an NN-Descent index, not for the graph of a self
+  kNN. Defaults to `0.0`.
 
 - ef_budget:
 
-  Integer or `NULL`. NNDescent param: optional query budget. Higher
-  values improve recall at the cost of speed. Defaults to `NULL`.
-
-- extract_knn:
-
-  Boolean. NNDescent param: hand back the graph the descent already
-  built instead of beam searching it. Skips the query pass entirely, so
-  it is much faster, at the cost of some recall. Rows the descent never
-  filled come back padded with duplicate edges. Ignored by every other
-  method. Defaults to `FALSE`.
+  Integer or `NULL`. NNDescent param: optional query budget. Only used
+  where a query runs against an NN-Descent index, not for the graph of a
+  self kNN. Defaults to `NULL`.
 
 - m:
 
@@ -106,7 +101,9 @@ A named list with the following elements:
 - k - Integer. Number of neighbours. Defaults to `15L`.
 
 - knn_method - String. Which method to use for the approximate nearest
-  neighbour search. One of
+  neighbour search. `"nndescent"` hands back the graph the NN-Descent
+  built, with no index and no query pass. Rows the descent left short
+  are re-queried exactly. One of
   `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
   Defaults to `"kmknn"`.
 
@@ -122,17 +119,13 @@ A named list with the following elements:
 - delta - Numeric. NNDescent param: early termination criterion.
   Defaults to `0.001`.
 
-- diversify_prob - Numeric. NNDescent param: diversification probability
-  applied at the end of index construction. Defaults to `0.0`.
+- diversify_prob - Numeric. NNDescent param: diversification
+  probability. Only used where a query runs against an NN-Descent index,
+  not for the graph of a self kNN. Defaults to `0.0`.
 
 - ef_budget - Integer or `NULL`. NNDescent param: optional query budget.
-  Higher values improve recall at the cost of speed. Defaults to `NULL`.
-
-- extract_knn - Boolean. NNDescent param: hand back the graph the
-  descent already built instead of beam searching it. Skips the query
-  pass entirely, so it is much faster, at the cost of some recall. Rows
-  the descent never filled come back padded with duplicate edges.
-  Ignored by every other method. Defaults to `FALSE`.
+  Only used where a query runs against an NN-Descent index, not for the
+  graph of a self kNN. Defaults to `NULL`.
 
 - m - Integer. HNSW param: number of connections between layers.
   Defaults to `16L`.

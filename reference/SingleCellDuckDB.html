@@ -9,7 +9,7 @@ observation/cell metadata and the feature/gene metadata."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,7 +161,8 @@ observation/cell metadata and the feature/gene metadata.</p>
 observation table.</p></dd>
 
       <dt><code>filter</code></dt>
-<dd><p>Optional integer. Positions of obs to read in from file.</p></dd>
+<dd><p>Optional integer. 1-indexed positions of the obs rows to
+keep, in output order.</p></dd>
 
       <dt><code>cell_id_col</code></dt>
 <dd><p>Optional string. If you can see that the first column
@@ -190,14 +191,15 @@ obs data from the h5ad file into the DuckDB.</p>
 observation table.</p></dd>
 
       <dt><code>filter</code></dt>
-<dd><p>Optional integer. Positions of obs to read in from file.</p></dd>
+<dd><p>Optional integer. 1-indexed positions of the var rows to
+keep, in output order.</p></dd>
 
 
 </dl><p></p></div>
 </div><p></p><div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
 <p>Returns invisible self. As a side effect, it will load in the
-obs data from the h5ad file into the DuckDB.</p>
+var data from the h5ad file into the DuckDB.</p>
 </div>
 
 </div>
@@ -266,7 +268,8 @@ Function to populate the obs table from plain text files</p>
 <dd><p>Boolean. Does the flat file have a header.</p></dd>
 
       <dt><code>filter</code></dt>
-<dd><p>Optional integer. Positions of obs to read in from file.</p></dd>
+<dd><p>Optional integer. 1-indexed rows of the file to keep.
+<code>cell_idx</code> follows the file order of the kept rows.</p></dd>
 
 
 </dl><p></p></div>
@@ -292,7 +295,8 @@ Function to populate the var table from plain text files</p>
 <dd><p>Boolean. Does the flat file have a header.</p></dd>
 
       <dt><code>filter</code></dt>
-<dd><p>Optional integer. Positions of obs to read in from file.</p></dd>
+<dd><p>Optional integer. 1-indexed rows of the file to keep.
+<code>gene_idx</code> follows the file order of the kept rows.</p></dd>
 
 
 </dl><p></p></div>

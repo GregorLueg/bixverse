@@ -15,11 +15,8 @@ Available algorithms are:
   build non-deterministic. Bigger impact on smaller data sets.
 
 - `nndescent` - Nearest neighbour descent. Leverages concepts from
-  `PyNNDescent` and works well on very large data sets similar to
-  `hnsw`. Set `extract_knn = TRUE` in the kNN parameters to hand back
-  the descent graph directly instead of beam searching it. That drops
-  the query pass altogether, so it is much faster, but recall goes down
-  a little.
+  `PyNNDescent`. Hands back the graph the descent built, with no index
+  and no query pass, and works well on very large data sets.
 
 - `ivf` - Inverted file index. Uses first k-means clustering to identify
   Voronoi cells and leverages these during querying. Works well on large

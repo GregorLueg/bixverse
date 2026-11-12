@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -954,13 +954,6 @@
 
         <dt>
 
-          <code><a href="get_model_fit.html">get_model_fit()</a></code>
-          <span class="badge lifecycle lifecycle-deprecated">deprecated</span>
-        </dt>
-        <dd>Get the fitted model</dd>
-
-        <dt>
-
           <code><a href="get_tpm_counts.html">get_tpm_counts()</a></code>
 
         </dt>
@@ -1115,7 +1108,7 @@
           <code><a href="leiden_clustering.html">leiden_clustering()</a></code>
 
         </dt>
-        <dd>Leiden or Louvain community detection on an igraph</dd>
+        <dd>Leiden or Louvain community detection</dd>
 
         <dt>
 
@@ -1457,6 +1450,34 @@
 
         <dt>
 
+          <code><a href="as_sc_connectivity.html">as_sc_connectivity()</a></code>
+
+        </dt>
+        <dd>Convert a graph into a SingleCellConnectivity</dd>
+
+        <dt>
+
+          <code><a href="as_igraph.html">as_igraph()</a></code>
+
+        </dt>
+        <dd>Convert a graph to igraph</dd>
+
+        <dt>
+
+          <code><a href="to_bytes.html">to_bytes()</a></code>
+
+        </dt>
+        <dd>Serialise an object to bytes</dd>
+
+        <dt>
+
+          <code><a href="from_bytes.html">from_bytes()</a></code>
+
+        </dt>
+        <dd>Read a SingleCellConnectivity back from bytes</dd>
+
+        <dt>
+
           <code><a href="get_gene_names_from_idx.html">get_gene_names_from_idx()</a></code>
 
         </dt>
@@ -1620,10 +1641,10 @@
 
         <dt>
 
-          <code><a href="step_harmony_v2_sc.html">step_harmony_v2_sc()</a></code>
+          <code><a href="step_harmony_v1_sc.html">step_harmony_v1_sc()</a></code>
 
         </dt>
-        <dd>Pipeline step: Harmony v2 batch correction</dd>
+        <dd>Pipeline step: Harmony v1 batch correction</dd>
 
         <dt>
 
@@ -2407,10 +2428,10 @@
 
         <dt>
 
-          <code><a href="harmony_v2_sc.html">harmony_v2_sc()</a></code>
+          <code><a href="harmony_v1_sc.html">harmony_v1_sc()</a></code>
 
         </dt>
-        <dd>Run Harmony v2</dd>
+        <dd>Run Harmony v1</dd>
 
         <dt>
 
@@ -4228,6 +4249,20 @@
 
         <dt>
 
+          <code><a href="rs_h5ad_dimensions.html">rs_h5ad_dimensions()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Dimensions and storage layout of an h5ad file</dd>
+
+        <dt>
+
+          <code><a href="rs_h5ad_raw_slot.html">rs_h5ad_raw_slot()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Detect which slot of an h5ad file holds raw integer counts</dd>
+
+        <dt>
+
           <code><a href="rs_hamming_dist.html">rs_hamming_dist()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4651,7 +4686,7 @@
           <code><a href="rs_sc_knn_graph.html">rs_sc_knn_graph()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Generates the neighbour graph for igraph</dd>
+        <dd>Generates the neighbour graph</dd>
 
         <dt>
 
@@ -4785,6 +4820,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run the weighted nearest neighbour algorithm</dd>
+
+        <dt>
+
+          <code><a href="rs_write_tenx_h5.html">rs_write_tenx_h5()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Write a cells x features count matrix as a CellRanger style h5 file</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

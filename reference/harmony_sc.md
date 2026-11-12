@@ -1,8 +1,9 @@
 # Run Harmony
 
-A version of Harmony by Korsunsky et al., implemented in Rust. Performs
-batch correction on PCA embeddings and stores the result as a
-`"harmony"` embedding in the object.
+Harmony v2 by Patikas et al., 2026, implemented in Rust. Performs batch
+correction on PCA embeddings and stores the result as a `"harmony"`
+embedding in the object. The original Harmony by Korsunsky et al. is
+[`harmony_v1_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v1_sc.md).
 
 ## Usage
 
@@ -12,7 +13,7 @@ harmony_sc(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -41,7 +42,7 @@ harmony_sc(
 - harmony_params:
 
   List. Output of
-  [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md).
+  [`params_sc_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony_v2.md).
 
 - seed:
 

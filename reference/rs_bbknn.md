@@ -40,7 +40,9 @@ A list with
 
 - distances - Sparse list representation of the kNN distances.
 
-- connectivities - Sparse list representation of the connectivities.
+- connectivities - External pointer to the undirected neighbour graph.
+  Each cell pair keeps the larger of its two directed connectivity
+  weights.
 
 ## References
 

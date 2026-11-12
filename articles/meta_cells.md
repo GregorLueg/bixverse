@@ -25,7 +25,7 @@ ideas:
   archetypal analysis. The algorithm finds a set of archetypes (the
   SEACells) such that every cell can be expressed as a convex
   combination of nearby archetypes. Tends to produce purer aggregations
-  but is the most computationally expensive of the three.
+  but is the most computationally expensive of the methods here.
 
 - **SuperCells** ([Bilous, et al.,
   2022](https://doi.org/10.1186/s12859-022-04861-1)) applies the
@@ -533,11 +533,11 @@ metacells2_large <- generate_metacells2_sc(
 ### Purity
 
 A simple sanity check is to ask, for each meta cell, what fraction of
-its constituent cells share the same underlying label. We use the Leiden
-clusters from the parent `SingleCells` object as a proxy for cell type
-identity. The labels themselves are imperfect, so absolute numbers
-should be read with that caveat, but relative differences between
-methods are reasonably indicative.
+its constituent cells share the same underlying label. We use the
+`celltype` labels from the parent `SingleCells` object as a proxy for
+cell type identity. The labels themselves are imperfect, so absolute
+numbers should be read with that caveat, but relative differences
+between methods are reasonably indicative.
 
 ``` r
 
@@ -579,7 +579,7 @@ ggplot(purity_dt, aes(x = method, y = purity)) +
   geom_boxplot(width = 0.05, outlier.size = 0.5) +
   theme_bw() +
   theme(legend.position = "none") +
-  labs(x = "Method", y = "Meta cell purity (Leiden)") +
+  labs(x = "Method", y = "Meta cell purity (cell type)") +
   ylim(0, 1)
 ```
 
@@ -595,7 +595,7 @@ We called the
 [`calc_diffusion_coordinates()`](https://gregorlueg.github.io/bixverse/reference/calc_diffusion_coordinates.md)
 with the kNN graph on the data. This will tell us which parts of the
 manifold are being sampled here, i.e., for example high, medium or low
-density regions (based on the diffusion map and distance to the 150k-th
+density regions (based on the diffusion map and distance to the 150th
 neighbour within that). This gives an idea how many rare cell states the
 meta cells capture.
 
@@ -716,13 +716,13 @@ metrics_dt[,
 ```
 
 Some differences are visible here. hdWGCNA has the worst separation and
-best compactness (not unexpected given the bootstrapping method only
-sampling direct neighbours). Of the three kNN-based methods, SEACells
-has the worst compactness (not unsurprising as the meta cells here
-capture more sparse regions of the manifold) and middling separation;
-SuperCells (version 2.0, the default setting here) is in the middle.
-MetaCells2 comes out least compact, mostly in the low density regions.
-Keep in mind that it is judged on someone else’s turf here: the
+close to the best compactness (not unexpected given the bootstrapping
+method only sampling direct neighbours). Of the three kNN-based methods,
+SEACells has the worst compactness (not unsurprising as the meta cells
+here capture more sparse regions of the manifold) and middling
+separation; SuperCells (version 2.0, the default setting here) is in the
+middle. MetaCells2 comes out least compact, mostly in the low density
+regions. Keep in mind that it is judged on someone else’s turf here: the
 diffusion map sits on the PCA kNN graph, while MetaCells2 never saw it
 and built its own graph from the raw counts of the genes it selected per
 pile.
@@ -971,11 +971,11 @@ seacells <- find_neighbours_sc(
 #> Generating the snn graph.
 
 seacells <- find_clusters_sc(seacells, res = 1.0, name = "leiden_clusters")
+#> Running leiden clustering at resolution 1.
 
 seacells <- umap_sc(seacells, k = 10L, knn_method = "exhaustive")
 #> Running UMAP.
-#> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-#> Using provided kNN graph.
+#> Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
 ```
 
 ``` r

@@ -17,7 +17,11 @@ Key parameters to tune: k controls the balance between local and global
 structure (larger values produce more global layouts), while min_dist
 and spread together control how tightly points are packed in the
 embedding. For MetaCells, smaller k values are often appropriate given
-the reduced number of points."><meta property="og:description" content="Wrapper around manifoldsR::umap() for the SingleCells and MetaCells
+the reduced number of points.
+The optimiser is set via optimiser in manifoldsR::params_umap(), one of
+&quot;adam_parallel&quot; (the default), &quot;sgd&quot;, &quot;sgd_parallel&quot; or &quot;adam&quot;.
+&quot;sgd_parallel&quot; is lock-free (Hogwild!) SGD and not reproducible run to run
+with more than one thread."><meta property="og:description" content="Wrapper around manifoldsR::umap() for the SingleCells and MetaCells
 classes. UMAP produces a low-dimensional embedding that emphasises local
 neighbourhood structure while being computationally efficient via its
 negative-sampling-based optimisation. It is the de facto default for
@@ -35,7 +39,11 @@ Key parameters to tune: k controls the balance between local and global
 structure (larger values produce more global layouts), while min_dist
 and spread together control how tightly points are packed in the
 embedding. For MetaCells, smaller k values are often appropriate given
-the reduced number of points."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
+the reduced number of points.
+The optimiser is set via optimiser in manifoldsR::params_umap(), one of
+&quot;adam_parallel&quot; (the default), &quot;sgd&quot;, &quot;sgd_parallel&quot; or &quot;adam&quot;.
+&quot;sgd_parallel&quot; is lock-free (Hogwild!) SGD and not reproducible run to run
+with more than one thread."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -43,7 +51,7 @@ the reduced number of points."><meta property="og:image" content="https://gregor
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,6 +158,10 @@ structure (larger values produce more global layouts), while <code>min_dist</cod
 and <code>spread</code> together control how tightly points are packed in the
 embedding. For <code>MetaCells</code>, smaller <code>k</code> values are often appropriate given
 the reduced number of points.</p>
+<p>The optimiser is set via <code>optimiser</code> in <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_umap.html" class="external-link">manifoldsR::params_umap()</a></code>, one of
+<code>"adam_parallel"</code> (the default), <code>"sgd"</code>, <code>"sgd_parallel"</code> or <code>"adam"</code>.
+<code>"sgd_parallel"</code> is lock-free (Hogwild!) SGD and not reproducible run to run
+with more than one thread.</p>
     </div>
 
     <div class="section level2">

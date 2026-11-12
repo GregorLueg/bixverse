@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,7 +109,6 @@
 <span>  delta <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  diversify_prob <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  ef_budget <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  extract_knn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  m <span class="op">=</span> <span class="fl">16L</span>,</span>
 <span>  ef_construction <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  ef_search <span class="op">=</span> <span class="fl">100L</span>,</span>
@@ -128,7 +127,9 @@
 
 <dt id="arg-knn-method">knn_method<a class="anchor" aria-label="anchor" href="#arg-knn-method"></a></dt>
 <dd><p>String. Which method to use for the approximate nearest
-neighbour search. One of <code>c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>. Defaults to <code>"kmknn"</code>.</p></dd>
+neighbour search. <code>"nndescent"</code> hands back the graph the NN-Descent built,
+with no index and no query pass. Rows the descent left short are re-queried
+exactly. One of <code>c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>. Defaults to <code>"kmknn"</code>.</p></dd>
 
 
 <dt id="arg-ann-dist">ann_dist<a class="anchor" aria-label="anchor" href="#arg-ann-dist"></a></dt>
@@ -151,21 +152,15 @@ to <code>0.001</code>.</p></dd>
 
 
 <dt id="arg-diversify-prob">diversify_prob<a class="anchor" aria-label="anchor" href="#arg-diversify-prob"></a></dt>
-<dd><p>Numeric. NNDescent param: diversification probability
-applied at the end of index construction. Defaults to <code>0.0</code>.</p></dd>
+<dd><p>Numeric. NNDescent param: diversification probability.
+Only used where a query runs against an NN-Descent index, not for the graph
+of a self kNN. Defaults to <code>0.0</code>.</p></dd>
 
 
 <dt id="arg-ef-budget">ef_budget<a class="anchor" aria-label="anchor" href="#arg-ef-budget"></a></dt>
 <dd><p>Integer or <code>NULL</code>. NNDescent param: optional query budget.
-Higher values improve recall at the cost of speed. Defaults to <code>NULL</code>.</p></dd>
-
-
-<dt id="arg-extract-knn">extract_knn<a class="anchor" aria-label="anchor" href="#arg-extract-knn"></a></dt>
-<dd><p>Boolean. NNDescent param: hand back the graph the descent
-already built instead of beam searching it. Skips the query pass entirely, so
-it is much faster, at the cost of some recall. Rows the descent never filled
-come back padded with duplicate edges. Ignored by every other method.
-Defaults to <code>FALSE</code>.</p></dd>
+Only used where a query runs against an NN-Descent index, not for the graph
+of a self kNN. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-m">m<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
@@ -197,7 +192,9 @@ If <code>NULL</code>, defaults to <code>sqrt(n)</code> internally. Defaults to <
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list with the following elements:</p><ul><li><p>k - Integer. Number of neighbours. Defaults to <code>15L</code>.</p></li>
 <li><p>knn_method - String. Which method to use for the approximate nearest
-neighbour search. One of <code>c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>. Defaults to <code>"kmknn"</code>.</p></li>
+neighbour search. <code>"nndescent"</code> hands back the graph the NN-Descent built,
+with no index and no query pass. Rows the descent left short are re-queried
+exactly. One of <code>c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>. Defaults to <code>"kmknn"</code>.</p></li>
 <li><p>ann_dist - String. Distance metric to use. One of <code>c("euclidean", "cosine")</code>. Defaults to <code>"euclidean"</code>.</p></li>
 <li><p>n_trees - Integer. Annoy param: number of trees. Defaults to <code>50L</code>.</p></li>
 <li><p>search_budget - Integer or <code>NULL</code>. Annoy param: optional search budget
@@ -205,15 +202,12 @@ per tree. If <code>NULL</code>, defaults to <code>n_trees * k * 20L</code> inter
 <code>NULL</code>.</p></li>
 <li><p>delta - Numeric. NNDescent param: early termination criterion.
 Defaults to <code>0.001</code>.</p></li>
-<li><p>diversify_prob - Numeric. NNDescent param: diversification probability
-applied at the end of index construction. Defaults to <code>0.0</code>.</p></li>
+<li><p>diversify_prob - Numeric. NNDescent param: diversification
+probability. Only used where a query runs against an NN-Descent index, not
+for the graph of a self kNN. Defaults to <code>0.0</code>.</p></li>
 <li><p>ef_budget - Integer or <code>NULL</code>. NNDescent param: optional query budget.
-Higher values improve recall at the cost of speed. Defaults to <code>NULL</code>.</p></li>
-<li><p>extract_knn - Boolean. NNDescent param: hand back the graph the
-descent already built instead of beam searching it. Skips the query pass
-entirely, so it is much faster, at the cost of some recall. Rows the descent
-never filled come back padded with duplicate edges. Ignored by every other
-method. Defaults to <code>FALSE</code>.</p></li>
+Only used where a query runs against an NN-Descent index, not for the graph
+of a self kNN. Defaults to <code>NULL</code>.</p></li>
 <li><p>m - Integer. HNSW param: number of connections between layers.
 Defaults to <code>16L</code>.</p></li>
 <li><p>ef_construction - Integer. HNSW param: size of the dynamic candidate

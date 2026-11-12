@@ -280,8 +280,6 @@ differential gene expression results.
   : Return the FPKM-normalised counts
 - [`get_gene_lengths()`](https://gregorlueg.github.io/bixverse/reference/get_gene_lengths.md)
   : Get the gene lengths
-- [`get_model_fit()`](https://gregorlueg.github.io/bixverse/reference/get_model_fit.md)
-  **\[deprecated\]** : Get the fitted model
 - [`get_tpm_counts()`](https://gregorlueg.github.io/bixverse/reference/get_tpm_counts.md)
   : Return the TPM-normalised counts
 
@@ -335,7 +333,7 @@ network fusion.
 - [`constrained_page_rank_ls()`](https://gregorlueg.github.io/bixverse/reference/constrained_page_rank_ls.md)
   : Constrained personalised page rank over a list
 - [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md)
-  : Leiden or Louvain community detection on an igraph
+  : Leiden or Louvain community detection
 - [`diffuse_seed_nodes()`](https://gregorlueg.github.io/bixverse/reference/diffuse_seed_nodes.md)
   : Diffuse seed genes over a network
 - [`permute_seed_nodes()`](https://gregorlueg.github.io/bixverse/reference/permute_seed_nodes.md)
@@ -437,6 +435,14 @@ THE single cell class with a large number of getters.
   : Get the PCA factors
 - [`get_connectivities()`](https://gregorlueg.github.io/bixverse/reference/get_connectivities.md)
   : Get the neighbour graph
+- [`as_sc_connectivity()`](https://gregorlueg.github.io/bixverse/reference/as_sc_connectivity.md)
+  : Convert a graph into a SingleCellConnectivity
+- [`as_igraph()`](https://gregorlueg.github.io/bixverse/reference/as_igraph.md)
+  : Convert a graph to igraph
+- [`to_bytes()`](https://gregorlueg.github.io/bixverse/reference/to_bytes.md)
+  : Serialise an object to bytes
+- [`from_bytes()`](https://gregorlueg.github.io/bixverse/reference/from_bytes.md)
+  : Read a SingleCellConnectivity back from bytes
 - [`get_gene_names_from_idx()`](https://gregorlueg.github.io/bixverse/reference/get_gene_names_from_idx.md)
   : Get the gene names based on the gene idx
 - [`get_sc_available_features()`](https://gregorlueg.github.io/bixverse/reference/get_sc_available_features.md)
@@ -503,8 +509,8 @@ Sub-clustering a group of cells and running the same chain per group.
 - [`step_harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/step_harmony_sc.md)
   : Pipeline step: Harmony batch correction
 
-- [`step_harmony_v2_sc()`](https://gregorlueg.github.io/bixverse/reference/step_harmony_v2_sc.md)
-  : Pipeline step: Harmony v2 batch correction
+- [`step_harmony_v1_sc()`](https://gregorlueg.github.io/bixverse/reference/step_harmony_v1_sc.md)
+  : Pipeline step: Harmony v1 batch correction
 
 - [`step_metacells_sc()`](https://gregorlueg.github.io/bixverse/reference/step_metacells_sc.md)
   : Pipeline step: generate meta cells
@@ -837,8 +843,8 @@ Batch correction methods and metrics for single cell
   : Run fastMNN
 - [`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
   : Run Harmony
-- [`harmony_v2_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v2_sc.md)
-  : Run Harmony v2
+- [`harmony_v1_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v1_sc.md)
+  : Run Harmony v1
 - [`bbknn_sc()`](https://gregorlueg.github.io/bixverse/reference/bbknn_sc.md)
   : Run BBKNN
 - [`seurat_cca_sc()`](https://gregorlueg.github.io/bixverse/reference/seurat_cca_sc.md)
@@ -1535,6 +1541,11 @@ There is a lot more under the hood…
   **\[experimental\]** : Rust version of the GSVA algorithm
 - [`rs_h5ad_data()`](https://gregorlueg.github.io/bixverse/reference/rs_h5ad_data.md)
   **\[experimental\]** : Load in h5ad data via Rust
+- [`rs_h5ad_dimensions()`](https://gregorlueg.github.io/bixverse/reference/rs_h5ad_dimensions.md)
+  **\[experimental\]** : Dimensions and storage layout of an h5ad file
+- [`rs_h5ad_raw_slot()`](https://gregorlueg.github.io/bixverse/reference/rs_h5ad_raw_slot.md)
+  **\[experimental\]** : Detect which slot of an h5ad file holds raw
+  integer counts
 - [`rs_hamming_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_hamming_dist.md)
   **\[experimental\]** : Calculates the Hamming distance between
   categorical columns
@@ -1684,7 +1695,7 @@ There is a lot more under the hood…
   **\[experimental\]** : Generates the kNN graph with additional
   distances
 - [`rs_sc_knn_graph()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_graph.md)
-  **\[experimental\]** : Generates the neighbour graph for igraph
+  **\[experimental\]** : Generates the neighbour graph
 - [`rs_set_similarity()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity.md)
   **\[experimental\]** : Set similarities
 - [`rs_set_similarity_list()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list.md)
@@ -1726,3 +1737,6 @@ There is a lot more under the hood…
   **\[experimental\]** : Voom-transform a count matrix
 - [`rs_wnn()`](https://gregorlueg.github.io/bixverse/reference/rs_wnn.md)
   **\[experimental\]** : Run the weighted nearest neighbour algorithm
+- [`rs_write_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/rs_write_tenx_h5.md)
+  **\[experimental\]** : Write a cells x features count matrix as a
+  CellRanger style h5 file

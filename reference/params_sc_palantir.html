@@ -21,7 +21,7 @@ effect."><meta property="og:image" content="https://gregorlueg.github.io/bixvers
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -131,7 +131,7 @@ effect.</p>
 <span>  max_iterations <span class="op">=</span> <span class="fl">25L</span>,</span>
 <span>  branch_prob_threshold <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  lanczos_basis_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  lanczos_max_restarts <span class="op">=</span> <span class="fl">16L</span>,</span>
+<span>  lanczos_max_restarts <span class="op">=</span> <span class="fl">64L</span>,</span>
 <span>  lanczos_tol <span class="op">=</span> <span class="fl">1e-08</span>,</span>
 <span>  knn_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -192,7 +192,7 @@ requested component count. Defaults to <code>NULL</code>.</p></dd>
 
 <dt id="arg-lanczos-max-restarts">lanczos_max_restarts<a class="anchor" aria-label="anchor" href="#arg-lanczos-max-restarts"></a></dt>
 <dd><p>Integer. Maximum restart cycles for the Lanczos
-solver. Defaults to <code>16L</code>.</p></dd>
+solver. Defaults to <code>64L</code>.</p></dd>
 
 
 <dt id="arg-lanczos-tol">lanczos_tol<a class="anchor" aria-label="anchor" href="#arg-lanczos-tol"></a></dt>
@@ -234,7 +234,7 @@ zeroed. Defaults to <code>0.01</code>.</p></li>
 once during the diffusion-map eigendecomposition. If <code>NULL</code>, derived from
 the requested component count. Defaults to <code>NULL</code>.</p></li>
 <li><p>lanczos_max_restarts - Integer. Maximum restart cycles for the Lanczos
-solver. Defaults to <code>16L</code>.</p></li>
+solver. Defaults to <code>64L</code>.</p></li>
 <li><p>lanczos_tol - Numeric. Relative residual tolerance for the Lanczos
 solver. Defaults to <code>1e-08</code>.</p></li>
 <li><p>The elements of <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>, overridden by <code>knn_params</code>,

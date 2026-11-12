@@ -19,7 +19,7 @@ library(bixverse)
 
 Let’s start with some synthetic data that is powering all the tests in
 the package. It’s very simple data with 1,000 cells, 100 genes and three
-very cleary defined cell groups. Genes 1 to 10 defined cell_type 1,
+very clearly defined cell groups. Genes 1 to 10 define cell_type 1,
 genes 11 to 20 the next cell type and 21 to 30 the last cell type. The
 remaining genes are noise genes.
 
@@ -42,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x60bf92858e20> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x5fa948e24e20> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x60bf92858e20>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x5fa948e24e20>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -441,14 +441,14 @@ sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 get_sc_cache_status(sc_object)
 #>    modality       artefact   name stamped  stale reason               id
 #>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 35b9864dff85ee85
-#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> cba73da9eb3eec1f
-#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 38ac64ae59694c28
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> f9a97da51976e639
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 700a79d63787c3e6
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> c3e21394ed94994e
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 35b9864dff85ee85
-#> 3: cba73da9eb3eec1f
+#> 2: f9a97da51976e639
+#> 3: 700a79d63787c3e6
 ```
 
 The `from` column is what makes this more than a cell counter. The kNN
@@ -468,14 +468,14 @@ get_sc_cache_status(sc_object)
 #> 3:      rna connectivities   <NA>    TRUE   TRUE
 #>                                                         reason               id
 #>                                                         <char>           <char>
-#> 1:                                                        <NA> fed0a8d97e8b3fb2
-#> 2: the artefact it was derived from was re-computed or removed cba73da9eb3eec1f
-#> 3:                             its upstream `rna:knn` is stale 38ac64ae59694c28
+#> 1:                                                        <NA> c188f8607e432f60
+#> 2: the artefact it was derived from was re-computed or removed 700a79d63787c3e6
+#> 3:                             its upstream `rna:knn` is stale c3e21394ed94994e
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 35b9864dff85ee85
-#> 3: cba73da9eb3eec1f
+#> 2: f9a97da51976e639
+#> 3: 700a79d63787c3e6
 ```
 
 The PCA is fine. The kNN is stale because the PCA it points at no longer
@@ -523,14 +523,14 @@ sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 get_sc_cache_status(sc_object)
 #>    modality       artefact   name stamped  stale reason               id
 #>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> fed0a8d97e8b3fb2
-#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 360e53d161b318df
-#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 7aec38a6f09ceb6e
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> c188f8607e432f60
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 5964d5b3eacf235b
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 4f35b759c3d79848
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: fed0a8d97e8b3fb2
-#> 3: 360e53d161b318df
+#> 2: c188f8607e432f60
+#> 3: 5964d5b3eacf235b
 ```
 
 [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md)
@@ -630,8 +630,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.114406 1.134366 1.189667 1.169157 1.184021 1.475198    10
-#>  the_incorrect_way 2.095670 2.167406 2.282870 2.206734 2.238308 3.153118    10
+#>    the_correct_way 1.088332 1.133128 1.193100 1.172422 1.188360 1.457339    10
+#>  the_incorrect_way 2.185667 2.205697 2.322719 2.225001 2.230083 3.235873    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this
@@ -692,14 +692,14 @@ unfiltered_counts <- sc_object[1:10L, 1:10L, use_cells_to_keep = FALSE]
 
 cat(sprintf(
   "Number of cells: %i | Number of genes: %i (filtered version - primitive)\n",
-  nrow(counts_filtered),
-  ncol(counts_filtered)
+  nrow(filtered_counts),
+  ncol(filtered_counts)
 ))
 #> Number of cells: 8 | Number of genes: 10 (filtered version - primitive)
 cat(sprintf(
   "Number of cells: %i | Number of genes: %i (unfiltered version - primitive)\n",
-  nrow(counts_unfiltered),
-  ncol(counts_unfiltered)
+  nrow(unfiltered_counts),
+  ncol(unfiltered_counts)
 ))
 #> Number of cells: 10 | Number of genes: 10 (unfiltered version - primitive)
 ```

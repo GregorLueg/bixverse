@@ -28,8 +28,12 @@ set_connectivities(x, connectivities, ...)
 
 - connectivities:
 
-  Igraph. The neighbour graph for subsequent clustering, see
+  `SingleCellConnectivity` or undirected igraph. The neighbour graph for
+  subsequent clustering, see
   [`find_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/find_neighbours_sc.md).
+  An igraph is converted with
+  [`as_sc_connectivity()`](https://gregorlueg.github.io/bixverse/reference/as_sc_connectivity.md)
+  on entry.
 
 - ...:
 
@@ -42,8 +46,9 @@ set_connectivities(x, connectivities, ...)
 sc <- demo_single_cells()
 g <- get_connectivities(sc)
 sc <- set_connectivities(remove_connectivities(sc), g)
-igraph::vcount(get_connectivities(sc))
-#> [1] 500
+get_connectivities(sc)
+#> SingleCellConnectivity: 500 cells, 18888 edges
+#>   Method: snn
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

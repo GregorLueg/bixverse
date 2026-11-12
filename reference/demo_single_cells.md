@@ -72,6 +72,7 @@ A `SingleCells` object backed by `dir`.
 # a prepped object, ready for clustering
 sc <- demo_single_cells()
 sc <- find_clusters_sc(sc, res = 1.0)
+#> Running leiden clustering at resolution 1.
 sc
 #> Single cell experiment (Single Cells).
 #>   No cells (original): 500

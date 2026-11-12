@@ -15,7 +15,7 @@ build_symphony_ref(
   batch_column,
   additional_batch_columns = NULL,
   hvg,
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   pca_params = params_sc_pca(),
   no_pcs = 30L,
   slim = FALSE,
@@ -47,9 +47,10 @@ build_symphony_ref(
 - harmony_params:
 
   List. Output of
+  [`params_sc_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony_v2.md)
+  (Harmony v2, the default) or
   [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md)
-  or
-  [`params_sc_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony_v2.md).
+  (v1).
 
 - pca_params:
 
@@ -68,8 +69,8 @@ build_symphony_ref(
 - label_columns:
 
   Optional character vector of obs column names to snapshot into the
-  reference. Read in `cells_to_keep` order to align with `z_corr`.
-  Required for
+  reference. Read in cell index order of the kept cells, which is the
+  row order of `z_corr`. Required for
   [`transfer_labels_symphony()`](https://gregorlueg.github.io/bixverse/reference/transfer_labels_symphony.md)
   unless populated later via
   [`add_symphony_labels()`](https://gregorlueg.github.io/bixverse/reference/add_symphony_labels.md).
@@ -104,14 +105,14 @@ symphony_ref <- build_symphony_ref(
   ref,
   batch_column = "batch_index",
   hvg = get_hvg(ref) + 1L,
-  harmony_params = params_sc_harmony(k = 10L),
+  harmony_params = params_sc_harmony_v2(k = 10L),
   no_pcs = 10L,
   label_columns = "cell_grp",
   .verbose = FALSE
 )
 symphony_ref
 #> Symphony reference
-#>   Harmony backend: v1
+#>   Harmony backend: v2
 #>   No HVGs: 30
 #>   No PCs: 10
 #>   No clusters: 10

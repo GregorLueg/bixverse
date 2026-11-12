@@ -116,8 +116,9 @@ params_scdblfinder(
 
 - expected_doublet_rate:
 
-  Numeric or `NULL`. Expected doublet rate as a percentage. If not
-  provided, will be calculated internally. Defaults to `NULL`.
+  Numeric or `NULL`. Expected doublet rate as a fraction, e.g. 0.12 for
+  12 %. If not provided, will be calculated internally. Defaults to
+  `NULL`.
 
 - cxds_genes:
 
@@ -236,8 +237,8 @@ A named list with the following elements:
   as classifier features. Defaults to `19L`.
 
 - expected_doublet_rate - Numeric or `NULL`. Expected doublet rate as a
-  percentage. If not provided, will be calculated internally. Defaults
-  to `NULL`.
+  fraction, e.g. 0.12 for 12 %. If not provided, will be calculated
+  internally. Defaults to `NULL`.
 
 - manual_threshold - Numeric or `NULL`. Manual score threshold. If
   `NULL` (default), expected-rate thresholding is used. Defaults to

@@ -173,7 +173,6 @@ sc_mtx <- load_mtx(
   object = sc_mtx,
   sc_mtx_io_param = mtx_params,
   sc_qc_param = qc,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 sc_mtx
@@ -279,7 +278,6 @@ sc_mtx_swapped <- load_mtx(
   object = sc_mtx_swapped,
   sc_mtx_io_param = mtx_params_swapped,
   sc_qc_param = qc,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 sc_mtx_swapped
@@ -563,7 +561,8 @@ sc_restored
 ### Archiving for cold storage
 
 Project done, but you want to keep the data around? The two count
-binaries are uncompressed, so they eat disk.
+binaries are lz4-compressed per chunk (v4 format), but still take disk
+space.
 [`archive_sc_exp()`](https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.md)
 compresses `counts_cells.bin` into a single zstd `counts.bxa` and, by
 default, deletes both binaries. The gene-based file is not archived at

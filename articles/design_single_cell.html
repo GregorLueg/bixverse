@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Technical design choices for the single cell implementation</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -211,11 +211,11 @@ Same as kNN graph ~244 MB</code></pre>
 <p>Okay, everything so far reads like a rant. What is the solution, mate?</p>
 <section class="level3"><h3 id="lets-not-keep-data-in-memory-to-start-with">Let’s not keep data in memory to start with … ?<a class="anchor" aria-label="anchor" href="#lets-not-keep-data-in-memory-to-start-with"></a>
 </h3>
-<p>If we think this through, we can arrive at a solution. Ideally, we want an interface from an interpreted, dynamically typed language: going all-in on Rust is just too heavy. The average single cell enthuasist does not want to deal with the borrow checker, does not want to compile code, and wants to quickly analyse and iterate over data. The average bioinformatician lives in blissful ignorance and will not be able to comment on <code>f32</code> vs <code>f64</code> float representation in memory, when to use which and frankly should not have to. That means the interface should be a dynamically typed, interpreted language. This opens the package up to more people and makes plotting (ggplot2 and its extensions for the win) much easier. From there we can make some design decisions.</p>
+<p>If we think this through, we can arrive at a solution. Ideally, we want an interface from an interpreted, dynamically typed language: going all-in on Rust is just too heavy. The average single cell enthusiast does not want to deal with the borrow checker, does not want to compile code, and wants to quickly analyse and iterate over data. The average bioinformatician lives in blissful ignorance and will not be able to comment on <code>f32</code> vs <code>f64</code> float representation in memory, when to use which and frankly should not have to. That means the interface should be a dynamically typed, interpreted language. This opens the package up to more people and makes plotting (ggplot2 and its extensions for the win) much easier. From there we can make some design decisions.</p>
 <ol type="1">
 <li><p><strong><em>We do not keep data in memory if not needed!</em></strong> Most analyses leveraging counts only need subsets of cells and genes. We can also avoid holding metadata in memory via DuckDB. Data will be streamed from disk when needed and Rust’s compiler will free memory once it is no longer needed, sometimes enforced explicitly with <code><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop()</a></code>. Raw counts? Nope. Normalised counts? Nope. Scaled counts? Nope. We just removed up to 40 GB of unnecessary stuff from memory (in our 1M cell example). Data can be loaded into memory in milliseconds if need be.</p></li>
-<li><p><strong><em>We do not even load all data into memory to begin with.</em></strong> In 99.99% of cases, we know we do not want low quality cells with tiny library sizes and few unique features. We also almost always do the usual library-size-to-target-size normalisation with log transformation. (Anyone who has tried a fancy modelling appraoch with Pearson residual modelling on large data sets knows what I am talking about. But <code>bixverse</code> does also offer memory-frugal versions of <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8764781/" class="external-link">scTransform v2</a> if you want them.) That means when reading h5ad or mtx files, we can pre-scan them, take only what we want, and normalise in a single pass, avoiding the load-everything, then-filter, then-normalise pattern. Additionally, data gets streamed into the binary files avoid sudden memory spikes and OOM errors.</p></li>
-<li><p><strong><em>We accept that single cell is noisy</em></strong> and do not bother with <code>f32</code> or even <code>f64</code> precision for storage. Raw counts are integers and most of them are tiny, so on disk they get bit-packed to whatever width the block actually needs. A block of ones and twos costs a single bit per value, the rare gene with a count in the thousands only widens its own block, and nothing gets clipped. Normalised counts live as <code>f16</code>: the ML field has shown you can get away with it, and they are pushing quantisation even further than that. We will accept the precision loss when upcasting to <code>f64</code> to avoid catastrophic cancellation issues at large N.</p></li>
+<li><p><strong><em>We do not even load all data into memory to begin with.</em></strong> In 99.99% of cases, we know we do not want low quality cells with tiny library sizes and few unique features. We also almost always do the usual library-size-to-target-size normalisation with log transformation. (Anyone who has tried a fancy modelling approach with Pearson residual modelling on large data sets knows what I am talking about. But <code>bixverse</code> does also offer memory-frugal versions of <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8764781/" class="external-link">scTransform v2</a> if you want them.) That means when reading h5ad or mtx files, we can pre-scan them, take only what we want, and normalise in a single pass, avoiding the load-everything, then-filter, then-normalise pattern. Additionally, data gets streamed into the binary files to avoid sudden memory spikes and OOM errors.</p></li>
+<li><p><strong><em>We accept that single cell is noisy</em></strong> and do not bother with <code>f32</code> or even <code>f64</code> precision for storage. Raw counts are integers and most of them are tiny, so on disk they get bit-packed to whatever width the block actually needs. A block of ones and twos costs a single bit per value, the rare gene with a count in the thousands only widens its own block, and nothing gets clipped. Normalised counts get <code>f16</code> precision (the v4 section below covers how that layer is dropped and recomputed): the ML field has shown you can get away with it, and they are pushing quantisation even further than that. We will accept the precision loss when upcasting to <code>f64</code> to avoid catastrophic cancellation issues at large N.</p></li>
 <li><p><strong><em>We are not doing any heavy calculations in R (or Python, future roadmap).</em></strong> Rust is superior for speed and optimisation: aggressive multi-threading, no copy-on-modify semantics, tight memory control, and SIMD acceleration for specific bottlenecks (distance calculations, averaging, summing, normalising). R here is just an interface, telling the underlying Rust code what to do. We pay for this with some long compile time while installing the package, but the speed-ups across the board are so substantial that it is worth it.</p></li>
 </ol>
 <p>But if the data is not in memory, will this not be slow? Well, no. We store data in structures like this. One for cells:</p>
@@ -313,7 +313,7 @@ Same as kNN graph ~244 MB</code></pre>
 <p>The response is graded rather than one blanket error. Reading a stale artefact warns, because plenty of call sites use the getters as presence probes on something they are about to overwrite anyway. Anything that hands cached indices to Rust or writes a derived result back errors outright. <code>options(bixverse.cache_check = "error")</code> promotes the warnings if you want no mercy, <code>"none"</code> turns the lot off at your own risk. Nothing is ever silently recomputed or binned: a forty minute Harmony run is not the package’s to throw away.</p>
 <p>None of which means you get to stop thinking about on-disk state. It only means you find out before the biology is wrong rather than after. The worked example lives in the <a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">thinking about single cells</a> vignette.</p>
 </li>
-<li><p>The “ecosystem” (quotation marks because at the moment it is just this R package and several Rust crates) is in its <del>infacy</del>puberty. Stuff will bug, break, breaking changes have been and will likely continue to be introduced. If you want to contribute at the methods level, you will need to go low-level and learn Rust (or ask your favourite LLM. But please no obvious AI slop.) The Rust code powering all of this is <a href="https://crates.io/crates/bixverse-rs" class="external-link">here</a>.</p></li>
+<li><p>The “ecosystem” (quotation marks because at the moment it is just this R package and several Rust crates) is in its <del>infancy</del>puberty. Stuff will bug, break, breaking changes have been and will likely continue to be introduced. If you want to contribute at the methods level, you will need to go low-level and learn Rust (or ask your favourite LLM. But please no obvious AI slop.) The Rust code powering all of this is <a href="https://crates.io/crates/bixverse-rs" class="external-link">here</a>.</p></li>
 </ul>
 <p>This is a side/hobby project, mostly a labour of love. I do hope other people find it useful and at least rethink some of their assumptions.</p>
 </section><section class="level2"><h2 id="future-directions">Future directions<a class="anchor" aria-label="anchor" href="#future-directions"></a>
@@ -334,7 +334,8 @@ Same as kNN graph ~244 MB</code></pre>
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -343,8 +344,69 @@ Same as kNN graph ~244 MB</code></pre>
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -358,6 +420,7 @@ Same as kNN graph ~244 MB</code></pre>
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

@@ -22,13 +22,14 @@ which identifies doublets via genetic variation across pooled donors.
   calls.
 
 - **Boosted doublet detection** takes a different angle. Rather than
-  simulating doublets, it trains a gradient-boosted tree ensemble to
-  distinguish real cells from synthetic doublets generated in the same
-  way as Scrublet. The classifier produces a probability per cell, and
-  doublet calls are derived from that probability. This can be more
-  robust when the score distribution from Scrublet is not cleanly
-  bimodal, though it introduces its own hyperparameters (and is
-  substantially slower).
+  simulating doublets, it repeatedly clusters real cells together with
+  synthetic doublets (Louvain) and tests each cluster for doublet
+  enrichment, the DoubletDetection approach; the synthetic doublets are
+  generated in the same way as Scrublet. The classifier produces a
+  probability per cell, and doublet calls are derived from that
+  probability. This can be more robust when the score distribution from
+  Scrublet is not cleanly bimodal, though it introduces its own
+  hyperparameters (and is substantially slower).
 
 - **scDblFinder** is a port of the
   [scDblFinder](https://bioconductor.org/packages/release/bioc/html/scDblFinder.html)
@@ -101,8 +102,8 @@ sc_object <- load_mtx(
 
 sc_object
 #> Single cell experiment (Single Cells).
-#>   No cells (original): 14528
-#>    To keep n: 14528
+#>   No cells (original): 14537
+#>    To keep n: 14537
 #>   No genes: 12622
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
@@ -149,12 +150,12 @@ scrublet <- scrublet_sc(
 )
 
 scrublet
-#> ScrubletRes: 14528 cells, 1774 doublets (12.2%)
-#>   Threshold:              0.2102
-#>   Detected doublet rate:  12.2%
-#>   Detectable fraction:    88.1%
-#>   Overall doublet rate:   13.9%
-#>   Simulated doublets:     21792
+#> ScrubletRes: 14537 cells, 1693 doublets (11.6%)
+#>   Threshold:              0.2228
+#>   Detected doublet rate:  11.6%
+#>   Detectable fraction:    84.4%
+#>   Overall doublet rate:   13.8%
+#>   Simulated doublets:     21805
 ```
 
 The `plot` method shows the score distribution for observed and
@@ -179,13 +180,13 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 #> $precision
-#> [1] 0.6640361
+#> [1] 0.6639102
 #> 
 #> $recall
-#> [1] 0.7556126
+#> [1] 0.7205128
 #> 
 #> $f1
-#> [1] 0.7068707
+#> [1] 0.6910544
 ```
 
 If you want to add the information to the DuckDB within the object, you
@@ -201,12 +202,12 @@ sc_object <- add_sc_new_obs(
 head(sc_object)
 #>    cell_idx          cell_id   nnz lib_size to_keep doublet doublet_score
 #>       <num>           <char> <num>    <num>  <lgcl>  <lgcl>         <num>
-#> 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.4036143720
-#> 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0503597111
-#> 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0175808705
-#> 4:        4 AAACATACCAGCTA-1   948     1588    TRUE   FALSE  0.1975089163
-#> 5:        5 AAACATACCATGCA-1   337      499    TRUE   FALSE  0.0006016847
-#> 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0391015001
+#> 1:        1 AAACATACAATGCC-1   851     2190    TRUE    TRUE   0.337701410
+#> 2:        2 AAACATACATTTCC-1   876     3016    TRUE   FALSE   0.053114705
+#> 3:        3 AAACATACCAGAAA-1   713     2481    TRUE   FALSE   0.017581267
+#> 4:        4 AAACATACCAGCTA-1   948     3155    TRUE   FALSE   0.187288731
+#> 5:        5 AAACATACCATGCA-1   337      703    TRUE   FALSE   0.004369638
+#> 6:        6 AAACATACCTCGCT-1   849     3419    TRUE   FALSE   0.024590714
 ```
 
 As we can see with added now the Scrublet data
@@ -220,10 +221,10 @@ lets you override it.
 ``` r
 
 scrublet_adj <- call_doublets_manual(scrublet, threshold = 0.25)
-#> Detected doublet rate = 11.3%
-#> Estimated detectable doublet fraction = 84.7%
+#> Detected doublet rate = 10.8%
+#> Estimated detectable doublet fraction = 81.8%
 #> Overall doublet rate:
-#>   Estimated = 13.3%
+#>   Estimated = 13.2%
 
 plot(scrublet_adj)
 ```
@@ -241,13 +242,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.6823458
+#> [1] 0.6779553
 #> 
 #> $recall
-#> [1] 0.7164849
+#> [1] 0.6801282
 #> 
 #> $f1
-#> [1] 0.6989987
+#> [1] 0.67904
 ```
 
 We have made it worse here, but maybe there are cases where the scores
@@ -268,10 +269,10 @@ run the detection method within a specific set of cells (see the
 The boosted approach trains a classifier to separate real cells from
 synthetic doublets. This can work better when the Scrublet score
 distribution is messy or unimodal. However, in this case we are running
-25 iterations of the algorithm, which means 20x generation of synthetic
-doublets. The initial PCA will be stored in the object for subsequent
-reprojection - nonetheless, this makes this usually slower than the
-other methods in this vignette.
+20 iterations of the algorithm (the `n_iters` default), which means 20x
+generation of synthetic doublets. The initial PCA will be stored in the
+object for subsequent reprojection - nonetheless, this makes this
+usually slower than the other methods in this vignette.
 
 ``` r
 
@@ -291,13 +292,13 @@ boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 #> $precision
-#> [1] 0.6506024
+#> [1] 0.6635638
 #> 
 #> $recall
-#> [1] 0.6927518
+#> [1] 0.6397436
 #> 
 #> $f1
-#> [1] 0.6710158
+#> [1] 0.651436
 ```
 
 Overall, it takes longer and has worse performance (in this data set).
@@ -337,13 +338,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7041825
+#> [1] 0.7108042
 #> 
 #> $recall
-#> [1] 0.5939705
+#> [1] 0.5608974
 #> 
 #> $f1
-#> [1] 0.6443981
+#> [1] 0.6270154
 ```
 
 ### scDblFinder
@@ -382,13 +383,13 @@ doublet_metrics(
   actual = scdblfinder_dt$Call
 )
 #> $precision
-#> [1] 0.5851119
+#> [1] 0.5591443
 #> 
 #> $recall
-#> [1] 0.720975
+#> [1] 0.8544872
 #> 
 #> $f1
-#> [1] 0.645977
+#> [1] 0.6759635
 ```
 
 We can also extract the other scores from scDblFinder. We can for
@@ -409,8 +410,8 @@ table(
 )
 #>         weighted
 #> lightgbm FALSE  TRUE
-#>    FALSE 11760   847
-#>    TRUE     68  1853
+#>    FALSE 11647   506
+#>    TRUE    187  2197
 ```
 
 Or alternatively, the cxds scores can also be extracted and used. These
@@ -432,8 +433,8 @@ table(
 )
 #>         cxds
 #> lightgbm FALSE  TRUE
-#>    FALSE 12363   244
-#>    TRUE    848  1073
+#>    FALSE 11981   172
+#>    TRUE   1247  1137
 ```
 
 Should you observe that this is very flat or you only have a few data

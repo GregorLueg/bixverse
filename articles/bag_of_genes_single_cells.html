@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -147,7 +147,7 @@
 <li>The third, NMF, also <em>discovers</em> gene programmes and regulatory relationships via matrix factorisation which is different from SCENIC and Hotspot.</li>
 <li>The fourth, LDA, is a topic model over a binary matrix. It picks up where SCENIC leaves off: binarise the regulon activity, then sort the TFs into topics.</li>
 </ul>
-<p>We use the PBMC3k dataset throughout. At 2,700 cells this is likely too small for the GRN methods to produce biologically meaningful results, but it is large enough to show the API and the workflow end to end. On real datasets with tens of thousands of cells the same code applies unchanged. Also, as the</p>
+<p>We use the PBMC3k dataset throughout. At 2,700 cells this is likely too small for the GRN methods to produce biologically meaningful results, but it is large enough to show the API and the workflow end to end. On real datasets with tens of thousands of cells the same code applies unchanged.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse">bixverse</a></span><span class="op">)</span></span>
@@ -181,7 +181,6 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_mtx.html">load_mtx</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  sc_mtx_io_param <span class="op">=</span> <span class="va">mtx_io_params</span>,</span>
-<span>  mtx_streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -238,10 +237,10 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Generating the snn graph.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">1.5</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.5.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, knn_method <span class="op">=</span> <span class="st">"annoy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
-<span><span class="co">#&gt; Using n_epochs = 500 (dataset &lt;10k samples or adam_parallel optimiser)</span></span>
-<span><span class="co">#&gt; Using provided kNN graph.</span></span>
+<span><span class="co">#&gt; Using n_epochs = 500 (Adam optimiser or dataset &lt;=10k samples)</span></span>
 <span></span>
 <span><span class="co"># UMAP coordinates for reuse</span></span>
 <span><span class="va">umap_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_embedding_data.html">extract_embedding_data</a></span><span class="op">(</span><span class="va">sc_object</span>, embedding <span class="op">=</span> <span class="st">"umap"</span><span class="op">)</span></span>
@@ -351,7 +350,7 @@
 </div>
 </div>
 </div>
-<p>Let’s imagine you want to add the scores to the internal DB. There are helpers for this, too. The <code><a href="../reference/get_data.html">get_data()</a></code> helper in combination with ``</p>
+<p>Let’s imagine you want to add the scores to the internal DB. There are helpers for this, too. The <code><a href="../reference/get_data.html">get_data()</a></code> helper in combination with <code><a href="../reference/add_sc_new_obs.html">add_sc_new_obs()</a></code> does the job.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_sc_new_obs.html">add_sc_new_obs</a></span><span class="op">(</span></span>
@@ -426,7 +425,7 @@
 </section><section class="level3"><h3 id="vision-with-spatial-autocorrelation">VISION with spatial autocorrelation<a class="anchor" aria-label="anchor" href="#vision-with-spatial-autocorrelation"></a>
 </h3>
 <p>Scoring gene sets is useful, but a natural follow-up question is: <em>are these scores spatially structured on the cell neighbourhood graph, or just noise?</em> <a href="https://www.nature.com/articles/s41467-019-12235-0" class="external-link">VISION</a> provides a permutation-based test of spatial autocorrelation (Geary’s C) on the kNN graph. Gene sets with significant autocorrelation are those whose activity varies smoothly across cell neighbourhoods – a strong indication that the signal is biologically meaningful rather than random.</p>
-<p>VISION expects gene sets in a signed format with <code>pos</code> and (optionally) <code>neg</code> components. In the cause of our cell lineage genes, we could use the other cell type’s markers as negatives, but we will just leave it blank here.</p>
+<p>VISION expects gene sets in a signed format with <code>pos</code> and (optionally) <code>neg</code> components. In the case of our cell lineage genes, we could use the other cell type’s markers as negatives, but we will just leave it blank here.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vision_gs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">lineage_sets</span>, <span class="kw">function</span><span class="op">(</span><span class="va">genes</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>pos <span class="op">=</span> <span class="va">genes</span><span class="op">)</span><span class="op">)</span></span>
@@ -464,7 +463,7 @@
 <span><span class="va">hotspot_autocor</span><span class="op">[</span>, <span class="va">gene_symbol</span> <span class="op">:=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">gene_id</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hotspot_autocor</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">fdr</span><span class="op">)</span><span class="op">]</span>, <span class="fl">25L</span><span class="op">)</span></span>
-<span><span class="co">#&gt;             gene_id  gaerys_c   z_score  pval   fdr  gene_symbol</span></span>
+<span><span class="co">#&gt;             gene_id  gearys_c   z_score  pval   fdr  gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;       &lt;char&gt;</span></span>
 <span><span class="co">#&gt;  1: ENSG00000162444 0.2827095  43.65414     0     0         RBP7</span></span>
 <span><span class="co">#&gt;  2: ENSG00000142676 0.2258087  45.49569     0     0        RPL11</span></span>
@@ -491,7 +490,7 @@
 <span><span class="co">#&gt; 23: ENSG00000115523 0.6014066 155.95502     0     0         GNLY</span></span>
 <span><span class="co">#&gt; 24: ENSG00000153563 0.2453860  51.16970     0     0         CD8A</span></span>
 <span><span class="co">#&gt; 25: ENSG00000172116 0.2991430  59.67398     0     0         CD8B</span></span>
-<span><span class="co">#&gt;             gene_id  gaerys_c   z_score  pval   fdr  gene_symbol</span></span>
+<span><span class="co">#&gt;             gene_id  gearys_c   z_score  pval   fdr  gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;       &lt;char&gt;</span></span></code></pre></div>
 </div>
 <p>You should get a set of well known cell type markers here…</p>
@@ -1365,7 +1364,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -1374,8 +1374,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -1389,6 +1450,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

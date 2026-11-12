@@ -51,6 +51,7 @@ sc <- demo_single_cells(
   )
 )
 calculate_graph_connectivity_sc(sc, cell_type_column = "cell_grp")
+#> Calculating graph connectivity over 3 cell types.
 #> Graph Connectivity
 #>   Cell types: 3
 #>   Mean:    1.0000 (1 = every cell type connected)

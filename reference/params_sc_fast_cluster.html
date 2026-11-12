@@ -11,7 +11,7 @@ centroid is handed back to its cells."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -134,7 +134,7 @@ centroid is handed back to its cells.</p>
 
 <dl><dt id="arg-n-centroids">n_centroids<a class="anchor" aria-label="anchor" href="#arg-n-centroids"></a></dt>
 <dd><p>Integer or <code>NULL</code>. Number of k-means centroids. If <code>NULL</code>,
-defaults to <code>floor(sqrt(n_cells))</code>. Defaults to <code>NULL</code>.</p></dd>
+defaults to <code>floor(4 * sqrt(n_cells))</code>. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-km-type">km_type<a class="anchor" aria-label="anchor" href="#arg-km-type"></a></dt>
@@ -235,7 +235,7 @@ in units of the number of nodes. Defaults to <code>10L</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list with the following elements:</p><ul><li><p>n_centroids - Integer or <code>NULL</code>. Number of k-means centroids. If
-<code>NULL</code>, defaults to <code>floor(sqrt(n_cells))</code>. Defaults to <code>NULL</code>.</p></li>
+<code>NULL</code>, defaults to <code>floor(4 * sqrt(n_cells))</code>. Defaults to <code>NULL</code>.</p></li>
 <li><p>km_type - String. Which k-means to run for the coarsening. One of
 <code>c("standard", "minibatch")</code>. Defaults to <code>"standard"</code>.</p></li>
 <li><p>k_means_iter - Integer. Number of k-means iterations. Defaults to

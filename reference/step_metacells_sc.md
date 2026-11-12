@@ -18,14 +18,18 @@ then hand to
 ## Usage
 
 ``` r
-step_metacells_sc(method = c("bootstrapped", "seacells", "supercells"), ...)
+step_metacells_sc(
+  method = c("bootstrapped", "seacells", "supercells", "metacells2"),
+  ...
+)
 ```
 
 ## Arguments
 
 - method:
 
-  String. One of `c("bootstrapped", "seacells", "supercells")`.
+  String. One of
+  `c("bootstrapped", "seacells", "supercells", "metacells2")`.
 
 - ...:
 

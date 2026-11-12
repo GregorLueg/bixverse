@@ -4,8 +4,9 @@ Returns the neighbour graph the clustering runs on. Depending on the
 `knn_sym` it was built with, see
 [`params_knn_graph_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_graph_defaults.md),
 this is the shared nearest neighbour graph, the UMAP fuzzy simplicial
-set or the kNN union. The method is stored in the `method` graph
-attribute.
+set or the kNN union. The graph lives in Rust; convert it with
+[`as_igraph()`](https://gregorlueg.github.io/bixverse/reference/as_igraph.md)
+if you need an igraph.
 
 ## Usage
 
@@ -37,15 +38,17 @@ get_connectivities(x, ...)
 
 ## Value
 
-The undirected, weighted igraph.
+A `SingleCellConnectivity`, see
+[`as_sc_connectivity()`](https://gregorlueg.github.io/bixverse/reference/as_sc_connectivity.md).
 
 ## Examples
 
 ``` r
 # the neighbour graph the clustering methods run on
 sc <- demo_single_cells()
-igraph::vcount(get_connectivities(sc))
-#> [1] 500
+get_connectivities(sc)
+#> SingleCellConnectivity: 500 cells, 18888 edges
+#>   Method: snn
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

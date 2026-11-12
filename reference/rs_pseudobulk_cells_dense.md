@@ -25,8 +25,7 @@ rs_pseudobulk_cells_dense(f_path, cell_indices_ls, assay, verbose)
 - assay:
 
   String. One of `c("raw", "norm")`. `"raw"` sums the raw counts,
-  `"norm"` averages the normalised counts. Unrecognised values fall back
-  to `"raw"`.
+  `"norm"` averages the normalised counts.
 
 - verbose:
 

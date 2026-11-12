@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -104,7 +104,7 @@
 <span>  prop <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  k_refine <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  refinement_strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"index"</span>, <span class="st">"approximate"</span>, <span class="st">"bruteforce"</span><span class="op">)</span>,</span>
-<span>  index_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nndescent"</span>, <span class="st">"ivf"</span>, <span class="st">"hnsw"</span>, <span class="st">"annoy"</span>, <span class="st">"exhaustive"</span><span class="op">)</span>,</span>
+<span>  index_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nndescent"</span>, <span class="st">"hnsw"</span>, <span class="st">"annoy"</span>, <span class="st">"exhaustive"</span><span class="op">)</span>,</span>
 <span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -131,7 +131,7 @@ One of <code>c("approximate", "bruteforce", "index")</code>. Defaults to
 
 <dt id="arg-index-type">index_type<a class="anchor" aria-label="anchor" href="#arg-index-type"></a></dt>
 <dd><p>String. Type of kNN index to use. One of
-<code>c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")</code>. Defaults to
+<code>c("nndescent", "hnsw", "annoy", "exhaustive")</code>. Defaults to
 <code>"nndescent"</code>. <code>"exhaustive"</code> scans every cell, so it returns the true
 nearest neighbour rather than an approximation, at a cost that grows with
 the number of cells.</p></dd>
@@ -141,13 +141,13 @@ the number of cells.</p></dd>
 <dd><p>List. Optional overrides for kNN parameters. See
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
-<code>diversify_prob</code>, <code>ef_budget</code>, <code>extract_knn</code>, <code>m</code>, <code>ef_construction</code>,
-<code>ef_search</code>, <code>n_list</code> and <code>n_probe</code>.</p></dd>
+<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>,
+<code>n_list</code> and <code>n_probe</code>. <code>knn_method</code> is ignored in favour of <code>index_type</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the MiloR parameters.</p>
+    <p>A list with the MiloR parameters and the full kNN block.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

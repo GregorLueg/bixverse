@@ -6,9 +6,13 @@ global structure by operating on a diffusion process over the data manifold.
 Unlike UMAP or t-SNE, PHATE is explicitly designed to reveal continuous
 progressions and branching structure, making it the preferred choice for data
 with developmental or trajectory-like organisation.
-When use_knn = TRUE (the default), the kNN graph already stored on the
-object is reused; otherwise neighbours are computed from the chosen
-embedding. The algorithm then constructs a diffusion operator, raises it to a
+By default (use_knn = FALSE) neighbours are computed from the chosen
+embedding. PHATE searches 6 * k + 5 neighbours so that every point whose
+affinity clears the kernel threshold can join, which the kNN graph stored on
+the object (usually 15 wide) cannot supply. use_knn = TRUE reuses that
+graph anyway and gives a narrower kernel. modality = &quot;wnn&quot; always uses the
+integrated WNN graph. The algorithm then constructs a diffusion operator,
+raises it to a
 power (the diffusion time t, see manifoldsR::params_phate()) that
 denoises the manifold, and computes potential distances that are finally
 embedded via metric MDS.
@@ -21,9 +25,13 @@ global structure by operating on a diffusion process over the data manifold.
 Unlike UMAP or t-SNE, PHATE is explicitly designed to reveal continuous
 progressions and branching structure, making it the preferred choice for data
 with developmental or trajectory-like organisation.
-When use_knn = TRUE (the default), the kNN graph already stored on the
-object is reused; otherwise neighbours are computed from the chosen
-embedding. The algorithm then constructs a diffusion operator, raises it to a
+By default (use_knn = FALSE) neighbours are computed from the chosen
+embedding. PHATE searches 6 * k + 5 neighbours so that every point whose
+affinity clears the kernel threshold can join, which the kNN graph stored on
+the object (usually 15 wide) cannot supply. use_knn = TRUE reuses that
+graph anyway and gives a narrower kernel. modality = &quot;wnn&quot; always uses the
+integrated WNN graph. The algorithm then constructs a diffusion operator,
+raises it to a
 power (the diffusion time t, see manifoldsR::params_phate()) that
 denoises the manifold, and computes potential distances that are finally
 embedded via metric MDS.
@@ -37,7 +45,7 @@ continuous biological processes on denoised data."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,9 +140,13 @@ global structure by operating on a diffusion process over the data manifold.
 Unlike UMAP or t-SNE, PHATE is explicitly designed to reveal continuous
 progressions and branching structure, making it the preferred choice for data
 with developmental or trajectory-like organisation.</p>
-<p>When <code>use_knn = TRUE</code> (the default), the kNN graph already stored on the
-object is reused; otherwise neighbours are computed from the chosen
-embedding. The algorithm then constructs a diffusion operator, raises it to a
+<p>By default (<code>use_knn = FALSE</code>) neighbours are computed from the chosen
+embedding. PHATE searches <code>6 * k + 5</code> neighbours so that every point whose
+affinity clears the kernel threshold can join, which the kNN graph stored on
+the object (usually 15 wide) cannot supply. <code>use_knn = TRUE</code> reuses that
+graph anyway and gives a narrower kernel. <code>modality = "wnn"</code> always uses the
+integrated WNN graph. The algorithm then constructs a diffusion operator,
+raises it to a
 power (the diffusion time <code>t</code>, see <code><a href="https://gregorlueg.github.io/manifoldsR/reference/params_phate.html" class="external-link">manifoldsR::params_phate()</a></code>) that
 denoises the manifold, and computes potential distances that are finally
 embedded via metric MDS.</p>
@@ -147,7 +159,7 @@ continuous biological processes on denoised data.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">phate_sc</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
-<span>  use_knn <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  use_knn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"phate"</span>,</span>
 <span>  no_embd_to_use <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -172,7 +184,7 @@ continuous biological processes on denoised data.</p>
 
 <dt id="arg-use-knn">use_knn<a class="anchor" aria-label="anchor" href="#arg-use-knn"></a></dt>
 <dd><p>Boolean. Use the kNN graph found in the object. Defaults to
-<code>TRUE</code>. If not available, will default to the embedding.</p></dd>
+<code>FALSE</code>, see the description.</p></dd>
 
 
 <dt id="arg-embd-to-use">embd_to_use<a class="anchor" aria-label="anchor" href="#arg-embd-to-use"></a></dt>

@@ -73,7 +73,7 @@ symphony_ref <- build_symphony_ref(
   ref,
   batch_column = "batch_index",
   hvg = get_hvg(ref) + 1L,
-  harmony_params = params_sc_harmony(k = 10L),
+  harmony_params = params_sc_harmony_v2(k = 10L),
   no_pcs = 10L,
   label_columns = "cell_grp",
   .verbose = FALSE
@@ -89,12 +89,12 @@ labels <- transfer_labels_symphony(
 head(labels)
 #>    predicted_cell_grp confidence_cell_grp
 #>                <char>               <num>
-#> 1:        cell_type_1           1.0000000
-#> 2:        cell_type_2           0.8000000
+#> 1:        cell_type_1           0.9333333
+#> 2:        cell_type_2           0.9333333
 #> 3:        cell_type_3           0.8000000
-#> 4:        cell_type_1           0.8666667
+#> 4:        cell_type_1           0.9333333
 #> 5:        cell_type_2           0.7333333
-#> 6:        cell_type_3           0.8666667
+#> 6:        cell_type_3           0.9333333
 
 unlink(c(ref@dir_data, query@dir_data), recursive = TRUE, force = TRUE)
 ```

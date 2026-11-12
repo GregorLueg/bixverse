@@ -12,9 +12,10 @@ find_clusters_sc(
   object,
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
-  name = "leiden_clustering",
+  name = NULL,
   modality = c("rna", "adt", "wnn"),
   seed = 42L,
+  .verbose = TRUE,
   ...
 )
 ```
@@ -36,17 +37,23 @@ find_clusters_sc(
 
 - name:
 
-  String. The name to add to the obs table in the DuckDB.
+  Optional string. The name of the obs column to add. `NULL` gives
+  `"leiden_clustering"` or `"louvain_clustering"`, following
+  `cluster_algorithm`.
 
 - modality:
 
-  String. On which modality to run the UMAP. One of
-  `c("rna", "adt", "wnn")`. The two latter options are only available
-  for multi-modal versions with the added data.
+  String. On which modality to cluster. One of `c("rna", "adt", "wnn")`.
+  The two latter options are only available for multi-modal versions
+  with the added data.
 
 - seed:
 
   Integer. For reproducibility.
+
+- .verbose:
+
+  Boolean or integer. Controls verbosity.
 
 - ...:
 
@@ -64,6 +71,7 @@ The object with added clustering in the obs table.
 # Leiden on the cached neighbour graph
 sc <- demo_single_cells()
 sc <- find_clusters_sc(sc, res = 1.0, name = "clusters")
+#> Running leiden clustering at resolution 1.
 table(get_sc_obs(sc)$clusters)
 #> 
 #>   0   1   2 

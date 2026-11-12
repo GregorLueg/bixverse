@@ -42,7 +42,6 @@ anything.
 
 ``` r
 
-# NEEDS UPDATE
 h5_10x_path <- download_pbmc_totalseq_data()
 
 tempdir_10x_total_seq <- tempdir()
@@ -239,6 +238,7 @@ sc_object <- find_neighbours_sc(
 ``` r
 
 sc_object <- find_clusters_sc(sc_object)
+#> Running leiden clustering at resolution 1.
 
 head(sc_object)
 #>    cell_idx            cell_id   nnz lib_size to_keep adt_nnz adt_lib_size
@@ -283,11 +283,10 @@ embedding_plot_sc(
 
 ### ADT
 
-For ADT we skip HVG selection — there is nothing to select from in a
-panel of thirty-odd antibodies — and feed the panel directly into PCA,
-minus the isotype controls (they only add background noise). Otherwise
-the recipe is the same as for RNA, with `modality = "adt"` doing the
-routing.
+For ADT we skip HVG selection (there is nothing to select from in an
+antibody panel) and feed the panel directly into PCA, minus the isotype
+controls (they only add background noise). Otherwise the recipe is the
+same as for RNA, with `modality = "adt"` doing the routing.
 
 ``` r
 
@@ -329,7 +328,7 @@ feature_plot_sc(
   theme_bx()
 ```
 
-![](multi_modal_single_cells_files/figure-html/tsne%20and%20feature%20plot%20for%20RNA-1.png)
+![](multi_modal_single_cells_files/figure-html/tsne%20and%20feature%20plot%20for%20ADT-1.png)
 
 ## Plotting
 
@@ -475,7 +474,6 @@ sc_object <- tsne_sc(
   modality = "wnn"
 )
 #> Running t-SNE.
-#> Using provided kNN graph.
 ```
 
 A nice sanity check is to look at the same marker from both modalities,

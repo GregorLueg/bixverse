@@ -1,4 +1,4 @@
-# Generates the neighbour graph for igraph
+# Generates the neighbour graph
 
 **\[experimental\]** Symmetrises a kNN matrix into an undirected,
 weighted graph. Three options: the bluster/Seurat shared nearest
@@ -37,10 +37,8 @@ rs_sc_knn_graph(knn_mat, knn_dist, graph_params, verbose)
 
 ## Value
 
-A list with the following items:
-
-- edges - Integer vector with the flattened edge pairs (1-indexed!),
-  each undirected edge once, ready for
-  [`igraph::add_edges()`](https://r.igraph.org/reference/add_edges.html).
-
-- weights - Edge weights of the pairs above.
+External pointer to the Rust graph. See
+[`rs_graph_info()`](https://gregorlueg.github.io/bixverse/reference/rs_graph_info.md),
+[`rs_graph_to_edges()`](https://gregorlueg.github.io/bixverse/reference/rs_graph_to_edges.md)
+and
+[`rs_graph_to_bytes()`](https://gregorlueg.github.io/bixverse/reference/rs_graph_to_bytes.md).

@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Trajectory inference with Palantir and PAGA</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -233,11 +233,14 @@
 <span>  res <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  name <span class="op">=</span> <span class="st">"leiden_clusters"</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.7.</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in .manifold_inputs(object = object, use_knn = use_knn, embd_to_use =</span></span>
+<span><span class="co">#&gt; embd_to_use, : Using the cached kNN graph with 30 neighbours; `k = 15`,</span></span>
+<span><span class="co">#&gt; `knn_method` and `nn_params` only apply with `use_knn = FALSE`.</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
-<span><span class="co">#&gt; Using n_epochs = 500 (dataset &lt;10k samples or adam_parallel optimiser)</span></span>
-<span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
+<span><span class="co">#&gt; Using n_epochs = 500 (Adam optimiser or dataset &lt;=10k samples)</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
@@ -311,18 +314,18 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality       artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 733a93b0a505a11f</span></span>
-<span><span class="co">#&gt; 2:      rna      embedding   umap    TRUE  FALSE   &lt;NA&gt; b632828167fd19d8</span></span>
-<span><span class="co">#&gt; 3:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 6035cf89ed2786ee</span></span>
-<span><span class="co">#&gt; 4:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; b7ad77f84df47c76</span></span>
-<span><span class="co">#&gt; 5:      rna          magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 66135374d3f4615d</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; a27928178dbea264</span></span>
+<span><span class="co">#&gt; 2:      rna      embedding   umap    TRUE  FALSE   &lt;NA&gt; 8910010589687bc1</span></span>
+<span><span class="co">#&gt; 3:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 455b1bb1bf2ca2be</span></span>
+<span><span class="co">#&gt; 4:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 5cac22d67561b69b</span></span>
+<span><span class="co">#&gt; 5:      rna          magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 1b8f4c42c5fd2cfc</span></span>
 <span><span class="co">#&gt;                                 from</span></span>
 <span><span class="co">#&gt;                               &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                  </span></span>
-<span><span class="co">#&gt; 2: 733a93b0a505a11f,6035cf89ed2786ee</span></span>
-<span><span class="co">#&gt; 3:                  733a93b0a505a11f</span></span>
-<span><span class="co">#&gt; 4:                  6035cf89ed2786ee</span></span>
-<span><span class="co">#&gt; 5:                  6035cf89ed2786ee</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: a27928178dbea264,455b1bb1bf2ca2be</span></span>
+<span><span class="co">#&gt; 3:                  a27928178dbea264</span></span>
+<span><span class="co">#&gt; 4:                  455b1bb1bf2ca2be</span></span>
+<span><span class="co">#&gt; 5:                  455b1bb1bf2ca2be</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="paga">PAGA<a class="anchor" aria-label="anchor" href="#paga"></a>
 </h2>
@@ -399,7 +402,7 @@
 <span>  Ery <span class="op">=</span> <span class="st">"Run4_200562869397916"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p><code>knn = 30</code> is the neighbour count for the geodesic graph Palantir builds on the multiscale space, a different knob from the <code>k</code> of the input kNN graph, and <code>num_waypoints = 500</code> is the notebook’s override of the 1200 default.</p>
+<p><code>knn = 30</code> is the neighbour count for the geodesic graph Palantir builds on the multiscale space, a different knob from the <code>k</code> of the input kNN graph. <code>num_waypoints</code> stays at its default of 1200; the reference notebook uses 500.</p>
 <p>Two things do not mirror the reference, and both change what you get.</p>
 <p><code>use_early_cell_as_start</code> is <code>TRUE</code>, so the early cell you name is the one that gets used. The reference snaps it to the nearest boundary cell of the diffusion map instead, and that candidate set is small, at most two cells per multiscale component. On a branching manifold the snap will cheerfully move a root cell onto a branch tip and run the whole trajectory backwards.</p>
 <p><code>n_eigs</code> is pinned at 10, leaving nine multiscale components. Left at <code>NULL</code> the count comes from the largest eigengap, which on this data picks 3, i.e. two components. Two components cannot resolve a three-way branch: the erythroid arm separates fine but the monocyte and dendritic fate probabilities end up correlated, their branch masks collapse onto each other, and the gene trends for those two lineages come out nearly identical. There is a section on that below.</p>
@@ -695,7 +698,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -704,8 +708,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -719,6 +784,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

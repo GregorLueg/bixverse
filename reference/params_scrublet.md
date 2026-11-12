@@ -1,8 +1,8 @@
 # Wrapper function for Scrublet doublet detection parameters
 
-Constructor for the various Scrublet parameters. In this case, the
-default for the kNN graph generation was set to `"hnsw"` as this
-algorithm showed the best performance in different empirical benchmarks.
+Constructor for the various Scrublet parameters. The kNN graph uses the
+[`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+search (`"kmknn"`) with automatic neighbour detection (`k = 0L`).
 
 ## Usage
 
@@ -45,8 +45,8 @@ params_scrublet(
 - manual_threshold:
 
   Numeric or `NULL`. Manual doublet score threshold. If `NULL`
-  (default), threshold is automatically detected from simulated doublet
-  score distribution. Defaults to `NULL`.
+  (default), the threshold comes from Otsu's method on the observed
+  doublet scores. Defaults to `NULL`.
 
 - normalisation:
 
@@ -84,9 +84,9 @@ params_scrublet(
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
-  `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`. Note: this function defaults to `k = 0L` (automatic
-  neighbour detection). See
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`. Note:
+  this function defaults to `k = 0L` (automatic neighbour detection).
+  See
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for the available elements. Defaults to `list(k = 0L)`.
 
@@ -125,5 +125,5 @@ A named list with the following elements:
   automatic threshold detection. Typically 50-100. Defaults to `100L`.
 
 - manual_threshold - Numeric or `NULL`. Manual doublet score threshold.
-  If `NULL` (default), threshold is automatically detected from
-  simulated doublet score distribution. Defaults to `NULL`.
+  If `NULL` (default), the threshold comes from Otsu's method on the
+  observed doublet scores. Defaults to `NULL`.

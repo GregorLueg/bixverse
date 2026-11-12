@@ -32,7 +32,7 @@ We use the PBMC3k dataset throughout. At 2,700 cells this is likely too
 small for the GRN methods to produce biologically meaningful results,
 but it is large enough to show the API and the workflow end to end. On
 real datasets with tens of thousands of cells the same code applies
-unchanged. Also, as the
+unchanged.
 
 ``` r
 
@@ -74,7 +74,6 @@ mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -131,10 +130,10 @@ sc_object <- find_neighbours_sc(
 #> 
 #> Generating the snn graph.
 sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
+#> Running leiden clustering at resolution 1.5.
 sc_object <- umap_sc(sc_object, knn_method = "annoy")
 #> Running UMAP.
-#> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-#> Using provided kNN graph.
+#> Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
 
 # UMAP coordinates for reuse
 umap_dt <- extract_embedding_data(sc_object, embedding = "umap")
@@ -253,7 +252,9 @@ Module scores for lineage genes projected onto UMAP
 Let’s imagine you want to add the scores to the internal DB. There are
 helpers for this, too. The
 [`get_data()`](https://gregorlueg.github.io/bixverse/reference/get_data.md)
-helper in combination with \`\`
+helper in combination with
+[`add_sc_new_obs()`](https://gregorlueg.github.io/bixverse/reference/add_sc_new_obs.md)
+does the job.
 
 ``` r
 
@@ -351,7 +352,7 @@ indication that the signal is biologically meaningful rather than
 random.
 
 VISION expects gene sets in a signed format with `pos` and (optionally)
-`neg` components. In the cause of our cell lineage genes, we could use
+`neg` components. In the case of our cell lineage genes, we could use
 the other cell type’s markers as negatives, but we will just leave it
 blank here.
 
@@ -405,7 +406,7 @@ hotspot_autocor <- hotspot_autocor_sc(
 hotspot_autocor[, gene_symbol := ensembl_to_symbol[gene_id]]
 
 head(hotspot_autocor[order(fdr)], 25L)
-#>             gene_id  gaerys_c   z_score  pval   fdr  gene_symbol
+#>             gene_id  gearys_c   z_score  pval   fdr  gene_symbol
 #>              <char>     <num>     <num> <num> <num>       <char>
 #>  1: ENSG00000162444 0.2827095  43.65414     0     0         RBP7
 #>  2: ENSG00000142676 0.2258087  45.49569     0     0        RPL11
@@ -432,7 +433,7 @@ head(hotspot_autocor[order(fdr)], 25L)
 #> 23: ENSG00000115523 0.6014066 155.95502     0     0         GNLY
 #> 24: ENSG00000153563 0.2453860  51.16970     0     0         CD8A
 #> 25: ENSG00000172116 0.2991430  59.67398     0     0         CD8B
-#>             gene_id  gaerys_c   z_score  pval   fdr  gene_symbol
+#>             gene_id  gearys_c   z_score  pval   fdr  gene_symbol
 #>              <char>     <num>     <num> <num> <num>       <char>
 ```
 

@@ -25,5 +25,5 @@ Symmetrise a kNN into the neighbour graph
 
 ## Value
 
-Undirected, weighted igraph with the method in the `method` graph
-attribute.
+A `SingleCellConnectivity` holding the undirected, weighted Rust graph,
+with the method in `method`.

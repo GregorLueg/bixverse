@@ -198,7 +198,7 @@ about it too:
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id   from
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char> <list>
-#> 1:      rna residuals   <NA>    TRUE  FALSE   <NA> 0d85ca6460145028
+#> 1:      rna residuals   <NA>    TRUE  FALSE   <NA> 662212ebd9d8a1c0
 ```
 
 ## Variable features
@@ -323,6 +323,7 @@ none of them know or care where the PCA came from.
 
 sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 sc_object <- find_clusters_sc(sc_object, res = 0.8, name = "residual_clusters")
+#> Running leiden clustering at resolution 0.8.
 sc_object <- umap_sc(sc_object, .verbose = FALSE)
 
 umap_dt <- data.table(
@@ -466,7 +467,7 @@ corrected <- sct_corrected_counts_sc(
   .verbose = TRUE
 )
 #> Building the cell-major companion store.
-#> Corrected store: 6626 cells by 13925 genes in /tmp/RtmpsaWcBT/pbmc_corrected.
+#> Corrected store: 6626 cells by 13925 genes in /tmp/RtmpvJ1Vs2/pbmc_corrected.
 
 corrected
 #> Single cell experiment (Single Cells).

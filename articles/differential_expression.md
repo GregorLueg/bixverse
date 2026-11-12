@@ -251,7 +251,7 @@ response, and it is reassuring rather than surprising.
 
 Note that the Wilcoxon test finds *fewer* genes here than the other two,
 not more. Pseudoreplication inflates significance, but the Wilcoxon test
-is also a rank test with a expression-proportion filter, and it is
+is also a rank test with an expression-proportion filter, and it is
 simply less powerful for a large shift in mean. On a real, strong effect
 all three agree the effect is there. The difference shows up somewhere
 else.
@@ -502,10 +502,10 @@ expression” is an inference, and then it does.
 
 NEBULA fits an optimiser per gene and the fits are independent, so it
 parallelises well and scales linearly in genes. On this data 500 genes
-over 5,000 cells takes a couple of seconds. Something with 50,000 cells
-and 5,000 genes will take minutes rather than seconds, which is fine for
-a considered analysis and painful in a loop over twenty cell types.
-Restrict the genes.
+over 5,000 cells takes well under a second. Something with 50,000 cells
+and 5,000 genes takes far longer, which is fine for a considered
+analysis and painful in a loop over twenty cell types. Restrict the
+genes.
 
 `gene_batch_size` in
 [`params_nebula()`](https://gregorlueg.github.io/bixverse/reference/params_nebula.html)

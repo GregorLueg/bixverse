@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Multi-modal single cell analysis with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -159,8 +159,7 @@
 <p>A 10x Cell Ranger H5 with multiple feature types contains both the RNA and the ADT counts in one file, separated by <code>feature_type</code>. We peek at the metadata first to confirm what is in there before committing to anything.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># NEEDS UPDATE</span></span>
-<span><span class="va">h5_10x_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/download_pbmc_totalseq_data.html">download_pbmc_totalseq_data</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">h5_10x_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/download_pbmc_totalseq_data.html">download_pbmc_totalseq_data</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tempdir_10x_total_seq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -315,6 +314,7 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 1.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    cell_idx            cell_id   nnz lib_size to_keep adt_nnz adt_lib_size</span></span>
@@ -360,7 +360,7 @@
 </div>
 </section><section class="level3"><h3 id="adt">ADT<a class="anchor" aria-label="anchor" href="#adt"></a>
 </h3>
-<p>For ADT we skip HVG selection — there is nothing to select from in a panel of thirty-odd antibodies — and feed the panel directly into PCA, minus the isotype controls (they only add background noise). Otherwise the recipe is the same as for RNA, with <code>modality = "adt"</code> doing the routing.</p>
+<p>For ADT we skip HVG selection (there is nothing to select from in an antibody panel) and feed the panel directly into PCA, minus the isotype controls (they only add background noise). Otherwise the recipe is the same as for RNA, with <code>modality = "adt"</code> doing the routing.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_adt_sc.html">calculate_pca_adt_sc</a></span><span class="op">(</span></span>
@@ -400,7 +400,7 @@
 <span>  <span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/theme_bx.html">theme_bx</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="multi_modal_single_cells_files/figure-html/tsne%20and%20feature%20plot%20for%20RNA-1.png" width="672"></p>
+<figure><p><img src="multi_modal_single_cells_files/figure-html/tsne%20and%20feature%20plot%20for%20ADT-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -523,8 +523,7 @@
 <span>  <span class="va">sc_object</span>,</span>
 <span>  modality <span class="op">=</span> <span class="st">"wnn"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Running t-SNE.</span></span>
-<span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
+<span><span class="co">#&gt; Running t-SNE.</span></span></code></pre></div>
 </div>
 <p>A nice sanity check is to look at the same marker from both modalities, projected onto the WNN embedding. If WNN is doing its job, the two pictures should largely agree — even though they come from completely independent measurements.</p>
 <div class="cell">
@@ -567,7 +566,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -576,8 +576,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -591,6 +652,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

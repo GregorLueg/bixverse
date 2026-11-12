@@ -13,7 +13,7 @@ files are being used to store the counts."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,7 +113,7 @@ files are being used to store the counts.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  sc_mtx_io_param <span class="op">=</span> <span class="fu"><a href="params_sc_mtx_io.html">params_sc_mtx_io</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  mtx_streaming <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  mtx_streaming <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  csc_mem_gb <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  streaming <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  batch_size <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
@@ -141,9 +141,9 @@ files are being used to store the counts.</p>
 
 
 <dt id="arg-mtx-streaming">mtx_streaming<a class="anchor" aria-label="anchor" href="#arg-mtx-streaming"></a></dt>
-<dd><p>Boolean. Shall the .mtx file ingestion itself be
-streamed (via temp-file bucketing). Recommended for large mtx files.
-Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>No longer has an effect: the .mtx file is always read in
+a single pass with its entries bucketed on disk next to the store. Ignored.
+<a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a></p></dd>
 
 
 <dt id="arg-csc-mem-gb">csc_mem_gb<a class="anchor" aria-label="anchor" href="#arg-csc-mem-gb"></a></dt>

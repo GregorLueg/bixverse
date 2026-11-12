@@ -10,7 +10,8 @@ cluster on the plot tells you nothing, with densMAP it does. Setting
 [`manifoldsR::params_densmap()`](https://gregorlueg.github.io/manifoldsR/reference/params_densmap.html)
 gives you back plain UMAP.
 
-Neighbour handling is the same as in
+Neighbour handling and the optimiser choice in `umap_params` are the
+same as in
 [`umap_sc()`](https://gregorlueg.github.io/bixverse/reference/umap_sc.md):
 with `use_knn = TRUE` (the default) the cached kNN graph is reused,
 otherwise neighbours are computed from the chosen embedding.

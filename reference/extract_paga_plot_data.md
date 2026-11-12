@@ -102,6 +102,7 @@ Wolf, et al., Genome Biol., 2019.
 # the abstracted graph placed on the PCA coordinates
 sc <- demo_single_cells()
 sc <- find_clusters_sc(sc, res = 1.0)
+#> Running leiden clustering at resolution 1.
 paga <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
 extract_paga_plot_data(sc, paga, embedding = "pca")$nodes
 #>    cluster      dim_1      dim_2 n_cells

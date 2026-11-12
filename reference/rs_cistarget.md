@@ -49,7 +49,7 @@ rs_cistarget(
 - method:
 
   String. Recovery curve calculation method, one of
-  `c("approx", "icistarget")`. Anything else falls back to `"approx"`.
+  `c("approx", "icistarget")`.
 
 - n_mean:
 

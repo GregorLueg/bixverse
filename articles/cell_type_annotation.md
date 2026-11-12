@@ -148,7 +148,7 @@ sc_ref <- set_cells_to_keep(sc_ref, cells_to_keep)
 
 This block is the Harmony v2 path of the batch correction vignette: pick
 HVGs, run PCA, run Harmony v2. Version 1 is still available via
-[`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
+[`harmony_v1_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v1_sc.md)
 and
 [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md),
 but v2 is preferable in most settings (see the batch correction vignette
@@ -168,7 +168,7 @@ sc_ref <- calculate_pca_sc(
 )
 #> Using sparse SVD solving on scaled data on 2000 HVG.
 
-sc_ref <- harmony_v2_sc(
+sc_ref <- harmony_sc(
   object = sc_ref,
   batch_column = "exp_id",
   harmony_params = params_sc_harmony_v2()
@@ -208,7 +208,7 @@ resolutions <- c(0.5, 1, 1.5, 2)
 n_clusters <- purrr::map(graph_types, \(graph_type) {
   sc_ref <- find_neighbours_sc(
     object = sc_ref,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     neighbours_params = params_sc_neighbours(
       graph = list(knn_sym = graph_type)
     ),
@@ -227,6 +227,18 @@ n_clusters <- purrr::map(graph_types, \(graph_type) {
     rbindlist()
 }) %>%
   rbindlist()
+#> Running leiden clustering at resolution 0.5.
+#> Running leiden clustering at resolution 1.
+#> Running leiden clustering at resolution 1.5.
+#> Running leiden clustering at resolution 2.
+#> Running leiden clustering at resolution 0.5.
+#> Running leiden clustering at resolution 1.
+#> Running leiden clustering at resolution 1.5.
+#> Running leiden clustering at resolution 2.
+#> Running leiden clustering at resolution 0.5.
+#> Running leiden clustering at resolution 1.
+#> Running leiden clustering at resolution 1.5.
+#> Running leiden clustering at resolution 2.
 
 dcast(n_clusters, resolution ~ graph, value.var = "n_clusters")
 #> Key: <resolution>
@@ -253,7 +265,7 @@ For the rest of the vignette we work on the sNN graph.
 
 sc_ref <- find_neighbours_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   neighbours_params = params_sc_neighbours()
 )
 #> 
@@ -265,8 +277,7 @@ sc_ref <- umap_sc(
   use_knn = TRUE
 )
 #> Running UMAP.
-#> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-#> Using provided kNN graph.
+#> Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
 ```
 
 ## Clustering
@@ -282,6 +293,7 @@ are 0-based with `0` being the largest cluster.
 ``` r
 
 sc_ref <- find_clusters_sc(sc_ref, res = 1, name = "leiden_clusters")
+#> Running leiden clustering at resolution 1.
 
 sc_ref <- find_clusters_sc(
   sc_ref,
@@ -289,6 +301,7 @@ sc_ref <- find_clusters_sc(
   res = 1,
   name = "louvain_clusters"
 )
+#> Running louvain clustering at resolution 1.
 ```
 
 A few knobs get passed through `...` to
@@ -313,6 +326,7 @@ sc_ref <- find_clusters_sc(
   min_gain = 1e-4,
   local_moving = "coloured"
 )
+#> Running leiden clustering at resolution 1.
 ```
 
 How much do the three labelings agree? A small helper that plots, for
@@ -379,10 +393,10 @@ plot_overlap(
 On a few thousand cells the full graph clustering is instant. On a
 million it isn’t.
 [`fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_cluster_sc.md)
-coarsens the cells with k-means first (`sqrt(N)` centroids by default),
-builds a graph over the centroids and runs Louvain or Leiden on that.
-Each cell inherits the community of its centroid. Two options for the
-centroid graph:
+coarsens the cells with k-means first (`floor(4 * sqrt(N))` centroids by
+default), builds a graph over the centroids and runs Louvain or Leiden
+on that. Each cell inherits the community of its centroid. Two options
+for the centroid graph:
 
 - the default, a symmetrised kNN between the centroids (`centroid_k`,
   `centroid_graph`);
@@ -400,14 +414,14 @@ fc_resolutions <- c(2, 1.5, 1, 0.5)
 
 fc_knn <- fast_cluster_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   resolutions = fc_resolutions,
   n_seeds = 10L
 )
 
 fc_cell_med <- fast_cluster_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   resolutions = fc_resolutions,
   fc_params = params_sc_fast_cluster(cell_mediated = TRUE),
   n_seeds = 10L
@@ -485,9 +499,9 @@ plot_overlap(
 
 ![](cell_type_annotation_files/figure-html/fast%20vs%20full-1.png)
 
-With ~5.8k cells there are only ~76 centroids, so the partitions come
-out coarse: about 5 communities at resolution 1 against 14 for Leiden on
-the full graph. For data sets of this size, stick with
+At this size `floor(4 * sqrt(N))` only gives a few hundred centroids, so
+the partitions come out coarser than Leiden on the full graph. For data
+sets of this size, stick with
 [`find_clusters_sc()`](https://gregorlueg.github.io/bixverse/reference/find_clusters_sc.md).
 The fast path earns its keep once you are in the hundreds of thousands
 of cells, see the [1 million cells
@@ -834,7 +848,6 @@ sc_query <- SingleCells(dir_data = tempdir_query)
 sc_query <- load_mtx(
   object = sc_query,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = TRUE
 )
 #>  Converting the cell-based data into the gene-based format.
@@ -918,7 +931,9 @@ sc_query <- map_symphony_query(
   params = params_symphony_map(),
   .verbose = TRUE
 )
-#>  17 / 2000 reference HVGs not found in query; treated as zero columns.
+#> Warning in `method(map_symphony_query, bixverse::SymphonyReference)`(reference
+#> = <object>, : 17 / 2000 reference HVGs not found in query; treated as zero
+#> columns.
 ```
 
 The query now carries three embeddings: `"symphony"` (z_corr, the
@@ -946,8 +961,7 @@ sc_query <- umap_sc(
   use_knn = TRUE
 )
 #> Running UMAP.
-#> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-#> Using provided kNN graph.
+#> Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
 ```
 
 ### Transferring labels
@@ -1057,7 +1071,7 @@ ggplot(conf_dt, aes(x = predicted_sc_type, y = sc_type_confidence)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
   ylim(0, 1.025)
-#> Warning: Removed 112 rows containing missing values or values outside the scale range
+#> Warning: Removed 140 rows containing missing values or values outside the scale range
 #> (`geom_point()`).
 ```
 

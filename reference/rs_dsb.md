@@ -56,8 +56,7 @@ rs_dsb(
   String. One of `"standardise"` or `"mean_subtract"`. Only used when
   `background_counts` is provided. `"standardise"` subtracts the
   per-protein background mean and divides by the per-protein background
-  SD. `"mean_subtract"` subtracts the mean only. Unrecognised values
-  fall back to `"standardise"`.
+  SD. `"mean_subtract"` subtracts the mean only.
 
 - seed:
 

@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Scaling to millions of cells with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -189,12 +189,12 @@
 </div>
 <p>This step is one of the slowest… A lot of things are actually happening here.</p>
 <ul>
-<li>First, (streaming) scan to understand in how many cells a gene is expressed. Only keep genes that are expressed in whatever you set to <code>min_cells</code>.</li>
-<li>Second, (streaming) scan, given the genes from the first step, which cells to include based on minimum library size and minimum features.</li>
-<li>Third, now that it’s clear which cells/genes to include, create quick temp files with the cells to keep with the genes already re-indexed. This way we avoid loading in the massive MTX file in one go into memory. These files are automatically cleaned up at the end and loaded sequentially and written to the CSR-type file (while the normalisation is also done on the fly).</li>
+<li>First, a single pass over the MTX file. Entries get bucketed per cell on disk next to the store, and the gene counts accumulate on the way.</li>
+<li>Second, decide which genes pass <code>min_cells</code> and which cells pass the minimum library size and features. The cell QC subtracts the dropped genes, so it doesn’t need another scan.</li>
+<li>Third, write the kept cells from the buckets to the CSR-type file, with the genes re-indexed and the normalisation done on the fly. The buckets get cleaned up at the end.</li>
 <li>Lastly, load in the cell data in small chunks and do a transpose to a CSC style format for easy gene retrieval.</li>
 </ul>
-<p>This approach avoids loading the whole data into memory at any point. The DuckDB also gets populated with the metadata in the observations (based on what has been filtered) and the vars. This part - streaming the data and processing it - is usually what takes quite a bit of time. If you have already loaded in the data and it exists on-disk from a previous session, skip the streaming step entirely and reconnect. On a MacBook Air with 24 GB and an M3 chip, this takes 90 seconds minutes.</p>
+<p>This approach avoids loading the whole data into memory at any point. The DuckDB also gets populated with the metadata in the observations (based on what has been filtered) and the vars. This part - streaming the data and processing it - is usually what takes quite a bit of time. If you have already loaded in the data and it exists on-disk from a previous session, skip the streaming step entirely and reconnect. On a MacBook Air with 24 GB and an M3 chip, this takes 90 seconds.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># the folder is hopefully not temp...</span></span>
@@ -204,7 +204,7 @@
 </div>
 </section><section class="level2"><h2 id="doublet-detection">Doublet detection<a class="anchor" aria-label="anchor" href="#doublet-detection"></a>
 </h2>
-<p>Before any QC on library sizes and gene-set proportions, we run Scrublet to flag doublets. Doublets are called per sample via the <code>group_by</code> argument, which is what you want when sample-level differences in capture rates would otherwise distort a single global score. Results are merged back onto the cell metadata and the doublets are dropped from the set of cells to keep. The runs over the individual samples are occuring sequentially to not overwhelm memory and each run is massively parallelised internally in Rust.</p>
+<p>Before any QC on library sizes and gene-set proportions, we run Scrublet to flag doublets. Doublets are called per sample via the <code>group_by</code> argument, which is what you want when sample-level differences in capture rates would otherwise distort a single global score. Results are merged back onto the cell metadata and the doublets are dropped from the set of cells to keep. The runs over the individual samples are occurring sequentially to not overwhelm memory and each run is massively parallelised internally in Rust.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scrublet_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scrublet_sc.html">scrublet_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, group_by <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
@@ -221,7 +221,7 @@
 <span></span>
 <span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">sce</span>, cells_to_keep <span class="op">=</span> <span class="va">cells_without_doublets</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Due to having run over 24 samples in this case, this will take ~6 minutes. Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - which ever floats your boat. Once you have passed this, things will get substantially faster.</p>
+<p>Due to having run over 24 samples in this case, this will take ~6 minutes. Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - whichever floats your boat. Once you have passed this, things will get substantially faster.</p>
 <section class="level3"><h3 id="scrublet-on-the-gpu">Scrublet on the GPU<a class="anchor" aria-label="anchor" href="#scrublet-on-the-gpu"></a>
 </h3>
 <p>Got a GPU? <code>bixverse.gpu</code> ships <code>scrublet_gpu_sc()</code>, a drop-in for <code><a href="../reference/scrublet_sc.html">scrublet_sc()</a></code>. Three stages move to the device: the randomised sparse SVD, the projection of the simulated doublets into that PC space, and the kNN over the combined embedding. That embedding is <code>(1 + sim_doublet_ratio) * n_cells</code> rows tall, so the kNN is the stage that gets painful on the CPU as samples grow. HVG selection, the doublet simulation and the Otsu threshold stay on the CPU. <code>group_by</code> works the same way and the result is the same <code>ScrubletRes</code>, so everything downstream is unchanged.</p>
@@ -351,7 +351,7 @@
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
 <span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span></span>
-<span>    knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"nndescent"</span>, extract_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>    knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"nndescent"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -361,7 +361,6 @@
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
 <span>  knn_method <span class="op">=</span> <span class="st">"nndescent"</span>,</span>
-<span>  nn_params <span class="op">=</span> <span class="fu">params_nn_gpu</span><span class="op">(</span>extract_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -406,7 +405,7 @@
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">umap_tsne_sc</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">tsne_gpu_sc</span><span class="op">(</span></span>
 <span>  <span class="va">sce</span>,</span>
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_prior_gpu"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -442,7 +441,7 @@
 <p>Okay, there is clearly a big sample batch effect. Let’s remove that one. Again you have two options here… Harmony (<a href="https://www.biorxiv.org/content/10.64898/2026.03.16.711825v2" class="external-link">version 2</a> - recommended) on CPU or a GPU-accelerated version. Let’s check out the CPU version first… (~ 4 seconds)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_sc.html">harmony_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>If you have a GPU at hand, you can also just use the GPU version (also 4 seconds on the Air. The CPU path is already very optimised and the GPU is not particularly powerful). Again, you will observe some slight numerical differences… This is due to the GPU implementation, but the overall structure of the data will be recovered in the same way.</p>
 <div class="cell">
@@ -454,9 +453,8 @@
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">find_neighbours_gpu_sc</span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony if you just did the CPU version</span></span>
 <span>  knn_method <span class="op">=</span> <span class="st">"nndescent"</span>,</span>
-<span>  nn_params <span class="op">=</span> <span class="fu">params_nn_gpu</span><span class="op">(</span>extract_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -476,7 +474,7 @@
 <div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fast_cluster_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
-<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony if you just did the CPU version</span></span>
 <span>  return_kmeans <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  n_seeds <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="fl">2L</span></span>
@@ -534,7 +532,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -543,8 +542,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -558,6 +618,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

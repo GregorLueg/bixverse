@@ -7,6 +7,9 @@ Get the main gene names (for example symbols or Ensembl identifiers).
 ``` r
 get_gene_names(x)
 
+## S7 method for class <bixverse::MetaCells>
+get_gene_names(x)
+
 # S3 method for class 'ScMap'
 get_gene_names(x)
 

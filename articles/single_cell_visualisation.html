@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>A guide to single-cell plotting functions</h1>
 
       <p class="author">Liesbeth François</p>
-      <p class="date">2026-10-27</p>
+      <p class="date">2026-11-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -137,8 +137,8 @@
 
 
 
-    <section class="section level3"><h3 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
-</h3>
+    <section class="section level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
+</h2>
 <p>This vignette gives an overview of the different plotting functions that are available when running a single cell analysis.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
@@ -153,8 +153,8 @@
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse.plots/">bixverse.plots</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-</section><section class="section level3"><h3 id="preparing-the-data">Preparing the data<a class="anchor" aria-label="anchor" href="#preparing-the-data"></a>
-</h3>
+</section><section class="section level2"><h2 id="preparing-the-data">Preparing the data<a class="anchor" aria-label="anchor" href="#preparing-the-data"></a>
+</h2>
 <p>We run the standard analysis using the same PBMC3k data set. For more details on the data analysis itself, please refer to the <a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">introductory vignette</a>. This vignette assumes familiarity with how the <code>SingleCells</code> class, on-disk storage and cells-to-keep logic work.</p>
 <div class="cell">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
@@ -169,13 +169,13 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_mtx.html">load_mtx</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  sc_mtx_io_param <span class="op">=</span> <span class="va">mtx_io_params</span>,</span>
-<span>  mtx_streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;  Converting the cell-based data into the gene-based format.</span></span>
 <span><span class="co">#&gt; Loading observations data from flat file into the DuckDB.</span></span>
 <span><span class="co">#&gt; Loading variable data from flat file into the DuckDB.</span></span>
 <span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"sample"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sample1"</span>, <span class="st">"sample2"</span><span class="op">)</span>,</span>
 <span>  size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span>,</span>
@@ -248,7 +248,7 @@
 <span><span class="op">)</span></span></code></pre></div>
 </details>
 </div>
-</section><section class="section level3"><h3 id="joint-qc-plot">Joint QC plot<a class="anchor" aria-label="anchor" href="#joint-qc-plot"></a>
+<section class="level2"><h3 id="joint-qc-plot">Joint QC plot<a class="anchor" aria-label="anchor" href="#joint-qc-plot"></a>
 </h3>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/joint_plot_sc.html">joint_plot_sc()</a></code> compares the number of features and number of counts per cell similar to <code>sns.jointplot</code>.</p>
 <div class="cell">
@@ -261,7 +261,7 @@
 </div>
 </div>
 </div>
-</section><section class="section level3"><h3 id="violin-qc-plots">Violin QC Plots<a class="anchor" aria-label="anchor" href="#violin-qc-plots"></a>
+</section><section class="level2"><h3 id="violin-qc-plots">Violin QC Plots<a class="anchor" aria-label="anchor" href="#violin-qc-plots"></a>
 </h3>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/violin_plot_sc.html">violin_plot_sc()</a></code> shows the distribution of each QC metric as a violin, split by donor (or any grouping variable stored in the <code>qc</code> object).</p>
 <div class="cell">
@@ -291,7 +291,7 @@
 </div>
 </div>
 </div>
-<p>Alternatively, we can also provide a datatable generate the violins plots with different variables than those considered in the QC.</p>
+<p>Alternatively, we can also provide a data.table to generate the violin plots with different variables than those considered in the QC.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -309,7 +309,7 @@
 </div>
 </div>
 </div>
-</section><section class="section level3"><h3 id="density-qc-plots">Density QC Plots<a class="anchor" aria-label="anchor" href="#density-qc-plots"></a>
+</section><section class="level2"><h3 id="density-qc-plots">Density QC Plots<a class="anchor" aria-label="anchor" href="#density-qc-plots"></a>
 </h3>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/density_plot_sc.html">density_plot_sc()</a></code> overlays smoothed density distributions for each group, which highlights bimodal distributions or outlier populations that violins can obscure.</p>
 <div class="cell">
@@ -339,7 +339,7 @@
 </div>
 </div>
 </div>
-</section><section class="section level2"><h2 id="dimensionality-reduction-plots">Dimensionality Reduction Plots<a class="anchor" aria-label="anchor" href="#dimensionality-reduction-plots"></a>
+</section></section><section class="section level2"><h2 id="dimensionality-reduction-plots">Dimensionality Reduction Plots<a class="anchor" aria-label="anchor" href="#dimensionality-reduction-plots"></a>
 </h2>
 <p>After PCA, neighbour-finding, clustering, and UMAP, cells can be visualised on any 2D embedding stored in the object.</p>
 <div class="cell">
@@ -368,10 +368,10 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Generating the snn graph.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running leiden clustering at resolution 0.5.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
-<span><span class="co">#&gt; Using n_epochs = 500 (dataset &lt;10k samples or adam_parallel optimiser)</span></span>
-<span><span class="co">#&gt; Using provided kNN graph.</span></span>
+<span><span class="co">#&gt; Using n_epochs = 500 (Adam optimiser or dataset &lt;=10k samples)</span></span>
 <span></span>
 <span><span class="va">cell_markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  CD3D <span class="op">=</span> <span class="st">"T cells"</span>,</span>
@@ -468,7 +468,7 @@
 </div>
 </div>
 <p><strong>Colouring by a continuous variable</strong></p>
-<p>Set <code>discrete = FALSE</code> to use a continuous colour scale — useful for confidence scores, pseudotime, or gene module scores.</p>
+<p>Set <code>discrete = FALSE</code> to use a continuous colour scale: useful for confidence scores, pseudotime, or gene module scores.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
@@ -480,7 +480,7 @@
 <span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
-<figure><p><img src="single_cell_visualisation_files/figure-html/embedding-sctype-1.png" width="672"></p>
+<figure><p><img src="single_cell_visualisation_files/figure-html/embedding-ribo-1.png" width="672"></p>
 <figcaption>UMAP coloured by ribosomal content (continuous scale).</figcaption></figure>
 </div>
 </div>
@@ -529,14 +529,14 @@
 <span>  obs_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sc_type"</span>, <span class="st">"leiden_clusters"</span>, <span class="st">"Ribo"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span></span>
-<span><span class="co">#&gt;             cell_id     dim_1      dim_2    sc_type leiden_clusters      Ribo</span></span>
-<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;      &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: AAACATACAACCAC-1 -2.812537 -3.1161282    T cells               0 0.4371381</span></span>
-<span><span class="co">#&gt; 2: AAACATTGATCAGC-1 -5.286569 -4.6104288    T cells               0 0.3171120</span></span>
-<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1  2.052555  3.9632912 CD14+ Mono               1 0.2431611</span></span>
-<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1 -2.611849  0.1051564         NK               2 0.1491318</span></span>
-<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1 -4.285697 -3.7213485    T cells               0 0.3635097</span></span>
-<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1 -3.275007 -2.9111469         NK               2 0.4165899</span></span></code></pre></div>
+<span><span class="co">#&gt;             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo</span></span>
+<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: AAACATACAACCAC-1  4.236824 -1.036505    T cells               0 0.4371381</span></span>
+<span><span class="co">#&gt; 2: AAACATTGATCAGC-1  6.491835 -3.475420    T cells               0 0.3171120</span></span>
+<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1 -5.288665 -1.070349 CD14+ Mono               1 0.2431611</span></span>
+<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1  1.761112 -3.110243         NK               2 0.1491318</span></span>
+<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1  5.371714 -2.743932    T cells               0 0.3635097</span></span>
+<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1  4.394455 -2.221142         NK               2 0.4165899</span></span></code></pre></div>
 </div>
 </section><section class="section level2"><h2 id="other-2d-embeddings">Other 2D embeddings<a class="anchor" aria-label="anchor" href="#other-2d-embeddings"></a>
 </h2>
@@ -611,19 +611,18 @@
 </div>
 </div>
 </div>
-</section></section><section class="section level2"><h2 id="per-gene-expression-plots">Per-Gene Expression plots`<a class="anchor" aria-label="anchor" href="#per-gene-expression-plots"></a>
+</section></section><section class="section level2"><h2 id="per-gene-expression-plots">Per-Gene Expression plots<a class="anchor" aria-label="anchor" href="#per-gene-expression-plots"></a>
 </h2>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/feature_plot_sc.html">feature_plot_sc()</a></code> projects normalised expression of one or more genes onto the embedding.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Select a single feature by Ensembl ID; provide a human-readable label</span></span>
-<span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">symbol_to_ensembl</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_markers</span><span class="op">)</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></span>
-<span><span class="va">feature_labels</span> <span class="op">&lt;-</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">features</span><span class="op">]</span></span>
+<span><span class="va">ms4a1</span> <span class="op">&lt;-</span> <span class="va">symbol_to_ensembl</span><span class="op">[[</span><span class="st">"MS4A1"</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/feature_plot_sc.html">feature_plot_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
-<span>  features <span class="op">=</span> <span class="va">features</span><span class="op">[</span><span class="fl">8</span><span class="op">]</span>,</span>
-<span>  feature_labels <span class="op">=</span> <span class="va">feature_labels</span><span class="op">[</span><span class="fl">8</span><span class="op">]</span>,</span>
+<span>  features <span class="op">=</span> <span class="va">ms4a1</span>,</span>
+<span>  feature_labels <span class="op">=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">ms4a1</span><span class="op">]</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
 <span>  label_by <span class="op">=</span> <span class="st">"sc_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -639,13 +638,12 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Select a single feature by Ensembl ID; provide a human-readable label</span></span>
-<span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">symbol_to_ensembl</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cell_markers</span><span class="op">)</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></span>
-<span><span class="va">feature_labels</span> <span class="op">&lt;-</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">features</span><span class="op">]</span></span>
+<span><span class="va">ms4a1</span> <span class="op">&lt;-</span> <span class="va">symbol_to_ensembl</span><span class="op">[[</span><span class="st">"MS4A1"</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/feature_plot_sc.html">feature_plot_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
-<span>  features <span class="op">=</span> <span class="va">features</span><span class="op">[</span><span class="fl">8</span><span class="op">]</span>,</span>
-<span>  feature_labels <span class="op">=</span> <span class="va">feature_labels</span><span class="op">[</span><span class="fl">8</span><span class="op">]</span>,</span>
+<span>  features <span class="op">=</span> <span class="va">ms4a1</span>,</span>
+<span>  feature_labels <span class="op">=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">ms4a1</span><span class="op">]</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
 <span>  label_by <span class="op">=</span> <span class="st">"sc_type"</span>,</span>
 <span>  highlight_features <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -653,7 +651,7 @@
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure><p><img src="single_cell_visualisation_files/figure-html/feature-plot-highlight-1.png" width="672"></p>
-<figcaption>Expression of MS4A1 on the UMAP. High-expressing cells cluster in expected B cell cluster.</figcaption></figure>
+<figcaption>Expression of MS4A1 on the UMAP, with the expressing cells highlighted.</figcaption></figure>
 </div>
 </div>
 </div>
@@ -664,20 +662,19 @@
 <code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_feature_plot_data.html">extract_feature_plot_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
-<span>  obs_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sc_type"</span>, <span class="st">"leiden_clusters"</span>, <span class="st">"Ribo"</span><span class="op">)</span>,</span>
-<span>  features <span class="op">=</span> <span class="va">features</span><span class="op">[</span><span class="fl">8</span><span class="op">]</span>,</span>
-<span>  modality <span class="op">=</span> <span class="st">"rna"</span></span>
+<span>  obs_col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sc_type"</span>, <span class="st">"leiden_clusters"</span>, <span class="st">"Ribo"</span><span class="op">)</span>,</span>
+<span>  features <span class="op">=</span> <span class="va">ms4a1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span></span>
-<span><span class="co">#&gt;             cell_id     dim_1      dim_2    sc_type leiden_clusters      Ribo</span></span>
-<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;      &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: AAACATACAACCAC-1 -2.812537 -3.1161282    T cells               0 0.4371381</span></span>
-<span><span class="co">#&gt; 2: AAACATTGATCAGC-1 -5.286569 -4.6104288    T cells               0 0.3171120</span></span>
-<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1  2.052555  3.9632912 CD14+ Mono               1 0.2431611</span></span>
-<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1 -2.611849  0.1051564         NK               2 0.1491318</span></span>
-<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1 -4.285697 -3.7213485    T cells               0 0.3635097</span></span>
-<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1 -3.275007 -2.9111469         NK               2 0.4165899</span></span>
+<span><span class="co">#&gt;             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo</span></span>
+<span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt;     &lt;char&gt;           &lt;int&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: AAACATACAACCAC-1  4.236824 -1.036505    T cells               0 0.4371381</span></span>
+<span><span class="co">#&gt; 2: AAACATTGATCAGC-1  6.491835 -3.475420    T cells               0 0.3171120</span></span>
+<span><span class="co">#&gt; 3: AAACCGTGCTTCCG-1 -5.288665 -1.070349 CD14+ Mono               1 0.2431611</span></span>
+<span><span class="co">#&gt; 4: AAACCGTGTATGCG-1  1.761112 -3.110243         NK               2 0.1491318</span></span>
+<span><span class="co">#&gt; 5: AAACGCACTGGTAC-1  5.371714 -2.743932    T cells               0 0.3635097</span></span>
+<span><span class="co">#&gt; 6: AAACGCTGACCAGT-1  4.394455 -2.221142         NK               2 0.4165899</span></span>
 <span><span class="co">#&gt;               gene expression</span></span>
 <span><span class="co">#&gt;             &lt;fctr&gt;      &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: ENSG00000156738          0</span></span>
@@ -865,7 +862,8 @@
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -874,8 +872,69 @@
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -889,6 +948,7 @@
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

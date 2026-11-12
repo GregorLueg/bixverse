@@ -12,7 +12,7 @@ params_sc_mtx_io(path_mtx, path_obs, path_var, cells_as_rows, has_hdr)
 
 - path_mtx:
 
-  Any. Path to the .mtx file Required.
+  Any. Path to the .mtx or .mtx.gz file Required.
 
 - path_obs:
 
@@ -34,7 +34,7 @@ params_sc_mtx_io(path_mtx, path_obs, path_var, cells_as_rows, has_hdr)
 
 A named list with the following elements:
 
-- path_mtx - Any. Path to the .mtx file Required.
+- path_mtx - Any. Path to the .mtx or .mtx.gz file Required.
 
 - path_obs - Any. Path to the file containing cell/barcode info.
   Required.

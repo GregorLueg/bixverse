@@ -42,7 +42,6 @@ mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = TRUE
 )
 #>  Converting the cell-based data into the gene-based format.
@@ -269,6 +268,7 @@ al.](https://www.nature.com/articles/s41598-019-41695-z).
 ``` r
 
 sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_clusters")
+#> Running leiden clustering at resolution 1.
 
 all_markers <- find_all_markers_sc(
   object = sc_object,
@@ -374,8 +374,7 @@ Let us run quickly UMAP and tSNE.
 
 sc_object <- umap_sc(sc_object)
 #> Running UMAP.
-#> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-#> Using provided kNN graph.
+#> Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
 
 sc_object <- tsne_sc(
   sc_object,

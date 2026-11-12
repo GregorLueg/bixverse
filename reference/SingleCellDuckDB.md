@@ -89,7 +89,8 @@ This function populates the obs table from an h5 file (if found).
 
 - `filter`:
 
-  Optional integer. Positions of obs to read in from file.
+  Optional integer. 1-indexed positions of the obs rows to keep, in
+  output order.
 
 - `cell_id_col`:
 
@@ -121,11 +122,12 @@ This populates the vars table from an h5 file (if found.)
 
 - `filter`:
 
-  Optional integer. Positions of obs to read in from file.
+  Optional integer. 1-indexed positions of the var rows to keep, in
+  output order.
 
 #### Returns
 
-Returns invisible self. As a side effect, it will load in the obs data
+Returns invisible self. As a side effect, it will load in the var data
 from the h5ad file into the DuckDB.
 
 ------------------------------------------------------------------------
@@ -200,7 +202,8 @@ Invisible self. Function to populate the obs table from plain text files
 
 - `filter`:
 
-  Optional integer. Positions of obs to read in from file.
+  Optional integer. 1-indexed rows of the file to keep. `cell_idx`
+  follows the file order of the kept rows.
 
 #### Returns
 
@@ -227,7 +230,8 @@ populate the var table from plain text files
 
 - `filter`:
 
-  Optional integer. Positions of obs to read in from file.
+  Optional integer. 1-indexed rows of the file to keep. `gene_idx`
+  follows the file order of the kept rows.
 
 #### Returns
 

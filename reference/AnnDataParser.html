@@ -9,7 +9,7 @@ several options will allow for retrieval of the underlying data."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,8 +141,7 @@ h5ad file.</p><div class="section">
 </div><p></p><div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
 <p>data.table. The found observations are returned. The pandas index
-will be named <code>sample_id</code>. Remaining columns (if found) will be returned
-as factors due to the way the data is stored in h5.</p>
+will be named <code>sample_id</code>. Categorical columns are returned as factors.</p>
 </div>
 
 </div>
@@ -155,9 +154,8 @@ h5ad file.</p><div class="section">
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">AnnDataParser</span><span class="op">$</span><span class="fu">get_var_info</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
-<p>data.table. The found observations are returned. The pandas index
-will be named <code>var_id</code>. Remaining columns (if found) will be returned as
-factors due to the way the data is stored in h5.</p>
+<p>data.table. The found variables are returned. The pandas index
+will be named <code>var_id</code>. Categorical columns are returned as factors.</p>
 </div>
 
 </div>

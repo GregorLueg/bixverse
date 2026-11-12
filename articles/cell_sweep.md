@@ -310,6 +310,7 @@ cell_object <- find_clusters_sc(
   res = 1,
   name = "leiden_clusters"
 )
+#> Running leiden clustering at resolution 1.
 
 obs_cells <- get_sc_obs(cell_object)
 

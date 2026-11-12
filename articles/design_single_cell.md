@@ -150,7 +150,7 @@ Okay, everything so far reads like a rant. What is the solution, mate?
 
 If we think this through, we can arrive at a solution. Ideally, we want
 an interface from an interpreted, dynamically typed language: going
-all-in on Rust is just too heavy. The average single cell enthuasist
+all-in on Rust is just too heavy. The average single cell enthusiast
 does not want to deal with the borrow checker, does not want to compile
 code, and wants to quickly analyse and iterate over data. The average
 bioinformatician lives in blissful ignorance and will not be able to
@@ -174,7 +174,7 @@ much easier. From there we can make some design decisions.
     99.99% of cases, we know we do not want low quality cells with tiny
     library sizes and few unique features. We also almost always do the
     usual library-size-to-target-size normalisation with log
-    transformation. (Anyone who has tried a fancy modelling appraoch
+    transformation. (Anyone who has tried a fancy modelling approach
     with Pearson residual modelling on large data sets knows what I am
     talking about. But `bixverse` does also offer memory-frugal versions
     of [scTransform
@@ -182,8 +182,8 @@ much easier. From there we can make some design decisions.
     them.) That means when reading h5ad or mtx files, we can pre-scan
     them, take only what we want, and normalise in a single pass,
     avoiding the load-everything, then-filter, then-normalise pattern.
-    Additionally, data gets streamed into the binary files avoid sudden
-    memory spikes and OOM errors.
+    Additionally, data gets streamed into the binary files to avoid
+    sudden memory spikes and OOM errors.
 
 3.  ***We accept that single cell is noisy*** and do not bother with
     `f32` or even `f64` precision for storage. Raw counts are integers
@@ -191,10 +191,11 @@ much easier. From there we can make some design decisions.
     whatever width the block actually needs. A block of ones and twos
     costs a single bit per value, the rare gene with a count in the
     thousands only widens its own block, and nothing gets clipped.
-    Normalised counts live as `f16`: the ML field has shown you can get
-    away with it, and they are pushing quantisation even further than
-    that. We will accept the precision loss when upcasting to `f64` to
-    avoid catastrophic cancellation issues at large N.
+    Normalised counts get `f16` precision (the v4 section below covers
+    how that layer is dropped and recomputed): the ML field has shown
+    you can get away with it, and they are pushing quantisation even
+    further than that. We will accept the precision loss when upcasting
+    to `f64` to avoid catastrophic cancellation issues at large N.
 
 4.  ***We are not doing any heavy calculations in R (or Python, future
     roadmap).*** Rust is superior for speed and optimisation: aggressive
@@ -460,7 +461,7 @@ NOT in memory, we need to carefully synchronise state between:
   vignette.
 
 - The “ecosystem” (quotation marks because at the moment it is just this
-  R package and several Rust crates) is in its ~~infacy~~puberty. Stuff
+  R package and several Rust crates) is in its ~~infancy~~puberty. Stuff
   will bug, break, breaking changes have been and will likely continue
   to be introduced. If you want to contribute at the methods level, you
   will need to go low-level and learn Rust (or ask your favourite LLM.

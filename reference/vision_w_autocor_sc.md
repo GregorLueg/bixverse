@@ -93,7 +93,7 @@ A list with the following elements:
   scores as values.
 
 - auto_cor_dt - data.table with the auto-correlation results per gene
-  set, i.e., `auto_cor` (1 - Gaery's C), `p_val` and `fdr`.
+  set, i.e., `auto_cor` (1 - Geary's C), `p_val` and `fdr`.
 
 ## References
 

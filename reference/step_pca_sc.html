@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,6 +106,7 @@
 <span>  sparse_svd <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hvg <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  residuals <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -143,6 +144,18 @@ these, the internal HVG will be overwritten.</p></dd>
 <code>svd_solver = "randomised"</code> and the Lanczos start vector.</p></dd>
 
 
+<dt id="arg-residuals">residuals<a class="anchor" aria-label="anchor" href="#arg-residuals"></a></dt>
+<dd><p>Boolean. Run the PCA on the Pearson residuals of a model
+fitted with <code><a href="fit_residuals_sc.html">fit_residuals_sc()</a></code> instead of the stored normalised
+layer. Needs <code>params_sc_pca(normalise_variance = FALSE, clr = FALSE)</code>, since
+the residuals already carry the signal as variance, and does not support
+<code>sparse_svd</code>: a residual column is dense even where the counts are not.
+On this dense path the default <code>svd_solver = "auto"</code> pays for a full
+gene x gene cross-product and is slower than <code>svd_solver = "randomised"</code>,
+so pick the latter in <code><a href="params_sc_pca.html">params_sc_pca()</a></code> when speed matters. Not supported
+for <code>MetaCells</code>.</p></dd>
+
+
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
 <dd><p>Boolean or integer. Controls verbosity and returns run times.
 <code>FALSE</code> -&gt; quiet, <code>TRUE</code> or <code>1L</code> -&gt; normal verbosity, <code>2L</code> -&gt; detailed
@@ -160,7 +173,7 @@ verbosity.</p></dd>
 <span class="r-in"><span><span class="fu"><a href="step_hvg_sc.html">step_hvg_sc</a></span><span class="op">(</span>hvg_no <span class="op">=</span> <span class="fl">30L</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span> <span class="fu">step_pca_sc</span><span class="op">(</span>no_pcs <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;ScPipeline&gt; 2 steps</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1. hvg  hvg_no = 30L, hvg_params = &lt;list&gt;, streaming = NULL, .verbose = TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2. pca  no_pcs = 10L, pca_params = &lt;list&gt;, sparse_svd = NULL, hvg = NULL, seed = 42L, .verbose = TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2. pca  no_pcs = 10L, pca_params = &lt;list&gt;, sparse_svd = NULL, hvg = NULL, seed = 42L, residuals = FALSE, .verbose = TRUE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

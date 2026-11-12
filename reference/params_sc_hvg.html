@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -131,7 +131,8 @@ the trend for <code>method = "scran"</code>. Defaults to <code>0.3</code>.</p></
 
 
 <dt id="arg-num-bin">num_bin<a class="anchor" aria-label="anchor" href="#arg-num-bin"></a></dt>
-<dd><p>Integer. Not yet implemented. Defaults to <code>20L</code>.</p></dd>
+<dd><p>Integer. Number of bins for the <code>meanvarbin</code> and <code>dispersion</code>
+methods. Defaults to <code>20L</code>.</p></dd>
 
 
 <dt id="arg-bin-method">bin_method<a class="anchor" aria-label="anchor" href="#arg-bin-method"></a></dt>
@@ -158,7 +159,8 @@ than <code>hvg_no</code> genes. One of <code>c("vst", "meanvarbin", "dispersion"
 <li><p>loess_span - Numeric. The span parameter for the loess function that
 is used to standardise the variance for <code>method = "vst"</code>, and the lowess
 span of the trend for <code>method = "scran"</code>. Defaults to <code>0.3</code>.</p></li>
-<li><p>num_bin - Integer. Not yet implemented. Defaults to <code>20L</code>.</p></li>
+<li><p>num_bin - Integer. Number of bins for the <code>meanvarbin</code> and
+<code>dispersion</code> methods. Defaults to <code>20L</code>.</p></li>
 <li><p>bin_method - String. The binning method. One of <code>c("equal_width", "equal_freq")</code>. Defaults to <code>"equal_width"</code>.</p></li>
 <li><p>The elements of <code><a href="params_hvg_scran_defaults.html">params_hvg_scran_defaults()</a></code>, overridden by <code>scran</code>,
 spliced in at this position.</p></li>

@@ -63,6 +63,7 @@ sc <- demo_single_cells(
   )
 )
 calculate_pcr_sc(sc, batch_column = "batch_index")
+#> Calculating the PCR on `pca` and on the PCA.
 #> Principal Component Regression (batch)
 #>   Embedding: pca | Dimensions: 10
 #>   PCR:             0.1414

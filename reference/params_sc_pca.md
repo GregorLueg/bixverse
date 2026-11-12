@@ -8,7 +8,6 @@ Wrapper for PCA specifically designed for single cells
 params_sc_pca(
   mean_center = TRUE,
   normalise_variance = TRUE,
-  randomised = NULL,
   clr = FALSE,
   size_factor = 10000,
   svd_solver = c("auto", "covariance", "randomised", "exact")
@@ -24,11 +23,6 @@ params_sc_pca(
 - normalise_variance:
 
   Boolean. Shall the data have normalised variance Defaults to `TRUE`.
-
-- randomised:
-
-  Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE` maps to
-  `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 
 - clr:
 
@@ -62,9 +56,6 @@ A named list with the following elements:
 
 - normalise_variance - Boolean. Shall the data have normalised variance
   Defaults to `TRUE`.
-
-- randomised - Boolean or `NULL`. Deprecated, use `svd_solver`. `TRUE`
-  maps to `"randomised"`, `FALSE` to `"exact"`. Defaults to `NULL`.
 
 - clr - Boolean. Shall the CLR-type `PFlogPF` be applied, see
   Booeshaghi, et al. Defaults to `FALSE`.

@@ -21,9 +21,6 @@ so the resolution is testable on an obs table alone.
 
   List. See
   [`params_sc_empty_droplets()`](https://gregorlueg.github.io/bixverse/reference/params_sc_empty_droplets.md).
-  Required: there is no safe default, since the recommended
-  `method = "supplied"` needs the name of the obs column holding the
-  mask.
 
 - .verbose:
 

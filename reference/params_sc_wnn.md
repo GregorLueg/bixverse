@@ -38,7 +38,7 @@ params_sc_wnn(
 
 - sigma_idx:
 
-  Integer. `"sigma_idx"` only: 0-based kNN index for bandwidth.e.
+  Integer. `"sigma_idx"` only: 0-based kNN index for the bandwidth (i.e.
   `k_nn - 1`). Defaults to `19L`.
 
 - s_nn:
@@ -69,8 +69,8 @@ params_sc_wnn(
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
-  `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
-  `n_probe`. See
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`. Note that
+  `k` is unused here, `knn_range` sets the neighbour pool. See
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for the available elements. Defaults to
   [`list()`](https://rdrr.io/r/base/list.html).
@@ -88,8 +88,8 @@ A named list with the following elements:
 - sigma_method - String. Bandwidth method. One of
   `c("snn_farthest", "sigma_idx")`. Defaults to `"snn_farthest"`.
 
-- sigma_idx - Integer. `"sigma_idx"` only: 0-based kNN index for
-  bandwidth.e. `k_nn - 1`). Defaults to `19L`.
+- sigma_idx - Integer. `"sigma_idx"` only: 0-based kNN index for the
+  bandwidth (i.e. `k_nn - 1`). Defaults to `19L`.
 
 - s_nn - Integer. `"snn_farthest"` only: kNN size used to build the SNN
   graph. Defaults to `20L`.

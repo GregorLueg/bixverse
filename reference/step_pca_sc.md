@@ -13,6 +13,7 @@ step_pca_sc(
   sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
+  residuals = FALSE,
   .verbose = TRUE
 )
 ```
@@ -50,6 +51,20 @@ step_pca_sc(
   Integer. Controls reproducibility. Only relevant for
   `svd_solver = "randomised"` and the Lanczos start vector.
 
+- residuals:
+
+  Boolean. Run the PCA on the Pearson residuals of a model fitted with
+  [`fit_residuals_sc()`](https://gregorlueg.github.io/bixverse/reference/fit_residuals_sc.md)
+  instead of the stored normalised layer. Needs
+  `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since the
+  residuals already carry the signal as variance, and does not support
+  `sparse_svd`: a residual column is dense even where the counts are
+  not. On this dense path the default `svd_solver = "auto"` pays for a
+  full gene x gene cross-product and is slower than
+  `svd_solver = "randomised"`, so pick the latter in
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  when speed matters. Not supported for `MetaCells`.
+
 - .verbose:
 
   Boolean or integer. Controls verbosity and returns run times. `FALSE`
@@ -67,5 +82,5 @@ An `ScStep`.
 step_hvg_sc(hvg_no = 30L) %>>% step_pca_sc(no_pcs = 10L)
 #> <ScPipeline> 2 steps
 #>   1. hvg  hvg_no = 30L, hvg_params = <list>, streaming = NULL, .verbose = TRUE
-#>   2. pca  no_pcs = 10L, pca_params = <list>, sparse_svd = NULL, hvg = NULL, seed = 42L, .verbose = TRUE
+#>   2. pca  no_pcs = 10L, pca_params = <list>, sparse_svd = NULL, hvg = NULL, seed = 42L, residuals = FALSE, .verbose = TRUE
 ```

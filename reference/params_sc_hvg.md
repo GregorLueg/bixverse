@@ -37,7 +37,8 @@ params_sc_hvg(
 
 - num_bin:
 
-  Integer. Not yet implemented. Defaults to `20L`.
+  Integer. Number of bins for the `meanvarbin` and `dispersion` methods.
+  Defaults to `20L`.
 
 - bin_method:
 
@@ -73,7 +74,8 @@ A named list with the following elements:
   is used to standardise the variance for `method = "vst"`, and the
   lowess span of the trend for `method = "scran"`. Defaults to `0.3`.
 
-- num_bin - Integer. Not yet implemented. Defaults to `20L`.
+- num_bin - Integer. Number of bins for the `meanvarbin` and
+  `dispersion` methods. Defaults to `20L`.
 
 - bin_method - String. The binning method. One of
   `c("equal_width", "equal_freq")`. Defaults to `"equal_width"`.

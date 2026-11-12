@@ -344,6 +344,9 @@ only for the picture, the test above never touched it.
 ``` r
 
 sc_object <- umap_sc(sc_object, .verbose = FALSE)
+#> Warning in .manifold_inputs(object = object, use_knn = use_knn, embd_to_use =
+#> embd_to_use, : Using the cached kNN graph with 60 neighbours; `k = 15`,
+#> `knn_method` and `nn_params` only apply with `use_knn = FALSE`.
 ```
 
 ``` r

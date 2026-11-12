@@ -147,11 +147,14 @@ sc_object <- find_clusters_sc(
   res = 0.7,
   name = "leiden_clusters"
 )
+#> Running leiden clustering at resolution 0.7.
 
 sc_object <- umap_sc(sc_object)
+#> Warning in .manifold_inputs(object = object, use_knn = use_knn, embd_to_use =
+#> embd_to_use, : Using the cached kNN graph with 30 neighbours; `k = 15`,
+#> `knn_method` and `nn_params` only apply with `use_knn = FALSE`.
 #> Running UMAP.
-#> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-#> Using provided kNN graph.
+#> Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
 ```
 
 ``` r
@@ -246,18 +249,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality       artefact   name stamped  stale reason               id
 #>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 733a93b0a505a11f
-#> 2:      rna      embedding   umap    TRUE  FALSE   <NA> b632828167fd19d8
-#> 3:      rna            knn   <NA>    TRUE  FALSE   <NA> 6035cf89ed2786ee
-#> 4:      rna connectivities   <NA>    TRUE  FALSE   <NA> b7ad77f84df47c76
-#> 5:      rna          magic   <NA>    TRUE  FALSE   <NA> 66135374d3f4615d
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> a27928178dbea264
+#> 2:      rna      embedding   umap    TRUE  FALSE   <NA> 8910010589687bc1
+#> 3:      rna            knn   <NA>    TRUE  FALSE   <NA> 455b1bb1bf2ca2be
+#> 4:      rna connectivities   <NA>    TRUE  FALSE   <NA> 5cac22d67561b69b
+#> 5:      rna          magic   <NA>    TRUE  FALSE   <NA> 1b8f4c42c5fd2cfc
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: 733a93b0a505a11f,6035cf89ed2786ee
-#> 3:                  733a93b0a505a11f
-#> 4:                  6035cf89ed2786ee
-#> 5:                  6035cf89ed2786ee
+#> 2: a27928178dbea264,455b1bb1bf2ca2be
+#> 3:                  a27928178dbea264
+#> 4:                  455b1bb1bf2ca2be
+#> 5:                  455b1bb1bf2ca2be
 ```
 
 ## PAGA
@@ -356,8 +359,8 @@ terminal_states <- c(
 
 `knn = 30` is the neighbour count for the geodesic graph Palantir builds
 on the multiscale space, a different knob from the `k` of the input kNN
-graph, and `num_waypoints = 500` is the notebook’s override of the 1200
-default.
+graph. `num_waypoints` stays at its default of 1200; the reference
+notebook uses 500.
 
 Two things do not mirror the reference, and both change what you get.
 

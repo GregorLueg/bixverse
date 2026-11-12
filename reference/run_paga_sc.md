@@ -70,6 +70,7 @@ Wolf, et al., Genome Biol., 2019.
 # cluster level graph abstraction of the Leiden clusters
 sc <- demo_single_cells()
 sc <- find_clusters_sc(sc, res = 1.0)
+#> Running leiden clustering at resolution 1.
 res <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
 res$sizes
 #>    cluster n_cells

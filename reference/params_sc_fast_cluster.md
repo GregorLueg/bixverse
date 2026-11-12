@@ -34,7 +34,7 @@ params_sc_fast_cluster(
 - n_centroids:
 
   Integer or `NULL`. Number of k-means centroids. If `NULL`, defaults to
-  `floor(sqrt(n_cells))`. Defaults to `NULL`.
+  `floor(4 * sqrt(n_cells))`. Defaults to `NULL`.
 
 - km_type:
 
@@ -138,7 +138,7 @@ params_sc_fast_cluster(
 A named list with the following elements:
 
 - n_centroids - Integer or `NULL`. Number of k-means centroids. If
-  `NULL`, defaults to `floor(sqrt(n_cells))`. Defaults to `NULL`.
+  `NULL`, defaults to `floor(4 * sqrt(n_cells))`. Defaults to `NULL`.
 
 - km_type - String. Which k-means to run for the coarsening. One of
   `c("standard", "minibatch")`. Defaults to `"standard"`.
