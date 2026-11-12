@@ -48,7 +48,6 @@ metadata first to confirm what is in there before committing to anything.
 
 ```{r}
 #| label: paths
-# NEEDS UPDATE
 h5_10x_path <- download_pbmc_totalseq_data()
 
 tempdir_10x_total_seq <- tempdir()
@@ -247,8 +246,8 @@ embedding_plot_sc(
 
 ### ADT
 
-For ADT we skip HVG selection — there is nothing to select from in a panel
-of thirty-odd antibodies — and feed the panel directly into PCA, minus the
+For ADT we skip HVG selection (there is nothing to select from in an antibody
+panel) and feed the panel directly into PCA, minus the
 isotype controls (they only add background noise). Otherwise the recipe is
 the same as for RNA, with `modality = "adt"` doing the routing.
 
@@ -272,7 +271,7 @@ sc_object <- find_neighbours_sc(
 ```
 
 ```{r}
-#| label: tsne and feature plot for RNA
+#| label: tsne and feature plot for ADT
 sc_object <- tsne_sc(
   sc_object,
   modality = "adt"

@@ -66,8 +66,7 @@ h5ad file.
   }
   \subsection{Returns}{
     data.table. The found observations are returned. The pandas index
-will be named \code{sample_id}. Remaining columns (if found) will be returned
-as factors due to the way the data is stored in h5.
+will be named \code{sample_id}. Categorical columns are returned as factors.
   }
 }
 
@@ -83,9 +82,8 @@ h5ad file.
     \if{html}{\out{</div>}}
   }
   \subsection{Returns}{
-    data.table. The found observations are returned. The pandas index
-will be named \code{var_id}. Remaining columns (if found) will be returned as
-factors due to the way the data is stored in h5.
+    data.table. The found variables are returned. The pandas index
+will be named \code{var_id}. Categorical columns are returned as factors.
   }
 }
 

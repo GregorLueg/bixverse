@@ -72,11 +72,29 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
   checkmate::qassert(randomised_svd, "B1")
   checkmate::qassert(seed, "I1")
 
-  norm_counts <- get_sc_counts(
-    object = object,
-    assay = "norm",
-    modality = "adt"
-  )
+  adt <- S7::prop(object, "adt_counts")
+  if (is.null(adt)) {
+    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
+  }
+  kept <- get_cell_names(object, filtered = TRUE)
+  n_missing <- sum(!kept %in% rownames(adt$norm_counts))
+  if (n_missing > 0L) {
+    stop(sprintf(
+      paste(
+        "%i kept cells are not in the ADT counts. Restrict the cells with",
+        "set_cells_to_keep() first."
+      ),
+      n_missing
+    ))
+  }
+
+  norm_counts <- adt$norm_counts[kept, , drop = FALSE]
+  if (!is.null(features)) {
+    norm_counts <- norm_counts[,
+      .match_features(features, colnames(norm_counts)),
+      drop = FALSE
+    ]
+  }
 
   # force scaling
   zeallot::`%<-%`(
@@ -94,6 +112,22 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
       rs_prcomp(x = norm_counts, scale = TRUE, top_pcs = no_pcs)
     }
   )
+  # rs_prcomp returns component SDs; store singular values on both paths, as
+  # the RNA PCA does
+  if (!randomised_svd) {
+    singular_values <- singular_values * sqrt(nrow(norm_counts) - 1)
+  }
+  # rs_random_svd hands back every column of v, not only the requested rank
+  pca_loadings <- pca_loadings[, seq_len(ncol(pca_factors)), drop = FALSE]
+  # a PC is only defined up to its sign; same rule as the crate's flip_signs:
+  # the largest-magnitude loading of each component is positive
+  flip <- purrr::map_dbl(seq_len(ncol(pca_loadings)), \(j) {
+    v <- pca_loadings[, j]
+    if (v[which.max(abs(v))] < 0) -1 else 1
+  })
+  pca_loadings <- sweep(pca_loadings, 2L, flip, `*`)
+  pca_factors <- sweep(pca_factors, 2L, flip, `*`)
+  rownames(pca_loadings) <- colnames(norm_counts)
 
   object <- set_pca_factors(
     x = object,
@@ -243,6 +277,8 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
   checkmate::assertTRUE(
     embd_to_use_2 %in% get_available_embeddings(object, modality = modality_2)
   )
+  assert_sc_state(object, artefacts = embd_to_use_1, modality = modality_1)
+  assert_sc_state(object, artefacts = embd_to_use_2, modality = modality_2)
 
   embd_1 <- get_embedding(
     x = object,

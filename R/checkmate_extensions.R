@@ -180,18 +180,9 @@ checkScMiloR <- function(x) {
     return(res)
   }
 
-  # Only a subset of the kNN elements travels with these params, so the rules
-  # are applied here rather than through checkKnnParams(), which wants them all.
   res <- apply_qtest_rules(
     x,
-    list(
-      k_refine = "I1[1,)",
-      prop = "N1(0,1)",
-      k = "I1[0,)",
-      n_trees = "I1[1,)",
-      search_budget = c("0", "I1[1,)"),
-      delta = "N1[0,1]"
-    ),
+    list(k_refine = "I1[1,)", prop = "N1(0,1)"),
     label = "MiloR params",
     hint = "k_refine must be an integer >= 1; prop must be in (0, 1)."
   )
@@ -199,23 +190,20 @@ checkScMiloR <- function(x) {
     return(res)
   }
 
-  apply_choice_rules(
+  res <- apply_choice_rules(
     x,
     list(
       refinement_strategy = c("approximate", "bruteforce", "index"),
-      index_type = c("nndescent", "ivf", "hnsw", "annoy", "exhaustive"),
-      knn_method = c(
-        "kmknn",
-        "hnsw",
-        "annoy",
-        "nndescent",
-        "ivf",
-        "exhaustive"
-      ),
-      ann_dist = c("euclidean", "cosine")
+      index_type = c("nndescent", "hnsw", "annoy", "exhaustive")
     ),
     label = "MiloR params"
   )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  knn_keys <- names(params_knn_defaults())
+  checkKnnParams(x[intersect(names(x), knn_keys)])
 }
 
 #' Assert MiloR parameters

@@ -33,8 +33,7 @@ if there are no isotype controls.}
 \item{scale_factor}{String. One of \code{"standardise"} or \code{"mean_subtract"}.
 Only used when \code{background_counts} is provided. \code{"standardise"} subtracts
 the per-protein background mean and divides by the per-protein background
-SD. \code{"mean_subtract"} subtracts the mean only. Unrecognised values fall
-back to \code{"standardise"}.}
+SD. \code{"mean_subtract"} subtracts the mean only.}
 
 \item{seed}{Integer. Random seed for the k-means initialisations.}
 

@@ -2,9 +2,9 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_bbknn_filtering}
 \alias{rs_bbknn_filtering}
-\title{Reduce BBKNN results to Top X neighbours}
+\title{Reduce BBKNN results to the k nearest neighbours}
 \usage{
-rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
+rs_bbknn_filtering(indptr, indices, data, batch_labels, no_neighbours_to_keep)
 }
 \arguments{
 \item{indptr}{Integer vector. The index pointers of the underlying data.}
@@ -13,15 +13,23 @@ rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 
 \item{data}{Numeric vector. The distances to the nearest neighbours.}
 
+\item{batch_labels}{Integer vector. The batch of each cell, as passed to
+\code{\link[=rs_bbknn]{rs_bbknn()}}.}
+
 \item{no_neighbours_to_keep}{Integer. Number of nearest neighbours to keep.}
 }
 \value{
-A list with \code{indices} and \code{dist}, both numeric (double) matrices
-of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
-are \code{NaN} in both.
+A list with \code{indices} (integer, 0-indexed) and \code{dist} (numeric)
+matrices of shape (n_cells, no_neighbours_to_keep), nearest first.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Keeps the first \code{no_neighbours_to_keep} stored entries of each CSR row.
+Keeps the batch-balanced \code{no_neighbours_to_keep} nearest neighbours of
+each row of the BBKNN distance CSR: the nearest
+\code{ceil(no_neighbours_to_keep / n_batches)} per batch, with slots a batch
+cannot fill going to the nearest remaining neighbours. Rows come back
+sorted by distance (ties by index). Rows with fewer stored entries are
+padded by repeating their last neighbour; an empty row points at the cell
+itself at distance zero.
 }
 \keyword{internal}

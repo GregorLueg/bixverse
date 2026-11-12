@@ -6,7 +6,7 @@
 \usage{
 params_sc_empty_droplets(
   method = c("supplied", "umi_cutoff", "expected_cells", "knee"),
-  is_empty_column = NULL,
+  is_empty_column = "is_empty",
   umi_cutoff = NULL,
   expected_cells = NULL
 )
@@ -17,8 +17,8 @@ One of \code{c("supplied", "umi_cutoff", "expected_cells", "knee")}. Defaults to
 \code{"supplied"}.}
 
 \item{is_empty_column}{String or \code{NULL}. Name of the logical obs column
-holding the mask. Required for \code{method = "supplied"}, ignored otherwise.
-Defaults to \code{NULL}.}
+holding the mask, \code{TRUE} for an empty droplet. Used by \code{method = "supplied"},
+ignored otherwise. Defaults to \code{"is_empty"}.}
 
 \item{umi_cutoff}{Integer or \code{NULL}. Barcodes with a library size strictly
 below this are empty. Required for \code{method = "umi_cutoff"}, ignored
@@ -35,8 +35,7 @@ A named list with the following elements:
 description. One of \code{c("supplied", "umi_cutoff", "expected_cells", "knee")}.
 Defaults to \code{"supplied"}.
 \item is_empty_column - String or \code{NULL}. Name of the logical obs column
-holding the mask. Required for \code{method = "supplied"}, ignored otherwise.
-Defaults to \code{NULL}.
+holding the mask, \code{TRUE} for an empty droplet. Used by \code{method = "supplied"}, ignored otherwise. Defaults to \code{"is_empty"}.
 \item umi_cutoff - Integer or \code{NULL}. Barcodes with a library size strictly
 below this are empty. Required for \code{method = "umi_cutoff"}, ignored
 otherwise. Defaults to \code{NULL}.

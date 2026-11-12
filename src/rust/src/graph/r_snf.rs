@@ -1,5 +1,5 @@
-use bixverse_r::methods_r_wrapper::r_matrix_list_to_vec;
 use bixverse_r::methods::snf::*;
+use bixverse_r::methods_r_wrapper::r_matrix_list_to_vec;
 use bixverse_r::prelude::*;
 use extendr_api::scalar::Rbool;
 use extendr_api::*;

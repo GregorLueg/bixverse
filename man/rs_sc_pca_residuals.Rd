@@ -13,7 +13,6 @@ rs_sc_pca_residuals(
   cell_indices,
   gene_indices,
   seed,
-  return_scaled,
   verbose
 )
 }
@@ -38,8 +37,6 @@ Every one must be covered by the fit.}
 
 \item{seed}{Integer. Random seed for the randomised SVD.}
 
-\item{return_scaled}{Boolean. Shall the scaled data be returned.}
-
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
 }
@@ -49,8 +46,6 @@ A list with the following items
 \item scores - The samples projected on the PCA space.
 \item loadings - The loadings of the features for the PCA.
 \item singular_values - The singular values for the PCA.
-\item scaled - The scaled matrix if \code{return_scaled = TRUE}, otherwise
-\code{NULL}.
 }
 }
 \description{

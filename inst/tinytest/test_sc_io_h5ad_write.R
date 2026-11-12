@@ -64,7 +64,7 @@ expect_error(
 # anndata refuses to read a file whose groups are not tagged, so the encoding
 # attributes are the actual contract with ScanPy
 
-root_attrs <- rhdf5::h5readAttributes(h5_out, "/")
+root_attrs <- rs_h5_attrs(h5_out, "/")
 
 expect_equal(
   current = root_attrs[["encoding-type"]],
@@ -72,7 +72,7 @@ expect_equal(
   info = "h5ad export - the root carries the anndata encoding"
 )
 
-x_attrs <- rhdf5::h5readAttributes(h5_out, "X")
+x_attrs <- rs_h5_attrs(h5_out, "X")
 
 expect_equal(
   current = x_attrs[["encoding-type"]],
@@ -86,7 +86,7 @@ expect_equal(
   info = "h5ad export - the X shape attribute matches the object"
 )
 
-obs_attrs <- rhdf5::h5readAttributes(h5_out, "obs")
+obs_attrs <- rs_h5_attrs(h5_out, "obs")
 
 expect_equal(
   current = obs_attrs[["encoding-type"]],
@@ -95,7 +95,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(h5_out, "obs/_index")),
+  current = as.vector(rs_h5_read(h5_out, "obs/_index")),
   target = obs_expected$cell_id,
   info = "h5ad export - the cell ids are the obs index"
 )
@@ -114,14 +114,14 @@ expect_false(
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(h5_out, "var/_index")),
+  current = as.vector(rs_h5_read(h5_out, "var/_index")),
   target = var_expected$gene_id,
   info = "h5ad export - the gene ids are the var index"
 )
 
 for (grp in c("obsm", "varm", "obsp", "uns")) {
   expect_equal(
-    current = rhdf5::h5readAttributes(h5_out, grp)[["encoding-type"]],
+    current = rs_h5_attrs(h5_out, grp)[["encoding-type"]],
     target = "dict",
     info = sprintf("h5ad export - %s is tagged as a dict", grp)
   )
@@ -133,13 +133,13 @@ for (grp in c("obsm", "varm", "obsp", "uns")) {
 # strings stays a string array
 
 expect_equal(
-  current = rhdf5::h5readAttributes(h5_out, "obs/cell_grp")[["encoding-type"]],
+  current = rs_h5_attrs(h5_out, "obs/cell_grp")[["encoding-type"]],
   target = "categorical",
   info = "h5ad export - a repeating character column becomes categorical"
 )
 
 expect_equal(
-  current = rhdf5::h5readAttributes(
+  current = rs_h5_attrs(
     h5_out,
     "obs/unique_tag"
   )[["encoding-type"]],
@@ -148,7 +148,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = rhdf5::h5readAttributes(
+  current = rs_h5_attrs(
     h5_out,
     "obs/cell_grp/codes"
   )[["encoding-type"]],
@@ -156,8 +156,8 @@ expect_equal(
   info = "h5ad export - the categorical codes are tagged as an array"
 )
 
-cat_levels <- as.vector(rhdf5::h5read(h5_out, "obs/cell_grp/categories"))
-cat_codes <- as.vector(rhdf5::h5read(h5_out, "obs/cell_grp/codes"))
+cat_levels <- as.vector(rs_h5_read(h5_out, "obs/cell_grp/categories"))
+cat_codes <- as.vector(rs_h5_read(h5_out, "obs/cell_grp/codes"))
 
 expect_equal(
   current = cat_levels[cat_codes + 1L],
@@ -166,20 +166,19 @@ expect_equal(
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(h5_out, "obs/unique_tag")),
+  current = as.vector(rs_h5_read(h5_out, "obs/unique_tag")),
   target = obs_expected$unique_tag,
   info = "h5ad export - string array values survive"
 )
 
-# rhdf5 hands an HDF5 boolean enum back as a factor over "FALSE" / "TRUE";
-# h5py and therefore ScanPy see a numpy bool
+# an HDF5 boolean enum; h5py and therefore ScanPy see a numpy bool
 expect_equal(
-  current = as.logical(as.character(rhdf5::h5read(h5_out, "obs/is_even"))),
+  current = rs_h5_read(h5_out, "obs/is_even"),
   target = obs_expected$is_even,
   info = "h5ad export - logical columns survive the boolean enum"
 )
 
-na_codes <- as.vector(rhdf5::h5read(h5_out, "obs/grp_na/codes"))
+na_codes <- as.vector(rs_h5_read(h5_out, "obs/grp_na/codes"))
 
 expect_equal(
   current = na_codes == -1L,
@@ -187,9 +186,9 @@ expect_equal(
   info = "h5ad export - a missing categorical value is written as code -1"
 )
 
-n_na_written <- as.vector(rhdf5::h5read(h5_out, "obs/n_na"))
+n_na_written <- as.vector(rs_h5_read(h5_out, "obs/n_na"))
 
-# NA_integer_ has no float representation but NaN; rhdf5 reads NaN back as NA
+# NA_integer_ has no float representation but NaN, which is.na() catches
 expect_true(
   current = is.double(n_na_written),
   info = "h5ad export - an integer column with NA is widened to float"
@@ -203,7 +202,7 @@ expect_equal(
 
 ## counts ----------------------------------------------------------------------
 
-indptr <- as.vector(rhdf5::h5read(h5_out, "X/indptr"))
+indptr <- as.vector(rs_h5_read(h5_out, "X/indptr"))
 
 expect_equal(
   current = length(indptr),
@@ -218,13 +217,13 @@ expect_equal(
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(h5_out, "X/indices")),
+  current = as.vector(rs_h5_read(h5_out, "X/indices")),
   target = counts_expected@j,
   info = "h5ad export - the streamed indices match the object"
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(h5_out, "X/data")),
+  current = as.vector(rs_h5_read(h5_out, "X/data")),
   target = counts_expected@x,
   info = "h5ad export - the streamed data match the object"
 )
@@ -245,8 +244,8 @@ save_h5ad(
 
 for (slot in c("X/data", "X/indices", "X/indptr")) {
   expect_equal(
-    current = as.vector(rhdf5::h5read(h5_out, slot)),
-    target = as.vector(rhdf5::h5read(h5_single_chunk, slot)),
+    current = as.vector(rs_h5_read(h5_out, slot)),
+    target = as.vector(rs_h5_read(h5_single_chunk, slot)),
     info = sprintf("h5ad export - %s does not depend on the chunk size", slot)
   )
 }
@@ -255,8 +254,8 @@ for (slot in c("X/data", "X/indices", "X/indptr")) {
 
 pca_expected <- get_embedding(sc_object, embd_name = "pca")
 
-# rhdf5 hands back the transpose of the on-disk (obs x k) layout
-pca_written <- t(rhdf5::h5read(h5_out, "obsm/X_pca"))
+# rs_h5_read hands back the transpose of the on-disk (obs x k) layout
+pca_written <- t(rs_h5_read(h5_out, "obsm/X_pca"))
 
 expect_equal(
   current = pca_written,
@@ -265,12 +264,12 @@ expect_equal(
 )
 
 expect_equal(
-  current = dim(t(rhdf5::h5read(h5_out, "varm/PCs"))),
+  current = dim(t(rs_h5_read(h5_out, "varm/PCs"))),
   target = c(nrow(var_expected), ncol(pca_expected)),
   info = "h5ad export - the PCA loadings are padded out to every gene"
 )
 
-loadings_written <- t(rhdf5::h5read(h5_out, "varm/PCs"))
+loadings_written <- t(rs_h5_read(h5_out, "varm/PCs"))
 hvg_idx <- get_hvg(sc_object) + 1L
 
 expect_equal(
@@ -284,8 +283,35 @@ expect_true(
   info = "h5ad export - non-HVG loading rows are zero"
 )
 
+### loadings after the HVGs moved ----------------------------------------------
+
+# re-running the HVGs after the PCA must not move the loadings onto the new
+# HVG set; they belong to the genes the PCA ran on
+sc_rehvg <- find_hvg_sc(
+  sc_object,
+  hvg_no = length(hvg_idx) - 5L,
+  .verbose = FALSE
+)
+
+h5_rehvg <- file.path(test_temp_dir, "export_rehvg.h5ad")
+
+save_h5ad(object = sc_rehvg, h5_path = h5_rehvg, .verbose = FALSE)
+
+loadings_rehvg <- t(rs_h5_read(h5_rehvg, "varm/PCs"))
+
 expect_equal(
-  current = rhdf5::h5readAttributes(
+  current = loadings_rehvg[hvg_idx, ],
+  target = unname(get_pca_loadings(sc_object)),
+  info = "h5ad export - loadings stay on the PCA genes after new HVGs"
+)
+
+expect_true(
+  current = all(loadings_rehvg[-hvg_idx, ] == 0),
+  info = "h5ad export - no loadings on genes outside the PCA"
+)
+
+expect_equal(
+  current = rs_h5_attrs(
     h5_out,
     "obsp/connectivities"
   )[["encoding-type"]],
@@ -295,14 +321,14 @@ expect_equal(
 
 expect_equal(
   current = as.integer(
-    rhdf5::h5readAttributes(h5_out, "obsp/connectivities")[["shape"]]
+    rs_h5_attrs(h5_out, "obsp/connectivities")[["shape"]]
   ),
   target = rep(nrow(counts_expected), 2L),
   info = "h5ad export - the sNN graph is square over the cells"
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(
+  current = as.vector(rs_h5_read(
     h5_out,
     "uns/neighbors/connectivities_key"
   )),
@@ -313,13 +339,8 @@ expect_equal(
 # anndata reads a scalar string as `elem.asstr()[()]`, so a rank one dataset
 # would come back as a length one array rather than as the string itself
 
-key_fid <- rhdf5::H5Fopen(h5_out)
-key_did <- rhdf5::H5Dopen(key_fid, "uns/neighbors/connectivities_key")
-key_sid <- rhdf5::H5Dget_space(key_did)
-key_rank <- rhdf5::H5Sget_simple_extent_dims(key_sid)$rank
-rhdf5::H5Sclose(key_sid)
-rhdf5::H5Dclose(key_did)
-rhdf5::H5Fclose(key_fid)
+key_ls <- rs_h5_ls(h5_out, "uns/neighbors")
+key_rank <- key_ls$rank[key_ls$name == "connectivities_key"]
 
 expect_equal(
   current = key_rank,
@@ -399,14 +420,14 @@ suppressWarnings(
 
 expect_equal(
   current = as.integer(
-    rhdf5::h5readAttributes(h5_filtered, "X")[["shape"]]
+    rs_h5_attrs(h5_filtered, "X")[["shape"]]
   ),
   target = c(length(keep), ncol(counts_expected)),
   info = "h5ad export - only the kept cells are written"
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(h5_filtered, "obs/_index")),
+  current = as.vector(rs_h5_read(h5_filtered, "obs/_index")),
   target = obs_expected$cell_id[keep],
   info = "h5ad export - the obs table follows the kept cells"
 )
@@ -417,7 +438,7 @@ counts_kept <- methods::as(
 )
 
 expect_equal(
-  current = as.vector(rhdf5::h5read(h5_filtered, "X/data")),
+  current = as.vector(rs_h5_read(h5_filtered, "X/data")),
   target = counts_kept@x,
   info = "h5ad export - the counts follow the kept cells"
 )
@@ -425,11 +446,7 @@ expect_equal(
 # the cached PCA covers every cell, so it is stale for the filtered object and
 # must be left out rather than written at the wrong length
 expect_true(
-  current = !("X_pca" %in%
-    rhdf5::h5ls(h5_filtered)[
-      rhdf5::h5ls(h5_filtered)$group == "/obsm",
-      "name"
-    ]),
+  current = !("X_pca" %in% rs_h5_ls(h5_filtered, "obsm")$name),
   info = "h5ad export - a stale embedding is skipped, not written"
 )
 

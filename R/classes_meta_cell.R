@@ -110,7 +110,7 @@ MetaCells <- S7::new_class(
     obs_data <- data.table::data.table(
       meta_cell_idx = seq_len(n_metacells),
       meta_cell_id = meta_cell_ids,
-      no_originating_cells = purrr::map_dbl(
+      no_originating_cells = purrr::map_int(
         meta_cell_data$assignments$metacells,
         length
       ),
@@ -605,12 +605,41 @@ S7::method(get_hvg, MetaCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
 
-  hvg_indices <- as.integer(S7::prop(x, "other_data")[["hvg"]])
+  # stored 1-based, which keeps saved objects valid; returned 0-based like
+  # every other class
+  hvg_indices <- as.integer(S7::prop(x, "other_data")[["hvg"]]) - 1L
   if (length(hvg_indices) == 0) {
     warning("No highly variable features found in the class.")
   }
 
   return(hvg_indices)
+}
+
+#' @name get_cell_names.MetaCells
+#'
+#' @rdname get_cell_names
+#'
+#' @method get_cell_names MetaCells
+S7::method(get_cell_names, MetaCells) <- function(x, filtered = FALSE) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(filtered, "B1")
+
+  # meta cells have no cell filter; `filtered` is accepted for the shared
+  # signature
+  x@obs_table[["meta_cell_id"]]
+}
+
+#' @name get_gene_names.MetaCells
+#'
+#' @rdname get_gene_names
+#'
+#' @method get_gene_names MetaCells
+S7::method(get_gene_names, MetaCells) <- function(x) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  x@var_table[["gene_id"]]
 }
 
 #' @name get_cell_indices.MetaCells
@@ -916,7 +945,10 @@ S7::method(set_connectivities, MetaCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
 
   S7::prop(x, "sc_cache") <- set_connectivities(
     x = S7::prop(x, "sc_cache"),
@@ -1018,7 +1050,7 @@ S7::method(get_pca_loadings, MetaCells) <- function(
   }
 
   colnames(res) <- sprintf("PC_%i", 1:ncol(res))
-  rownames(res) <- S7::prop(x, "var_table")$gene_id[get_hvg(x)]
+  rownames(res) <- S7::prop(x, "var_table")$gene_id[get_hvg(x) + 1L]
 
   return(res)
 }

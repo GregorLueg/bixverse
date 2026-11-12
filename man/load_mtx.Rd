@@ -8,7 +8,7 @@ load_mtx(
   object,
   sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
-  mtx_streaming = TRUE,
+  mtx_streaming = deprecated(),
   csc_mem_gb = NULL,
   streaming = deprecated(),
   batch_size = deprecated(),
@@ -25,9 +25,9 @@ load_mtx(
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 
-\item{mtx_streaming}{Boolean. Shall the .mtx file ingestion itself be
-streamed (via temp-file bucketing). Recommended for large mtx files.
-Defaults to \code{TRUE}.}
+\item{mtx_streaming}{No longer has an effect: the .mtx file is always read in
+a single pass with its entries bucketed on disk next to the store. Ignored.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
 \item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
 cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}

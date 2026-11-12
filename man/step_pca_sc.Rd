@@ -10,6 +10,7 @@ step_pca_sc(
   sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
+  residuals = FALSE,
   .verbose = TRUE
 )
 }
@@ -32,6 +33,16 @@ these, the internal HVG will be overwritten.}
 
 \item{seed}{Integer. Controls reproducibility. Only relevant for
 \code{svd_solver = "randomised"} and the Lanczos start vector.}
+
+\item{residuals}{Boolean. Run the PCA on the Pearson residuals of a model
+fitted with \code{\link[=fit_residuals_sc]{fit_residuals_sc()}} instead of the stored normalised
+layer. Needs \code{params_sc_pca(normalise_variance = FALSE, clr = FALSE)}, since
+the residuals already carry the signal as variance, and does not support
+\code{sparse_svd}: a residual column is dense even where the counts are not.
+On this dense path the default \code{svd_solver = "auto"} pays for a full
+gene x gene cross-product and is slower than \code{svd_solver = "randomised"},
+so pick the latter in \code{\link[=params_sc_pca]{params_sc_pca()}} when speed matters. Not supported
+for \code{MetaCells}.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed

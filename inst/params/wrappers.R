@@ -1556,7 +1556,7 @@ spec_sc_mtx_io <- param_spec(
     }
   }),
   fields = list(
-    path_mtx = p_free(doc = "Path to the .mtx file"),
+    path_mtx = p_free(doc = "Path to the .mtx or .mtx.gz file"),
     path_obs = p_free(doc = "Path to the file containing cell/barcode info."),
     path_var = p_free(doc = "Path to the file containing gene/variable info."),
     cells_as_rows = p_lgl(doc = "Do cells represent the rows or columns."),
@@ -1631,7 +1631,10 @@ spec_sc_hvg <- param_spec(
         "span of the trend for `method = \"scran\"`."
       )
     ),
-    num_bin = p_int(20L, doc = "Not yet implemented."),
+    num_bin = p_int(
+      20L,
+      doc = "Number of bins for the `meanvarbin` and `dispersion` methods."
+    ),
     bin_method = p_choice(
       "equal_width",
       c("equal_width", "equal_freq"),
@@ -1659,35 +1662,11 @@ spec_sc_pca <- param_spec(
     "svd_solver must be one of auto, covariance, randomised or exact;",
     "size_factor must be a single numeric."
   ),
-  # randomised stays in its old position so positional calls keep working.
-  # Plain warning(): lifecycle::deprecate_warn() inspects the caller frames and
-  # errors when this constructor is itself a lazily evaluated argument.
-  extra_ctor = quote({
-    if (!is.null(randomised)) {
-      svd_solver <- c("exact", "randomised")[randomised + 1L]
-      warning(sprintf(
-        paste(
-          "`randomised` is deprecated, use `svd_solver` instead.",
-          "Mapping randomised = %s to svd_solver = \"%s\"."
-        ),
-        randomised,
-        svd_solver
-      ))
-    }
-  }),
   fields = list(
     mean_center = p_lgl(TRUE, doc = "Shall the data be mean centred"),
     normalise_variance = p_lgl(
       TRUE,
       doc = "Shall the data have normalised variance"
-    ),
-    randomised = p_lgl(
-      NULL,
-      null_ok = TRUE,
-      doc = paste(
-        "Deprecated, use `svd_solver`. `TRUE` maps to",
-        "`\"randomised\"`, `FALSE` to `\"exact\"`."
-      )
     ),
     clr = p_lgl(
       FALSE,
@@ -1877,18 +1856,26 @@ spec_sc_knn <- param_spec(
   hint = paste(
     "k, n_trees, m, ef_construction and ef_search must be",
     "positive integers; delta must be a positive numeric;",
-    "diversify_prob must be a numeric in [0, 1]; extract_knn must",
-    "be a single boolean; search_budget, ef_budget, n_list and",
-    "n_probe must be NULL or positive integers."
+    "diversify_prob must be a numeric in [0, 1]; search_budget,",
+    "ef_budget, n_list and n_probe must be NULL or positive integers."
   ),
   fields = list(
     k = p_int(15L, range = "[1,)", doc = "Number of neighbours."),
     knn_method = p_choice(
       "kmknn",
-      c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
+      c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "ivf",
+        "exhaustive"
+      ),
       doc = paste(
         "Which method to use for the approximate nearest neighbour",
-        "search."
+        "search. `\"nndescent\"` hands back the graph the NN-Descent",
+        "built, with no index and no query pass. Rows the descent left",
+        "short are re-queried exactly."
       )
     ),
     ann_dist = p_choice(
@@ -1915,8 +1902,9 @@ spec_sc_knn <- param_spec(
       0,
       range = "[0,1]",
       doc = paste(
-        "NNDescent param: diversification probability applied at the",
-        "end of index construction."
+        "NNDescent param: diversification probability. Only used where a",
+        "query runs against an NN-Descent index, not for the graph of a",
+        "self kNN."
       )
     ),
     ef_budget = p_int(
@@ -1924,18 +1912,9 @@ spec_sc_knn <- param_spec(
       range = "[1,)",
       null_ok = TRUE,
       doc = paste(
-        "NNDescent param: optional query budget. Higher values",
-        "improve recall at the cost of speed."
-      )
-    ),
-    extract_knn = p_lgl(
-      FALSE,
-      doc = paste(
-        "NNDescent param: hand back the graph the descent already",
-        "built instead of beam searching it. Skips the query pass",
-        "entirely, so it is much faster, at the cost of some recall.",
-        "Rows the descent never filled come back padded with",
-        "duplicate edges. Ignored by every other method."
+        "NNDescent param: optional query budget. Only used where a query",
+        "runs against an NN-Descent index, not for the graph of a self",
+        "kNN."
       )
     ),
     m = p_int(
@@ -2129,12 +2108,12 @@ spec_symphony_map <- param_spec(
   title = "Default parameters for Symphony query mapping",
   checker = "SymphonyMap",
   label = "Symphony map params",
-  hint = "sigma and lambda must be non-negative numerics.",
+  hint = "sigma must be a positive numeric; lambda must be non-negative.",
   class_tag = "params_symphony_map",
   fields = list(
     sigma = p_dbl(
       0.1,
-      range = "[0,)",
+      range = "(0,)",
       doc = paste(
         "Soft-clustering fuzziness for query -> reference centroid",
         "assignment. Symphony R default is 0.1."

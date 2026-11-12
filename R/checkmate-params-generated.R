@@ -170,7 +170,6 @@ checkScBoostParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -211,7 +210,6 @@ checkScBoostParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -1535,7 +1533,6 @@ checkKnnParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -1556,7 +1553,6 @@ checkKnnParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -1567,8 +1563,7 @@ checkKnnParams <- function(x) {
     hint = paste(
       "k must be >= 0; n_trees, m, ef_construction and ef_search must",
       "be >= 1; search_budget, ef_budget, n_list and n_probe must be",
-      "NULL or >= 1; delta and diversify_prob must be in [0, 1];",
-      "extract_knn must be a single boolean."
+      "NULL or >= 1; delta and diversify_prob must be in [0, 1]."
     )
   )
   if (!isTRUE(res)) {
@@ -1592,8 +1587,7 @@ checkKnnParams <- function(x) {
     hint = paste(
       "k must be >= 0; n_trees, m, ef_construction and ef_search must",
       "be >= 1; search_budget, ef_budget, n_list and n_probe must be",
-      "NULL or >= 1; delta and diversify_prob must be in [0, 1];",
-      "extract_knn must be a single boolean."
+      "NULL or >= 1; delta and diversify_prob must be in [0, 1]."
     )
   )
   if (!isTRUE(res)) {
@@ -2106,7 +2100,6 @@ checkMeldParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -2134,7 +2127,6 @@ checkMeldParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -2709,7 +2701,6 @@ checkScBbknnParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -2734,7 +2725,6 @@ checkScBbknnParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -2972,7 +2962,6 @@ checkScBootstrappedMetacellsParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -2996,7 +2985,6 @@ checkScBootstrappedMetacellsParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -3492,7 +3480,6 @@ checkScFastmnnParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -3500,7 +3487,6 @@ checkScFastmnnParams <- function(x) {
       "n_probe",
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -3523,7 +3509,6 @@ checkScFastmnnParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -3531,7 +3516,6 @@ checkScFastmnnParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -3701,7 +3685,7 @@ checkScHarmonyParams <- function(x) {
     x,
     list(
       k = c("I1[1,)", "0"),
-      sigma = "N+[0,)",
+      sigma = "N+(0,)",
       theta = "N+[0,)",
       lambda = "N+[0,)",
       block_size = "N1(0,1]",
@@ -3803,7 +3787,7 @@ checkScHarmonyV2Params <- function(x) {
     x,
     list(
       k = c("I1[1,)", "0"),
-      sigma = "N+[0,)",
+      sigma = "N+(0,)",
       theta = "N+[0,)",
       lambda = "N+[0,)",
       block_size = "N1(0,1]",
@@ -3899,7 +3883,6 @@ checkScHotspotParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -3923,7 +3906,6 @@ checkScHotspotParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -4090,7 +4072,6 @@ checkScKnnParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -4111,7 +4092,6 @@ checkScKnnParams <- function(x) {
       delta = "N1(0,)",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -4122,9 +4102,8 @@ checkScKnnParams <- function(x) {
     hint = paste(
       "k, n_trees, m, ef_construction and ef_search must be positive",
       "integers; delta must be a positive numeric; diversify_prob must",
-      "be a numeric in [0, 1]; extract_knn must be a single boolean;",
-      "search_budget, ef_budget, n_list and n_probe must be NULL or",
-      "positive integers."
+      "be a numeric in [0, 1]; search_budget, ef_budget, n_list and",
+      "n_probe must be NULL or positive integers."
     )
   )
   if (!isTRUE(res)) {
@@ -4148,9 +4127,8 @@ checkScKnnParams <- function(x) {
     hint = paste(
       "k, n_trees, m, ef_construction and ef_search must be positive",
       "integers; delta must be a positive numeric; diversify_prob must",
-      "be a numeric in [0, 1]; extract_knn must be a single boolean;",
-      "search_budget, ef_budget, n_list and n_probe must be NULL or",
-      "positive integers."
+      "be a numeric in [0, 1]; search_budget, ef_budget, n_list and",
+      "n_probe must be NULL or positive integers."
     )
   )
   if (!isTRUE(res)) {
@@ -4603,7 +4581,6 @@ checkScNeighboursParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -4629,7 +4606,6 @@ checkScNeighboursParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -4716,7 +4692,6 @@ checkScPalantirParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -4748,7 +4723,6 @@ checkScPalantirParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -4826,7 +4800,6 @@ checkScPcaParams <- function(x) {
     c(
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -4841,7 +4814,6 @@ checkScPcaParams <- function(x) {
     list(
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -4996,7 +4968,6 @@ checkScSeacellsParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -5027,7 +4998,6 @@ checkScSeacellsParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -5122,7 +5092,6 @@ checkScSeuratCcaParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -5130,7 +5099,6 @@ checkScSeuratCcaParams <- function(x) {
       "n_probe",
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -5158,7 +5126,6 @@ checkScSeuratCcaParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -5166,7 +5133,6 @@ checkScSeuratCcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -5242,7 +5208,6 @@ checkScSeuratRpcaParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -5250,7 +5215,6 @@ checkScSeuratRpcaParams <- function(x) {
       "n_probe",
       "mean_center",
       "normalise_variance",
-      "randomised",
       "clr",
       "size_factor",
       "svd_solver"
@@ -5275,7 +5239,6 @@ checkScSeuratRpcaParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -5283,7 +5246,6 @@ checkScSeuratRpcaParams <- function(x) {
       n_probe = c("I1[1,)", "0"),
       mean_center = "B1",
       normalise_variance = "B1",
-      randomised = c("B1", "0"),
       clr = "B1",
       size_factor = "N1"
     ),
@@ -5358,7 +5320,6 @@ checkScSupercellParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -5384,7 +5345,6 @@ checkScSupercellParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -5798,7 +5758,6 @@ checkScVisionParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -5821,7 +5780,6 @@ checkScVisionParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -5902,7 +5860,6 @@ checkScWnnParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -5931,7 +5888,6 @@ checkScWnnParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -6018,7 +5974,6 @@ checkScDblFinderParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -6067,7 +6022,6 @@ checkScDblFinderParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -6384,7 +6338,6 @@ checkScScrubletParams <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
-      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -6419,7 +6372,6 @@ checkScScrubletParams <- function(x) {
       delta = "N1[0,1]",
       diversify_prob = "N1[0,1]",
       ef_budget = c("I1[1,)", "0"),
-      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -6718,11 +6670,11 @@ checkSymphonyMapParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
-      sigma = "N1[0,)",
+      sigma = "N1(0,)",
       lambda = "N1[0,)"
     ),
     label = "Symphony map params",
-    hint = "sigma and lambda must be non-negative numerics."
+    hint = "sigma must be a positive numeric; lambda must be non-negative."
   )
   if (!isTRUE(res)) {
     return(res)

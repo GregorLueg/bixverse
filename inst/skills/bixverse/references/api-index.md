@@ -148,7 +148,6 @@ Methods to help out with differential gene expression analyses in a structured w
 - `get_dge_qc_plot`: Return QC plots
 - `get_fpkm_counts`: Return the FPKM-normalised counts
 - `get_gene_lengths`: Get the gene lengths
-- `get_model_fit`: Get the fitted model
 - `get_tpm_counts`: Return the TPM-normalised counts
 
 ## Biomedical ontologies
@@ -178,7 +177,7 @@ Different methods working on graphs; diffuse information over a network and iden
 - `community_detection`: Identify privileged communities based on a given diffusion vector
 - `constrained_page_rank`: Constrained personalised page rank
 - `constrained_page_rank_ls`: Constrained personalised page rank over a list
-- `leiden_clustering`: Leiden or Louvain community detection on an igraph
+- `leiden_clustering`: Leiden or Louvain community detection
 - `diffuse_seed_nodes`: Diffuse seed genes over a network
 - `permute_seed_nodes`: Generate permuation scores for the diffusion
 - `get_diffusion_perms`: Get the diffusion permutations
@@ -231,6 +230,10 @@ THE single cell class with a large number of getters.
 - `get_pca_loadings`: Get the PCA loadings
 - `get_pca_factors`: Get the PCA factors
 - `get_connectivities`: Get the neighbour graph
+- `as_sc_connectivity`: Convert a graph into a SingleCellConnectivity
+- `as_igraph`: Convert a graph to igraph
+- `to_bytes`: Serialise an object to bytes
+- `from_bytes`: Read a SingleCellConnectivity back from bytes
 - `get_gene_names_from_idx`: Get the gene names based on the gene idx
 - `get_sc_available_features`: Returns the available features for single cell applications
 - `setnames_sc`: Rename columns in the obs or var table
@@ -258,7 +261,7 @@ Sub-clustering a group of cells and running the same chain per group.
 - `step_bbknn_sc`: Pipeline step: BBKNN batch correction
 - `step_fast_mnn_sc`: Pipeline step: fastMNN batch correction
 - `step_harmony_sc`: Pipeline step: Harmony batch correction
-- `step_harmony_v2_sc`: Pipeline step: Harmony v2 batch correction
+- `step_harmony_v1_sc`: Pipeline step: Harmony v1 batch correction
 - `step_metacells_sc`: Pipeline step: generate meta cells
 
 ## Single cell class for multi-modal data and getters
@@ -389,7 +392,7 @@ Batch correction methods and metrics for single cell
 
 - `fast_mnn_sc`: Run fastMNN
 - `harmony_sc`: Run Harmony
-- `harmony_v2_sc`: Run Harmony v2
+- `harmony_v1_sc`: Run Harmony v1
 - `bbknn_sc`: Run BBKNN
 - `seurat_cca_sc`: Run Seurat CCA integration
 - `seurat_rpca_sc`: Run Seurat rPCA integration
@@ -655,7 +658,7 @@ All types of other random helpers without a clear pattern
 
 Everything Rusty - only use this if you know what you are doing... Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood...
 
-115 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
+118 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
 
 ## Not on the package website
 
@@ -715,7 +718,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_adt_clr`: Applies CLR normalisation on ADT counts
 - `rs_aucell`: Calculate AUCell in Rust
 - `rs_bbknn`: BBKNN implementation in Rust
-- `rs_bbknn_filtering`: Reduce BBKNN results to Top X neighbours
+- `rs_bbknn_filtering`: Reduce BBKNN results to the k nearest neighbours
 - `rs_bonsai_layout`: Lay out an existing Bonsai tree
 - `rs_build_symphony_ref`: Build a Symphony reference (Rust)
 - `rs_calc_es`: Calculates the traditional GSEA enrichment score
@@ -741,6 +744,14 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_get_gs_indices`: Helper function to rapidly retrieve the indices of the gene set members
 - `rs_get_metacells_bootstrapped`: Generate meta cells (hdWGCNA method)
 - `rs_get_seacells`: Generate SEACells
+- `rs_graph_from_bytes`: Read a Rust neighbour graph back from bytes
+- `rs_graph_from_edges`: Build a Rust neighbour graph from an edge list
+- `rs_graph_info`: Summary of a Rust neighbour graph
+- `rs_graph_leiden`: Leiden and Louvain clustering on a Rust neighbour graph
+- `rs_graph_to_bytes`: Serialise a Rust neighbour graph to bytes
+- `rs_graph_to_csr`: Extract the CSR adjacency of a Rust neighbour graph
+- `rs_graph_to_edges`: Flatten a Rust neighbour graph into an edge list
+- `rs_h5ad_frame_to_parquet`: Write the obs or var dataframe of an h5ad file to Parquet
 - `rs_hotspot_autocor`: Calculate gene spatial auto-correlations
 - `rs_hotspot_cluster_genes`: Cluster the genes by Z-score together
 - `rs_hotspot_gene_cor`: Calculate gene to gene spatial correlations
@@ -803,6 +814,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_sc_scrublet`: Scrublet Rust interface
 - `rs_sc_type`: Run the ScType scoring approach
 - `rs_sc_type_assign_cells`: Per-cell ScType assignment with optional kNN smoothing
+- `rs_sc_type_assign_cells_graph`: Assign ScType cell types per cell, smoothing over a Rust neighbour graph
 - `rs_sc_type_cluster_assignment`: Score the individual clusters based on ScType
 - `rs_scenic_gene_filter`: Identifies genes to include into a SCENIC analysis
 - `rs_scenic_grn`: SCENIC: Generating gene-regulatory networks
@@ -822,6 +834,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_synthetic_sc_cellsweep_data`: Generates synthetic single cell counts with a planted ambient profile
 - `rs_synthetic_sc_data_with_cell_types`: Generates synthetic data for single cell
 - `rs_synthetic_sc_dialogue_data`: Generates synthetic data with a planted multicellular programme
+- `rs_tenx_frame_to_parquet`: Write the barcodes or features of a 10x h5 file to Parquet
 - `rs_top_k_targets`: SCENIC: Select the Top TF <> Gene pairs
 - `rs_transfer_labels_symphony`: Transfer labels from a Symphony reference to a query via kNN vote
 - `rs_vision`: Calculate VISION pathway scores in Rust

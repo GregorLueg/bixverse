@@ -33,8 +33,6 @@
 #'   order they will appear in the final var table.
 #'   \item universe_size - Length of the universe.
 #'   \item file_tasks - List of per-input task lists for Rust and DuckDB.
-#'   \item temp_files - Character vector of temp files created during
-#'   decompression; the caller should `unlink()` these after use.
 #' }
 #'
 #' @export
@@ -61,7 +59,7 @@
 #' )
 #' scan_res$universe_size
 #'
-#' unlink(c(dirs, scan_res$temp_files), recursive = TRUE, force = TRUE)
+#' unlink(dirs, recursive = TRUE, force = TRUE)
 prescan_mtx_dirs <- function(
   dirs,
   exp_ids,
@@ -78,10 +76,6 @@ prescan_mtx_dirs <- function(
   checkmate::qassert(has_hdr, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  temp_dir <- tempfile(pattern = "bixverse_mtx_prescan_")
-  dir.create(temp_dir)
-  temp_files <- character()
-
   locate <- function(dir, pat) {
     files <- list.files(
       dir,
@@ -96,32 +90,6 @@ prescan_mtx_dirs <- function(
       stop(sprintf("Multiple files matching '%s' in %s", pat, dir))
     }
     files
-  }
-
-  gunzip_to_temp <- function(path) {
-    out_name <- sub("\\.gz$", "", basename(path), ignore.case = TRUE)
-    out_path <- file.path(
-      temp_dir,
-      paste0(
-        tools::file_path_sans_ext(out_name),
-        "_",
-        basename(tempfile("")),
-        ".",
-        tools::file_ext(out_name)
-      )
-    )
-    con_in <- gzfile(path, open = "rb")
-    on.exit(close(con_in), add = TRUE)
-    con_out <- file(out_path, open = "wb")
-    on.exit(close(con_out), add = TRUE)
-    repeat {
-      chunk <- readBin(con_in, "raw", n = 8 * 1024 * 1024)
-      if (length(chunk) == 0L) {
-        break
-      }
-      writeBin(chunk, con_out)
-    }
-    out_path
   }
 
   gene_sets <- vector("list", length(dirs))
@@ -141,12 +109,8 @@ prescan_mtx_dirs <- function(
     features_path <- locate(d, "(features|genes)\\.(tsv|csv)(\\.gz)?$")
     barcodes_path <- locate(d, "barcodes\\.(tsv|csv)(\\.gz)?$")
 
-    if (grepl("\\.gz$", mtx_path, ignore.case = TRUE)) {
-      decompressed <- gunzip_to_temp(mtx_path)
-      temp_files <- c(temp_files, decompressed)
-      mtx_path <- decompressed
-    }
-
+    # a .mtx.gz goes to Rust as is; the reader detects gzip from the magic
+    # bytes
     delim <- if (grepl("\\.tsv(\\.gz)?$", features_path, ignore.case = TRUE)) {
       "\t"
     } else {
@@ -189,8 +153,7 @@ prescan_mtx_dirs <- function(
   list(
     universe = universe,
     universe_size = length(universe),
-    file_tasks = file_tasks,
-    temp_files = temp_files
+    file_tasks = file_tasks
   )
 }
 
@@ -1581,10 +1544,8 @@ S7::method(save_h5ad, SingleCells) <- function(
   obs <- .h5ad_export_obs(object)
   var <- .h5ad_export_var(object)
 
-  # `set_cells_to_keep()` keeps whatever order it was handed, while the obs
-  # table comes back in cell index order; sorting here is what keeps the two
-  # aligned. 0-based, as Rust wants it.
-  cell_indices <- sort(get_cells_to_keep(object))
+  # ascending, like the obs table; 0-based, as Rust wants it
+  cell_indices <- get_cells_to_keep(object)
 
   # the DuckDB and the ScMap both track which cells are kept; a mismatch here
   # would silently misalign the obs table against the counts
@@ -1716,7 +1677,7 @@ S7::method(save_h5ad, SingleCells) <- function(
   # today (#252), so bixverse could no longer read back what it writes.
   purrr::map(as.list(dt), function(x) {
     if (is.character(x) && data.table::uniqueN(x) < length(x)) {
-      x <- factor(x)
+      x <- factor(x, levels = sort(unique(x), method = "radix"))
     }
     if (is.factor(x)) {
       if (nlevels(x) == 0L) as.character(x) else x
@@ -1797,53 +1758,44 @@ S7::method(save_h5ad, SingleCells) <- function(
   }
 
   loadings <- .drop_stamp(get_pca_loadings(sc_cache))
-  if (is.matrix(loadings)) {
-    # the loadings only cover the HVGs, so they are padded back out to every
-    # gene; ScanPy expects varm to be aligned with var. `get_hvg()` is 0-based
-    # for Rust.
-    hvg <- get_hvg(object)
-    if (length(hvg) == nrow(loadings)) {
+  # without a written X_pca the loadings describe a PCA that no longer matches
+  # the cells, so they go too
+  if (is.matrix(loadings) && !is.null(obsm[["X_pca"]])) {
+    # the loadings only cover the PCA genes, so they are padded back out to
+    # every gene; ScanPy expects varm to be aligned with var. Rows are named by
+    # gene since 0.9.0; older loadings fall back to the current HVGs, which
+    # `get_hvg()` returns 0-based.
+    pca_genes <- if (is.null(rownames(loadings))) {
+      get_hvg(object) + 1L
+    } else {
+      match(rownames(loadings), get_gene_names(object))
+    }
+    if (length(pca_genes) == nrow(loadings) && !anyNA(pca_genes)) {
       padded <- matrix(0, nrow = no_genes, ncol = ncol(loadings))
-      padded[hvg + 1L, ] <- loadings
+      padded[pca_genes, ] <- unname(loadings)
       varm[["PCs"]] <- padded
     } else {
       warning(sprintf(
         paste(
-          "The cached PCA loadings cover %i genes but %i HVGs are set.",
-          "Skipping varm/PCs in the h5ad export."
+          "The cached PCA loadings cover %i genes, which cannot be matched",
+          "to the genes of the object. Skipping varm/PCs in the h5ad export."
         ),
-        nrow(loadings),
-        length(hvg)
+        nrow(loadings)
       ))
     }
   }
 
-  connectivities <- .drop_stamp(get_connectivities(sc_cache))
+  connectivities <- get_connectivities(sc_cache)
   if (
-    inherits(connectivities, "igraph") &&
-      igraph::vcount(connectivities) == no_cells
+    inherits(connectivities, "SingleCellConnectivity") &&
+      connectivities$n == no_cells
   ) {
     if (.verbose) {
       message("Adding the neighbour graph as obsp/connectivities.")
     }
-    attr_name <- if ("weight" %in% igraph::edge_attr_names(connectivities)) {
-      "weight"
-    } else {
-      NULL
-    }
-    adj <- igraph::as_adjacency_matrix(
-      connectivities,
-      attr = attr_name,
-      sparse = TRUE
-    )
-    adj <- methods::as(
-      methods::as(methods::as(adj, "dMatrix"), "generalMatrix"),
-      "RsparseMatrix"
-    )
-    obsp[["connectivities"]] <- list(
-      indptr = adj@p,
-      indices = adj@j,
-      data = adj@x
+    # the Rust CSR is the symmetric adjacency, rows sorted
+    obsp[["connectivities"]] <- rs_graph_to_csr(
+      .connectivity_ptr(connectivities)
     )
     uns[["neighbors"]] <- list(connectivities_key = "connectivities")
   }
@@ -1870,9 +1822,9 @@ S7::method(save_h5ad, SingleCells) <- function(
 #' @param sc_mtx_io_param List. Please generate this one via
 #' [bixverse::params_sc_mtx_io()].
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
-#' @param mtx_streaming Boolean. Shall the .mtx file ingestion itself be
-#' streamed (via temp-file bucketing). Recommended for large mtx files.
-#' Defaults to `TRUE`.
+#' @param mtx_streaming No longer has an effect: the .mtx file is always read in
+#' a single pass with its entries bucketed on disk next to the store. Ignored.
+#' `r lifecycle::badge("deprecated")`
 #' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
 #' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
 #' (default) converts in one pass and holds the whole matrix. Set a cap for
@@ -1925,7 +1877,7 @@ load_mtx <- S7::new_generic(
     object,
     sc_mtx_io_param = params_sc_mtx_io(),
     sc_qc_param = params_sc_min_quality(),
-    mtx_streaming = TRUE,
+    mtx_streaming = deprecated(),
     csc_mem_gb = NULL,
     streaming = deprecated(),
     batch_size = deprecated(),
@@ -1947,7 +1899,7 @@ S7::method(load_mtx, SingleCells) <- function(
   object,
   sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
-  mtx_streaming = TRUE,
+  mtx_streaming = deprecated(),
   csc_mem_gb = NULL,
   streaming = deprecated(),
   batch_size = deprecated(),
@@ -1958,33 +1910,31 @@ S7::method(load_mtx, SingleCells) <- function(
   checkmate::assertClass(object, "bixverse::SingleCells")
   assertScMtxIOParams(sc_mtx_io_param)
   assertScMinQCParams(sc_qc_param)
-  checkmate::qassert(mtx_streaming, "B1")
   checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
 
-  rust_con <- get_sc_rust_ptr(object)
-
-  file_res <- if (mtx_streaming) {
-    with(
-      sc_mtx_io_param,
-      rust_con$mtx_to_file_streaming(
-        mtx_path = path_mtx,
-        qc_params = sc_qc_param,
-        cells_as_rows = cells_as_rows,
-        verbose = .verbose
-      )
-    )
-  } else {
-    with(
-      sc_mtx_io_param,
-      rust_con$mtx_to_file(
-        mtx_path = path_mtx,
-        qc_params = sc_qc_param,
-        cells_as_rows = cells_as_rows,
-        verbose = .verbose
+  if (lifecycle::is_present(mtx_streaming)) {
+    deprecate_warn(
+      "0.8.4",
+      "load_mtx(mtx_streaming)",
+      details = paste(
+        "The .mtx file is always read in a single pass with its entries",
+        "bucketed on disk next to the store. The argument is ignored."
       )
     )
   }
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- with(
+    sc_mtx_io_param,
+    rust_con$mtx_to_file_streaming(
+      mtx_path = path_mtx,
+      qc_params = sc_qc_param,
+      cells_as_rows = cells_as_rows,
+      verbose = .verbose
+    )
+  )
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
@@ -2101,11 +2051,7 @@ S7::method(load_mtx, SingleCells) <- function(
 #' )
 #' dim(sc)
 #'
-#' unlink(
-#'   c(dirs, dir_data, scan_res$temp_files),
-#'   recursive = TRUE,
-#'   force = TRUE
-#' )
+#' unlink(c(dirs, dir_data), recursive = TRUE, force = TRUE)
 load_multi_mtx <- S7::new_generic(
   name = "load_multi_mtx",
   dispatch_args = "object",
@@ -2142,18 +2088,10 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   assertScMinQCParams(sc_qc_param)
   checkmate::assertList(prescan_result)
   checkmate::assertTRUE(all(
-    c("universe", "universe_size", "file_tasks", "temp_files") %in%
-      names(prescan_result)
+    c("universe", "universe_size", "file_tasks") %in% names(prescan_result)
   ))
   checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
-
-  on.exit(
-    if (length(prescan_result$temp_files) > 0L) {
-      unlink(prescan_result$temp_files)
-    },
-    add = TRUE
-  )
 
   rust_con <- get_sc_rust_ptr(object)
 
@@ -2577,9 +2515,17 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertChoice(type, c("qs2", "rds"))
 
+  # copies of the object share one DuckDB; the saved object's filter is the
+  # one load_existing() reads back
+  .sync_cells_to_keep_to_db(object)
+
   # pull the data out from the class
   sc_map <- get_sc_map(object)
-  sc_cache <- get_sc_cache(object)
+  # the Rust graph pointer does not survive serialisation; save its bytes
+  sc_cache <- .map_cache_connectivities(
+    get_sc_cache(object),
+    .connectivity_to_disk
+  )
   dir <- S7::prop(object, "dir_data")
 
   to_save <- list(sc_map = sc_map, sc_cache = sc_cache)
@@ -2701,6 +2647,69 @@ S7::method(upgrade_sc_store, SingleCells) <- function(
   invisible(NULL)
 }
 
+#' Write the object's cell filter to DuckDB before saving
+#'
+#' @description R copies of a `SingleCells` object share one DuckDB, so a
+#' [set_cells_to_keep()] on one copy rewrites `obs.to_keep` under all others.
+#' Saving re-asserts the saved object's own filter, so the memory file and
+#' the DB agree on disk.
+#'
+#' @param object `SingleCells` or `SingleCellsMultiModal` class.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @keywords internal
+.sync_cells_to_keep_to_db <- function(object) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+
+  duckdb_con <- get_sc_duckdb(object)
+  keep <- get_cells_to_keep(object) + 1L
+  if (!identical(duckdb_con$get_cells_to_keep(), keep)) {
+    duckdb_con$set_cells_to_keep(cell_idx_to_keep = keep)
+  }
+
+  invisible(NULL)
+}
+
+#' Take the cell filter from DuckDB when loading a saved object
+#'
+#' @description DuckDB `obs.to_keep` is the authoritative cell filter: another
+#' front end (or a hand edit of the DB) may have changed it after the memory
+#' file was written. When the two disagree, the DB wins and the cached
+#' artefacts in the memory file are flagged as stale.
+#'
+#' @param object `SingleCells` or `SingleCellsMultiModal` with the memory file
+#' already loaded.
+#' @param duckdb_con The `SingleCellDuckDB` connection of the object.
+#'
+#' @returns The object with the cell filter set from DuckDB.
+#'
+#' @keywords internal
+.sync_cells_to_keep_from_db <- function(object, duckdb_con) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertR6(duckdb_con, "SingleCellDuckDB")
+
+  db_keep <- duckdb_con$get_cells_to_keep()
+  # memory files from before 0.9.0 can hold an unsorted filter; the cached
+  # rows follow that order, so it counts as a mismatch too
+  mem_keep <- get_cells_to_keep(object) + 1L
+
+  if (!identical(as.integer(db_keep), as.integer(mem_keep))) {
+    warning(paste(
+      "The cell filter in the DuckDB differs from the one in the memory file.",
+      "Using the DuckDB one; cached artefacts may be stale, see",
+      "`get_sc_cache_status()`."
+    ))
+  }
+
+  S7::prop(object, "sc_map") <- set_cells_to_keep(
+    S7::prop(object, "sc_map"),
+    db_keep
+  )
+
+  object
+}
+
 #' @method load_existing SingleCells
 #'
 #' @export
@@ -2772,6 +2781,8 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
         "The dimensions of the found data do not agree with the Rust data."
       ))
     }
+
+    object <- .sync_cells_to_keep_from_db(object, duckdb_con)
   } else {
     cell_map <- duckdb_con$get_obs_index_map()
     gene_map <- duckdb_con$get_var_index_map()
@@ -2817,13 +2828,31 @@ S7::method(save_sc_exp_to_disk, SingleCellsMultiModal) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
   checkmate::assertChoice(type, c("qs2", "rds"))
 
+  .sync_cells_to_keep_to_db(object)
+
   # pull the data out from the class
   sc_map <- get_sc_map(object)
-  sc_cache <- get_sc_cache(object)
-  adt_cache <- S7::prop(object, "adt_cache")
-  atac_cache <- S7::prop(object, "atac_cache")
+  # the Rust graph pointers do not survive serialisation; save their bytes
+  sc_cache <- .map_cache_connectivities(
+    get_sc_cache(object),
+    .connectivity_to_disk
+  )
+  adt_cache <- .map_cache_connectivities(
+    S7::prop(object, "adt_cache"),
+    .connectivity_to_disk
+  )
+  atac_cache <- .map_cache_connectivities(
+    S7::prop(object, "atac_cache"),
+    .connectivity_to_disk
+  )
   adt_counts <- S7::prop(object, "adt_counts")
   other_data <- S7::prop(object, "other_data")
+  if (!is.null(other_data[["wnn"]])) {
+    other_data[["wnn"]] <- .map_cache_connectivities(
+      other_data[["wnn"]],
+      .connectivity_to_disk
+    )
+  }
   dir <- S7::prop(object, "dir_data")
 
   to_save <- list(
@@ -2910,6 +2939,8 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
         "The dimensions of the found data do not agree with the Rust data."
       ))
     }
+
+    object <- .sync_cells_to_keep_from_db(object, duckdb_con)
 
     # ADT is keyed by barcode and frozen at add time, so it can hold more
     # cells than survive later QC; only kept cells missing from it matter

@@ -77,9 +77,10 @@ UMAP the relative size of a cluster on the plot tells you nothing, with
 densMAP it does. Setting \code{lambda = 0} in \code{\link[manifoldsR:params_densmap]{manifoldsR::params_densmap()}}
 gives you back plain UMAP.
 
-Neighbour handling is the same as in \code{\link[=umap_sc]{umap_sc()}}: with
-\code{use_knn = TRUE} (the default) the cached kNN graph is reused, otherwise
-neighbours are computed from the chosen embedding.
+Neighbour handling and the optimiser choice in \code{umap_params} are the same
+as in \code{\link[=umap_sc]{umap_sc()}}: with \code{use_knn = TRUE} (the default) the cached
+kNN graph is reused, otherwise neighbours are computed from the chosen
+embedding.
 }
 \examples{
 # densMAP off the cached kNN graph

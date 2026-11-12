@@ -60,7 +60,6 @@ tempdir_pbmc <- tempdir()
 sc_object <- load_mtx(
   object = SingleCells(dir_data = tempdir_pbmc),
   sc_mtx_io_param = get_cell_ranger_params(pbmc3k_path),
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -312,7 +311,7 @@ about 20 times the counts, so its error bars are much tighter, and Bonsai
 weights by them. The same `bonsai_sc()` call works on `MetaCells`; every
 metacell becomes a leaf.
 
-Here SEACells compresses the PBMCs to 100 metacells, and each metacell gets
+Here SuperCells compresses the PBMCs to metacells, and each metacell gets
 the cell type most of its cells carry.
 
 ```{r}
@@ -376,7 +375,7 @@ cores):
 | | Sanity | Bonsai search | total |
 |---|---|---|---|
 | `bonsai_sc()` | 60 s | 80 s | 140 s |
-| `bonsai_gpu_sc()` | 5 s | 80 s | 65 s |
+| `bonsai_gpu_sc()` | 5 s | 80 s | 85 s |
 
 Both kept the same 2,751 genes. With Sanity on the GPU the tree search is the
 clear  cost, and that is where 100k cells will hurt. Metacells are the way 

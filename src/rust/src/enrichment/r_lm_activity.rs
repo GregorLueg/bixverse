@@ -46,11 +46,7 @@ extendr_module! {
 ///
 /// @references Badia-i-Mompel, et al., Bioinform. Adv., 2022.
 #[extendr]
-fn rs_lm_activity(
-    mat: RMatrix<f64>,
-    gs_list: List,
-    lm_params: List,
-) -> extendr_api::Result<List> {
+fn rs_lm_activity(mat: RMatrix<f64>, gs_list: List, lm_params: List) -> extendr_api::Result<List> {
     let mat = r_matrix_to_faer(&mat);
     let net = r_list_to_feature_set_weights(gs_list, mat.nrows())?;
     let params = LmActivityParams::from_r_list(lm_params)?;
@@ -62,5 +58,8 @@ fn rs_lm_activity(
         None => NULL.into_robj(),
     };
 
-    Ok(list!(es = faer_to_r_matrix(res.es.as_ref()), p_values = p_values))
+    Ok(list!(
+        es = faer_to_r_matrix(res.es.as_ref()),
+        p_values = p_values
+    ))
 }

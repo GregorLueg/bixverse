@@ -32,7 +32,7 @@ filtering significant motifs.}
 (at most \code{nrow(rankings)}).}
 
 \item{method}{String. Recovery curve calculation method, one of
-\code{c("approx", "icistarget")}. Anything else falls back to \code{"approx"}.}
+\code{c("approx", "icistarget")}.}
 
 \item{n_mean}{Integer. Window size for the smoothing in the approximate
 method.}

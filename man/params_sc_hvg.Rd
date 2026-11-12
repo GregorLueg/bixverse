@@ -26,7 +26,8 @@ Defaults to \code{"vst"}.}
 used to standardise the variance for \code{method = "vst"}, and the lowess span of
 the trend for \code{method = "scran"}. Defaults to \code{0.3}.}
 
-\item{num_bin}{Integer. Not yet implemented. Defaults to \code{20L}.}
+\item{num_bin}{Integer. Number of bins for the \code{meanvarbin} and \code{dispersion}
+methods. Defaults to \code{20L}.}
 
 \item{bin_method}{String. The binning method. One of \code{c("equal_width", "equal_freq")}. Defaults to \code{"equal_width"}.}
 
@@ -49,7 +50,8 @@ than \code{hvg_no} genes. One of \code{c("vst", "meanvarbin", "dispersion", "scr
 \item loess_span - Numeric. The span parameter for the loess function that
 is used to standardise the variance for \code{method = "vst"}, and the lowess
 span of the trend for \code{method = "scran"}. Defaults to \code{0.3}.
-\item num_bin - Integer. Not yet implemented. Defaults to \code{20L}.
+\item num_bin - Integer. Number of bins for the \code{meanvarbin} and
+\code{dispersion} methods. Defaults to \code{20L}.
 \item bin_method - String. The binning method. One of \code{c("equal_width", "equal_freq")}. Defaults to \code{"equal_width"}.
 \item The elements of \code{\link[=params_hvg_scran_defaults]{params_hvg_scran_defaults()}}, overridden by \code{scran},
 spliced in at this position.

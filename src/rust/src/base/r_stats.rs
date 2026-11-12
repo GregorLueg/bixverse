@@ -214,7 +214,11 @@ fn rs_mad_outlier(
     direction: &str,
     r_standard: bool,
 ) -> extendr_api::Result<List> {
-    let direction = parse_outlier_type(direction).unwrap_or_default();
+    let direction = parse_outlier_type(direction).ok_or_else(|| {
+        extendr_api::Error::Other(format!(
+            "Unknown direction '{direction}'. Use 'twosided', 'below' or 'above'."
+        ))
+    })?;
 
     let (outliers, threshold) = mad_outlier(x, threshold, direction, r_standard);
 

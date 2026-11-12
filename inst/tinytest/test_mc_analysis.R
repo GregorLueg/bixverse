@@ -96,8 +96,8 @@ expect_true(
 # the signal genes (1-30) should dominate the HVGs - it's the same signal
 # carried into the meta cells
 expect_true(
-  current = length(intersect(mc_hvg, 1:30)) >=
-    length(intersect(mc_hvg, 31:100)),
+  current = length(intersect(mc_hvg + 1L, 1:30)) >=
+    length(intersect(mc_hvg + 1L, 31:100)),
   info = "mc hvg - bulk of signal genes recovered as HVGs"
 )
 
@@ -127,8 +127,8 @@ expect_true(
 )
 
 expect_true(
-  current = length(intersect(mc_hvg_disp, 1:30)) >=
-    length(intersect(mc_hvg_disp, 31:100)),
+  current = length(intersect(mc_hvg_disp + 1L, 1:30)) >=
+    length(intersect(mc_hvg_disp + 1L, 31:100)),
   info = "mc hvg dispersion - signal genes dominate the HVGs"
 )
 
@@ -158,8 +158,8 @@ expect_true(
 )
 
 expect_true(
-  current = length(intersect(mc_hvg_mvb, 1:30)) >=
-    length(intersect(mc_hvg_mvb, 31:100)),
+  current = length(intersect(mc_hvg_mvb + 1L, 1:30)) >=
+    length(intersect(mc_hvg_mvb + 1L, 31:100)),
   info = "mc hvg meanvarbin - signal genes dominate the HVGs"
 )
 
@@ -202,7 +202,7 @@ mc_hvg_scran <- get_hvg(mc_object)
 
 expect_true(
   current = setequal(
-    mc_hvg_scran,
+    mc_hvg_scran + 1L,
     order(mc_var_scran$scran_residual, decreasing = TRUE)[1:hvg_to_keep]
   ),
   info = "mc hvg scran - HVGs are the top residuals"
@@ -279,7 +279,7 @@ expect_true(
 expect_true(
   current = length(intersect(
     mc_hvg_dt_full[is_hvg == TRUE, gene_idx],
-    mc_current_hvg
+    mc_current_hvg + 1L
   )) ==
     hvg_to_keep,
   info = "mc get_hvg_data_sc - NULL cell_ids matches find_hvg_sc"
@@ -415,12 +415,12 @@ expect_equal(
 )
 
 expect_true(
-  current = class(get_connectivities(mc_object)) == "igraph",
-  info = "mc snn - igraph returned"
+  current = inherits(get_connectivities(mc_object), "SingleCellConnectivity"),
+  info = "mc snn - SingleCellConnectivity returned"
 )
 
 expect_equal(
-  current = igraph::vcount(get_connectivities(mc_object)),
+  current = get_connectivities(mc_object)$n,
   target = target_n_metacells,
   info = "mc snn - graph vertex count matches meta cell count"
 )
@@ -658,6 +658,62 @@ expect_true(
     col.names = "named"
   ),
   info = "mc vision w autocor - 4 gene sets and a rebuilt kNN still work"
+)
+
+## hotspot ---------------------------------------------------------------------
+
+expect_equal(
+  current = get_gene_names(mc_object),
+  target = mc_object@var_table[["gene_id"]],
+  info = "mc get_gene_names - reads the var table"
+)
+
+hotspot_genes <- get_gene_names(mc_object)[1:20]
+
+hotspot_res <- hotspot_gene_cor_sc(
+  object = mc_object,
+  genes_to_take = hotspot_genes,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(hotspot_res, "Hotspot"),
+  info = "mc hotspot gene cor - correct class"
+)
+
+expect_equal(
+  current = rownames(hotspot_res$z),
+  target = hotspot_genes,
+  info = "mc hotspot gene cor - z matrix labelled with the requested genes"
+)
+
+expect_equal(
+  current = dim(hotspot_res$cor),
+  target = c(20L, 20L),
+  info = "mc hotspot gene cor - correct shape"
+)
+
+# an unknown gene must not shift the labels off the values
+expect_warning(
+  current = hotspot_gene_cor_sc(
+    object = mc_object,
+    genes_to_take = c("not_a_gene", hotspot_genes),
+    .verbose = FALSE
+  ),
+  pattern = "could not be matched",
+  info = "mc hotspot gene cor - warns on an unknown gene"
+)
+
+hotspot_res_unknown <- suppressWarnings(hotspot_gene_cor_sc(
+  object = mc_object,
+  genes_to_take = c("not_a_gene", hotspot_genes),
+  .verbose = FALSE
+))
+
+expect_equal(
+  current = hotspot_res_unknown$z,
+  target = hotspot_res$z,
+  info = "mc hotspot gene cor - unknown gene dropped, labels stay on the values"
 )
 
 ## scenic ----------------------------------------------------------------------

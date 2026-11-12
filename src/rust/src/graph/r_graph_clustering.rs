@@ -2,7 +2,7 @@ use bixverse_r::core::base::cors_similarity::*;
 use bixverse_r::core::math::rbf::rbf_gaussian_mat;
 use bixverse_r::graph::graph_clustering::*;
 use bixverse_r::graph::graph_structures::edge_pairs_to_sparse_graph;
-use bixverse_r::graph::leiden::{LeidenParams, leiden_sparse_graph};
+use bixverse_r::graph::leiden::{leiden_sparse_graph, LeidenParams};
 use bixverse_r::ml::clustering::k_means::KMeansParamsWrappers;
 use bixverse_r::prelude::*;
 use extendr_api::prelude::*;

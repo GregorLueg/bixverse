@@ -307,7 +307,6 @@ reference:
       - get_dge_qc_plot
       - get_fpkm_counts
       - get_gene_lengths
-      - get_model_fit
       - get_tpm_counts
   # Ontologies
   - title: Biomedical ontologies
@@ -394,6 +393,10 @@ reference:
       - get_pca_loadings
       - get_pca_factors
       - get_connectivities
+      - as_sc_connectivity
+      - as_igraph
+      - to_bytes
+      - from_bytes
       - get_gene_names_from_idx
       - get_sc_available_features
       - setnames_sc
@@ -421,7 +424,7 @@ reference:
       - step_bbknn_sc
       - step_fast_mnn_sc
       - step_harmony_sc
-      - step_harmony_v2_sc
+      - step_harmony_v1_sc
       - step_metacells_sc
   # Single cell classes and getters
   - title: Single cell class for multi-modal data and getters
@@ -553,7 +556,7 @@ reference:
     contents:
       - fast_mnn_sc
       - harmony_sc
-      - harmony_v2_sc
+      - harmony_v1_sc
       - bbknn_sc
       - seurat_cca_sc
       - seurat_rpca_sc
@@ -867,6 +870,8 @@ reference:
       - rs_gse_geom_elim_list
       - rs_gsva
       - rs_h5ad_data
+      - rs_h5ad_dimensions
+      - rs_h5ad_raw_slot
       - rs_hamming_dist
       - rs_harmony
       - rs_harmony_v2
@@ -947,3 +952,4 @@ reference:
       - rs_upper_triangle_to_sparse
       - rs_voom_normalise
       - rs_wnn
+      - rs_write_tenx_h5

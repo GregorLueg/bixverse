@@ -1,18 +1,28 @@
 use bixverse_r::sc_r_wrappers::cell_sweep_fit_to_r_list;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use bixverse_r::prelude::*;
+use bixverse_r::sc_r_wrappers::cellsweep_sample_from_r_list;
 use bixverse_r::single_cell::sc_data::{
-    archive_io::*, bin_merge_io::*, data_io::peek_file_version, gene_file_io::*, h5_10x_io::*,
-    h5_10x_multifile_io::*, h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*,
-    r_obj_io::*, v4_io::{upgrade_store_to_v4, ChunkCodec},
+    archive_io::*,
+    bin_merge_io::*,
+    data_io::peek_file_version,
+    gene_file_io::*,
+    h5_10x_io::*,
+    h5_10x_multifile_io::*,
+    h5ad_io::*,
+    h5ad_multifile_io::*,
+    mtx_io::*,
+    mtx_multifile_io::*,
+    r_obj_io::*,
+    v4_io::{upgrade_store_to_v4, ChunkCodec},
 };
 use bixverse_r::single_cell::sc_processing::cellsweep::{
     run_cellsweep, CellSweepParams, CellSweepSample,
 };
-use bixverse_r::sc_r_wrappers::cellsweep_sample_from_r_list;
 
 use crate::single_cell::utils::norm_counts_to_f32;
 
@@ -609,7 +619,8 @@ impl SingleCellCountData {
     /// Write an mtx file to the cells binary file
     ///
     /// @param mtx_path (`character`)\cr
-    /// Path to the mtx file.
+    /// Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the
+    /// magic bytes).
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
     /// @param cells_as_rows (`logical`)\cr
@@ -629,7 +640,9 @@ impl SingleCellCountData {
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
 
-        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows).to_extendr()?;
+        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows)
+            .to_extendr()?
+            .with_temp_dir(spill_dir(&self.f_path_cells));
 
         let mtx_quality_data = mtx_reader.parse_mtx_quality(verbose).to_extendr()?;
 
@@ -651,7 +664,8 @@ impl SingleCellCountData {
     /// Write an mtx file to the cells binary file using streaming
     ///
     /// @param mtx_path (`character`)\cr
-    /// Path to the mtx file.
+    /// Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the
+    /// magic bytes).
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
     /// @param cells_as_rows (`logical`)\cr
@@ -671,7 +685,9 @@ impl SingleCellCountData {
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
 
-        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows).to_extendr()?;
+        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows)
+            .to_extendr()?
+            .with_temp_dir(spill_dir(&self.f_path_cells));
 
         let mtx_quality_data = mtx_reader.parse_mtx_quality(verbose).to_extendr()?;
 
@@ -1451,5 +1467,24 @@ impl SingleCellCountData {
             nnz = result.nnz.r_int_convert(),
             fits = fits
         ))
+    }
+}
+
+/// Directory for the mtx loader's spill files
+///
+/// The spill is 12 bytes per entry, so it belongs next to the store rather
+/// than in the session temp directory, which can sit on a small volume.
+///
+/// ### Params
+///
+/// * `f_path_cells` - Path of the cell-based binary file being written
+///
+/// ### Returns
+///
+/// Its parent directory, or `.` for a bare file name.
+fn spill_dir(f_path_cells: &str) -> PathBuf {
+    match Path::new(f_path_cells).parent() {
+        Some(dir) if !dir.as_os_str().is_empty() => dir.to_path_buf(),
+        _ => PathBuf::from("."),
     }
 }

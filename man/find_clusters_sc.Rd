@@ -8,9 +8,10 @@ find_clusters_sc(
   object,
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
-  name = "leiden_clustering",
+  name = NULL,
   modality = c("rna", "adt", "wnn"),
   seed = 42L,
+  .verbose = TRUE,
   ...
 )
 }
@@ -22,13 +23,17 @@ find_clusters_sc(
 \item{res}{Numeric. The modularity resolution parameter, see
 \code{\link[=leiden_clustering]{leiden_clustering()}}.}
 
-\item{name}{String. The name to add to the obs table in the DuckDB.}
+\item{name}{Optional string. The name of the obs column to add. \code{NULL}
+gives \code{"leiden_clustering"} or \code{"louvain_clustering"}, following
+\code{cluster_algorithm}.}
 
-\item{modality}{String. On which modality to run the UMAP. One of
+\item{modality}{String. On which modality to cluster. One of
 \code{c("rna", "adt", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
 
 \item{seed}{Integer. For reproducibility.}
+
+\item{.verbose}{Boolean or integer. Controls verbosity.}
 
 \item{...}{Further parameters for \code{\link[=leiden_clustering]{leiden_clustering()}}: \code{n_iterations},
 \code{beta}, \code{min_gain} and \code{local_moving}.}

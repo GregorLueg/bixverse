@@ -7,7 +7,7 @@
 params_sc_mtx_io(path_mtx, path_obs, path_var, cells_as_rows, has_hdr)
 }
 \arguments{
-\item{path_mtx}{Any. Path to the .mtx file Required.}
+\item{path_mtx}{Any. Path to the .mtx or .mtx.gz file Required.}
 
 \item{path_obs}{Any. Path to the file containing cell/barcode info. Required.}
 
@@ -22,7 +22,7 @@ Required.}
 \value{
 A named list with the following elements:
 \itemize{
-\item path_mtx - Any. Path to the .mtx file Required.
+\item path_mtx - Any. Path to the .mtx or .mtx.gz file Required.
 \item path_obs - Any. Path to the file containing cell/barcode info.
 Required.
 \item path_var - Any. Path to the file containing gene/variable info.

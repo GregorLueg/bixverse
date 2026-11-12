@@ -15,8 +15,8 @@
 \item{.verbose}{Boolean or integer. Controls verbosity.}
 }
 \value{
-Undirected, weighted igraph with the method in the \code{method} graph
-attribute.
+A \code{SingleCellConnectivity} holding the undirected, weighted Rust
+graph, with the method in \code{method}.
 }
 \description{
 Symmetrise a kNN into the neighbour graph

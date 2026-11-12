@@ -1179,7 +1179,7 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
       hotspot_res$cor %>% `rownames<-`(used_genes) %>% `colnames<-`(used_genes)
     },
     params = list(used_cells = used_cells),
-    module_memership = NULL
+    module_membership = NULL
   )
 
   class(sc_hotspot) <- "Hotspot"
@@ -1199,14 +1199,14 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
 print.Hotspot <- function(x, ...) {
   n_genes <- nrow(x$z)
   n_cells <- length(x$params$used_cells)
-  has_modules <- !is.null(x$module_memership)
+  has_modules <- !is.null(x$module_membership)
 
   cat("Hotspot gene-gene local correlation results\n")
   cat(sprintf("  Genes: %d\n", n_genes))
   cat(sprintf("  Cells: %d\n", n_cells))
 
   if (has_modules) {
-    membership <- x$module_memership
+    membership <- x$module_membership
     n_assigned <- sum(!is.na(membership$cluster_member))
     n_modules <- length(unique(na.omit(membership$cluster_member)))
     cat(sprintf(
@@ -1276,13 +1276,13 @@ plot.Hotspot <- function(x, top_k = 5L, max_genes = 500L, seed = 42L, ...) {
 
   z_mat <- x$z
 
-  membership <- x[["module_memership"]]
+  membership <- x[["module_membership"]]
   if (!is.null(membership)) {
     membership <- data.table::copy(membership)[!is.na(cluster_member)]
   }
 
   if (is.null(membership) || nrow(membership) == 0L) {
-    if (!is.null(x[["module_memership"]])) {
+    if (!is.null(x[["module_membership"]])) {
       warning("No gene was assigned to a module. Plotting all genes.")
     }
 
@@ -1481,7 +1481,7 @@ get_hotspot_membership.Hotspot <- function(
   # checks
   checkmate::assertClass(x, "Hotspot")
 
-  x[["module_memership"]]
+  x[["module_membership"]]
 }
 
 #### methods -------------------------------------------------------------------
@@ -1532,7 +1532,7 @@ generate_hotspot_membership.Hotspot <- function(
     )
   )
 
-  x[["module_memership"]] <- gene_membership
+  x[["module_membership"]] <- gene_membership
 
   x
 }
@@ -1696,44 +1696,6 @@ get_differential_abundance_res.miloR <- function(
   }
 
   res
-}
-
-#' Get the fitted model
-#'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#' The neighbourhood test moved into Rust, so there is no `DGEGLM` to hand
-#' back any more. Everything the fit was consulted for now sits in the results
-#' table, see [bixverse::get_differential_abundance_res()].
-#'
-#' @param x An object from which to get the fitted model from.
-#'
-#' @returns `NULL`, with a deprecation warning.
-#'
-#' @export
-get_model_fit <- function(x) {
-  UseMethod("get_model_fit")
-}
-
-#' @rdname get_model_fit
-#'
-#' @export
-get_model_fit.miloR <- function(
-  x
-) {
-  # checks
-  checkmate::assertClass(x, "miloR")
-
-  lifecycle::deprecate_warn(
-    when = "0.4.11",
-    what = "get_model_fit()",
-    details = paste(
-      "test_nhoods() now runs the edgeR quasi-likelihood chain in Rust and",
-      "keeps no DGEGLM. Use get_differential_abundance_res() instead."
-    )
-  )
-
-  invisible(NULL)
 }
 
 #' Get the index cells
@@ -2087,7 +2049,8 @@ add_nhoods_info.miloR <- function(x, cell_info) {
     majority_prop = apply(celltype_counts, 1, max) / rowSums(celltype_counts)
   )]
 
-  x[["nhoods_info"]] <- x[["nhoods_info"]][
+  # copy: `:=` on the stored table would also change the caller's object
+  x[["nhoods_info"]] <- data.table::copy(x[["nhoods_info"]])[
     nhood_info,
     on = "Nhood",
     `:=`(

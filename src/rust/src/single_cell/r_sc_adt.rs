@@ -1,12 +1,12 @@
-use bixverse_r::prelude::*;
-use bixverse_r::single_cell::sc_data::h5_10x_adt_io::{TenxDenseModality, read_tenx_h5_modality};
-use bixverse_r::single_cell::multi_modal::adt::dsb::*;
 use bixverse_r::mm_r_wrappers::dsb_params_from_r_list;
+use bixverse_r::prelude::*;
+use bixverse_r::single_cell::multi_modal::adt::clr::adt_clr;
+use bixverse_r::single_cell::multi_modal::adt::dsb::*;
+use bixverse_r::single_cell::sc_data::h5_10x_adt_io::{read_tenx_h5_modality, TenxDenseModality};
 use bixverse_r::single_cell::sc_data::h5_10x_io::parse_tenx_version;
 use extendr_api::Nullable::Null;
 use extendr_api::*;
 
-use rayon::prelude::*;
 
 ////////////////////
 // extendr Module //
@@ -77,48 +77,6 @@ fn rs_read_tenx_h5_modality(f_path: String, version: String, feature_type: Strin
 // Helpers //
 /////////////
 
-/// Seurat-style CLR of one row
-///
-/// Computes `log1p(x / g)`, with `g` the exponent of the summed `log1p` over
-/// the positive entries divided by `ncol`.
-///
-/// ### Params
-///
-/// * `row` - The row values
-/// * `ncol` - Number of columns/features in the data
-///
-/// ### Returns
-///
-/// Seurat-style CLR-normalised row, non-negative.
-#[inline]
-fn clr_row_seurat(row: &[f64], ncol: usize) -> Vec<f64> {
-    let g = ((0..ncol)
-        .filter(|&j| row[j] > 0.0)
-        .map(|j| row[j].ln_1p())
-        .sum::<f64>()
-        / ncol as f64)
-        .exp();
-    row.iter().map(|&v| (v / g).ln_1p()).collect()
-}
-
-/// Proper CLR of one row
-///
-/// Computes `log1p(x) - mean(log1p(x))`.
-///
-/// ### Params
-///
-/// * `row` - The row values
-/// * `ncol` - Number of columns/features in the data
-///
-/// ### Returns
-///
-/// CLR-normalised row, mean-centred and possibly negative.
-#[inline]
-fn clr_row(row: &[f64], ncol: usize) -> Vec<f64> {
-    let log_gm = row.iter().map(|&v| v.ln_1p()).sum::<f64>() / ncol as f64;
-    row.iter().map(|&v| v.ln_1p() - log_gm).collect()
-}
-
 /// Applies CLR normalisation on ADT counts
 ///
 /// @description
@@ -140,22 +98,7 @@ fn clr_row(row: &[f64], ncol: usize) -> Vec<f64> {
 #[extendr]
 fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
     let counts = r_matrix_to_faer(&counts);
-    let nrow = counts.nrows();
-    let ncol = counts.ncols();
-
-    let rows: Vec<Vec<f64>> = (0..nrow)
-        .into_par_iter()
-        .map(|i| {
-            let row: Vec<f64> = (0..ncol).map(|j| counts[(i, j)]).collect();
-            if seurat_clr {
-                clr_row_seurat(&row, ncol)
-            } else {
-                clr_row(&row, ncol)
-            }
-        })
-        .collect();
-
-    RMatrix::new_matrix(nrow, ncol, |i, j| rows[i][j])
+    faer_to_r_matrix(adt_clr(counts, seurat_clr).as_ref())
 }
 
 /// Run DSB normalisation on raw ADT counts
@@ -188,8 +131,7 @@ fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
 /// @param scale_factor String. One of `"standardise"` or `"mean_subtract"`.
 /// Only used when `background_counts` is provided. `"standardise"` subtracts
 /// the per-protein background mean and divides by the per-protein background
-/// SD. `"mean_subtract"` subtracts the mean only. Unrecognised values fall
-/// back to `"standardise"`.
+/// SD. `"mean_subtract"` subtracts the mean only.
 /// @param seed Integer. Random seed for the k-means initialisations.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -226,6 +168,12 @@ fn rs_dsb(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
+    // prepare_background_source falls back to "standardise" on anything else
+    if parse_scale_factor(&scale_factor).is_none() {
+        return Err(Error::Other(format!(
+            "Unknown scale_factor '{scale_factor}'. Use 'standardise' or 'mean_subtract'."
+        )));
+    }
     let raw_counts = r_matrix_to_faer_fp32(&raw_counts);
     let dsb_params = dsb_params_from_r_list(dsb_params, isotype_indices)?;
 

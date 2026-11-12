@@ -6,7 +6,7 @@
 \usage{
 phate_sc(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   slot_name = "phate",
   no_embd_to_use = NULL,
@@ -24,7 +24,7 @@ phate_sc(
 \item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
-\code{TRUE}. If not available, will default to the embedding.}
+\code{FALSE}, see the description.}
 
 \item{embd_to_use}{String. The embedding to use for PHATE. Must be available
 in the object.}
@@ -69,9 +69,13 @@ Unlike UMAP or t-SNE, PHATE is explicitly designed to reveal continuous
 progressions and branching structure, making it the preferred choice for data
 with developmental or trajectory-like organisation.
 
-When \code{use_knn = TRUE} (the default), the kNN graph already stored on the
-object is reused; otherwise neighbours are computed from the chosen
-embedding. The algorithm then constructs a diffusion operator, raises it to a
+By default (\code{use_knn = FALSE}) neighbours are computed from the chosen
+embedding. PHATE searches \code{6 * k + 5} neighbours so that every point whose
+affinity clears the kernel threshold can join, which the kNN graph stored on
+the object (usually 15 wide) cannot supply. \code{use_knn = TRUE} reuses that
+graph anyway and gives a narrower kernel. \code{modality = "wnn"} always uses the
+integrated WNN graph. The algorithm then constructs a diffusion operator,
+raises it to a
 power (the diffusion time \code{t}, see \code{\link[manifoldsR:params_phate]{manifoldsR::params_phate()}}) that
 denoises the manifold, and computes potential distances that are finally
 embedded via metric MDS.

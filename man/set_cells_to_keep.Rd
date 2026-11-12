@@ -16,13 +16,15 @@ set_cells_to_keep(x, cells_to_keep)
 \arguments{
 \item{x}{An object to set cells to keep for}
 
-\item{cells_to_keep}{String or integer. The names or indices of the cells
-to keep in downstream analysis.}
+\item{cells_to_keep}{String or integer. The names or indices (1-based) of
+the cells to keep in downstream analysis.}
 }
 \description{
 Set the cells to keep. This is used for the single cell-related
 classes with streaming from disk and tells subsequent (Rust) methods which
-cells to include.
+cells to include. The filter is stored as unique, ascending cell indices:
+the order and any duplicates of \code{cells_to_keep} are dropped, so every
+result downstream follows the cell order of the store.
 }
 \examples{
 # restrict everything downstream to the first 100 cells

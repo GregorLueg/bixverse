@@ -105,6 +105,18 @@ DIALOGUE_MIN_SHARED_SAMPLES <- 5L
   ids <- as.character(obs[[cell_id_col]])
   samples <- as.character(obs[[sample_col]])
 
+  # cells without a cell type take no part; a used cell without a sample would
+  # reach Rust as an NA code
+  in_use <- !is.na(labels) & labels %in% cell_types
+  if (anyNA(samples[in_use])) {
+    stop(sprintf(
+      "`%s` has %i NA labels among the cells DIALOGUE uses.",
+      sample_col,
+      sum(is.na(samples[in_use]))
+    ))
+  }
+  labels[!in_use] <- NA_character_
+
   quality_raw <- if (is.null(quality_col)) {
     default_quality
   } else {
@@ -112,7 +124,7 @@ DIALOGUE_MIN_SHARED_SAMPLES <- 5L
   }
   checkmate::qassert(quality_raw, "N+")
 
-  cell_ids <- purrr::map(cell_types, \(ct) ids[labels == ct])
+  cell_ids <- purrr::map(cell_types, \(ct) ids[which(labels == ct)])
   names(cell_ids) <- cell_types
 
   cell_type_indices <- purrr::map(cell_types, \(ct) {
@@ -133,7 +145,7 @@ DIALOGUE_MIN_SHARED_SAMPLES <- 5L
   # to line the blocks up on
   per_type_samples <- purrr::map(
     cell_types,
-    \(ct) unique(samples[labels == ct])
+    \(ct) unique(samples[which(labels == ct)])
   )
   shared <- Reduce(intersect, per_type_samples)
   if (length(shared) < DIALOGUE_MIN_SHARED_SAMPLES) {
@@ -149,7 +161,7 @@ DIALOGUE_MIN_SHARED_SAMPLES <- 5L
     ))
   }
 
-  sample_levels <- sort(unique(samples))
+  sample_levels <- sort(unique(samples[in_use]), method = "radix")
   sample_codes <- match(samples, sample_levels) - 1L
 
   # global (0-indexed) space, so the vectors have to reach the largest index

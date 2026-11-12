@@ -154,7 +154,11 @@ new_adt_counts_dsb <- function(
   if (!is.null(isotype_names)) {
     checkmate::assertSubset(isotype_names, colnames(raw_counts))
   }
-  if (isTRUE(dsb_params$use_isotype_controls) && is.null(isotype_names)) {
+  if (
+    isTRUE(dsb_params$denoise_counts) &&
+      isTRUE(dsb_params$use_isotype_controls) &&
+      is.null(isotype_names)
+  ) {
     stop(
       "dsb_params$use_isotype_controls = TRUE but isotype_names is NULL."
     )
@@ -986,7 +990,10 @@ S7::method(set_connectivities, SingleCellsMultiModal) <- function(
 ) {
   modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
   S7::prop(x, slot) <- set_connectivities(S7::prop(x, slot), connectivities)
   .stamp_artefact(
     x,
@@ -1084,10 +1091,12 @@ S7::method(get_pca_loadings, SingleCellsMultiModal) <- function(
     return(NULL)
   }
   colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
-  rownames(res) <- if (modality == "rna") {
-    get_gene_names(x)[get_hvg(x) + 1]
-  } else {
-    .adt_feature_names(x)
+  # the ADT PCA stores its features as row names; a `features` subset makes
+  # them shorter than the full ADT panel
+  if (modality == "rna") {
+    rownames(res) <- get_gene_names(x)[get_hvg(x) + 1]
+  } else if (is.null(rownames(res))) {
+    rownames(res) <- .adt_feature_names(x)
   }
   res
 }

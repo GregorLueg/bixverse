@@ -14,7 +14,7 @@ author:
   - name: "Liesbeth François"
 ---
 
-## Intro
+# Intro
 
 This vignette gives an overview of the different plotting functions that are 
 available when running a single cell analysis. 
@@ -28,7 +28,7 @@ library(bixverse.plots)
 library(magrittr)
 ```
 
-## Preparing the data
+# Preparing the data
 
 We run the standard analysis using the same PBMC3k data set. For more details on 
 the data analysis itself, please refer to the 
@@ -50,10 +50,10 @@ mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = TRUE
 )
 
+set.seed(42L)
 sc_object[["sample"]] <- sample(
   x = c("sample1", "sample2"),
   size = nrow(sc_object),
@@ -148,7 +148,7 @@ split by donor (or any grouping variable stored in the `qc` object).
 violin_plot_sc(qc)
 ```
 
-Alternatively, we can also provide a datatable generate the violins plots with 
+Alternatively, we can also provide a data.table to generate the violin plots with 
 different variables than those considered in the QC.
 
 ```{r}
@@ -299,11 +299,11 @@ embedding_plot_sc(
 
 **Colouring by a continuous variable**
 
-Set `discrete = FALSE` to use a continuous colour scale — useful for confidence 
+Set `discrete = FALSE` to use a continuous colour scale: useful for confidence 
 scores, pseudotime, or gene module scores.
 
 ```{r}
-#| label: embedding-sctype
+#| label: embedding-ribo
 #| fig-cap: "UMAP coloured by ribosomal content (continuous scale)."
 embedding_plot_sc(
   sc_object,
@@ -434,7 +434,7 @@ fa2_plots <- purrr::map(
 patchwork::wrap_plots(fa2_plots, ncol = 2, guides = "collect")
 ```
 
-# Per-Gene Expression plots`
+# Per-Gene Expression plots
 
 `feature_plot_sc()` projects normalised expression of one or more genes onto the 
 embedding.
@@ -443,13 +443,12 @@ embedding.
 #| label: feature-plot
 #| fig-cap: "Expression of MS4A1 on the UMAP. High-expressing cells cluster in expected B cell cluster."
 # Select a single feature by Ensembl ID; provide a human-readable label
-features <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
-feature_labels <- ensembl_to_symbol[features]
+ms4a1 <- symbol_to_ensembl[["MS4A1"]]
 
 feature_plot_sc(
   object = sc_object,
-  features = features[8],
-  feature_labels = feature_labels[8],
+  features = ms4a1,
+  feature_labels = ensembl_to_symbol[ms4a1],
   embedding = "umap",
   label_by = "sc_type"
 )
@@ -462,15 +461,14 @@ We can also highlight the genes of interest for clearer visualisation.
 
 ```{r}
 #| label: feature-plot-highlight
-#| fig-cap: "Expression of MS4A1 on the UMAP. High-expressing cells cluster in expected B cell cluster."
+#| fig-cap: "Expression of MS4A1 on the UMAP, with the expressing cells highlighted."
 # Select a single feature by Ensembl ID; provide a human-readable label
-features <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
-feature_labels <- ensembl_to_symbol[features]
+ms4a1 <- symbol_to_ensembl[["MS4A1"]]
 
 feature_plot_sc(
   object = sc_object,
-  features = features[8],
-  feature_labels = feature_labels[8],
+  features = ms4a1,
+  feature_labels = ensembl_to_symbol[ms4a1],
   embedding = "umap",
   label_by = "sc_type",
   highlight_features = TRUE
@@ -487,9 +485,8 @@ customised plots.
 dt <- extract_feature_plot_data(
   sc_object,
   embedding = "umap",
-  obs_cols = c("sc_type", "leiden_clusters", "Ribo"),
-  features = features[8],
-  modality = "rna"
+  obs_col = c("sc_type", "leiden_clusters", "Ribo"),
+  features = ms4a1
 )
 
 head(dt)

@@ -208,8 +208,9 @@ get_results(dlg_res)
 
 A programme is only interesting if it holds up across *every* pair, so the
 number to look at is the worst p in each programme, which is what `print()`
-reports. With `n_permutations = 100` the p-value cannot go below roughly 0.01,
-so do not read too much into the exact values; raise it for anything you intend
+reports. The p-value is a rank-sum test of the observed fit against the
+permuted ones, so with `n_permutations = 100` it cannot go below roughly 0.045;
+do not read too much into the exact values and raise it for anything you intend
 to believe.
 
 `refit_fidelity` says how well each cell type's score survived stage three,
@@ -303,7 +304,7 @@ score_dt[,
 ```
 
 That is not a small correlation. `mcp_01` is tracking library size at
-`rho ~ 0.5` in every cell type, and library size itself differs between the UC
+`|rho| ~ 0.5` in every cell type (the sign of a programme is arbitrary), and library size itself differs between the UC
 and healthy donors on this subset. So a good chunk of what we just called a
 disease programme is a depth axis wearing a lab coat.
 

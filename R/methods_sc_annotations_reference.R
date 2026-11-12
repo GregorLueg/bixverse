@@ -162,16 +162,12 @@ S7::method(assign_sc_type, SingleCells) <- function(
       "No neighbour graph found. Did you run find_neighbours_sc()?",
       "Scoring without smoothing."
     ))
-    edges <- NULL
-  } else {
-    if (igraph::vcount(connectivities) != sc_type_res$n_cells) {
-      stop(sprintf(
-        "The neighbour graph has %d nodes, but the ScType results %d cells.",
-        igraph::vcount(connectivities),
-        sc_type_res$n_cells
-      ))
-    }
-    edges <- igraph::as_edgelist(connectivities, names = FALSE)
+  } else if (connectivities$n != sc_type_res$n_cells) {
+    stop(sprintf(
+      "The neighbour graph has %d nodes, but the ScType results %d cells.",
+      connectivities$n,
+      sc_type_res$n_cells
+    ))
   }
 
   cluster_labels <- NULL
@@ -185,19 +181,27 @@ S7::method(assign_sc_type, SingleCells) <- function(
   if (.verbose) {
     message(sprintf(
       "Assigning cell types per cell (smoothing: %s).",
-      !is.null(edges)
+      !is.null(connectivities)
     ))
   }
 
-  res <- rs_sc_type_assign_cells(
-    sc_type_res = sc_type_res,
-    from = if (is.null(edges)) NULL else as.integer(edges[, 1]),
-    to = if (is.null(edges)) NULL else as.integer(edges[, 2]),
-    weights = if (is.null(connectivities)) NULL else
-      igraph::E(connectivities)$weight,
-    cluster_labels = cluster_labels,
-    params = sctype_cell_params
-  )
+  res <- if (is.null(connectivities)) {
+    rs_sc_type_assign_cells(
+      sc_type_res = sc_type_res,
+      from = NULL,
+      to = NULL,
+      weights = NULL,
+      cluster_labels = cluster_labels,
+      params = sctype_cell_params
+    )
+  } else {
+    rs_sc_type_assign_cells_graph(
+      sc_type_res = sc_type_res,
+      graph = .connectivity_ptr(connectivities),
+      cluster_labels = cluster_labels,
+      params = sctype_cell_params
+    )
+  }
 
   new_sc_type_cell_results(res)
 }
@@ -240,15 +244,15 @@ S7::method(assign_sc_type, SingleCells) <- function(
 #' @param additional_batch_columns Optional character vector.
 #' @param hvg Integer vector. R-style 1-based HVG indices into the gene
 #' universe of `object`. Must be provided explicitly.
-#' @param harmony_params List. Output of [bixverse::params_sc_harmony()] or
-#' [bixverse::params_sc_harmony_v2()].
+#' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()]
+#' (Harmony v2, the default) or [bixverse::params_sc_harmony()] (v1).
 #' @param pca_params List. Output of [bixverse::params_sc_pca()].
 #' @param no_pcs Integer. Number of principal components.
 #' @param slim Boolean. If `TRUE`, drops `z_orig` and `r` from the returned
 #' reference. `z_corr` is always kept (needed for kNN label transfer).
 #' @param label_columns Optional character vector of obs column names to
-#' snapshot into the reference. Read in `cells_to_keep` order to align with
-#' `z_corr`. Required for [transfer_labels_symphony()] unless populated
+#' snapshot into the reference. Read in cell index order of the kept cells,
+#' which is the row order of `z_corr`. Required for [transfer_labels_symphony()] unless populated
 #' later via [add_symphony_labels()].
 #' @param seed Integer.
 #' @param .verbose Boolean or integer.
@@ -271,7 +275,7 @@ S7::method(assign_sc_type, SingleCells) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE
@@ -287,7 +291,7 @@ build_symphony_ref <- S7::new_generic(
     batch_column,
     additional_batch_columns = NULL,
     hvg,
-    harmony_params = params_sc_harmony(),
+    harmony_params = params_sc_harmony_v2(),
     pca_params = params_sc_pca(),
     no_pcs = 30L,
     slim = FALSE,
@@ -307,7 +311,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   batch_column,
   additional_batch_columns = NULL,
   hvg,
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   pca_params = params_sc_pca(),
   no_pcs = 30L,
   slim = FALSE,
@@ -353,8 +357,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   # batch labels (same pattern as harmony_sc)
   batch_columns_all <- c(batch_column, additional_batch_columns)
   batch_index_ls <- lapply(batch_columns_all, function(col) {
-    vals <- unlist(object[[col]])
-    as.integer(factor(vals)) - 1L
+    .group_codes(object[[col]], col)
   })
 
   cells_to_keep <- get_cells_to_keep(object)
@@ -453,7 +456,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   .verbose = FALSE
 #' )
@@ -565,7 +568,7 @@ S7::method(add_symphony_labels, SymphonyReference) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   .verbose = FALSE
 #' )
@@ -611,9 +614,12 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
   hvg_names <- S7::prop(reference, "hvg_gene_names")
   query_idx_1based <- match(hvg_names, query_gene_names)
   n_missing <- sum(is.na(query_idx_1based))
-  if (n_missing > 0L && .verbose) {
-    message(sprintf(
-      " %d / %d reference HVGs not found in query; treated as zero columns.",
+  if (n_missing == length(hvg_names)) {
+    stop("None of the reference HVGs are in the query. Check the gene ids.")
+  }
+  if (n_missing > 0L) {
+    warning(sprintf(
+      "%d / %d reference HVGs not found in query; treated as zero columns.",
       n_missing,
       length(hvg_names)
     ))
@@ -626,8 +632,7 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
   } else {
     batch_columns_all <- c(batch_column, additional_batch_columns)
     lapply(batch_columns_all, function(col) {
-      vals <- unlist(query[[col]])
-      as.integer(factor(vals)) - 1L
+      .group_codes(query[[col]], col)
     })
   }
 
@@ -711,7 +716,7 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE
@@ -790,7 +795,15 @@ S7::method(transfer_labels_symphony, SymphonyReference) <- function(
   ref_labels_raw <- unlist(labels[[label_column]])
   # NA (e.g. scType Unknown) becomes its own class, otherwise it reaches Rust
   # as NA_integer_ and panics as an out of bounds index
-  ref_label_factor <- factor(ref_labels_raw, exclude = NULL)
+  ref_label_factor <- factor(
+    ref_labels_raw,
+    levels = sort(
+      unique(as.character(ref_labels_raw)),
+      method = "radix",
+      na.last = TRUE
+    ),
+    exclude = NULL
+  )
   ref_label_idx <- as.integer(ref_label_factor) - 1L
 
   res <- rs_transfer_labels_symphony(

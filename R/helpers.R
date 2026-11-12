@@ -593,7 +593,7 @@ one_hot_encode <- function(labels) {
   # checks
   checkmate::qassert(labels, "s+")
 
-  unique_labels <- sort(unique(labels[!is.na(labels)]))
+  unique_labels <- sort(unique(labels[!is.na(labels)]), method = "radix")
   n <- length(labels)
   k <- length(unique_labels)
 
@@ -605,6 +605,31 @@ one_hot_encode <- function(labels) {
   }
 
   mat
+}
+
+## group codes -----------------------------------------------------------------
+
+#' Dense 0-based codes for a grouping vector handed to Rust
+#'
+#' @description Levels are sorted by code point (`method = "radix"`), so the
+#' codes do not depend on the locale and match the Python front end. NA labels
+#' error: cast to an integer they would reach Rust as `NA_integer_`.
+#'
+#' @param x Atomic vector or list column of group labels.
+#' @param what String. Name of the grouping for the error message.
+#'
+#' @returns Integer vector of 0-based codes, one per element of `x`.
+#'
+#' @keywords internal
+.group_codes <- function(x, what) {
+  checkmate::qassert(what, "S1")
+  x <- unlist(x, use.names = FALSE)
+  checkmate::assertAtomic(x)
+  if (anyNA(x)) {
+    stop(sprintf("`%s` has %i NA labels.", what, sum(is.na(x))))
+  }
+  x <- as.character(x)
+  as.integer(factor(x, levels = sort(unique(x), method = "radix"))) - 1L
 }
 
 ## sparse to list --------------------------------------------------------------

@@ -251,7 +251,7 @@ print.ScResidualFit <- function(x, ...) {
         group_column
       ))
     }
-    as.integer(factor(unlist(obs[[group_column]]))) - 1L
+    .group_codes(obs[[group_column]], group_column)
   }
 
   covariates <- .residual_covariates(obs, covariate_columns, method)
@@ -688,10 +688,10 @@ print.ScResidualFit <- function(x, ...) {
     cell_indices = cell_indices,
     gene_indices = selected_hvg,
     seed = seed,
-    return_scaled = FALSE,
     verbose = parse_verbosity(.verbose)
   )
 
+  rownames(res$loadings) <- get_gene_names(object)[selected_hvg + 1L]
   object <- set_pca_factors(object, res$scores, from = "residuals")
   object <- set_pca_loadings(object, res$loadings)
   object <- set_pca_singular_vals(object, res$singular_values[1:no_pcs])

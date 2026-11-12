@@ -28,18 +28,19 @@ get_connectivities(x, ...)
 \item{...}{Other parameters.}
 }
 \value{
-The undirected, weighted igraph.
+A \code{SingleCellConnectivity}, see \code{\link[=as_sc_connectivity]{as_sc_connectivity()}}.
 }
 \description{
 Returns the neighbour graph the clustering runs on. Depending on the
 \code{knn_sym} it was built with, see \code{\link[=params_knn_graph_defaults]{params_knn_graph_defaults()}},
 this is the shared nearest neighbour graph, the UMAP fuzzy simplicial set
-or the kNN union. The method is stored in the \code{method} graph attribute.
+or the kNN union. The graph lives in Rust; convert it with
+\code{\link[=as_igraph]{as_igraph()}} if you need an igraph.
 }
 \examples{
 # the neighbour graph the clustering methods run on
 sc <- demo_single_cells()
-igraph::vcount(get_connectivities(sc))
+get_connectivities(sc)
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }

@@ -107,17 +107,25 @@ spec_knn_defaults <- param_defaults(
   hint = paste(
     "k must be >= 0; n_trees, m, ef_construction and ef_search must be",
     ">= 1; search_budget, ef_budget, n_list and n_probe must be NULL or",
-    ">= 1; delta and diversify_prob must be in [0, 1]; extract_knn must be",
-    "a single boolean."
+    ">= 1; delta and diversify_prob must be in [0, 1]."
   ),
   fields = list(
     k = p_int(15L, range = "[0,)", doc = "Number of neighbours."),
     knn_method = p_choice(
       "kmknn",
-      c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
+      c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "ivf",
+        "exhaustive"
+      ),
       doc = paste(
         "Which method to use for the approximate nearest neighbour",
-        "search."
+        "search. `\"nndescent\"` hands back the graph the NN-Descent",
+        "built, with no index and no query pass. Rows the descent left",
+        "short are re-queried exactly."
       )
     ),
     ann_dist = p_choice(
@@ -151,9 +159,9 @@ spec_knn_defaults <- param_defaults(
       0.0,
       range = "[0,1]",
       doc = paste(
-        "NNDescent param: diversification probability for the",
-        "NNDescent index. This will diversify the index at the end and",
-        "identify potentially better edges."
+        "NNDescent param: diversification probability. Only used where a",
+        "query runs against an NN-Descent index, not for the graph of a",
+        "self kNN."
       )
     ),
     ef_budget = p_int(
@@ -161,18 +169,9 @@ spec_knn_defaults <- param_defaults(
       range = "[1,)",
       null_ok = TRUE,
       doc = paste(
-        "NNDescent param: optional query budget parameter. Can",
-        "accelerate querying, but at the cost of Recall."
-      )
-    ),
-    extract_knn = p_lgl(
-      FALSE,
-      doc = paste(
-        "NNDescent param: hand back the graph the descent already built",
-        "instead of beam searching it. Skips the query pass entirely, so",
-        "it is much faster, at the cost of some recall. Rows the descent",
-        "never filled come back padded with duplicate edges. Ignored by",
-        "every other method."
+        "NNDescent param: optional query budget. Only used where a query",
+        "runs against an NN-Descent index, not for the graph of a self",
+        "kNN."
       )
     ),
     m = p_int(

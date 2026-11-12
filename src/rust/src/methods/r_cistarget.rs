@@ -38,7 +38,7 @@ extendr_module! {
 /// @param max_rank Integer. Maximum rank to consider for the recovery curves
 /// (at most `nrow(rankings)`).
 /// @param method String. Recovery curve calculation method, one of
-/// `c("approx", "icistarget")`. Anything else falls back to `"approx"`.
+/// `c("approx", "icistarget")`.
 /// @param n_mean Integer. Window size for the smoothing in the approximate
 /// method.
 /// @param verbose Boolean. Report progress per decile of gene sets.
@@ -66,15 +66,19 @@ fn rs_cistarget(
     method: String,
     n_mean: usize,
     verbose: bool,
-) -> List {
+) -> extendr_api::Result<List> {
     let rankings = r_matrix_to_faer(&rankings);
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
-    let rcc_method = parse_rcc_type(&method).unwrap_or(RccType::Approx);
+    let rcc_method = parse_rcc_type(&method).ok_or_else(|| {
+        extendr_api::Error::Other(format!("Unknown rcc method '{method}'."))
+    })?;
     for i in 0..gs_list.len() {
-        let list_elem = gs_list.elt(i).unwrap();
+        let list_elem = gs_list.elt(i)?;
         let elem = list_elem
             .as_integer_vector()
-            .unwrap()
+            .ok_or_else(|| {
+                extendr_api::Error::Other("gs_list must be a list of integer vectors.".into())
+            })?
             .iter()
             .map(|x| (*x - 1) as usize)
             .collect();
@@ -110,9 +114,7 @@ fn rs_cistarget(
 
     let mut r_results = List::new(results.len());
     for (i, enrichments) in results.iter().enumerate() {
-        r_results
-            .set_elt(i, Robj::from(motif_enrichments_to_r_list(enrichments)))
-            .unwrap();
+        r_results.set_elt(i, Robj::from(motif_enrichments_to_r_list(enrichments)))?;
     }
-    r_results
+    Ok(r_results)
 }

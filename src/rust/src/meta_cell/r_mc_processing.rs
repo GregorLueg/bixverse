@@ -5,26 +5,19 @@
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::mc_analysis::metrics::pairwise_gene_correlations_in_memory;
 use bixverse_r::single_cell::mc_processing::hvg_pca::*;
-use bixverse_r::single_cell::sc_data::in_memory_io::InMemorySparseReader;
-use bixverse_r::single_cell::sc_processing::analytic_pearson::model::AprParams;
-use bixverse_r::single_cell::sc_processing::analytic_pearson::stream::{
-    apr_gene_pass, build_apr_model, cell_totals_over_genes, fit_analytic_pearson_grouped,
-    AprGroupedFit,
+use bixverse_r::single_cell::sc_processing::pca::SingleCellPcaParams;
+use bixverse_r::single_cell::sc_processing::residual_fit::{
+    fit_residuals_in_memory, pca_residuals_in_memory, residual_variance_in_memory,
 };
-use bixverse_r::single_cell::sc_processing::hvg::*;
-use bixverse_r::single_cell::sc_processing::pca::{pca_on_sc_residuals, SingleCellPcaParams};
-use bixverse_r::single_cell::sc_processing::residuals::residual_variance;
-use bixverse_r::single_cell::sc_processing::sctransform::model::{SctCovariates, SctParams};
-use bixverse_r::single_cell::sc_processing::sctransform::stream::{
-    fit_sctransform, fit_sctransform_grouped, SctGroupedFit, SctStreamOpts,
-};
+use bixverse_r::single_cell::sc_processing::sctransform::stream::SctStreamOpts;
 use extendr_api::*;
 use std::time::Instant;
 
 use crate::meta_cell::utils::{mc_list_to_sparse_f32, mc_list_to_sparse_u32};
+use crate::single_cell::r_sc_processing::{hvg_params_from_args, hvg_stats_to_list};
 use crate::single_cell::r_sc_residuals::{
-    apr_fit_to_r_list, parse_residual_fit, residual_variance_to_r_list, resolve_groups,
-    sct_fit_to_r_list, stream_opts, with_residual_source, METHOD_APR, METHOD_SCT,
+    parse_residual_fit, residual_covariates, residual_fit_to_r_list, residual_params,
+    residual_variance_to_r_list, resolve_groups, stream_opts,
 };
 
 /////////////
@@ -129,52 +122,15 @@ fn rs_mc_hvg(
         )
     }
 
-    let hvg_type = parse_hvg_method(hvg_method)
-        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))?;
-
-    let res = match hvg_type {
-        HvgMethod::Vst => {
-            let res = get_hvg_vst_from_sparse(&sparse, loess_span as f32, clip_max);
-            Ok(list!(
-                mean = res.mean,
-                var = res.var,
-                var_exp = res.var_exp,
-                var_std = res.var_std
-            ))
-        }
-        HvgMethod::MeanVarBin => {
-            let res = get_hvg_mvb_from_sparse(&sparse, &binning, n_bins);
-            Ok(list!(
-                mean = res.mean,
-                dispersion = res.dispersion,
-                dispersion_scaled = res.dispersion_scaled,
-                bin = res.bin
-            ))
-        }
-        HvgMethod::Dispersion => {
-            let res = get_hvg_dispersion_from_sparse(&sparse, &binning, n_bins);
-            Ok(list!(
-                mean = res.mean,
-                dispersion = res.dispersion,
-                dispersion_scaled = res.dispersion_scaled,
-                bin = res.bin
-            ))
-        }
-        HvgMethod::Scran => {
-            let params = ScranTrendParams {
-                span: loess_span,
-                ..ScranTrendParams::from_r_list(scran_params)?
-            };
-            let (mean, var) = mc_log2_gene_stats(&sparse);
-            let (fitted, residual) = fit_variance_trend(&mean, &var, &params).to_extendr()?;
-            Ok(list!(
-                scran_mean = mean,
-                scran_var = var,
-                scran_fitted = fitted,
-                scran_residual = residual
-            ))
-        }
-    };
+    let params = hvg_params_from_args(
+        hvg_method,
+        loess_span,
+        binning,
+        n_bins,
+        clip_max,
+        scran_params,
+    )?;
+    let res = hvg_stats_to_list(hvg_on_metacells(&sparse, &params).to_extendr()?);
 
     if verbosity.detailed_verbosity() {
         println!(
@@ -183,52 +139,7 @@ fn rs_mc_hvg(
         )
     }
 
-    res
-}
-
-/// Per-gene mean and variance of the log2-expression of a metacell matrix.
-///
-/// The metacell `"norm"` assay is `log1p` on the natural scale, the same as
-/// the single cell `data_norm` layer, so the sums go through
-/// [log2_stats_from_sums] exactly like the streaming scran driver. Zero
-/// entries contribute nothing to either sum.
-///
-/// ### Params
-///
-/// * `matrix` - Log-normalised data in `data`, shape (metacells, genes), CSR
-///   or CSC.
-///
-/// ### Returns
-///
-/// `(mean, var)` per gene on the log2 scale.
-fn mc_log2_gene_stats(matrix: &CompressedSparseData2<f32>) -> (Vec<f64>, Vec<f64>) {
-    let (n_cells, n_genes) = matrix.shape;
-    let mut sums = vec![(0.0_f64, 0.0_f64); n_genes];
-
-    let mut add = |gene: usize, value: f32| {
-        let value = value as f64;
-        sums[gene].0 += value;
-        sums[gene].1 += value * value;
-    };
-
-    match matrix.cs_type {
-        CompressedSparseFormat::Csr => {
-            for (&gene, &value) in matrix.indices.iter().zip(&matrix.data) {
-                add(gene as usize, value);
-            }
-        }
-        CompressedSparseFormat::Csc => {
-            for (gene, window) in matrix.indptr.windows(2).enumerate() {
-                for &value in &matrix.data[window[0] as usize..window[1] as usize] {
-                    add(gene, value);
-                }
-            }
-        }
-    }
-
-    sums.into_iter()
-        .map(|(sum, sum_sq)| log2_stats_from_sums(sum, sum_sq, n_cells))
-        .unzip()
+    Ok(res)
 }
 
 /////////
@@ -364,108 +275,20 @@ fn rs_mc_fit_residuals(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_u32(sparse_data)?;
-    let sparse = to_csc(sparse);
+    let groups = resolve_groups(group_of_cell, sparse.shape.0)?;
+    let params = residual_params(method, params)?;
+    let covariates = residual_covariates(&params, covariates)?;
 
-    let n_cells = sparse.shape.0;
-    let cell_set: Vec<usize> = (0..n_cells).collect();
-    let opts = stream_opts(None, seed, verbose);
+    let fit = fit_residuals_in_memory(
+        &sparse,
+        groups.as_deref(),
+        covariates,
+        params,
+        stream_opts(None, seed, verbose),
+    )
+    .to_extendr()?;
 
-    let gene_reader = InMemorySparseReader::new(&sparse, None).to_extendr()?;
-
-    match method {
-        METHOD_SCT => {
-            let sct_params = SctParams::from_r_list(params)?;
-            let covariates = SctCovariates::from_r_list(covariates)?;
-            covariates.validate(n_cells).to_extendr()?;
-
-            let library_sizes: Vec<f64> = gene_reader
-                .read_cell_library_sizes(&cell_set)
-                .to_extendr()?
-                .into_iter()
-                .map(|s| s as f64)
-                .collect();
-            let log10_umi: Vec<f64> = library_sizes.iter().map(|&s| s.log10()).collect();
-
-            let fit = match &group_of_cell {
-                None => {
-                    let (model, _pass) = fit_sctransform(
-                        &gene_reader,
-                        &cell_set,
-                        &library_sizes,
-                        &covariates,
-                        &sct_params,
-                        None,
-                        None,
-                        opts,
-                    )
-                    .to_extendr()?;
-
-                    SctGroupedFit {
-                        genes: model.genes.clone(),
-                        models: vec![model],
-                        passes: Vec::new(),
-                        group_of_cell: vec![0_u32; n_cells],
-                    }
-                }
-                Some(_) => {
-                    let groups = resolve_groups(group_of_cell.clone(), n_cells)?;
-                    fit_sctransform_grouped(
-                        &gene_reader,
-                        &cell_set,
-                        &groups,
-                        &library_sizes,
-                        &covariates,
-                        &sct_params,
-                        opts,
-                    )
-                    .to_extendr()?
-                }
-            };
-
-            Ok(sct_fit_to_r_list(&fit, &log10_umi, &covariates, &cell_set))
-        }
-        METHOD_APR => {
-            let apr_params = AprParams::from_r_list(params)?;
-
-            // the analytic Pearson fit sums each cell over its group's retained
-            // genes, which a gene-major sweep cannot answer
-            let cell_reader =
-                InMemorySparseReader::new_cell_major(&sparse, None).to_extendr()?;
-
-            let fit = match &group_of_cell {
-                None => {
-                    let pass =
-                        apr_gene_pass(&gene_reader, &cell_set, &apr_params, opts).to_extendr()?;
-                    let totals = cell_totals_over_genes(&cell_reader, &cell_set, &pass.retained)
-                        .to_extendr()?;
-                    let model = build_apr_model(&pass, &totals, &apr_params).to_extendr()?;
-
-                    AprGroupedFit {
-                        models: vec![model],
-                        cell_totals: totals,
-                        group_of_cell: vec![0_u32; n_cells],
-                    }
-                }
-                Some(_) => {
-                    let groups = resolve_groups(group_of_cell.clone(), n_cells)?;
-                    fit_analytic_pearson_grouped(
-                        &gene_reader,
-                        &cell_reader,
-                        &cell_set,
-                        &groups,
-                        &apr_params,
-                        opts,
-                    )
-                    .to_extendr()?
-                }
-            };
-
-            Ok(apr_fit_to_r_list(&fit, &cell_set))
-        }
-        other => Err(Error::Other(format!(
-            "Unknown residual method '{other}'. Expected '{METHOD_SCT}' or '{METHOD_APR}'."
-        ))),
-    }
+    Ok(residual_fit_to_r_list(&fit))
 }
 
 /// Residual variance and variable features for meta cells
@@ -500,21 +323,17 @@ fn rs_mc_residual_variance(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_u32(sparse_data)?;
-    let sparse = to_csc(sparse);
+    let fit = parse_residual_fit(residual_fit)?;
 
-    let cell_set: Vec<usize> = (0..sparse.shape.0).collect();
-    let opts = stream_opts(None, SctStreamOpts::default().seed, verbose);
+    let res = residual_variance_in_memory(
+        &sparse,
+        &fit,
+        n_hvg,
+        stream_opts(None, SctStreamOpts::default().seed, verbose),
+    )
+    .to_extendr()?;
 
-    let reader = InMemorySparseReader::new(&sparse, None).to_extendr()?;
-    let fit = parse_residual_fit(residual_fit, &cell_set)?;
-
-    let (genes, variance, hvg) = with_residual_source(&fit, |source| {
-        let per_group = residual_variance(&reader, source, &cell_set, opts)?;
-        let hvg = select_residual_hvg(&per_group, source.genes(), n_hvg)?;
-        Ok((source.genes().to_vec(), per_group, hvg))
-    })?;
-
-    Ok(residual_variance_to_r_list(&genes, &variance, &hvg))
+    Ok(residual_variance_to_r_list(&res))
 }
 
 /// Calculates PCA on Pearson residuals for meta cells
@@ -558,57 +377,25 @@ fn rs_mc_pca_residuals(
     verbose: usize,
 ) -> Result<List> {
     let sparse = mc_list_to_sparse_u32(sparse_data)?;
-    let sparse = to_csc(sparse);
-
-    let cell_set: Vec<usize> = (0..sparse.shape.0).collect();
-    let gene_set = gene_indices.r_int_convert();
-
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+    let fit = parse_residual_fit(residual_fit)?;
 
-    let reader = InMemorySparseReader::new(&sparse, None).to_extendr()?;
-    let fit = parse_residual_fit(residual_fit, &cell_set)?;
-
-    let res = with_residual_source(&fit, |source| {
-        pca_on_sc_residuals(
-            &reader,
-            &cell_set,
-            &gene_set,
-            no_pcs,
-            &pca_params,
-            source,
-            seed,
-            false,
-            verbose,
-        )
-    })?;
+    let (scores, loadings, singular_values) = pca_residuals_in_memory(
+        &sparse,
+        &fit,
+        &gene_indices.r_int_convert(),
+        no_pcs,
+        &pca_params,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
 
     Ok(list!(
-        scores = faer_to_r_matrix(res.0.as_ref()),
-        loadings = faer_to_r_matrix(res.1.as_ref()),
-        singular_values = res.2.r_float_convert()
+        scores = faer_to_r_matrix(scores.as_ref()),
+        loadings = faer_to_r_matrix(loadings.as_ref()),
+        singular_values = singular_values.r_float_convert()
     ))
-}
-
-/// Ensure the meta cell matrix is CSC over (metacells, genes)
-///
-/// The R side hands over CSR, and [InMemorySparseReader] wants the gene-major
-/// layout of the same matrix. `transform` converts the format and leaves the
-/// shape alone, which is exactly that; `transpose_and_convert` would swap the
-/// axes instead.
-///
-/// ### Params
-///
-/// * `sparse` - The matrix as it arrived from R.
-///
-/// ### Returns
-///
-/// The same matrix, CSC.
-fn to_csc(sparse: CompressedSparseData2<u32, f32>) -> CompressedSparseData2<u32, f32> {
-    if sparse.cs_type.is_csc() {
-        sparse
-    } else {
-        sparse.transform()
-    }
 }
 
 ///////////////////

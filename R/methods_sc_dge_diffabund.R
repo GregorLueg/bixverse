@@ -511,7 +511,7 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
 #'   \item refinement_strategy - String. Strategy for refining sampled indices.
 #'   One of `c("approximate", "bruteforce", "index")`.
 #'   \item index_type - String. Type of kNN index to use. One of
-#'   `c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")`.
+#'   `c("nndescent", "hnsw", "annoy", "exhaustive")`.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }
@@ -605,7 +605,7 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
     ))
   }
 
-  samples <- factor(samples)
+  samples <- factor(samples, levels = sort(unique(samples), method = "radix"))
 
   embd <- get_embedding(x = object, embd_name = embd_to_use)
 
@@ -715,9 +715,6 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
 #'   `c("combinatorial", "normalised")`.
 #'   \item normalise_indicators - Logical. If `TRUE`, indicator columns are
 #'   divided by their column sum before filtering.
-#'   \item landmark - Logical. Whether to use landmark approximation. Useful
-#'   for large data sets.
-#'   \item n_landmarks - Integer. Number of landmarks to use.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }
@@ -792,7 +789,9 @@ S7::method(meld_sc, SingleCells) <- function(
   # hard tier: the densities are returned per kept cell
   assert_sc_state(object, artefacts = c(embd_to_use, "knn"))
 
-  samples <- as.factor(unlist(object[[sample_id_col]], use.names = FALSE))
+  sample_vals <- unlist(object[[sample_id_col]], use.names = FALSE)
+  sample_codes <- .group_codes(sample_vals, sample_id_col)
+  sample_levels <- sort(unique(as.character(sample_vals)), method = "radix")
 
   embd <- get_embedding(x = object, embd_name = embd_to_use)
 
@@ -804,28 +803,26 @@ S7::method(meld_sc, SingleCells) <- function(
   knn_data <- get_knn_obj(object)
 
   if (is.null(knn_data)) {
-    warning(
-      paste(
-        "No kNN data could be found on the object.",
-        "The kNN graph will be regenerated with the specified embedding."
-      )
-    )
+    warning(paste(
+      "No kNN data could be found on the object. Run find_neighbours_sc()",
+      "first. Returning NULL."
+    ))
     return(NULL)
   }
 
+  # rs_meld_sc takes 1-based labels
   meld_res <- rs_meld_sc(
     embd = embd,
     knn_data = knn_data,
     meld_params = meld_params,
-    labels = as.integer(samples),
-    n_labels = as.integer(length(levels(samples))),
+    labels = sample_codes + 1L,
+    n_labels = length(sample_levels),
     seed = seed,
     verbose = parse_verbosity(.verbose)
   )
 
-  colnames(meld_res$raw_scores) <- colnames(meld_res$norm_scores) <- levels(
-    samples
-  )
+  colnames(meld_res$raw_scores) <- colnames(meld_res$norm_scores) <-
+    sample_levels
   rownames(meld_res$raw_scores) <- rownames(
     meld_res$norm_scores
   ) <- get_cell_names(object, filtered = TRUE)

@@ -559,8 +559,9 @@ expect_equal(
 )
 
 expect_true(
-  current = min(mc_hvg) >= 1L,
-  info = "Meta cells index genes 1-based, unlike the on-disk classes"
+  current = min(mc_hvg) >= 0L &&
+    max(mc_hvg) < nrow(S7::prop(mc_apr, "var_table")),
+  info = "Meta cells index genes 0-based, like the on-disk classes"
 )
 
 mc_apr <- calculate_pca_sc(
@@ -677,9 +678,9 @@ expect_silent(
 )
 
 expect_equal(
-  current = igraph::vcount(get_sc_cache(renamed_object)$connectivities),
+  current = get_sc_cache(renamed_object)$connectivities$n,
   target = 5L,
-  info = "The old snn_graph comes back under connectivities"
+  info = "The old snn_graph comes back under connectivities, moved into Rust"
 )
 
 ### slots the constructor no longer knows --------------------------------------

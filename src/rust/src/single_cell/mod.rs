@@ -10,6 +10,7 @@ pub mod r_sc_bonsai;
 pub mod r_sc_h5ad;
 pub mod r_sc_metacells;
 pub mod r_sc_multimodal;
+pub mod r_sc_obs_var;
 pub mod r_sc_plot_extraction;
 pub mod r_sc_processing;
 pub mod r_sc_residuals;

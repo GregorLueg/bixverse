@@ -2,10 +2,9 @@ spec_scrublet <- param_spec(
   name = "scrublet",
   title = "Wrapper function for Scrublet doublet detection parameters",
   description = paste(
-    "Constructor for the various Scrublet parameters. In this",
-    "case, the default for the kNN graph generation was set to",
-    "`\"hnsw\"` as this algorithm showed the best performance in",
-    "different empirical benchmarks."
+    "Constructor for the various Scrublet parameters. The kNN graph",
+    "uses the [bixverse::params_knn_defaults()] search (`\"kmknn\"`)",
+    "with automatic neighbour detection (`k = 0L`)."
   ),
   return_order = c(
     "normalisation",
@@ -68,8 +67,8 @@ spec_scrublet <- param_spec(
       null_ok = TRUE,
       doc = paste(
         "Manual doublet score threshold. If `NULL` (default),",
-        "threshold is automatically detected from simulated doublet",
-        "score distribution."
+        "the threshold comes from Otsu's method on the observed doublet",
+        "scores."
       )
     ),
     normalisation = p_merge(
@@ -105,7 +104,7 @@ spec_scrublet <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`.",
         "Note: this function defaults to `k = 0L` (automatic",
         "neighbour detection)."
@@ -218,7 +217,7 @@ spec_boost <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`.",
         "Note: this function defaults to `k = 0L` (automatic",
         "neighbour detection)."
@@ -375,8 +374,8 @@ spec_scdblfinder <- param_spec(
       range = "(0,1]",
       null_ok = TRUE,
       doc = paste(
-        "Expected doublet rate as a percentage. If not provided, will",
-        "be calculated internally."
+        "Expected doublet rate as a fraction, e.g. 0.12 for 12 %. If not",
+        "provided, will be calculated internally."
       )
     ),
     cxds_genes = p_int(
@@ -457,7 +456,7 @@ spec_sc_neighbours <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -508,7 +507,7 @@ spec_sc_fast_cluster <- param_spec(
       null_ok = TRUE,
       doc = paste(
         "Number of k-means centroids. If `NULL`, defaults to",
-        "`floor(sqrt(n_cells))`."
+        "`floor(4 * sqrt(n_cells))`."
       )
     ),
     km_type = p_choice(
@@ -652,12 +651,12 @@ spec_sc_vision <- param_spec(
     ),
     knn = p_merge(
       "knn_defaults",
-      overrides = list(k = 15L, nn_max_iter = 15L),
+      overrides = list(k = 15L),
       doc = paste(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -895,7 +894,7 @@ spec_sc_hotspot <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1179,7 +1178,7 @@ spec_sc_bt_metacells <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1257,7 +1256,7 @@ spec_sc_seacells <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1319,7 +1318,7 @@ spec_sc_supercell <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1592,7 +1591,8 @@ spec_sc_bbknn <- param_spec(
         "Trim the neighbours of each cell to these many top",
         "connectivities. May help with population independence and",
         "improve the tidiness of clustering. If `NULL`, it defaults",
-        "to `10 * neighbours_within_batch`."
+        "to `10 * neighbours_within_batch * n_batches`, as in the",
+        "reference implementation."
       )
     ),
     knn = p_merge(
@@ -1602,7 +1602,7 @@ spec_sc_bbknn <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     )
@@ -1644,7 +1644,7 @@ spec_sc_fastmnn <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
       )
     ),
@@ -1685,7 +1685,7 @@ spec_sc_harmony <- param_spec(
     ),
     sigma = p_dbl(
       0.1,
-      range = "[0,)",
+      range = "(0,)",
       len = "+",
       doc = paste(
         "Per-cluster diversity weights. Either a single value",
@@ -1797,7 +1797,7 @@ spec_sc_harmony_v2 <- param_spec(
     ),
     sigma = p_dbl(
       0.1,
-      range = "[0,)",
+      range = "(0,)",
       len = "+",
       doc = paste(
         "Per-cluster diversity weights. Either a single value",
@@ -1994,7 +1994,7 @@ spec_sc_seurat_cca <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`. Note",
         "that `k` is unused here, the neighbourhood sizes come from",
         "`k_anchor`, `k_filter`, `k_score` and `k_weight`."
@@ -2067,7 +2067,7 @@ spec_sc_seurat_rpca <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
         "`ef_construction`, `ef_search`, `n_list` and `n_probe`. Note",
         "that `k` is unused here, the neighbourhood sizes come from",
         "`k_anchor`, `k_score` and `k_weight`."
@@ -2424,7 +2424,7 @@ spec_sc_wnn <- param_spec(
       19L,
       range = "[0,)",
       doc = paste(
-        "`\"sigma_idx\"` only: 0-based kNN index for bandwidth.e.",
+        "`\"sigma_idx\"` only: 0-based kNN index for the bandwidth (i.e.",
         "`k_nn - 1`)."
       )
     ),
@@ -2454,8 +2454,9 @@ spec_sc_wnn <- param_spec(
         "Optional overrides for kNN parameters. See",
         "[bixverse::params_knn_defaults()] for available parameters:",
         "`k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,",
-        "`delta`, `diversify_prob`, `ef_budget`, `extract_knn`, `m`,",
-        "`ef_construction`, `ef_search`, `n_list` and `n_probe`."
+        "`delta`, `diversify_prob`, `ef_budget`, `m`,",
+        "`ef_construction`, `ef_search`, `n_list` and `n_probe`. Note",
+        "that `k` is unused here, `knn_range` sets the neighbour pool."
       )
     )
   )
@@ -2552,7 +2553,7 @@ spec_sc_palantir <- param_spec(
       )
     ),
     lanczos_max_restarts = p_int(
-      16L,
+      64L,
       range = "[1,)",
       doc = "Maximum restart cycles for the Lanczos solver."
     ),
@@ -3461,11 +3462,12 @@ spec_sc_empty_droplets <- param_spec(
       doc = "How the empty droplets are called, see the description."
     ),
     is_empty_column = p_chr(
-      NULL,
+      "is_empty",
       null_ok = TRUE,
       doc = paste(
-        "Name of the logical obs column holding the mask. Required",
-        "for `method = \"supplied\"`, ignored otherwise."
+        "Name of the logical obs column holding the mask, `TRUE` for",
+        "an empty droplet. Used by `method = \"supplied\"`, ignored",
+        "otherwise."
       )
     ),
     umi_cutoff = p_int(

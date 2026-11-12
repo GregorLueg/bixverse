@@ -13,8 +13,7 @@ rs_pseudobulk_cells_sparse(f_path, cell_indices_ls, assay, verbose)
 of the cells to aggregate.}
 
 \item{assay}{String. One of \code{c("raw", "norm")}. \code{"raw"} sums the raw
-counts, \code{"norm"} averages the normalised counts. Unrecognised values fall
-back to \code{"raw"}.}
+counts, \code{"norm"} averages the normalised counts.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}

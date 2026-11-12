@@ -1099,6 +1099,176 @@ rs_synthetic_sc_cellsweep_data <- function(n_real, n_empty, n_genes, n_celltypes
 #' @export
 rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 
+#' Dimensions and storage layout of an h5ad file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the obs and var lengths and how `X` is stored, without touching the
+#' counts. Sparse `X` takes its layout from the `encoding-type` attribute,
+#' dense `X` from comparing its shape against the obs and var lengths.
+#'
+#' @param f_path String. Path to the h5ad file.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item n_obs - Integer. Number of cells (rows of obs).
+#'   \item n_var - Integer. Number of genes (rows of var).
+#'   \item format - String. One of `c("CSR", "CSC", "DENSE_ROW",
+#'   "DENSE_COL")`.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5ad_dimensions <- function(f_path) .Call(wrap__rs_h5ad_dimensions, f_path)
+
+#' Detect which slot of an h5ad file holds raw integer counts
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Samples each candidate slot in turn and returns the first whose non-zero
+#' values are whole numbers at a rate of at least `threshold`. A missing slot,
+#' or one sampled to all zeros, is skipped.
+#'
+#' @param f_path String. Path to the h5ad file.
+#' @param candidates Character vector. Slots to test, in priority order. Any of
+#' `c("layers.counts", "raw.X", "X")`.
+#' @param n_sample Integer. Values to sample per slot.
+#' @param threshold Numeric. Minimum fraction of whole numbers among the
+#' non-zero values.
+#'
+#' @returns The first qualifying entry of `candidates`, or `NULL`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5ad_raw_slot <- function(f_path, candidates, n_sample, threshold) .Call(wrap__rs_h5ad_raw_slot, f_path, candidates, n_sample, threshold)
+
+#' Write a cells x features count matrix as a CellRanger style h5 file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The cells x features CSR buffers are the features x cells CSC buffers 10x
+#' stores, so they are written as they are. Counts, indices, pointers and
+#' shape go out as `int32`, strings as variable-length UTF-8. An existing file
+#' is truncated.
+#'
+#' @param f_path String. Path of the file to create.
+#' @param version String. One of `c("v3", "v2")`.
+#' @param indptr Integer vector. Row pointers of the cells x features CSR
+#' matrix (0-indexed).
+#' @param indices Integer vector. Feature indices (0-indexed).
+#' @param data Integer vector. The counts. Must be non-negative.
+#' @param n_cells Integer. Number of cells.
+#' @param n_features Integer. Number of features.
+#' @param barcodes Character vector. One barcode per cell.
+#' @param feature_ids Character vector. One id per feature.
+#' @param feature_names Character vector. One name per feature.
+#' @param feature_types Optional character vector. One type per feature, v3
+#' only. `NULL` writes `"Gene Expression"` for every feature.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_write_tenx_h5 <- function(f_path, version, indptr, indices, data, n_cells, n_features, barcodes, feature_ids, feature_names, feature_types) .Call(wrap__rs_write_tenx_h5, f_path, version, indptr, indices, data, n_cells, n_features, barcodes, feature_ids, feature_names, feature_types)
+
+#' Read an h5ad dataframe group into R
+#'
+#' @description
+#' Decodes plain, categorical and nullable columns, old-style
+#' `__categories` and the `_index` attribute or dataset.
+#'
+#' @param f_path String. Path to the h5ad file.
+#' @param group String. The dataframe group, e.g. `"obs"`.
+#'
+#' @returns A list with `cols` (named list of vectors, categoricals as
+#' factors, in HDF5 name order with column groups first), `idx` (the index,
+#' or `NULL`) and `skipped` (columns with an unsupported encoding).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5ad_frame <- function(f_path, group) .Call(wrap__rs_h5ad_frame, f_path, group)
+
+#' Read one HDF5 dataset into R
+#'
+#' @description
+#' 1-D datasets and encoded columns (categorical, nullable) come back as
+#' vectors. A 2-D numeric dataset comes back as a double matrix with the
+#' dimensions reversed (the on-disk row-major `rows x cols` read as R's
+#' column-major `cols x rows`).
+#'
+#' @param f_path String. Path to the HDF5 file.
+#' @param path String. Path of the dataset inside the file.
+#'
+#' @returns The vector or matrix.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5_read <- function(f_path, path) .Call(wrap__rs_h5_read, f_path, path)
+
+#' Read the attributes of an HDF5 group or dataset into R
+#'
+#' @param f_path String. Path to the HDF5 file.
+#' @param path String. Path of the group or dataset; `"/"` for the root.
+#'
+#' @returns A named list of vectors. Unsupported dtypes are left out.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5_attrs <- function(f_path, path) .Call(wrap__rs_h5_attrs, f_path, path)
+
+#' List the members of an HDF5 group
+#'
+#' @param f_path String. Path to the HDF5 file.
+#' @param group String. Path of the group; `"/"` for the root.
+#'
+#' @returns A list with `name`, `otype` (`"group"` or `"dataset"`) and `rank`
+#' (number of dimensions, 0 for groups and scalars).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5_ls <- function(f_path, group) .Call(wrap__rs_h5_ls, f_path, group)
+
+#' Version and dimensions of a 10x CellRanger h5 file
+#'
+#' @param f_path String. Path to the 10x h5 file.
+#'
+#' @returns A list with `version` (`"v2"` or `"v3"`), `n_genes` and
+#' `n_cells`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_tenx_h5_metadata <- function(f_path) .Call(wrap__rs_tenx_h5_metadata, f_path)
+
+#' Write a minimal h5ad file
+#'
+#' @description
+#' Writes `X` plus `obs` / `var` as plain datasets without anndata encoding
+#' attributes. The first column of `obs` and `var` becomes `_index`.
+#'
+#' @param f_path String. Output file, overwritten.
+#' @param x_type String. One of `c("csr", "csc", "dense")`.
+#' @param data Numeric. Non-zero values, or the dense values cells x genes in
+#' row-major order.
+#' @param indices Integer. 0-based minor indices; ignored for dense.
+#' @param indptr Integer. 0-based major offsets; ignored for dense.
+#' @param n_obs Integer. Number of cells.
+#' @param n_var Integer. Number of genes.
+#' @param obs Named list of cell columns, identifier first.
+#' @param var Named list of gene columns, identifier first.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_write_h5ad_plain <- function(f_path, x_type, data, indices, indptr, n_obs, n_var, obs, var) .Call(wrap__rs_write_h5ad_plain, f_path, x_type, data, indices, indptr, n_obs, n_var, obs, var)
+
 #' Calibrate the blitzGSEA gamma null for a signature
 #'
 #' @description
@@ -2017,6 +2187,138 @@ rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_t
 #' @keywords internal
 rs_knn_mat_to_edge_pairs <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_pairs, knn_mat, one_index)
 
+#' Summary of a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the shape of the graph behind an external pointer.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item n_nodes - Integer. Number of nodes.
+#'   \item n_edges - Numeric. Number of (undirected) edges. Numeric, since a
+#'   very large graph can hold more than `.Machine$integer.max` edges.
+#'   \item directed - Logical. Whether the graph is directed.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_info <- function(ptr) .Call(wrap__rs_graph_info, ptr)
+
+#' Serialise a Rust neighbour graph to bytes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The byte layout carries a magic, a format version and the float width, so
+#' reading back a foreign or outdated blob errors rather than decoding into
+#' garbage.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns Raw vector.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_to_bytes <- function(ptr) .Call(wrap__rs_graph_to_bytes, ptr)
+
+#' Read a Rust neighbour graph back from bytes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Inverse of `rs_graph_to_bytes()`. The CSR is validated on the way in.
+#'
+#' @param bytes Raw vector written by `rs_graph_to_bytes()`.
+#'
+#' @returns External pointer to the Rust graph.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_from_bytes <- function(bytes) .Call(wrap__rs_graph_from_bytes, bytes)
+
+#' Flatten a Rust neighbour graph into an edge list
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Each undirected edge comes out once, ready for `igraph::add_edges()`.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item edges - Integer vector with the flattened edge pairs (1-indexed!),
+#'   `c(from_1, to_1, from_2, to_2, ...)`.
+#'   \item weights - Numeric vector. One weight per pair.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_to_edges <- function(ptr) .Call(wrap__rs_graph_to_edges, ptr)
+
+#' Build a Rust neighbour graph from an edge list
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Builds an undirected graph. Each edge should be listed once; duplicates are
+#' kept as separate entries, as in igraph. Weights are stored as `f32`.
+#'
+#' @param edges Integer vector. Flattened edge pairs (1-indexed!),
+#' `c(from_1, to_1, from_2, to_2, ...)`.
+#' @param weights Numeric vector. One weight per pair.
+#' @param n_nodes Integer. Number of nodes.
+#'
+#' @returns External pointer to the Rust graph.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_from_edges <- function(edges, weights, n_nodes) .Call(wrap__rs_graph_from_edges, edges, weights, n_nodes)
+
+#' Extract the CSR adjacency of a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The symmetric adjacency, rows sorted, as ScanPy stores it under
+#' `obsp/connectivities`.
+#'
+#' @param ptr External pointer to the Rust graph.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item indptr - Integer vector. Row pointers (0-indexed).
+#'   \item indices - Integer vector. Column indices (0-indexed).
+#'   \item data - Numeric vector. Edge weights.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_to_csr <- function(ptr) .Call(wrap__rs_graph_to_csr, ptr)
+
+#' Leiden and Louvain clustering on a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Same engine and parameters as `rs_leiden_clustering()`, but on the graph
+#' behind the pointer, so nothing is flattened into R vectors. Louvain is
+#' `refine = FALSE`.
+#'
+#' @param ptr External pointer to the Rust graph.
+#' @param leiden_params List. See `rs_leiden_clustering()`.
+#'
+#' @returns Integer vector with the 1-based community of each node; `1` is the
+#' largest community.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_graph_leiden <- function(ptr, leiden_params) .Call(wrap__rs_graph_leiden, ptr, leiden_params)
+
 #' Calculates the TOM over an affinity matrix
 #'
 #' @description
@@ -2900,7 +3202,7 @@ rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(
 #' @param max_rank Integer. Maximum rank to consider for the recovery curves
 #' (at most `nrow(rankings)`).
 #' @param method String. Recovery curve calculation method, one of
-#' `c("approx", "icistarget")`. Anything else falls back to `"approx"`.
+#' `c("approx", "icistarget")`.
 #' @param n_mean Integer. Window size for the smoothing in the approximate
 #' method.
 #' @param verbose Boolean. Report progress per decile of gene sets.
@@ -3272,6 +3574,30 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #' @keywords internal
 rs_sc_type_assign_cells <- function(sc_type_res, from, to, weights, cluster_labels, params) .Call(wrap__rs_sc_type_assign_cells, sc_type_res, from, to, weights, cluster_labels, params)
 
+#' Assign ScType cell types per cell, smoothing over a Rust neighbour graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' As `rs_sc_type_assign_cells()`, but the graph is the Rust neighbour graph
+#' behind an external pointer rather than an edge list.
+#'
+#' @param sc_type_res List. The ScType results, see `rs_sc_type()`.
+#' @param graph External pointer to the Rust neighbour graph, with one node per
+#' scored cell.
+#' @param cluster_labels Optional integer vector. 0-indexed(!) cluster
+#' assignment, of length of the scored cells.
+#' @param params List. The output of `params_sctype_cells()`.
+#'
+#' @returns See `rs_sc_type_assign_cells()`.
+#'
+#' @references
+#' Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_type_assign_cells_graph <- function(sc_type_res, graph, cluster_labels, params) .Call(wrap__rs_sc_type_assign_cells_graph, sc_type_res, graph, cluster_labels, params)
+
 #' Build a Symphony reference (Rust)
 #'
 #' @description
@@ -3580,8 +3906,9 @@ rs_graph_connectivity <- function(knn_mat, labels) .Call(wrap__rs_graph_connecti
 #' @returns A list with
 #' \itemize{
 #'   \item distances - Sparse list representation of the kNN distances.
-#'   \item connectivities - Sparse list representation of the
-#'   connectivities.
+#'   \item connectivities - External pointer to the undirected neighbour
+#'   graph. Each cell pair keeps the larger of its two directed connectivity
+#'   weights.
 #' }
 #'
 #' @export
@@ -3591,25 +3918,32 @@ rs_graph_connectivity <- function(knn_mat, labels) .Call(wrap__rs_graph_connecti
 #' @keywords internal
 rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
 
-#' Reduce BBKNN results to Top X neighbours
+#' Reduce BBKNN results to the k nearest neighbours
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Keeps the first `no_neighbours_to_keep` stored entries of each CSR row.
+#' Keeps the batch-balanced `no_neighbours_to_keep` nearest neighbours of
+#' each row of the BBKNN distance CSR: the nearest
+#' `ceil(no_neighbours_to_keep / n_batches)` per batch, with slots a batch
+#' cannot fill going to the nearest remaining neighbours. Rows come back
+#' sorted by distance (ties by index). Rows with fewer stored entries are
+#' padded by repeating their last neighbour; an empty row points at the cell
+#' itself at distance zero.
 #'
 #' @param indptr Integer vector. The index pointers of the underlying data.
 #' @param indices Integer vector. The indices of the nearest neighbours.
 #' @param data Numeric vector. The distances to the nearest neighbours.
+#' @param batch_labels Integer vector. The batch of each cell, as passed to
+#' [bixverse::rs_bbknn()].
 #' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 #'
-#' @returns A list with `indices` and `dist`, both numeric (double) matrices
-#' of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
-#' are `NaN` in both.
+#' @returns A list with `indices` (integer, 0-indexed) and `dist` (numeric)
+#' matrices of shape (n_cells, no_neighbours_to_keep), nearest first.
 #'
 #' @export
 #'
 #' @keywords internal
-rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, data, no_neighbours_to_keep)
+rs_bbknn_filtering <- function(indptr, indices, data, batch_labels, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, data, batch_labels, no_neighbours_to_keep)
 
 #' FastMNN batch correction in Rust
 #'
@@ -4356,7 +4690,7 @@ rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wra
 #' @export
 rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, validate_index, verbose, seed)
 
-#' Generates the neighbour graph for igraph
+#' Generates the neighbour graph
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -4376,12 +4710,8 @@ rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .C
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with the following items:
-#' \itemize{
-#'  \item edges - Integer vector with the flattened edge pairs (1-indexed!),
-#'  each undirected edge once, ready for `igraph::add_edges()`.
-#'  \item weights - Edge weights of the pairs above.
-#' }
+#' @returns External pointer to the Rust graph. See `rs_graph_info()`,
+#' `rs_graph_to_edges()` and `rs_graph_to_bytes()`.
 #'
 #' @export
 rs_sc_knn_graph <- function(knn_mat, knn_dist, graph_params, verbose) .Call(wrap__rs_sc_knn_graph, knn_mat, knn_dist, graph_params, verbose)
@@ -4629,7 +4959,6 @@ rs_sc_residual_variance <- function(f_path_gene, f_path_cell, residual_fit, cell
 #' @param gene_indices Integer vector. The gene indices to use. (0-indexed!)
 #' Every one must be covered by the fit.
 #' @param seed Integer. Random seed for the randomised SVD.
-#' @param return_scaled Boolean. Shall the scaled data be returned.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -4638,14 +4967,12 @@ rs_sc_residual_variance <- function(f_path_gene, f_path_cell, residual_fit, cell
 #'   \item scores - The samples projected on the PCA space.
 #'   \item loadings - The loadings of the features for the PCA.
 #'   \item singular_values - The singular values for the PCA.
-#'   \item scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
-#'   `NULL`.
 #' }
 #'
 #' @export
 #'
 #' @keywords internal
-rs_sc_pca_residuals <- function(f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
+rs_sc_pca_residuals <- function(f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, f_path_cell, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose)
 
 #' Writes scTransform-corrected counts to a new store
 #'
@@ -4926,7 +5253,7 @@ rs_regulon_thresholds <- function(auc_matrix, binarise_params) .Call(wrap__rs_re
 #' @returns A list with the following elements.
 #' \itemize{
 #'   \item gene_idx - 0-based integer indicating the gene index.
-#'   \item gaerys_c - Geary's C statistic of the gene.
+#'   \item gearys_c - Geary's C statistic of the gene.
 #'   \item z_score - Z-score of the auto-correlation.
 #'   \item pval - P-value derived from the Z-score.
 #'   \item fdr - False discovery rate based on the p-value.
@@ -6081,8 +6408,7 @@ rs_metacell_separation <- function(dc, meta_cells) .Call(wrap__rs_metacell_separ
 #' @param cell_indices_ls List. Each element contains the 0-indexed positions
 #' of the cells to aggregate.
 #' @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
-#' counts, `"norm"` averages the normalised counts. Unrecognised values fall
-#' back to `"raw"`.
+#' counts, `"norm"` averages the normalised counts.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -6106,8 +6432,7 @@ rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .
 #' @param cell_indices_ls List. Each element contains the 0-indexed positions
 #' of the cells to aggregate.
 #' @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
-#' counts, `"norm"` averages the normalised counts. Unrecognised values fall
-#' back to `"raw"`.
+#' counts, `"norm"` averages the normalised counts.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -6630,7 +6955,7 @@ rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wra
 #' @returns A list with the following elements.
 #' \itemize{
 #'   \item gene_idx - 0-based integer indicating the gene index.
-#'   \item gaerys_c - Geary's C calculation for the autocorrelation
+#'   \item gearys_c - Geary's C calculation for the autocorrelation
 #'   coefficient.
 #'   \item z_score - Z-score of the auto-correlation.
 #'   \item pval - P-value derived from the Z-score.
@@ -7124,8 +7449,7 @@ rs_adt_clr <- function(counts, seurat_clr) .Call(wrap__rs_adt_clr, counts, seura
 #' @param scale_factor String. One of `"standardise"` or `"mean_subtract"`.
 #' Only used when `background_counts` is provided. `"standardise"` subtracts
 #' the per-protein background mean and divides by the per-protein background
-#' SD. `"mean_subtract"` subtracts the mean only. Unrecognised values fall
-#' back to `"standardise"`.
+#' SD. `"mean_subtract"` subtracts the mean only.
 #' @param seed Integer. Random seed for the k-means initialisations.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -7190,6 +7514,62 @@ rs_dsb <- function(raw_counts, background_counts, isotype_indices, dsb_params, s
 #'
 #' @references Hao et al., Cell, 2021
 rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose) .Call(wrap__rs_wnn, modality_emb_one, modality_emb_two, wnn_params, seed, verbose)
+
+#' Write the obs or var dataframe of an h5ad file to Parquet
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Writes the table the obs / var DuckDB tables are built from: `cell_idx` /
+#' `gene_idx` (1-based after filtering), `cell_id` / `gene_id`, then the
+#' remaining columns snake_cased. Categoricals are written as strings; their
+#' levels come back for the caller to cast to an ENUM.
+#'
+#' @param h5_path String. Path to the h5ad file.
+#' @param frame String. One of `c("obs", "var")`.
+#' @param keep Optional integer vector. 0-indexed(!) rows to keep, in output
+#' order. `NULL` keeps all.
+#' @param id_col Optional string. Column to use as identifier when the group
+#' has no index; the first column otherwise.
+#' @param out_path String. Parquet file to write.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item names - Character vector. Column names in file order.
+#'   \item types - Character vector. One of `"integer"`, `"double"`,
+#'   `"boolean"`, `"string"` or `"categorical"` per column.
+#'   \item categories - List. The levels in order for a categorical column,
+#'   `NULL` otherwise.
+#'   \item skipped - Character vector. Source columns left out for an
+#'   unsupported encoding.
+#'   \item n_rows - Numeric. Number of rows written.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_h5ad_frame_to_parquet <- function(h5_path, frame, keep, id_col, out_path) .Call(wrap__rs_h5ad_frame_to_parquet, h5_path, frame, keep, id_col, out_path)
+
+#' Write the barcodes or features of a 10x h5 file to Parquet
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Obs is `cell_idx`, `cell_id`. Var is `gene_idx`, `gene_id`, `gene_name`,
+#' plus `feature_type` for v3. Features are read in file order across all
+#' modalities, so `keep` indexes into that order.
+#'
+#' @param h5_path String. Path to the 10x h5 file.
+#' @param version String. One of `c("v2", "v3")`.
+#' @param frame String. One of `c("obs", "var")`.
+#' @param keep Optional integer vector. 0-indexed(!) rows to keep, in output
+#' order. `NULL` keeps all.
+#' @param out_path String. Parquet file to write.
+#'
+#' @returns See `rs_h5ad_frame_to_parquet()`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_tenx_frame_to_parquet <- function(h5_path, version, frame, keep, out_path) .Call(wrap__rs_tenx_frame_to_parquet, h5_path, version, frame, keep, out_path)
 
 #' Single cell count data handler
 #'
@@ -7368,7 +7748,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file.}
+#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the magic bytes).}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
@@ -7384,7 +7764,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file.}
+#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file, plain or gzipped (`.mtx.gz`, detected from the magic bytes).}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }

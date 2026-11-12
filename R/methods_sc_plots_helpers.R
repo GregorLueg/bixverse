@@ -72,6 +72,8 @@
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param modality String. One of `c("rna", "adt", "wnn")`.
+#' @param k Optional integer. Neighbour count the caller asked for. Only feeds
+#' the mismatch warning and the returned `k`.
 #'
 #' @returns A list with
 #' \itemize{
@@ -79,6 +81,9 @@
 #'   should build its own.
 #'   \item embd - The input embedding, cells x dimensions.
 #'   \item cache_modality - The modality the embedding was read from.
+#'   \item k - The neighbour count to hand to manifoldsR: the cached graph's
+#'   width when one is used, `k` otherwise. manifoldsR cuts a wider graph down
+#'   to `k`, so passing the width keeps the whole cached graph.
 #' }
 #'
 #' @keywords internal
@@ -87,7 +92,8 @@
   use_knn,
   embd_to_use,
   no_embd_to_use,
-  modality
+  modality,
+  k = NULL
 ) {
   # checks
   checkmate::assertTRUE(
@@ -99,6 +105,7 @@
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
+  checkmate::qassert(k, c("0", "I1"))
 
   if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
     stop(sprintf(
@@ -125,6 +132,18 @@
     NULL
   }
 
+  # the cached graph's width wins over `k`, which then only feeds a check
+  if (!is.null(knn) && !is.null(k) && !is.null(knn$k) && k != knn$k) {
+    warning(sprintf(
+      paste(
+        "Using the cached kNN graph with %i neighbours; `k = %i`,",
+        "`knn_method` and `nn_params` only apply with `use_knn = FALSE`."
+      ),
+      as.integer(knn$k),
+      as.integer(k)
+    ))
+  }
+
   checkmate::assertTRUE(
     embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
   )
@@ -139,7 +158,11 @@
     embd <- embd[, 1:to_take]
   }
 
-  list(knn = knn, embd = embd, cache_modality = cache_modality)
+  if (!is.null(knn) && !is.null(knn$k)) {
+    k <- as.integer(knn$k)
+  }
+
+  list(knn = knn, embd = embd, cache_modality = cache_modality, k = k)
 }
 
 #' Name a manifold embedding and write it back onto the object
@@ -199,6 +222,11 @@
 #' and `spread` together control how tightly points are packed in the
 #' embedding. For `MetaCells`, smaller `k` values are often appropriate given
 #' the reduced number of points.
+#'
+#' The optimiser is set via `optimiser` in [manifoldsR::params_umap()], one of
+#' `"adam_parallel"` (the default), `"sgd"`, `"sgd_parallel"` or `"adam"`.
+#' `"sgd_parallel"` is lock-free (Hogwild!) SGD and not reproducible run to run
+#' with more than one thread.
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
@@ -311,7 +339,8 @@ S7::method(umap_sc, ScOrMc) <- function(
     use_knn = use_knn,
     embd_to_use = embd_to_use,
     no_embd_to_use = no_embd_to_use,
-    modality = modality
+    modality = modality,
+    k = k
   )
 
   if (.verbose) {
@@ -322,7 +351,7 @@ S7::method(umap_sc, ScOrMc) <- function(
     data = inputs$embd,
     n_dim = n_dim,
     knn = inputs$knn,
-    k = k,
+    k = inputs$k,
     min_dist = min_dist,
     spread = spread,
     knn_method = knn_method,
@@ -359,9 +388,10 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' densMAP it does. Setting `lambda = 0` in [manifoldsR::params_densmap()]
 #' gives you back plain UMAP.
 #'
-#' Neighbour handling is the same as in [bixverse::umap_sc()]: with
-#' `use_knn = TRUE` (the default) the cached kNN graph is reused, otherwise
-#' neighbours are computed from the chosen embedding.
+#' Neighbour handling and the optimiser choice in `umap_params` are the same
+#' as in [bixverse::umap_sc()]: with `use_knn = TRUE` (the default) the cached
+#' kNN graph is reused, otherwise neighbours are computed from the chosen
+#' embedding.
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
@@ -480,7 +510,8 @@ S7::method(densmap_sc, ScOrMc) <- function(
     use_knn = use_knn,
     embd_to_use = embd_to_use,
     no_embd_to_use = no_embd_to_use,
-    modality = modality
+    modality = modality,
+    k = k
   )
 
   if (.verbose) {
@@ -491,7 +522,7 @@ S7::method(densmap_sc, ScOrMc) <- function(
     data = inputs$embd,
     knn = inputs$knn,
     n_dim = n_dim,
-    k = k,
+    k = inputs$k,
     min_dist = min_dist,
     spread = spread,
     knn_method = knn_method,
@@ -876,9 +907,13 @@ S7::method(densne_sc, ScOrMc) <- function(
 #' progressions and branching structure, making it the preferred choice for data
 #' with developmental or trajectory-like organisation.
 #'
-#' When `use_knn = TRUE` (the default), the kNN graph already stored on the
-#' object is reused; otherwise neighbours are computed from the chosen
-#' embedding. The algorithm then constructs a diffusion operator, raises it to a
+#' By default (`use_knn = FALSE`) neighbours are computed from the chosen
+#' embedding. PHATE searches `6 * k + 5` neighbours so that every point whose
+#' affinity clears the kernel threshold can join, which the kNN graph stored on
+#' the object (usually 15 wide) cannot supply. `use_knn = TRUE` reuses that
+#' graph anyway and gives a narrower kernel. `modality = "wnn"` always uses the
+#' integrated WNN graph. The algorithm then constructs a diffusion operator,
+#' raises it to a
 #' power (the diffusion time `t`, see [manifoldsR::params_phate()]) that
 #' denoises the manifold, and computes potential distances that are finally
 #' embedded via metric MDS.
@@ -889,7 +924,7 @@ S7::method(densne_sc, ScOrMc) <- function(
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
-#' `TRUE`. If not available, will default to the embedding.
+#' `FALSE`, see the description.
 #' @param embd_to_use String. The embedding to use for PHATE. Must be available
 #' in the object.
 #' @param slot_name String. The name of this embedding within the object.
@@ -928,7 +963,7 @@ phate_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    use_knn = TRUE,
+    use_knn = FALSE,
     embd_to_use = "pca",
     slot_name = "phate",
     no_embd_to_use = NULL,
@@ -955,7 +990,7 @@ phate_sc <- S7::new_generic(
 
 S7::method(phate_sc, ScOrMc) <- function(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   slot_name = "phate",
   no_embd_to_use = NULL,
@@ -1160,11 +1195,11 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
   # checks
   checkmate::qassert(slot_name, "S1")
   checkmate::qassert(init_embd, c("0", "S1"))
-  checkmate::qassert(k, "I1[2,)")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
   if (graph == "knn") {
+    checkmate::qassert(k, "I1[2,)")
     if (!is.null(init_embd)) {
       warning(
         "`init_embd` only applies to graph = 'connectivities'. Ignoring it."
@@ -1176,7 +1211,8 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
       use_knn = use_knn,
       embd_to_use = embd_to_use,
       no_embd_to_use = no_embd_to_use,
-      modality = modality
+      modality = modality,
+      k = k
     )
 
     if (.verbose) {
@@ -1186,7 +1222,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     fa2_embd <- manifoldsR::forceatlas2(
       data = inputs$embd,
       knn = inputs$knn,
-      k = k,
+      k = inputs$k,
       knn_method = knn_method,
       nn_params = nn_params,
       fa2_params = fa2_params,
@@ -1235,7 +1271,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     }
 
     fa2_embd <- manifoldsR::forceatlas2_from_graph(
-      graph = connectivities,
+      graph = as_igraph(connectivities),
       init = init,
       fa2_params = fa2_params,
       seed = seed,
@@ -1326,7 +1362,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
 #'
 #' @keywords internal
 .scale_and_clip_expr <- function(x, clip = NULL) {
-  s <- stats::sd(x)
+  s <- if (length(x) > 1L) stats::sd(x) else 0
   if (s > 1e-8) {
     x <- (x - mean(x)) / s
   }
@@ -1334,6 +1370,67 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
     x <- pmax(pmin(x, clip), -clip)
   }
   x
+}
+
+#' Attach obs columns to extracted rows by cell id
+#'
+#' @description Joins by id rather than by position, so the obs values cannot
+#' slide off the extracted values whatever order either side comes in.
+#'
+#' @param dt data.table. Extracted rows with a `cell_id` column.
+#' @param object `SingleCells`, `SingleCellsSubset` or `MetaCells` class.
+#' @param obs_cols Character vector. The obs columns to attach.
+#'
+#' @returns `dt` with the obs columns added by reference.
+#'
+#' @keywords internal
+.attach_obs_by_id <- function(dt, object, obs_cols) {
+  checkmate::assertDataTable(dt)
+  checkmate::assertNames(names(dt), must.include = "cell_id")
+  checkmate::qassert(obs_cols, "S+")
+
+  id_col <- if (S7::S7_inherits(object, MetaCells)) "meta_cell_id" else
+    "cell_id"
+
+  obs_dt <- get_sc_obs(
+    object,
+    cols = unique(c(id_col, obs_cols)),
+    filtered = TRUE
+  )
+  pos <- match(dt$cell_id, obs_dt[[id_col]])
+  if (anyNA(pos)) {
+    stop("Some extracted cells are not in the (filtered) obs table.")
+  }
+  for (col in obs_cols) {
+    data.table::set(dt, j = col, value = obs_dt[[col]][pos])
+  }
+
+  dt
+}
+
+#' Restrict ADT counts to the kept cells
+#'
+#' @description ADT counts are keyed by barcode and frozen when they are added,
+#' so they can hold cells a later filter dropped. Returns the rows of the kept
+#' cells present in the ADT matrix, in kept cell order.
+#'
+#' @param object `SingleCellsMultiModal` class.
+#' @param mat Numeric matrix. Cells x features, cell ids as row names.
+#'
+#' @returns `mat` restricted to (and ordered by) the kept cells.
+#'
+#' @keywords internal
+.adt_kept_rows <- function(object, mat) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
+  checkmate::assertCharacter(rownames(mat), any.missing = FALSE)
+
+  kept <- get_cell_names(object, filtered = TRUE)
+  kept <- kept[kept %in% rownames(mat)]
+  if (length(kept) == 0L) {
+    stop("None of the kept cells are present in the ADT counts.")
+  }
+
+  mat[kept, , drop = FALSE]
 }
 
 #' Extract dense expression for in-memory count matrices
@@ -1515,11 +1612,18 @@ S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
   }
 
   features <- .match_features(features, colnames(adt$norm_counts))
-  grouping <- as.factor(
-    unlist(object[[grouping_variable]], use.names = FALSE)
+  mat <- .adt_kept_rows(object, adt$norm_counts)
+  obs_dt <- get_sc_obs(
+    object,
+    cols = unique(c("cell_id", grouping_variable)),
+    filtered = TRUE
   )
+  grouping <- droplevels(as.factor(unlist(
+    obs_dt[[grouping_variable]][match(rownames(mat), obs_dt$cell_id)],
+    use.names = FALSE
+  )))
 
-  plot_dt <- .grouped_gene_stats_in_memory(adt$norm_counts, features, grouping)
+  plot_dt <- .grouped_gene_stats_in_memory(mat, features, grouping)
   .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
 }
 
@@ -1548,9 +1652,9 @@ S7::method(extract_dot_plot_data, MetaCells) <- function(
 
   mat <- get_sc_counts(object, assay = "norm")
   features <- .match_features(features, colnames(mat))
-  grouping <- as.factor(
+  grouping <- droplevels(as.factor(
     unlist(object[[grouping_variable]], use.names = FALSE)
-  )
+  ))
 
   plot_dt <- .grouped_gene_stats_in_memory(mat, features, grouping)
   .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
@@ -1617,10 +1721,7 @@ S7::method(extract_gene_expression, ScOrScSubset) <- function(
   }
 
   if (!is.null(obs_cols)) {
-    obs_dt <- object[[obs_cols]]
-    for (col in names(obs_dt)) {
-      data.table::set(dt, j = col, value = obs_dt[[col]])
-    }
+    dt <- .attach_obs_by_id(dt, object, obs_cols)
   }
 
   dt
@@ -1695,14 +1796,15 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
   }
 
   features <- .match_features(features, colnames(adt$norm_counts))
-  dt <- .extract_expr_in_memory(adt$norm_counts, features, scale, clip)
+  dt <- .extract_expr_in_memory(
+    .adt_kept_rows(object, adt$norm_counts),
+    features,
+    scale,
+    clip
+  )
 
-  # obs are attached positionally; rows are the kept cells in kept order
   if (!is.null(obs_cols)) {
-    obs_dt <- object[[obs_cols]]
-    for (col in names(obs_dt)) {
-      data.table::set(dt, j = col, value = obs_dt[[col]])
-    }
+    dt <- .attach_obs_by_id(dt, object, obs_cols)
   }
 
   dt
@@ -1747,10 +1849,7 @@ S7::method(extract_gene_expression, MetaCells) <- function(
   dt <- .extract_expr_in_memory(mat, features, scale, clip)
 
   if (!is.null(obs_cols)) {
-    obs_dt <- object[[obs_cols]]
-    for (col in names(obs_dt)) {
-      data.table::set(dt, j = col, value = obs_dt[[col]])
-    }
+    dt <- .attach_obs_by_id(dt, object, obs_cols)
   }
 
   dt

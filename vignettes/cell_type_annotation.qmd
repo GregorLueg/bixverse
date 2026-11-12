@@ -147,7 +147,7 @@ sc_ref <- set_cells_to_keep(sc_ref, cells_to_keep)
 ### HVGs, PCA, Harmony v2
 
 This block is the Harmony v2 path of the batch correction vignette: pick HVGs,
-run PCA, run Harmony v2. Version 1 is still available via `harmony_sc()` and
+run PCA, run Harmony v2. Version 1 is still available via `harmony_v1_sc()` and
 `params_sc_harmony()`, but v2 is preferable in most settings (see the batch
 correction vignette for the reasoning).
 
@@ -164,7 +164,7 @@ sc_ref <- calculate_pca_sc(
   no_pcs = 30L
 )
 
-sc_ref <- harmony_v2_sc(
+sc_ref <- harmony_sc(
   object = sc_ref,
   batch_column = "exp_id",
   harmony_params = params_sc_harmony_v2()
@@ -198,7 +198,7 @@ resolutions <- c(0.5, 1, 1.5, 2)
 n_clusters <- purrr::map(graph_types, \(graph_type) {
   sc_ref <- find_neighbours_sc(
     object = sc_ref,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     neighbours_params = params_sc_neighbours(
       graph = list(knn_sym = graph_type)
     ),
@@ -235,7 +235,7 @@ For the rest of the vignette we work on the sNN graph.
 #| label: reference neighbours
 sc_ref <- find_neighbours_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   neighbours_params = params_sc_neighbours()
 )
 
@@ -351,8 +351,8 @@ plot_overlap(
 ### Fast clustering
 
 On a few thousand cells the full graph clustering is instant. On a million it
-isn't. `fast_cluster_sc()` coarsens the cells with k-means first (`sqrt(N)`
-centroids by default), builds a graph over the centroids and runs Louvain or
+isn't. `fast_cluster_sc()` coarsens the cells with k-means first
+(`floor(4 * sqrt(N))` centroids by default), builds a graph over the centroids and runs Louvain or
 Leiden on that. Each cell inherits the community of its centroid. Two options
 for the centroid graph:
 
@@ -373,14 +373,14 @@ fc_resolutions <- c(2, 1.5, 1, 0.5)
 
 fc_knn <- fast_cluster_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   resolutions = fc_resolutions,
   n_seeds = 10L
 )
 
 fc_cell_med <- fast_cluster_sc(
   object = sc_ref,
-  embd_to_use = "harmony_v2",
+  embd_to_use = "harmony",
   resolutions = fc_resolutions,
   fc_params = params_sc_fast_cluster(cell_mediated = TRUE),
   n_seeds = 10L
@@ -437,9 +437,9 @@ plot_overlap(
   ggtitle("Full vs fast clustering")
 ```
 
-With ~5.8k cells there are only ~76 centroids, so the partitions come out
-coarse: about 5 communities at resolution 1 against 14 for Leiden on the full
-graph. For data sets of this size, stick with `find_clusters_sc()`. The fast
+At this size `floor(4 * sqrt(N))` only gives a few hundred centroids, so the
+partitions come out coarser than Leiden on the full graph. For data sets of this
+size, stick with `find_clusters_sc()`. The fast
 path earns its keep once you are in the hundreds of thousands of cells, see the
 [1 million cells vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html).
 
@@ -724,7 +724,6 @@ sc_query <- SingleCells(dir_data = tempdir_query)
 sc_query <- load_mtx(
   object = sc_query,
   sc_mtx_io_param = mtx_io_params,
-  mtx_streaming = FALSE,
   .verbose = TRUE
 )
 ```

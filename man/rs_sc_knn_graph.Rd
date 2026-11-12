@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_sc_knn_graph}
 \alias{rs_sc_knn_graph}
-\title{Generates the neighbour graph for igraph}
+\title{Generates the neighbour graph}
 \usage{
 rs_sc_knn_graph(knn_mat, knn_dist, graph_params, verbose)
 }
@@ -23,12 +23,8 @@ distances. Required for \code{knn_sym = "umap"}.}
 detailed verbosity.}
 }
 \value{
-A list with the following items:
-\itemize{
-\item edges - Integer vector with the flattened edge pairs (1-indexed!),
-each undirected edge once, ready for \code{igraph::add_edges()}.
-\item weights - Edge weights of the pairs above.
-}
+External pointer to the Rust graph. See \code{rs_graph_info()},
+\code{rs_graph_to_edges()} and \code{rs_graph_to_bytes()}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

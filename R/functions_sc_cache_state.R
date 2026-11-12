@@ -72,14 +72,40 @@
     x[["connectivities"]] <- x[["snn_graph"]]
     x[["snn_graph"]] <- NULL
   }
+  x <- .map_cache_connectivities(x, .connectivity_from_disk)
   .migrate_sc_state(x, new_sc_cache(), "ScCache")
+}
+
+#' Apply a function to the neighbour graph of a cache, if there is one
+#'
+#' @description
+#' Used to swap the Rust graph for bytes on save and back on load. An absent
+#' graph is left absent rather than written as `NULL`, which on a list would
+#' delete the slot.
+#'
+#' @param x The cache list (an `ScCache` or the `wnn` slot), or `NULL`.
+#' @param f Function. Takes and returns the graph.
+#'
+#' @returns The cache with `f` applied to `connectivities`.
+#'
+#' @keywords internal
+.map_cache_connectivities <- function(x, f) {
+  checkmate::assertFunction(f)
+
+  if (is.null(x) || is.null(x[["connectivities"]])) {
+    return(x)
+  }
+  x[["connectivities"]] <- f(x[["connectivities"]])
+
+  x
 }
 
 #' Bring a loaded `other_data` slot into the current shape
 #'
 #' @param x The `other_data` list loaded from disk.
 #'
-#' @returns `other_data` with the `wnn` graph under `connectivities`.
+#' @returns `other_data` with the `wnn` graph under `connectivities`, as a
+#' live `SingleCellConnectivity`.
 #'
 #' @keywords internal
 .migrate_other_data <- function(x) {
@@ -87,7 +113,9 @@
   if (!is.null(wnn) && "snn" %in% names(wnn)) {
     wnn[["connectivities"]] <- wnn[["snn"]]
     wnn[["snn"]] <- NULL
-    x[["wnn"]] <- wnn
+  }
+  if (!is.null(wnn)) {
+    x[["wnn"]] <- .map_cache_connectivities(wnn, .connectivity_from_disk)
   }
   x
 }
@@ -233,9 +261,9 @@ sc_stamp_env$counter <- 0L
 #' Hash of the cell state an artefact must agree with
 #'
 #' @description
-#' Order sensitive on purpose. [set_cells_to_keep()] does not sort, and the PCA
-#' rows come back from Rust in exactly `cell_indices` order, so row order is
-#' what aligns a cached matrix to a cell list.
+#' Order sensitive on purpose. [set_cells_to_keep()] stores the filter unique
+#' and ascending, but memory files written before 0.9.0 can hold an unsorted
+#' one; their cached rows follow that order and must hash as stale.
 #'
 #' @param x The object owning the cache.
 #'

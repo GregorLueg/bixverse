@@ -3,10 +3,9 @@
 
 use bixverse_r::enrichment::lm_activity::LmActivityParams;
 use bixverse_r::enrichment_r_wrapper::r_list_to_feature_set_weights;
-use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
-use bixverse_r::core::math::stats::p_adjust_fdr;
 use bixverse_r::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_r::methods::nmf_hals::HalsOpts;
+use bixverse_r::methods_r_wrapper::hals_opts_from_r_list;
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
 use bixverse_r::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
@@ -23,14 +22,15 @@ use bixverse_r::single_cell::sc_analysis::hotspot::{
 };
 use bixverse_r::single_cell::sc_analysis::nebula::NebulaScParams;
 use bixverse_r::single_cell::sc_analysis::scenic::ScenicParams;
-use bixverse_r::single_cell::sc_analysis::vision::calc_autocorr_with_clusters;
+use bixverse_r::single_cell::sc_analysis::vision::{vision_with_autocorrelation, SignatureGenes};
 use extendr_api::*;
 use faer::{Mat, MatRef};
 
 use crate::meta_cell::utils::*;
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
-    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, nebula_res_to_r_list,
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, nebula_res_to_r_list,
+    optional_knn, random_sig_genes, vision_autocor_to_r_list,
 };
 
 /////////////
@@ -101,33 +101,14 @@ fn resolve_knn_graph(
     seed: usize,
     verbosity: Verbosity,
 ) -> ResolvedKnn {
-    if knn_data != extendr_api::Nullable::Null {
-        if verbosity.normal_verbosity() {
-            println!("Using provided kNN graph...")
-        }
-        let knn_data = knn_data
-            .into_robj()
-            .as_list()
-            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
-
-        Ok((knn_indices, knn_dist))
-    } else {
-        if verbosity.normal_verbosity() {
-            println!("Generating a kNN graph from scratch")
-        }
-        let (knn_indices, knn_dist) = generate_knn_with_dist(
-            embd,
-            knn_params,
-            true,
-            false,
-            seed,
-            verbosity.detailed_verbosity(),
-        )
-        .to_extendr()?;
-
-        Ok((knn_indices, knn_dist.unwrap()))
-    }
+    knn_or_generate(
+        optional_knn(knn_data)?,
+        embd,
+        knn_params,
+        seed,
+        verbosity.normal_verbosity(),
+    )
+    .to_extendr()
 }
 
 /////////////////////
@@ -314,8 +295,7 @@ fn rs_mc_lm_activity(
     let net = r_list_to_feature_set_weights(gs_list, sparse.shape.1)?;
     let params = LmActivityParams::from_r_list(lm_params)?;
 
-    let res =
-        calculate_lm_activity_metacells(&sparse, &net, Some(params), verbose).to_extendr()?;
+    let res = calculate_lm_activity_metacells(&sparse, &net, Some(params), verbose).to_extendr()?;
 
     let to_r = |m: &Mat<f32>| {
         let m = Mat::from_fn(m.nrows(), m.ncols(), |i, j| m[(i, j)] as f64);
@@ -388,74 +368,41 @@ fn rs_mc_vision_with_autocorrelation(
     seed: usize,
 ) -> extendr_api::Result<List> {
     let verbosity = parse_verbosity_level(verbose);
-
     let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
-    assert!(
-        embd.nrows() == sparse.shape.0,
-        "The embedding matrix need to have the same nrow as the meta cells to use."
-    );
-
-    if verbosity.normal_verbosity() {
-        println!("Calculating the VISION scores of the actual gene sets.")
+    if embd.nrows() != sparse.shape.0 {
+        return Err(Error::Other(format!(
+            "The embedding has {} rows but there are {} meta cells",
+            embd.nrows(),
+            sparse.shape.0
+        )));
     }
 
-    let gene_signatures = r_list_to_sig_genes(gs_list)?;
-    let res = calculate_vision_metacells(&sparse, &gene_signatures, verbose).to_extendr()?;
-
-    if verbosity.normal_verbosity() {
-        println!("Calculating the VISION scores of the permuted gene sets.")
-    }
-
-    let mut random_scores_by_cluster: Vec<Vec<Vec<f32>>> = Vec::with_capacity(random_gs_list.len());
-
-    for cluster_idx in 0..random_gs_list.len() {
-        let cluster_sigs = random_gs_list
-            .elt(cluster_idx)?
-            .as_list()
-            .ok_or("Cluster element not a list")?;
-
-        let cluster_signatures = r_list_to_sig_genes(cluster_sigs)?;
-
-        let cluster_random_scores =
-            calculate_vision_metacells(&sparse, &cluster_signatures, verbose).to_extendr()?;
-
-        random_scores_by_cluster.push(cluster_random_scores);
-
-        if verbosity.normal_verbosity() {
-            println!(
-                "Completed random signatures for cluster {} / {}",
-                cluster_idx + 1,
-                random_gs_list.len()
-            );
-        }
-    }
-
-    let embd = r_matrix_to_faer_fp32(&embd);
+    let signatures = r_list_to_sig_genes(gs_list)?;
+    let random_by_cluster = random_sig_genes(random_gs_list)?;
     let knn_params = KnnParams::from_r_list(vision_params)?;
+    let embd = r_matrix_to_faer_fp32(&embd);
 
-    let (knn_indices, knn_dist) =
-        resolve_knn_graph(knn_data, embd.as_ref(), &knn_params, seed, verbosity)?;
+    let knn = knn_or_generate(
+        optional_knn(knn_data)?,
+        embd.as_ref(),
+        &knn_params,
+        seed,
+        verbosity.normal_verbosity(),
+    )
+    .to_extendr()?;
 
-    let cluster_membership = cluster_membership.r_int_convert_shift();
-
-    let (gaery_c, p_val) = calc_autocorr_with_clusters(
-        &res,
-        &random_scores_by_cluster,
-        &cluster_membership,
-        knn_indices,
-        knn_dist,
+    let res = vision_with_autocorrelation(
+        |sigs: &[SignatureGenes]| calculate_vision_metacells(&sparse, sigs, verbose),
+        &signatures,
+        &random_by_cluster,
+        &cluster_membership.r_int_convert_shift(),
+        knn,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    let fdr = p_adjust_fdr(&p_val);
-
-    let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
-
-    Ok(list!(
-        autocor_res = list!(auto_cor = gaery_c, p_val = p_val, fdr = fdr),
-        vision_mat = faer_to_r_matrix(vision_mat.as_ref())
-    ))
+    Ok(vision_autocor_to_r_list(res))
 }
 
 //////////////////////
@@ -496,7 +443,7 @@ fn rs_mc_vision_with_autocorrelation(
 /// @returns A list with the following elements.
 /// \itemize{
 ///   \item gene_idx - 0-based integer indicating the gene index.
-///   \item gaerys_c - Geary's C calculation for the autocorrelation
+///   \item gearys_c - Geary's C calculation for the autocorrelation
 ///   coefficient.
 ///   \item z_score - Z-score of the auto-correlation.
 ///   \item pval - P-value derived from the Z-score.
@@ -555,7 +502,7 @@ fn rs_mc_hotspot_autocor(
 
     Ok(list!(
         gene_idx = res.gene_idx,
-        gaerys_c = res.c,
+        gearys_c = res.c,
         z_score = res.z,
         pval = res.pval,
         fdr = res.fdr

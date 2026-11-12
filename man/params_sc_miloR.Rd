@@ -8,7 +8,7 @@ params_sc_miloR(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("nndescent", "ivf", "hnsw", "annoy", "exhaustive"),
+  index_type = c("nndescent", "hnsw", "annoy", "exhaustive"),
   knn = list()
 )
 }
@@ -24,7 +24,7 @@ One of \code{c("approximate", "bruteforce", "index")}. Defaults to
 \code{"index"}.}
 
 \item{index_type}{String. Type of kNN index to use. One of
-\code{c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")}. Defaults to
+\code{c("nndescent", "hnsw", "annoy", "exhaustive")}. Defaults to
 \code{"nndescent"}. \code{"exhaustive"} scans every cell, so it returns the true
 nearest neighbour rather than an approximation, at a cost that grows with
 the number of cells.}
@@ -32,11 +32,11 @@ the number of cells.}
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{extract_knn}, \code{m}, \code{ef_construction},
-\code{ef_search}, \code{n_list} and \code{n_probe}.}
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search},
+\code{n_list} and \code{n_probe}. \code{knn_method} is ignored in favour of \code{index_type}.}
 }
 \value{
-A list with the MiloR parameters.
+A list with the MiloR parameters and the full kNN block.
 }
 \description{
 Wrapper function for parameters for MiloR

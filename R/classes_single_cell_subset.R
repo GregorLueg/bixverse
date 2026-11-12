@@ -311,6 +311,9 @@ S7::method(get_sc_counts, SingleCellsSubset) <- function(
     } else if (length(cells_to_keep) > 0L) {
       original_cell_indices <- as.integer(cells_to_keep + 1L)
     }
+  } else if (is.null(original_cell_indices)) {
+    # without indices the read is still scoped to the subset, never the parent
+    original_cell_indices <- subset_to_original
   }
 
   count_data <- get_counts_from_rust(
@@ -755,7 +758,10 @@ S7::method(set_connectivities, SingleCellsSubset) <- function(
   ...
 ) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
   S7::prop(x, "sc_cache") <- set_connectivities(
     x = S7::prop(x, "sc_cache"),
     connectivities = connectivities
@@ -856,7 +862,6 @@ S7::method(get_pca_factors, SingleCellsSubset) <- function(x, ...) {
   }
   .warn_sc_state(x, artefact = "pca")
   res <- .drop_stamp(res)
-  # TODO: confirm cell id column name
   rownames(res) <- S7::prop(x, "obs_table")$cell_id
   colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
   res
@@ -904,7 +909,6 @@ S7::method(get_embedding, SingleCellsSubset) <- function(x, embd_name, ...) {
   }
   .warn_sc_state(x, artefact = "embedding", name = embd_name)
   res <- .drop_stamp(res)
-  # TODO: confirm cell id column name
   rownames(res) <- S7::prop(x, "obs_table")$cell_id
   res
 }
@@ -1140,7 +1144,9 @@ merge_subset_obs <- function(
     if (prefix_values) {
       grp <- S7::prop(sub, "group")
       dt[,
-        (cols) := lapply(.SD, \(v) sprintf("%s_%s", grp, v)),
+        (cols) := lapply(.SD, \(v) {
+          data.table::fifelse(is.na(v), NA_character_, sprintf("%s_%s", grp, v))
+        }),
         .SDcols = cols
       ]
     }

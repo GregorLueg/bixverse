@@ -10,7 +10,8 @@
 \item{x}{The \code{other_data} list loaded from disk.}
 }
 \value{
-\code{other_data} with the \code{wnn} graph under \code{connectivities}.
+\code{other_data} with the \code{wnn} graph under \code{connectivities}, as a
+live \code{SingleCellConnectivity}.
 }
 \description{
 Bring a loaded \code{other_data} slot into the current shape

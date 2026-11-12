@@ -9,7 +9,8 @@ use bixverse_r::single_cell::sc_data::data_io::{ParallelSparseReader, SingleCell
 use bixverse_r::single_cell::sc_data::in_memory_io::{
     prefer_cell_subset, read_cell_subset_csc, InMemorySparseReader,
 };
-use bixverse_r::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgScranRes};
+use bixverse_r::single_cell::sc_analysis::vision::{SignatureGenes, VisionAutocorRes};
+use bixverse_r::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgRes, HvgScranRes};
 use std::collections::HashMap;
 
 use extendr_api::*;
@@ -156,6 +157,48 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
     )
 }
 
+/// Flatten per-batch VST results into one long R list.
+///
+/// Assumes every batch covers the same genes, in the same order.
+///
+/// ### Params
+///
+/// * `results` - One [HvgRes] per batch.
+///
+/// ### Returns
+///
+/// List of equal-length vectors, batch-major: `mean`, `var`, `var_exp`,
+/// `var_std`, `batch` (0-indexed) and `gene_idx` (0-indexed position within
+/// the batch).
+pub fn flatten_vst_batches(results: Vec<HvgRes>) -> List {
+    let n_genes = results.first().map_or(0, |res| res.mean.len());
+    let total_len = n_genes * results.len();
+    let mut mean_flat = Vec::with_capacity(total_len);
+    let mut var_flat = Vec::with_capacity(total_len);
+    let mut var_exp_flat = Vec::with_capacity(total_len);
+    let mut var_std_flat = Vec::with_capacity(total_len);
+    let mut batch_idx = Vec::with_capacity(total_len);
+    let mut gene_idx = Vec::with_capacity(total_len);
+
+    for (batch, res) in results.into_iter().enumerate() {
+        mean_flat.extend(res.mean);
+        var_flat.extend(res.var);
+        var_exp_flat.extend(res.var_exp);
+        var_std_flat.extend(res.var_std);
+        batch_idx.extend(vec![batch as i32; n_genes]);
+        gene_idx.extend(0..n_genes as i32);
+    }
+
+    list!(
+        mean = mean_flat,
+        var = var_flat,
+        var_exp = var_exp_flat,
+        var_std = var_std_flat,
+        batch = batch_idx,
+        gene_idx = gene_idx
+    )
+}
+
 /// Flatten per-batch scran trend results into one long R list.
 ///
 /// Assumes every batch covers the same genes, in the same order.
@@ -228,16 +271,11 @@ pub fn r_list_to_index_vecs(r_list: List, what: &str) -> Result<Vec<Vec<usize>>>
 // kNN //
 /////////
 
-/// Pad a possibly ragged kNN graph out to a rectangular `k` columns.
+/// Pad a possibly ragged kNN graph out to `k` columns and warn about it.
 ///
-/// The NN-Descent `extract_knn` path hands back the graph the descent built
-/// rather than beam searching it, and rows can come back shorter than `k`
-/// where the descent never filled them. Everything that crosses into R as a
-/// matrix needs a rectangle, so short rows are padded by repeating their last
-/// neighbour, and an empty row falls back to the node itself at distance zero.
-///
-/// The padding is a duplicate edge, not a new one, so anything downstream that
-/// deduplicates neighbours sees the true, shorter neighbourhood.
+/// Wraps the crate's `pad_knn_rows`, which is silent. The padding repeats
+/// the last neighbour, so anything that deduplicates neighbours sees the
+/// true, shorter neighbourhood.
 ///
 /// ### Params
 ///
@@ -248,34 +286,17 @@ pub fn r_list_to_index_vecs(r_list: List, what: &str) -> Result<Vec<Vec<usize>>>
 /// ### Returns
 ///
 /// The number of rows that needed padding.
-pub fn pad_knn_rows(
+pub fn pad_knn_rows_warn(
     indices: &mut [Vec<usize>],
-    mut distances: Option<&mut [Vec<f32>]>,
+    distances: Option<&mut [Vec<f32>]>,
     k: usize,
 ) -> usize {
-    let mut padded = 0;
-
-    for (i, idx_row) in indices.iter_mut().enumerate() {
-        if idx_row.len() >= k {
-            continue;
-        }
-        padded += 1;
-
-        let (fill_idx, fill_dist) = match (idx_row.last(), distances.as_ref()) {
-            (Some(&last), Some(dists)) => (last, dists[i].last().copied().unwrap_or(0.0)),
-            (Some(&last), None) => (last, 0.0),
-            (None, _) => (i, 0.0),
-        };
-
-        idx_row.resize(k, fill_idx);
-        if let Some(dists) = distances.as_mut() {
-            dists[i].resize(k, fill_dist);
-        }
-    }
+    let padded =
+        bixverse_r::single_cell::sc_processing::knn::pad_knn_rows(indices, distances, k);
 
     if padded > 0 {
         println!(
-            "[WARNING!] {} of {} rows came back with fewer than {} neighbours and were padded with duplicate edges. This is expected with 'extract_knn'; lower 'k' or turn it off to avoid it.",
+            "[WARNING!] {} of {} rows came back with fewer than {} neighbours and were padded with duplicate edges. Lower 'k' to avoid it.",
             padded,
             indices.len(),
             k
@@ -283,6 +304,72 @@ pub fn pad_knn_rows(
     }
 
     padded
+}
+
+/// Parse an optional R kNN list into indices and distances.
+///
+/// ### Params
+///
+/// * `knn_data` - `NULL` or the kNN list with `indices` and `dist`.
+///
+/// ### Returns
+///
+/// `None` for `NULL`, else the indices and distances per cell.
+pub fn optional_knn(knn_data: Nullable<List>) -> Result<Option<KnnRows>> {
+    match knn_data {
+        Nullable::Null => Ok(None),
+        Nullable::NotNull(list) => {
+            let (idx, dist, _, _) = knn_data_to_rust(list)?;
+            Ok(Some((idx, dist)))
+        }
+    }
+}
+
+////////////
+// VISION //
+////////////
+
+/// Parse the permuted VISION signatures, one list per signature cluster.
+///
+/// ### Params
+///
+/// * `random_gs_list` - Double-nested list: clusters, then signatures with
+///   `pos` and `neg` gene indices (0-indexed).
+///
+/// ### Returns
+///
+/// The signatures per cluster.
+pub fn random_sig_genes(random_gs_list: List) -> Result<Vec<Vec<SignatureGenes>>> {
+    random_gs_list
+        .values()
+        .map(|cluster| {
+            let cluster = cluster
+                .as_list()
+                .ok_or_else(|| Error::Other("Each random_gs_list cluster must be a list.".into()))?;
+            r_list_to_sig_genes(cluster)
+        })
+        .collect()
+}
+
+/// The VISION autocorrelation result as the R list the wrappers expect.
+///
+/// ### Params
+///
+/// * `res` - The scores and autocorrelation statistics.
+///
+/// ### Returns
+///
+/// A list with `autocor_res` (`auto_cor`, `p_val`, `fdr`) and `vision_mat`,
+/// cells x signatures.
+pub fn vision_autocor_to_r_list(res: VisionAutocorRes) -> List {
+    let n_cells = res.scores.len();
+    let n_sigs = res.scores.first().map_or(0, |row| row.len());
+    let vision_mat = faer::Mat::from_fn(n_cells, n_sigs, |i, j| res.scores[i][j] as f64);
+
+    list!(
+        autocor_res = list!(auto_cor = res.auto_cor, p_val = res.p_val, fdr = res.fdr),
+        vision_mat = faer_to_r_matrix(vision_mat.as_ref())
+    )
 }
 
 /// Convert an R kNN index matrix into per-sample neighbour vectors.

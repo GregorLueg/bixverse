@@ -1,5 +1,5 @@
-use bixverse_r::enrichment_r_wrapper::prepare_gsea_params;
 use bixverse_r::enrichment::gsea::*;
+use bixverse_r::enrichment_r_wrapper::prepare_gsea_params;
 use bixverse_r::ontology::go_elim::*;
 use bixverse_r::ontology_r_wrappers::prepare_go_data;
 use bixverse_r::prelude::*;

@@ -54,7 +54,7 @@
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE
@@ -144,7 +144,7 @@ SymphonyReference <- S7::new_class(
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE
@@ -185,7 +185,7 @@ S7::method(get_symphony_loadings, SymphonyReference) <- function(object) {
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE
@@ -226,7 +226,7 @@ S7::method(get_symphony_z_corr, SymphonyReference) <- function(object) {
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE
@@ -268,7 +268,7 @@ S7::method(get_symphony_hvg_names, SymphonyReference) <- function(object) {
 #'   ref,
 #'   batch_column = "batch_index",
 #'   hvg = get_hvg(ref) + 1L,
-#'   harmony_params = params_sc_harmony(k = 10L),
+#'   harmony_params = params_sc_harmony_v2(k = 10L),
 #'   no_pcs = 10L,
 #'   label_columns = "cell_grp",
 #'   .verbose = FALSE

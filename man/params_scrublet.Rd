@@ -32,8 +32,8 @@ Defaults to \code{0.02}.}
 threshold detection. Typically 50-100. Defaults to \code{100L}.}
 
 \item{manual_threshold}{Numeric or \code{NULL}. Manual doublet score threshold. If
-\code{NULL} (default), threshold is automatically detected from simulated doublet
-score distribution. Defaults to \code{NULL}.}
+\code{NULL} (default), the threshold comes from Otsu's method on the observed
+doublet scores. Defaults to \code{NULL}.}
 
 \item{normalisation}{List. Optional overrides for normalisation parameters.
 See \code{\link[=params_norm_doublets_defaults]{params_norm_doublets_defaults()}} for available parameters:
@@ -54,10 +54,10 @@ Defaults to \code{list()}.}
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{extract_knn}, \code{m}, \code{ef_construction},
-\code{ef_search}, \code{n_list} and \code{n_probe}. Note: this function defaults to \code{k = 0L}
-(automatic neighbour detection). See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the
-available elements. Defaults to \code{list(k = 0L)}.}
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
+and \code{n_probe}. Note: this function defaults to \code{k = 0L} (automatic neighbour
+detection). See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the available elements. Defaults
+to \code{list(k = 0L)}.}
 }
 \value{
 A named list with the following elements:
@@ -81,12 +81,12 @@ rate. Defaults to \code{0.02}.
 \item n_bins_histogram - Integer. Number of bins for histogram-based
 automatic threshold detection. Typically 50-100. Defaults to \code{100L}.
 \item manual_threshold - Numeric or \code{NULL}. Manual doublet score threshold.
-If \code{NULL} (default), threshold is automatically detected from simulated
-doublet score distribution. Defaults to \code{NULL}.
+If \code{NULL} (default), the threshold comes from Otsu's method on the observed
+doublet scores. Defaults to \code{NULL}.
 }
 }
 \description{
-Constructor for the various Scrublet parameters. In this case,
-the default for the kNN graph generation was set to \code{"hnsw"} as this
-algorithm showed the best performance in different empirical benchmarks.
+Constructor for the various Scrublet parameters. The kNN graph
+uses the \code{\link[=params_knn_defaults]{params_knn_defaults()}} search (\code{"kmknn"}) with automatic
+neighbour detection (\code{k = 0L}).
 }

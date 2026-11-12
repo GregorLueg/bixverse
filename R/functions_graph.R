@@ -424,7 +424,7 @@ knn_graph_label_propagation <- function(
 
 ## main ------------------------------------------------------------------------
 
-#' Leiden or Louvain community detection on an igraph
+#' Leiden or Louvain community detection
 #'
 #' @description
 #' Modularity-based Leiden (Traag et al.) or Louvain (Blondel et al.) community
@@ -433,8 +433,11 @@ knn_graph_label_propagation <- function(
 #' depends on `seed` only (not on the global RNG or the number of threads).
 #' Communities are numbered by size, `1` being the largest.
 #'
-#' @param graph igraph. Undirected. If it has an edge attribute `weight`, it is
-#' used, otherwise all edges get weight 1.
+#' @param graph `SingleCellConnectivity` or undirected igraph. For an igraph,
+#' the edge attribute `weight` is used if present, otherwise all edges get
+#' weight 1. A `SingleCellConnectivity` is clustered in Rust directly; an
+#' igraph is flattened into an edge list first. Both give identical labels for
+#' the same graph.
 #' @param resolution Numeric. Modularity resolution parameter. Higher values
 #' give more communities.
 #' @param algorithm String. One of `c("leiden", "louvain")`.
@@ -474,8 +477,7 @@ leiden_clustering <- function(
 ) {
   algorithm <- match.arg(algorithm)
   local_moving <- match.arg(local_moving)
-  checkmate::assertClass(graph, "igraph")
-  checkmate::assertFALSE(igraph::is_directed(graph))
+  checkmate::assertMultiClass(graph, c("SingleCellConnectivity", "igraph"))
   checkmate::qassert(resolution, "N1(0,)")
   checkmate::assertChoice(algorithm, c("leiden", "louvain"))
   checkmate::qassert(beta, "N1(0,)")
@@ -489,6 +491,24 @@ leiden_clustering <- function(
     n_iterations <- .default_community_iters(algorithm)
   }
 
+  leiden_params <- list(
+    resolution = resolution,
+    beta = beta,
+    n_iterations = as.integer(n_iterations),
+    min_gain = min_gain,
+    refine = algorithm == "leiden",
+    local_moving = local_moving,
+    seed = as.integer(seed)
+  )
+
+  if (inherits(graph, "SingleCellConnectivity")) {
+    return(rs_graph_leiden(
+      ptr = .connectivity_ptr(graph),
+      leiden_params = leiden_params
+    ))
+  }
+
+  checkmate::assertFALSE(igraph::is_directed(graph))
   edges <- igraph::as_edgelist(graph, names = FALSE)
   weights <- igraph::E(graph)$weight
   if (is.null(weights)) {
@@ -500,14 +520,6 @@ leiden_clustering <- function(
     to = as.integer(edges[, 2]),
     weights = as.numeric(weights),
     n_nodes = igraph::vcount(graph),
-    leiden_params = list(
-      resolution = resolution,
-      beta = beta,
-      n_iterations = as.integer(n_iterations),
-      min_gain = min_gain,
-      refine = algorithm == "leiden",
-      local_moving = local_moving,
-      seed = as.integer(seed)
-    )
+    leiden_params = leiden_params
   )
 }

@@ -43,9 +43,6 @@ be >= 2.
 \code{c("combinatorial", "normalised")}.
 \item normalise_indicators - Logical. If \code{TRUE}, indicator columns are
 divided by their column sum before filtering.
-\item landmark - Logical. Whether to use landmark approximation. Useful
-for large data sets.
-\item n_landmarks - Integer. Number of landmarks to use.
 \item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
 for available parameters and their defaults.
 }}

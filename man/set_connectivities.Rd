@@ -25,8 +25,10 @@ set_connectivities(x, connectivities, ...)
 \arguments{
 \item{x}{An object to add the neighbour graph to.}
 
-\item{connectivities}{Igraph. The neighbour graph for subsequent
-clustering, see \code{\link[=find_neighbours_sc]{find_neighbours_sc()}}.}
+\item{connectivities}{\code{SingleCellConnectivity} or undirected igraph. The
+neighbour graph for subsequent clustering, see
+\code{\link[=find_neighbours_sc]{find_neighbours_sc()}}. An igraph is converted with
+\code{\link[=as_sc_connectivity]{as_sc_connectivity()}} on entry.}
 
 \item{...}{Other parameters.}
 }
@@ -38,7 +40,7 @@ Set/add the neighbour graph
 sc <- demo_single_cells()
 g <- get_connectivities(sc)
 sc <- set_connectivities(remove_connectivities(sc), g)
-igraph::vcount(get_connectivities(sc))
+get_connectivities(sc)
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }

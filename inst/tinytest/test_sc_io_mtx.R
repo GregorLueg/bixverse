@@ -192,7 +192,6 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_cells_rows_csv,
   sc_qc_param = sc_qc_param,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -300,7 +299,6 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_cells_rows_csv,
   sc_qc_param = sc_qc_param,
-  mtx_streaming = TRUE,
   .verbose = FALSE
 )
 
@@ -500,7 +498,6 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_genes_rows_tsv,
   sc_qc_param = sc_qc_param,
-  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -610,7 +607,6 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_genes_rows_tsv,
   sc_qc_param = sc_qc_param,
-  mtx_streaming = TRUE,
   .verbose = FALSE
 )
 
@@ -770,7 +766,7 @@ expect_true(
 expect_true(
   current = checkmate::testNames(
     names(prescan_result),
-    must.include = c("universe", "universe_size", "file_tasks", "temp_files")
+    must.include = c("universe", "universe_size", "file_tasks")
   ),
   info = "prescan_mtx_dirs returns expected names"
 )

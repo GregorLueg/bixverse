@@ -1116,8 +1116,8 @@ expect_equal(
 )
 
 expect_true(
-  current = class(get_connectivities(sc_object)) == "igraph",
-  info = "igraph correctly returned"
+  current = inherits(get_connectivities(sc_object), "SingleCellConnectivity"),
+  info = "SingleCellConnectivity correctly returned"
 )
 
 ## community detection ---------------------------------------------------------

@@ -278,11 +278,13 @@ set_cell_mapping <- function(x, cell_map) {
 #'
 #' @description Set the cells to keep. This is used for the single cell-related
 #' classes with streaming from disk and tells subsequent (Rust) methods which
-#' cells to include.
+#' cells to include. The filter is stored as unique, ascending cell indices:
+#' the order and any duplicates of `cells_to_keep` are dropped, so every
+#' result downstream follows the cell order of the store.
 #'
 #' @param x An object to set cells to keep for
-#' @param cells_to_keep String or integer. The names or indices of the cells
-#' to keep in downstream analysis.
+#' @param cells_to_keep String or integer. The names or indices (1-based) of
+#' the cells to keep in downstream analysis.
 #'
 #' @export
 #'
@@ -371,12 +373,14 @@ set_hvg <- function(x, hvg) {
 #' Get the HVG
 #'
 #' @description
-#' Returns the HVG indices. Pending class type this are 1-based (for R) or
-#' 0-based for Rust.
+#' Returns the positions of the HVGs in the var table. These are 0-based on
+#' every class, as Rust wants them: add 1 before indexing anything in R, e.g.
+#' `get_gene_names(sc)[get_hvg(sc) + 1L]`.
 #'
 #' @param x An object to get HVG from.
 #'
-#' @returns Indices of the stored HVG genes.
+#' @returns Integer vector of 0-based gene indices, empty with a warning when no
+#' HVGs are stored.
 #'
 #' @export
 #'
@@ -663,8 +667,10 @@ set_knn <- function(x, knn, ...) {
 #' Set/add the neighbour graph
 #'
 #' @param x An object to add the neighbour graph to.
-#' @param connectivities Igraph. The neighbour graph for subsequent
-#' clustering, see [bixverse::find_neighbours_sc()].
+#' @param connectivities `SingleCellConnectivity` or undirected igraph. The
+#' neighbour graph for subsequent clustering, see
+#' [bixverse::find_neighbours_sc()]. An igraph is converted with
+#' [bixverse::as_sc_connectivity()] on entry.
 #' @param ... Other parameters.
 #'
 #' @export
@@ -676,7 +682,7 @@ set_knn <- function(x, knn, ...) {
 #' sc <- demo_single_cells()
 #' g <- get_connectivities(sc)
 #' sc <- set_connectivities(remove_connectivities(sc), g)
-#' igraph::vcount(get_connectivities(sc))
+#' get_connectivities(sc)
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_connectivities <- function(x, connectivities, ...) {
@@ -939,19 +945,20 @@ get_available_embeddings <- function(x, ...) {
 #' Returns the neighbour graph the clustering runs on. Depending on the
 #' `knn_sym` it was built with, see [bixverse::params_knn_graph_defaults()],
 #' this is the shared nearest neighbour graph, the UMAP fuzzy simplicial set
-#' or the kNN union. The method is stored in the `method` graph attribute.
+#' or the kNN union. The graph lives in Rust; convert it with
+#' [bixverse::as_igraph()] if you need an igraph.
 #'
 #' @param x An object to get the neighbour graph from.
 #' @param ... Other parameters.
 #'
-#' @returns The undirected, weighted igraph.
+#' @returns A `SingleCellConnectivity`, see [bixverse::as_sc_connectivity()].
 #'
 #' @export
 #'
 #' @examples
 #' # the neighbour graph the clustering methods run on
 #' sc <- demo_single_cells()
-#' igraph::vcount(get_connectivities(sc))
+#' get_connectivities(sc)
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_connectivities <- function(x, ...) {
@@ -1433,10 +1440,8 @@ calculate_pca_sc <- S7::new_generic(
 #'   sets. A benign race condition is leveraged during index build, making the
 #'   build non-deterministic. Bigger impact on smaller data sets.
 #'   \item `nndescent` - Nearest neighbour descent. Leverages concepts from
-#'   `PyNNDescent` and works well on very large data sets similar to `hnsw`.
-#'   Set `extract_knn = TRUE` in the kNN parameters to hand back the descent
-#'   graph directly instead of beam searching it. That drops the query pass
-#'   altogether, so it is much faster, but recall goes down a little.
+#'   `PyNNDescent`. Hands back the graph the descent built, with no index and
+#'   no query pass, and works well on very large data sets.
 #'   \item `ivf` - Inverted file index. Uses first k-means clustering to
 #'   identify Voronoi cells and leverages these during querying. Works well
 #'   on large data sets with high dimensionality and when you need to return
@@ -1513,11 +1518,14 @@ find_neighbours_sc <- S7::new_generic(
 #' @param cluster_algorithm String. One of `c("leiden", "louvain")`.
 #' @param res Numeric. The modularity resolution parameter, see
 #' [leiden_clustering()].
-#' @param name String. The name to add to the obs table in the DuckDB.
-#' @param modality String. On which modality to run the UMAP. One of
+#' @param name Optional string. The name of the obs column to add. `NULL`
+#' gives `"leiden_clustering"` or `"louvain_clustering"`, following
+#' `cluster_algorithm`.
+#' @param modality String. On which modality to cluster. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean or integer. Controls verbosity.
 #' @param ... Further parameters for [leiden_clustering()]: `n_iterations`,
 #' `beta`, `min_gain` and `local_moving`.
 #'
@@ -1539,9 +1547,10 @@ find_clusters_sc <- S7::new_generic(
     object,
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
-    name = "leiden_clustering",
+    name = NULL,
     modality = c("rna", "adt", "wnn"),
     seed = 42L,
+    .verbose = TRUE,
     ...
   ) {
     S7::S7_dispatch()
@@ -2575,7 +2584,7 @@ lm_activity_sc <- S7::new_generic(
 #'   \item vision_matrix - Matrix of cells x signatures with the VISION
 #'   pathway scores as values.
 #'   \item auto_cor_dt - data.table with the auto-correlation results per
-#'   gene set, i.e., `auto_cor` (1 - Gaery's C), `p_val` and `fdr`.
+#'   gene set, i.e., `auto_cor` (1 - Geary's C), `p_val` and `fdr`.
 #' }
 #'
 #' @references DeTomaso, et al., Nat. Commun., 2019

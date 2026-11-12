@@ -144,8 +144,29 @@ expect_error(
     ),
     .verbose = FALSE
   ),
-  pattern = "is not a column in the obs table",
+  pattern = "column 'not_a_column', which does not exist",
   info = "resolve empty droplets: missing column errors"
+)
+
+expect_silent(
+  current = default_empty_params <- params_sc_empty_droplets(),
+  info = "empty droplets: the defaults pass their own constructor"
+)
+
+expect_equal(
+  current = default_empty_params$is_empty_column,
+  target = "is_empty",
+  info = "empty droplets: supplied reads `is_empty` by default"
+)
+
+expect_equal(
+  current = bixverse:::.resolve_empty_droplets(
+    obs = obs_resolve,
+    empty_params = default_empty_params,
+    .verbose = FALSE
+  ),
+  target = is_empty_true,
+  info = "empty droplets: the defaults resolve on an `is_empty` column"
 )
 
 expect_error(
@@ -228,7 +249,10 @@ expect_true(
 )
 
 expect_error(
-  current = params_sc_empty_droplets(method = "supplied"),
+  current = params_sc_empty_droplets(
+    method = "supplied",
+    is_empty_column = NULL
+  ),
   pattern = "needs `is_empty_column`",
   info = "empty droplet params: supplied without its column errors"
 )

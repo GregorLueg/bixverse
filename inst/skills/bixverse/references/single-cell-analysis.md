@@ -72,6 +72,9 @@ res <- generate_hotspot_membership(obj)
 get_hotspot_membership(res)
 ```
 
+Use `get_hotspot_membership()` rather than reaching into the result. The
+autocorrelation column is `gearys_c`.
+
 ## SCENIC and GRN inference
 
 The full chain, with the CisTarget prerequisites:
@@ -138,7 +141,6 @@ milo <- test_nhoods(milo, ...)
 
 get_differential_abundance_res(milo)
 get_index_cells(milo)
-get_model_fit(milo)
 ```
 
 The parameter bundle is `params_sc_miloR()`, with the capital R.
@@ -381,7 +383,9 @@ The important structural difference: unlike `SingleCells`, a `MetaCells` object
 DuckDB. It shares `ScCache` and dispatches through the `ScOrMc` S7 union, so the
 familiar generics work on it directly: `find_hvg_sc()`, `calculate_pca_sc()`,
 `find_neighbours_sc()`, `find_clusters_sc()`, `umap_sc()`, `aucell_sc()`,
-`vision_sc()`, `vision_w_autocor_sc()`, `dialogue_sc()`, `fit_residuals_sc()`.
+`vision_sc()`, `vision_w_autocor_sc()`, `dialogue_sc()`, `fit_residuals_sc()`,
+`hotspot_gene_cor_sc()`, `run_gene_trends_sc()`, `get_cell_names()`,
+`get_gene_names()`. `get_hvg()` is 0-based there too.
 `find_hvg_sc()` ignores `streaming` there and `calculate_pca_sc()` ignores
 `sparse_svd`, since neither applies to an in-memory object. For residuals on
 metacells prefer `method = "analytic_pearson"`; the `params_sc_sctransform()`

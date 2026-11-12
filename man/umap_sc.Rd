@@ -87,6 +87,11 @@ structure (larger values produce more global layouts), while \code{min_dist}
 and \code{spread} together control how tightly points are packed in the
 embedding. For \code{MetaCells}, smaller \code{k} values are often appropriate given
 the reduced number of points.
+
+The optimiser is set via \code{optimiser} in \code{\link[manifoldsR:params_umap]{manifoldsR::params_umap()}}, one of
+\code{"adam_parallel"} (the default), \code{"sgd"}, \code{"sgd_parallel"} or \code{"adam"}.
+\code{"sgd_parallel"} is lock-free (Hogwild!) SGD and not reproducible run to run
+with more than one thread.
 }
 \examples{
 # UMAP off the cached kNN graph

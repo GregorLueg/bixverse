@@ -108,8 +108,12 @@ set_cells_to_keep.ScMap <- function(x, cells_to_keep) {
   } else {
     x[["cell_mapping"]][cells_to_keep] - 1
   }
+  if (anyNA(res)) {
+    stop("Some of the supplied cells_to_keep are not in the object.")
+  }
 
-  x[["cells_to_keep_idx"]] <- res
+  # unique and ascending: the filter is a set, so its order carries no meaning
+  x[["cells_to_keep_idx"]] <- sort(unique(unname(res)), method = "radix")
 
   return(x)
 }
@@ -218,9 +222,13 @@ set_knn.ScCache <- function(x, knn, ...) {
 set_connectivities.ScCache <- function(x, connectivities, ...) {
   # checks
   checkmate::assertClass(x, "ScCache")
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
 
-  x[["connectivities"]] <- connectivities
+  # an igraph is moved into Rust on entry; the cache only holds the Rust graph
+  x[["connectivities"]] <- as_sc_connectivity(connectivities)
 
   return(x)
 }
@@ -1840,7 +1848,7 @@ S7::method(set_sc_new_obs_col, SingleCells) <- function(
 
   new_data <- data.table::data.table(new_data)
   data.table::setnames(new_data, "new_data", col_name)
-  new_data[, cell_idx := sort(cells_to_keep)]
+  new_data[, cell_idx := cells_to_keep]
 
   duckdb_con$join_data_obs(new_data)
 
@@ -1901,7 +1909,7 @@ S7::method(set_sc_new_obs_col_multiple, SingleCells) <- function(
   duckdb_con <- get_sc_duckdb(object)
 
   new_data <- data.table::as.data.table(new_data)
-  new_data[, cell_idx := sort(cells_to_keep)]
+  new_data[, cell_idx := cells_to_keep]
 
   duckdb_con$join_data_obs(new_data)
 
@@ -2319,7 +2327,10 @@ S7::method(set_connectivities, SingleCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
-  checkmate::assertClass(connectivities, "igraph")
+  checkmate::assertMultiClass(
+    connectivities,
+    c("SingleCellConnectivity", "igraph")
+  )
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_connectivities(

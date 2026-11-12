@@ -18,7 +18,7 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  # the subset carries no var table, so nothing is written back
+  # residual HVGs keep their statistics on the fit, not in the var table
   if (hvg_params$method == "residual") {
     return(.find_hvg_residual(
       object = object,
@@ -55,6 +55,14 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
     res[[hvg_rank_col(hvg_params$method)]],
     decreasing = TRUE
   )[1:hvg_no]
+
+  # the statistics go to the subset's in-memory var table; the parent's DuckDB
+  # var table is not touched
+  var_table <- data.table::copy(S7::prop(object, "var_table"))
+  for (stat in names(res)) {
+    data.table::set(var_table, j = stat, value = res[[stat]])
+  }
+  S7::prop(object, "var_table") <- var_table
 
   set_hvg(object, hvg = hvg)
 }

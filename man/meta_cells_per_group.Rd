@@ -7,7 +7,7 @@
 meta_cells_per_group(
   object,
   group_col,
-  method = c("bootstrapped", "seacells", "supercells"),
+  method = c("bootstrapped", "seacells", "supercells", "metacells2"),
   mc_params = list(),
   pipeline = NULL,
   groups = NULL,
@@ -20,7 +20,8 @@ meta_cells_per_group(
 
 \item{group_col}{String. Column in obs used to split.}
 
-\item{method}{String. One of \code{c("bootstrapped", "seacells", "supercells")}.
+\item{method}{String. One of
+\code{c("bootstrapped", "seacells", "supercells", "metacells2")}.
 Picks the meta cell generator.}
 
 \item{mc_params}{Named list. Arguments passed on to the generator, e.g.

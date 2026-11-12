@@ -1,215 +1,5 @@
 # h5ad functions and helpers ---------------------------------------------------
 
-## helpers ---------------------------------------------------------------------
-
-#' Resolve the index column from an h5ad group
-#'
-#' Checks for the `_index` attribute first (new anndata spec), then falls back
-#' to the `_index` dataset (old spec). Returns NULL if neither exists.
-#'
-#' @param f_path Path to the h5ad file.
-#' @param group_path The HDF5 group (e.g. "/obs", "/var").
-#' @param h5_content data.table from rhdf5::h5ls().
-#'
-#' @returns A list with `idx` (character vector or NULL) and `idx_col` (the
-#'   dataset name used, or NULL).
-#'
-#' @keywords internal
-.resolve_h5_index <- function(f_path, group_path, h5_content) {
-  grp_attrs <- tryCatch(
-    rhdf5::h5readAttributes(f_path, group_path),
-    error = function(e) list()
-  )
-
-  if ("_index" %in% names(grp_attrs)) {
-    idx_col <- grp_attrs[["_index"]]
-    idx <- .read_h5ad_column(
-      f_path,
-      paste0(group_path, "/", idx_col),
-      h5_content
-    )
-    return(list(idx = idx, idx_col = idx_col))
-  }
-
-  has_ds <- "_index" %in%
-    h5_content[
-      group == group_path & otype == "H5I_DATASET",
-      name
-    ]
-
-  if (has_ds) {
-    idx <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/_index")))
-    return(list(idx = idx, idx_col = "_index"))
-  }
-
-  list(idx = NULL, idx_col = NULL)
-}
-
-#' Read an h5ad dataset, mapping HDF5 enums to logical
-#'
-#' rhdf5 returns HDF5 enums as factors and `as.vector()` on a factor yields
-#' character. anndata only writes enums for booleans.
-#'
-#' @param f_path String. Path to the h5ad file.
-#' @param ds_path String. Full path of the dataset inside the file.
-#'
-#' @returns An atomic vector.
-#'
-#' @keywords internal
-.read_h5ad_dataset <- function(f_path, ds_path) {
-  x <- rhdf5::h5read(f_path, ds_path)
-  if (is.factor(x) && all(levels(x) %in% c("FALSE", "TRUE"))) {
-    return(as.logical(as.character(x)))
-  }
-  as.vector(x)
-}
-
-#' Read one column of an h5ad dataframe
-#'
-#' Handles plain arrays, categoricals (`categories` + `codes`) and the nullable
-#' encodings (`values` + `mask`), which anndata >= 0.13 also uses for every
-#' non-categorical string column.
-#'
-#' @param f_path String. Path to the h5ad file.
-#' @param col_path String. Full path of the column inside the file.
-#' @param h5_content data.table. Output of [rhdf5::h5ls()] on `f_path`.
-#'
-#' @returns An atomic vector or factor, or `NULL` for an unsupported encoding.
-#'
-#' @keywords internal
-.read_h5ad_column <- function(f_path, col_path, h5_content) {
-  sub_entries <- h5_content[
-    group == col_path & otype == "H5I_DATASET",
-    name
-  ]
-
-  if (length(sub_entries) == 0L) {
-    return(.read_h5ad_dataset(f_path, col_path))
-  }
-
-  if (all(c("categories", "codes") %in% sub_entries)) {
-    categories <- .read_h5ad_dataset(f_path, paste0(col_path, "/categories"))
-    codes <- .read_h5ad_dataset(f_path, paste0(col_path, "/codes"))
-    codes[codes < 0L] <- NA_integer_
-    return(factor(categories[codes + 1L], levels = categories))
-  }
-
-  if ("values" %in% sub_entries) {
-    values <- .read_h5ad_dataset(f_path, paste0(col_path, "/values"))
-    if ("mask" %in% sub_entries) {
-      values[.read_h5ad_dataset(f_path, paste0(col_path, "/mask"))] <- NA
-    }
-    return(values)
-  }
-
-  NULL
-}
-
-#' Read the columns of an h5ad dataframe group
-#'
-#' Columns stored as groups come first, then plain datasets, as h5ls lists
-#' them. Old-style categoricals (codes in a dataset, levels under
-#' `__categories`) are resolved. The index column is returned separately.
-#'
-#' @param f_path String. Path to the h5ad file.
-#' @param group_path String. The dataframe group, e.g. `"/obs"`.
-#' @param h5_content data.table. Output of [rhdf5::h5ls()] on `f_path`.
-#'
-#' @returns A list with `cols` (named list of column vectors) and `idx`
-#' (character vector or `NULL`).
-#'
-#' @keywords internal
-.read_h5ad_frame <- function(f_path, group_path, h5_content) {
-  idx_info <- .resolve_h5_index(f_path, group_path, h5_content)
-  skip <- c("_index", "__categories", idx_info$idx_col)
-
-  entries <- h5_content[group == group_path & !name %in% skip]
-  col_names <- c(
-    entries[otype == "H5I_GROUP", name],
-    entries[otype == "H5I_DATASET", name]
-  )
-
-  new_cat_names <- h5_content[
-    group == paste0(group_path, "/__categories") & otype == "H5I_DATASET",
-    name
-  ]
-
-  cols <- list()
-  for (col in col_names) {
-    col_path <- paste0(group_path, "/", col)
-    x <- .read_h5ad_column(f_path, col_path, h5_content)
-    if (is.null(x)) {
-      warning(sprintf("Skipping %s: unsupported h5ad encoding.", col_path))
-      next
-    }
-    if (col %in% new_cat_names) {
-      categories <- .read_h5ad_dataset(
-        f_path,
-        paste0(group_path, "/__categories/", col)
-      )
-      x[x < 0L] <- NA_integer_
-      x <- factor(categories[x + 1L], levels = categories)
-    }
-    cols[[col]] <- x
-  }
-
-  list(cols = cols, idx = idx_info$idx)
-}
-
-#' Read a sample of values from a matrix slot in an h5ad file
-#'
-#' Handles both sparse (group with a `data` dataset) and dense (direct dataset)
-#' storage. Returns NULL if the slot does not exist.
-#'
-#' @param f_path String. Path to the h5ad file.
-#' @param slot_path String. Full path of the slot inside the file.
-#' @param h5_content data.table. Output of [rhdf5::h5ls()] on `f_path`.
-#' @param n_sample Integer. Maximum number of values to read.
-#'
-#' @returns Numeric vector of sampled values, or `NULL` if the slot is absent.
-#'
-#' @keywords internal
-.read_slot_value_sample <- function(
-  f_path,
-  slot_path,
-  h5_content,
-  n_sample = 10000L
-) {
-  full <- data.table::fifelse(
-    h5_content$group == "/",
-    paste0("/", h5_content$name),
-    paste0(h5_content$group, "/", h5_content$name)
-  )
-
-  if (!slot_path %in% full) {
-    return(NULL)
-  }
-
-  otype <- h5_content$otype[full == slot_path][1L]
-
-  if (otype == "H5I_GROUP") {
-    data_path <- paste0(slot_path, "/data")
-    if (!data_path %in% full) {
-      return(NULL)
-    }
-    len <- as.numeric(
-      strsplit(h5_content$dim[full == data_path][1L], " x ", fixed = TRUE)[[
-        1L
-      ]][1L]
-    )
-    idx <- seq_len(min(len, n_sample))
-    return(as.vector(rhdf5::h5read(f_path, data_path, index = list(idx))))
-  }
-
-  # dense dataset
-  dims <- as.integer(
-    strsplit(h5_content$dim[full == slot_path][1L], " x ", fixed = TRUE)[[1L]]
-  )
-  side <- max(1L, as.integer(ceiling(sqrt(n_sample))))
-  idx <- lapply(dims, function(d) seq_len(min(d, side)))
-  as.vector(rhdf5::h5read(f_path, slot_path, index = idx))
-}
-
 #' Detect which slot holds raw integer counts in an h5ad file
 #'
 #' Samples the non-zero values of each candidate slot and returns the first one
@@ -246,31 +36,20 @@ detect_raw_count_slot <- function(
   threshold = 0.99
 ) {
   checkmate::assertFileExists(f_path)
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+  candidates <- match.arg(
+    candidates,
+    c("layers.counts", "raw.X", "X"),
+    several.ok = TRUE
+  )
+  checkmate::qassert(n_sample, "X1[1,)")
+  checkmate::qassert(threshold, "N1[0,1]")
 
-  slot_paths <- c(X = "/X", raw.X = "/raw/X", layers.counts = "/layers/counts")
-  candidates <- match.arg(candidates, names(slot_paths), several.ok = TRUE)
-
-  h5_content <- rhdf5::h5ls(f_path) |> data.table::setDT()
-
-  for (slot in candidates) {
-    vals <- .read_slot_value_sample(
-      f_path,
-      slot_paths[[slot]],
-      h5_content,
-      n_sample
-    )
-    if (is.null(vals) || length(vals) == 0L) {
-      next
-    }
-    nz <- vals[vals != 0]
-    if (length(nz) == 0L) {
-      next
-    }
-    if (mean(nz == floor(nz)) >= threshold) return(slot)
-  }
-
-  NULL
+  rs_h5ad_raw_slot(
+    f_path = f_path,
+    candidates = candidates,
+    n_sample = as.integer(n_sample),
+    threshold = threshold
+  )
 }
 
 ## scan multiple files for ingestion -------------------------------------------
@@ -350,9 +129,8 @@ prescan_h5ad_files <- function(
 
     meta <- get_h5ad_dimensions(h5_paths[[i]])
     gene_names <- as.vector(
-      rhdf5::h5read(h5_paths[[i]], sprintf("var/%s", var_index))
+      rs_h5_read(h5_paths[[i]], sprintf("var/%s", var_index))
     )
-    rhdf5::h5closeAll()
 
     resolved_slot <- if (raw_count_slot == "auto") {
       detect_raw_count_slot(h5_paths[[i]])
@@ -391,7 +169,7 @@ prescan_h5ad_files <- function(
     Reduce(union, all_gene_sets)
   }
 
-  universe <- sort(universe)
+  universe <- sort(universe, method = "radix")
   universe_lookup <- setNames(seq_along(universe) - 1L, universe)
 
   file_tasks <- lapply(file_meta, function(fm) {
@@ -422,50 +200,6 @@ prescan_h5ad_files <- function(
 
 ### dimensions -----------------------------------------------------------------
 
-#' Number of rows of an h5ad dataframe group
-#'
-#' @description
-#' Reads the length of the index named by the `_index` attribute. The index is
-#' a plain dataset for older writers, or a group holding `values` (nullable
-#' strings, as written with pandas >= 3) or `codes` (categoricals). Files
-#' without an `_index` attribute fall back to the first plain dataset in the
-#' group.
-#'
-#' @param f_path File path to the `.h5ad` file.
-#' @param h5_content data.table. Output of `rhdf5::h5ls()` on `f_path`.
-#' @param group String. One of `"/obs"` or `"/var"`.
-#'
-#' @returns The number of rows as numeric, `NA` if it cannot be resolved.
-#'
-#' @keywords internal
-.h5ad_frame_length <- function(f_path, h5_content, group) {
-  checkmate::assertFileExists(f_path)
-  checkmate::assertDataTable(h5_content)
-  checkmate::assertChoice(group, c("/obs", "/var"))
-
-  frame <- group
-  index_name <- rhdf5::h5readAttributes(f_path, frame)[["_index"]]
-
-  if (is.null(index_name)) {
-    return(h5_content[
-      group == frame & otype == "H5I_DATASET"
-    ][1, as.numeric(dim)])
-  }
-
-  index_path <- paste0(frame, "/", index_name)
-  index_row <- h5_content[group == frame & name == index_name]
-
-  if (nrow(index_row) == 1L && index_row$otype == "H5I_DATASET") {
-    return(as.numeric(index_row$dim))
-  }
-
-  h5_content[
-    group == index_path &
-      name %in% c("values", "codes") &
-      otype == "H5I_DATASET"
-  ][1, as.numeric(dim)]
-}
-
 #' Helper function to get the dimensions and storage format
 #'
 #' Distinguishes sparse (`CSR`/`CSC`) from dense storage. For dense `X` the
@@ -493,69 +227,11 @@ prescan_h5ad_files <- function(
 get_h5ad_dimensions <- function(f_path) {
   checkmate::assertFileExists(f_path)
 
-  h5_content <- rhdf5::h5ls(f_path) %>%
-    data.table::setDT()
-
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
-
-  no_obs <- .h5ad_frame_length(f_path, h5_content, "/obs")
-  no_var <- .h5ad_frame_length(f_path, h5_content, "/var")
-
-  x_row <- h5_content[group == "/" & name == "X"]
-
-  if (nrow(x_row) == 0L) {
-    stop("Could not locate /X in the h5ad file.")
-  }
-
-  cs_format <- if (x_row$otype == "H5I_GROUP") {
-    indptr <- h5_content[
-      group == "/X" & name == "indptr",
-      as.numeric(dim)
-    ]
-    if (length(indptr) == 0L) {
-      stop("/X is a group but contains no indptr dataset.")
-    }
-    encoding <- rhdf5::h5readAttributes(f_path, "X")[["encoding-type"]]
-    if (identical(encoding, "csr_matrix")) {
-      "CSR"
-    } else if (identical(encoding, "csc_matrix")) {
-      "CSC"
-    } else {
-      ifelse(no_var + 1 == indptr, "CSC", "CSR")
-    }
-  } else {
-    # h5ls dim is R-view; read native order directly
-    fid <- rhdf5::H5Fopen(f_path)
-    did <- rhdf5::H5Dopen(fid, "X")
-    sid <- rhdf5::H5Dget_space(did)
-    x_dims <- rhdf5::H5Sget_simple_extent_dims(sid)$size
-    rhdf5::H5Sclose(sid)
-    rhdf5::H5Dclose(did)
-    rhdf5::H5Fclose(fid)
-
-    if (length(x_dims) != 2L) {
-      stop(sprintf("Unexpected /X rank: %d", length(x_dims)))
-    }
-    if (x_dims[1] == no_obs && x_dims[2] == no_var) {
-      "DENSE_COL"
-    } else if (x_dims[1] == no_var && x_dims[2] == no_obs) {
-      "DENSE_ROW"
-    } else if (no_obs == no_var) {
-      "DENSE_ROW"
-    } else {
-      stop(sprintf(
-        "/X dense dims (%d x %d) match neither obs/var (%d / %d) ordering.",
-        x_dims[1],
-        x_dims[2],
-        no_obs,
-        no_var
-      ))
-    }
-  }
+  res <- rs_h5ad_dimensions(f_path = f_path)
 
   list(
-    dims = setNames(c(as.integer(no_obs), as.integer(no_var)), c("obs", "var")),
-    type = cs_format
+    dims = c(obs = as.integer(res$n_obs), var = as.integer(res$n_var)),
+    type = res$format
   )
 }
 
@@ -591,13 +267,11 @@ get_h5ad_dimensions <- function(f_path) {
 #' unlink(f_path)
 read_h5ad_metadata <- function(f_path) {
   checkmate::assertFileExists(f_path)
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
 
-  h5_content <- rhdf5::h5ls(f_path) |> data.table::setDT()
   meta <- get_h5ad_dimensions(f_path)
 
   .read_group_as_dt <- function(group_path) {
-    frame <- .read_h5ad_frame(f_path, group_path, h5_content)
+    frame <- rs_h5ad_frame(f_path, group_path)
     dt <- data.table::as.data.table(frame$cols)
 
     if (!is.null(frame$idx)) {
@@ -652,11 +326,10 @@ read_h5ad_metadata <- function(f_path) {
 #' unlink(f_path)
 read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
   checkmate::assertFileExists(f_path)
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
 
   meta <- get_h5ad_dimensions(f_path)
 
-  vals <- rhdf5::h5read(f_path, "/X/data")
+  vals <- rs_h5_read(f_path, "X/data")
 
   if (!is.null(n_sample) && length(vals) > n_sample) {
     vals_sample <- sample(vals, n_sample)
@@ -695,31 +368,7 @@ read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
 get_tenx_h5_metadata <- function(f_path) {
   checkmate::assertFileExists(f_path)
 
-  content <- rhdf5::h5ls(f_path) |> data.table::setDT()
-  on.exit(
-    tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
-    add = TRUE
-  )
-
-  is_v3 <- nrow(content[group == "/matrix" & name == "data"]) > 0L
-  is_v2 <- nrow(content[group == "/" & name == "data"]) > 0L &&
-    nrow(content[group == "/" & name == "genes"]) > 0L
-
-  version <- if (is_v3) {
-    "v3"
-  } else if (is_v2) {
-    "v2"
-  } else {
-    stop(paste(
-      "Could not detect 10x h5 version: neither v3 ('/matrix/data')",
-      "nor v2 ('/data' + '/genes') layout found."
-    ))
-  }
-
-  shape_path <- if (version == "v3") "matrix/shape" else "shape"
-  shape <- as.integer(rhdf5::h5read(f_path, shape_path))
-
-  list(version = version, n_genes = shape[1], n_cells = shape[2])
+  rs_tenx_h5_metadata(f_path)
 }
 
 #' Detect likely isotype-control features by name pattern
@@ -849,12 +498,8 @@ prescan_tenx_h5_files <- function(
     meta <- get_tenx_h5_metadata(h5_paths[[i]])
 
     if (meta$version == "v3") {
-      all_ids <- as.character(
-        rhdf5::h5read(h5_paths[[i]], "matrix/features/id")
-      )
-      all_types <- as.character(
-        rhdf5::h5read(h5_paths[[i]], "matrix/features/feature_type")
-      )
+      all_ids <- rs_h5_read(h5_paths[[i]], "matrix/features/id")
+      all_types <- rs_h5_read(h5_paths[[i]], "matrix/features/feature_type")
       keep_mask <- all_types == feature_type
 
       if (!any(keep_mask)) {
@@ -866,10 +511,9 @@ prescan_tenx_h5_files <- function(
         ))
       }
     } else {
-      all_ids <- as.character(rhdf5::h5read(h5_paths[[i]], "genes"))
+      all_ids <- rs_h5_read(h5_paths[[i]], "genes")
       keep_mask <- rep(TRUE, length(all_ids))
     }
-    rhdf5::h5closeAll()
 
     file_meta[[i]] <- list(
       exp_id = exp_ids[[i]],
@@ -901,7 +545,7 @@ prescan_tenx_h5_files <- function(
     stop("Gene universe across inputs is empty.")
   }
 
-  universe <- sort(universe)
+  universe <- sort(universe, method = "radix")
   universe_lookup <- setNames(seq_along(universe) - 1L, universe)
 
   file_tasks <- lapply(file_meta, function(fm) {
@@ -976,28 +620,23 @@ prescan_tenx_h5_files <- function(
 #' unlink(f_path)
 read_tenx_h5_metadata <- function(f_path) {
   checkmate::assertFileExists(f_path)
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
 
   meta <- get_tenx_h5_metadata(f_path)
   version <- meta$version
 
   barcodes_path <- if (version == "v3") "matrix/barcodes" else "barcodes"
-  obs <- data.table::data.table(
-    .id = as.character(rhdf5::h5read(f_path, barcodes_path))
-  )
+  obs <- data.table::data.table(.id = rs_h5_read(f_path, barcodes_path))
 
   var <- if (version == "v3") {
     data.table::data.table(
-      .id = as.character(rhdf5::h5read(f_path, "matrix/features/id")),
-      name = as.character(rhdf5::h5read(f_path, "matrix/features/name")),
-      feature_type = as.character(
-        rhdf5::h5read(f_path, "matrix/features/feature_type")
-      )
+      .id = rs_h5_read(f_path, "matrix/features/id"),
+      name = rs_h5_read(f_path, "matrix/features/name"),
+      feature_type = rs_h5_read(f_path, "matrix/features/feature_type")
     )
   } else {
     data.table::data.table(
-      .id = as.character(rhdf5::h5read(f_path, "genes")),
-      name = as.character(rhdf5::h5read(f_path, "gene_names"))
+      .id = rs_h5_read(f_path, "genes"),
+      name = rs_h5_read(f_path, "gene_names")
     )
   }
 

@@ -298,7 +298,7 @@ S7::method(hotspot_autocor_sc, MetaCells) <- function(
 
   hotspot_auto_cor_dt <- data.table::as.data.table(hotspot_auto_cor)[,
     gene_id := gene_ids
-  ][, c("gene_id", "gaerys_c", "z_score", "pval", "fdr")]
+  ][, c("gene_id", "gearys_c", "z_score", "pval", "fdr")]
 
   return(hotspot_auto_cor_dt)
 }
@@ -342,6 +342,8 @@ S7::method(hotspot_gene_cor_sc, MetaCells) <- function(
       cells_to_take = cells_to_take,
       genes_to_take = genes_to_take
     )
+  # unknown genes would be dropped by get_gene_indices() and shift the labels
+  genes_to_take <- .match_features(genes_to_take, get_gene_names(object))
 
   hotspot_gene_cor <- rs_mc_hotspot_gene_cor(
     sparse_data = mc_counts_to_list(object, assay = "raw"),
@@ -388,7 +390,7 @@ S7::method(scenic_gene_filter_sc, MetaCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   assertScenicParams(scenic_params)
   checkmate::qassert(cells_to_take, c("S+", "0"))
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   cell_indices <- if (is.null(cells_to_take)) {
     NULL
@@ -599,7 +601,7 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
   }
 
   gene_indices_1b <- if (is.null(gene_ids)) {
-    get_hvg(object)
+    get_hvg(object) + 1L
   } else {
     get_gene_indices(object, gene_ids = gene_ids, rust_index = FALSE)
   }

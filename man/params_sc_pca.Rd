@@ -7,7 +7,6 @@
 params_sc_pca(
   mean_center = TRUE,
   normalise_variance = TRUE,
-  randomised = NULL,
   clr = FALSE,
   size_factor = 10000,
   svd_solver = c("auto", "covariance", "randomised", "exact")
@@ -19,9 +18,6 @@ params_sc_pca(
 
 \item{normalise_variance}{Boolean. Shall the data have normalised variance
 Defaults to \code{TRUE}.}
-
-\item{randomised}{Boolean or \code{NULL}. Deprecated, use \code{svd_solver}. \code{TRUE}
-maps to \code{"randomised"}, \code{FALSE} to \code{"exact"}. Defaults to \code{NULL}.}
 
 \item{clr}{Boolean. Shall the CLR-type \code{PFlogPF} be applied, see Booeshaghi,
 et al. Defaults to \code{FALSE}.}
@@ -46,8 +42,6 @@ A named list with the following elements:
 \code{TRUE}.
 \item normalise_variance - Boolean. Shall the data have normalised variance
 Defaults to \code{TRUE}.
-\item randomised - Boolean or \code{NULL}. Deprecated, use \code{svd_solver}. \code{TRUE}
-maps to \code{"randomised"}, \code{FALSE} to \code{"exact"}. Defaults to \code{NULL}.
 \item clr - Boolean. Shall the CLR-type \code{PFlogPF} be applied, see
 Booeshaghi, et al. Defaults to \code{FALSE}.
 \item size_factor - Numeric. The used size factor during I/O. It needs to be

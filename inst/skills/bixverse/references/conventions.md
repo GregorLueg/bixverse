@@ -12,7 +12,7 @@ Naming:
 - `params_<method>()` for a method's own tuning: `params_coremo()`,
   `params_scrublet()`, `params_snf()`, `params_gsea()`
 - `params_sc_<method>()` when the method is single cell specific:
-  `params_sc_harmony()`, `params_sc_hotspot()`, `params_sc_pca()`
+  `params_sc_harmony_v2()`, `params_sc_hotspot()`, `params_sc_pca()`
 - `params_*_defaults()` for zero-argument bundles that nest inside a bigger
   one: `params_knn_defaults()`, `params_hvg_defaults()`,
   `params_norm_doublets_defaults()`, `params_scenic_random_forest_defaults()`
@@ -36,6 +36,10 @@ p$knn$k        # NULL <- there is no nested $knn
 
 So you pass `knn = list(...)` but read `p$k`. Same pattern in
 `params_sc_fast_cluster()` and `params_scrublet()`.
+
+`knn_method = "nndescent"` is graph-only: it hands back the graph the descent
+built, with no index and no query pass. `extract_knn` is gone from every kNN
+block and does nothing if you still pass it.
 
 A documented trap worth repeating: `pruning` in `params_sc_neighbours()` is a
 share of the neighbourhood, so it has to track `k`. The default `1/12` is tuned

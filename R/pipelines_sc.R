@@ -40,6 +40,35 @@ new_sc_step <- function(
   checkmate::assertSubset(accepts, SC_STEP_CLASSES)
   checkmate::assertChoice(returns, c("input", SC_STEP_CLASSES))
 
+  # a misspelt argument should fail here, not after the expensive steps ran
+  fn_args <- names(formals(fn))
+  if (!"..." %in% fn_args) {
+    unknown <- setdiff(names(args), fn_args)
+    if (length(unknown) > 0L) {
+      stop(sprintf(
+        "Step `%s` got unknown argument(s): %s.",
+        name,
+        paste(sprintf("`%s`", unknown), collapse = ", ")
+      ))
+    }
+  }
+
+  # same for a required argument nobody supplied; the object goes in first
+  fn_formals <- formals(fn)[-1L]
+  has_no_default <- purrr::map_lgl(
+    seq_along(fn_formals),
+    \(i) identical(fn_formals[[i]], quote(expr = ))
+  )
+  required <- setdiff(names(fn_formals)[has_no_default], "...")
+  absent <- setdiff(required, names(args))
+  if (length(absent) > 0L && length(args) == length(names(args))) {
+    stop(sprintf(
+      "Step `%s` is missing required argument(s): %s.",
+      name,
+      paste(sprintf("`%s`", absent), collapse = ", ")
+    ))
+  }
+
   structure(
     list(
       name = name,
@@ -169,15 +198,20 @@ format_step_args <- function(args) {
 # Internal: short class name of a single cell object, e.g. "bixverse::MetaCells"
 # becomes "MetaCells".
 .sc_object_class <- function(object) {
-  cls <- sub("^bixverse::", "", class(object)[1])
-  if (!cls %in% SC_STEP_CLASSES) {
-    stop(sprintf(
-      "Pipelines run on %s, not on a `%s`.",
-      paste(SC_STEP_CLASSES, collapse = ", "),
-      cls
-    ))
+  if (S7::S7_inherits(object, MetaCells)) {
+    return("MetaCells")
   }
-  cls
+  if (S7::S7_inherits(object, SingleCellsSubset)) {
+    return("SingleCellsSubset")
+  }
+  if (S7::S7_inherits(object, SingleCells)) {
+    return("SingleCells")
+  }
+  stop(sprintf(
+    "Pipelines run on %s, not on a `%s`.",
+    paste(SC_STEP_CLASSES, collapse = ", "),
+    class(object)[1]
+  ))
 }
 
 ## apply -----------------------------------------------------------------------
@@ -265,7 +299,16 @@ apply_pipeline <- function(pipeline, object) {
   }
   validate_pipeline(pipeline, .sc_object_class(object))
   Reduce(
-    function(obj, step) do.call(step$fn, c(list(obj), step$args)),
+    function(obj, step) {
+      res <- do.call(step$fn, c(list(obj), step$args))
+      if (is.null(res)) {
+        stop(sprintf(
+          "Step `%s` returned NULL; see its warning above.",
+          step$name
+        ))
+      }
+      res
+    },
     pipeline$steps,
     init = object
   )
@@ -319,7 +362,7 @@ apply_pipeline_per_group <- function(
   # fail before any subset is built rather than on the first group
   validate_pipeline(pipeline, "SingleCellsSubset")
 
-  group_vec <- unlist(object[[c(group_col)]], use.names = FALSE)
+  group_vec <- as.character(unlist(object[[c(group_col)]], use.names = FALSE))
   checkmate::qassert(group_vec, "S+")
 
   if (is.null(groups)) {
@@ -367,7 +410,8 @@ apply_pipeline_per_group <- function(
 #'
 #' @param object `SingleCells`.
 #' @param group_col String. Column in obs used to split.
-#' @param method String. One of `c("bootstrapped", "seacells", "supercells")`.
+#' @param method String. One of
+#' `c("bootstrapped", "seacells", "supercells", "metacells2")`.
 #' Picks the meta cell generator.
 #' @param mc_params Named list. Arguments passed on to the generator, e.g.
 #' `list(sc_meta_cell_params = params_sc_bt_metacells(), target_size = 1e5)`.
@@ -407,7 +451,7 @@ apply_pipeline_per_group <- function(
 meta_cells_per_group <- function(
   object,
   group_col,
-  method = c("bootstrapped", "seacells", "supercells"),
+  method = c("bootstrapped", "seacells", "supercells", "metacells2"),
   mc_params = list(),
   pipeline = NULL,
   groups = NULL,
@@ -420,7 +464,10 @@ meta_cells_per_group <- function(
   # checks
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(group_col, "S1")
-  checkmate::assertChoice(method, c("bootstrapped", "seacells", "supercells"))
+  checkmate::assertChoice(
+    method,
+    c("bootstrapped", "seacells", "supercells", "metacells2")
+  )
   checkmate::assertList(mc_params, names = "unique")
   if (!is.null(pipeline)) {
     checkmate::assertClass(pipeline, "ScPipeline")
@@ -439,7 +486,18 @@ meta_cells_per_group <- function(
   }
 
   if (!is.null(pipeline)) {
-    validate_pipeline(pipeline, "SingleCellsSubset")
+    # the pipeline must leave a SingleCellsSubset for the generator
+    out_class <- validate_pipeline(pipeline, "SingleCellsSubset")
+    if (out_class != "SingleCellsSubset") {
+      stop(sprintf(
+        paste(
+          "The pipeline returns a `%s`; meta_cells_per_group() generates the",
+          "meta cells itself, so the pipeline must not end on",
+          "step_metacells_sc()."
+        ),
+        out_class
+      ))
+    }
   }
 
   mc_fn <- .sc_metacell_generator(method)
@@ -522,6 +580,7 @@ step_pca_sc <- function(
   sparse_svd = NULL,
   hvg = NULL,
   seed = 42L,
+  residuals = FALSE,
   .verbose = TRUE
 ) {
   new_sc_step(
@@ -533,6 +592,7 @@ step_pca_sc <- function(
       sparse_svd = sparse_svd,
       hvg = hvg,
       seed = seed,
+      residuals = residuals,
       .verbose = .verbose
     ),
     accepts = SC_STEP_CLASSES
@@ -597,7 +657,7 @@ step_neighbours_sc <- function(
 step_clusters_sc <- function(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
-  name = "leiden_clustering",
+  name = NULL,
   modality = c("rna", "adt", "wnn"),
   seed = 42L,
   ...
@@ -622,7 +682,7 @@ step_clusters_sc <- function(
 #' Pipeline step: Harmony batch correction
 #'
 #' @description
-#' Wraps [harmony_sc()] as an `ScStep`.
+#' Wraps [harmony_sc()] (Harmony v2) as an `ScStep`.
 #'
 #' @inheritParams harmony_sc
 #'
@@ -638,7 +698,7 @@ step_harmony_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -656,32 +716,32 @@ step_harmony_sc <- function(
   )
 }
 
-#' Pipeline step: Harmony v2 batch correction
+#' Pipeline step: Harmony v1 batch correction
 #'
 #' @description
-#' Wraps [harmony_v2_sc()] as an `ScStep`.
+#' Wraps [harmony_v1_sc()] as an `ScStep`.
 #'
-#' @inheritParams harmony_v2_sc
+#' @inheritParams harmony_v1_sc
 #'
 #' @returns An `ScStep`.
 #'
 #' @export
 #'
 #' @examples
-#' # the v2 implementation writes its own embedding name
-#' step_harmony_v2_sc(batch_column = "batch_index") %>>%
-#'   step_neighbours_sc(embd_to_use = "harmony_v2")
-step_harmony_v2_sc <- function(
+#' # the original Harmony writes its own embedding name
+#' step_harmony_v1_sc(batch_column = "batch_index") %>>%
+#'   step_neighbours_sc(embd_to_use = "harmony_v1")
+step_harmony_v1_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony_v2(),
+  harmony_params = params_sc_harmony(),
   seed = 42L,
   .verbose = TRUE
 ) {
   new_sc_step(
-    "harmony_v2",
-    harmony_v2_sc,
+    "harmony_v1",
+    harmony_v1_sc,
     list(
       batch_column = batch_column,
       additional_batch_columns = additional_batch_columns,
@@ -786,7 +846,8 @@ step_fast_mnn_sc <- function(
     method,
     "bootstrapped" = generate_bt_meta_cells_sc,
     "seacells" = generate_seacells_sc,
-    "supercells" = generate_supercells_sc
+    "supercells" = generate_supercells_sc,
+    "metacells2" = generate_metacells2_sc
   )
 }
 
@@ -802,7 +863,8 @@ step_fast_mnn_sc <- function(
 #' pre-processing (HVG, PCA, batch correction within a patient, kNN) followed by
 #' source-pure meta cells, which you then hand to [merge_meta_cells()].
 #'
-#' @param method String. One of `c("bootstrapped", "seacells", "supercells")`.
+#' @param method String. One of
+#' `c("bootstrapped", "seacells", "supercells", "metacells2")`.
 #' @param ... Arguments passed on to the generator, e.g.
 #' `sc_meta_cell_params`, `target_size` or `.verbose`.
 #'
@@ -827,11 +889,14 @@ step_fast_mnn_sc <- function(
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 step_metacells_sc <- function(
-  method = c("bootstrapped", "seacells", "supercells"),
+  method = c("bootstrapped", "seacells", "supercells", "metacells2"),
   ...
 ) {
   method <- match.arg(method)
-  checkmate::assertChoice(method, c("bootstrapped", "seacells", "supercells"))
+  checkmate::assertChoice(
+    method,
+    c("bootstrapped", "seacells", "supercells", "metacells2")
+  )
 
   new_sc_step(
     sprintf("metacells (%s)", method),

@@ -283,8 +283,8 @@ terminal_states <- c(
 ```
 
 `knn = 30` is the neighbour count for the geodesic graph Palantir builds on the
-multiscale space, a different knob from the `k` of the input kNN graph, and
-`num_waypoints = 500` is the notebook's override of the 1200 default.
+multiscale space, a different knob from the `k` of the input kNN graph.
+`num_waypoints` stays at its default of 1200; the reference notebook uses 500.
 
 Two things do not mirror the reference, and both change what you get.
 

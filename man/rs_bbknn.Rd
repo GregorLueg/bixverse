@@ -24,8 +24,9 @@ detailed verbosity.}
 A list with
 \itemize{
 \item distances - Sparse list representation of the kNN distances.
-\item connectivities - Sparse list representation of the
-connectivities.
+\item connectivities - External pointer to the undirected neighbour
+graph. Each cell pair keeps the larger of its two directed connectivity
+weights.
 }
 }
 \description{

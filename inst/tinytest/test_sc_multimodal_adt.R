@@ -191,6 +191,48 @@ expect_true(
   info = "mm: adt pca matches prcomp"
 )
 
+expect_equivalent(
+  current = get_pca_singular_val(sc_mm, modality = "adt"),
+  target = pca_r_adt$sdev[1:no_pcs_adt] * sqrt(nrow(adt_norm) - 1),
+  tolerance = 1e-4,
+  info = "mm: adt pca stores singular values, as the rna pca does"
+)
+
+### feature subset --------------------------------------------------------------
+
+adt_features <- colnames(adt_norm)[1:6]
+sc_mm_sub <- calculate_pca_adt_sc(
+  object = sc_mm,
+  no_pcs = 3L,
+  features = adt_features
+)
+
+expect_equal(
+  current = rownames(get_pca_loadings(sc_mm_sub, modality = "adt")),
+  target = adt_features,
+  info = "mm: adt pca honours `features`"
+)
+
+pca_r_sub <- prcomp(as.matrix(adt_norm[, adt_features]), scale. = TRUE)
+expect_true(
+  current = all(
+    abs(diag(cor(
+      get_pca_factors(sc_mm_sub, modality = "adt")[, 1:3],
+      pca_r_sub$x[, 1:3]
+    ))) >
+      1 - 1e-6
+  ),
+  info = "mm: adt pca on a feature subset matches prcomp on that subset"
+)
+
+### var_adt by index ------------------------------------------------------------
+
+expect_equal(
+  current = get_sc_duckdb(sc_mm)$get_vars_adt_table(indices = 2:3)$feature_id,
+  target = get_adt_names(sc_mm)[2:3],
+  info = "mm: get_vars_adt_table filters on feature_idx"
+)
+
 ## knn on adt ------------------------------------------------------------------
 
 sc_mm <- find_neighbours_sc(
@@ -208,9 +250,9 @@ expect_true(
 expect_true(
   current = checkmate::testClass(
     get_connectivities(sc_mm, modality = "adt"),
-    "igraph"
+    "SingleCellConnectivity"
   ),
-  info = "mm: adt snn graph returned as igraph"
+  info = "mm: adt snn graph returned as SingleCellConnectivity"
 )
 
 ## wnn -------------------------------------------------------------------------
@@ -238,9 +280,9 @@ expect_true(
 expect_true(
   current = checkmate::testClass(
     get_connectivities(sc_mm, modality = "wnn"),
-    "igraph"
+    "SingleCellConnectivity"
   ),
-  info = "mm: wnn snn graph returned as igraph"
+  info = "mm: wnn snn graph returned as SingleCellConnectivity"
 )
 
 # the integration test: clustering on the fused graph recovers cell types

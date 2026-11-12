@@ -61,6 +61,7 @@ obj <- find_clusters_sc(obj, res = 1, name = "leiden_clusters")
 
 # 8. embedding for plots
 obj <- umap_sc(obj)
+obj <- phate_sc(obj)   # runs its own wider kNN search by default
 # t-SNE flavours: approx_type = "bh" | "bh_qd" (quick-and-dirty BH, tree
 # depth via manifoldsR::params_tsne(max_depth)) | "fft" | "fft_3k" (Unix only)
 obj <- tsne_sc(obj, approx_type = "bh_qd")
@@ -83,6 +84,10 @@ save_sc_exp_to_disk(obj, type = "qs2")
 | `SingleCellExperiment` | `load_sce()`, with `assay_name` naming the raw counts |
 | in-memory sparse matrix + obs + var | `load_r_data()` |
 | a directory written earlier | `load_existing()` |
+
+`load_mtx()` reads `.mtx.gz` directly. `real` files with integral values and
+`pattern` files (every entry a count of 1) load; fractional or negative values,
+`array`, `complex` and non-`general` symmetry error.
 
 Multi-sample variants: `load_multi_h5ad()`, `load_multi_mtx()`,
 `load_multi_tenx_h5()`, with `prescan_h5ad_files()`, `prescan_mtx_dirs()` and
@@ -148,7 +153,11 @@ obj <- set_cells_to_keep(obj, qc_df[!qc$combined, cell_id])
 ```
 
 `cells_to_keep` is a mask, not a deletion. Counts stay on disk and every
-downstream method respects it. `reset_cells_to_keep()` undoes it, but it wipes
+downstream method respects it. It's a set: duplicates collapse, indices are
+stored ascending, so results follow the store's cell order and not the order
+you passed. Unknown cell ids error. The DuckDB `obs.to_keep` column is the
+source of truth; if it disagrees with the memory file, `load_existing()` warns
+and takes the DuckDB one. `reset_cells_to_keep()` undoes it, but it wipes
 the cache and the HVG selection, and errors in a non-interactive session unless
 `force = TRUE`.
 
@@ -161,14 +170,16 @@ builds the gene x gene cross-product from the sparse data: exact, and the
 fastest for a few thousand HVGs. Its cost grows with the square of the gene
 count in memory and the cube in time, so with many more features, or for
 `residuals = TRUE` (dense only), use `"randomised"`. `"exact"` is a full SVD or
-Lanczos. The old `randomised = TRUE/FALSE` argument still works but warns.
-Leave `sparse_svd` at its `NULL` default unless you have a reason.
+Lanczos. The old `randomised` argument is gone; positional calls after it
+moved up one. Leave `sparse_svd` at its `NULL` default unless you have a
+reason. Sparse Lanczos has a sign convention (largest loading per component is
+positive), so factors are stable between runs.
 
 ### Missing prerequisites warn, they do not error
 
 `calculate_pca_sc()` with no HVG selection warns "Returning object as is" and
 hands the object back untouched. Same for `find_neighbours_sc()` without the
-named embedding. A chain that looks like it ran can have done nothing. Print the
+named embedding, and for every batch correction on a single batch. A chain that looks like it ran can have done nothing. Print the
 object or call `get_sc_cache_status()` after each step you're unsure of.
 
 | Step | Needs |
@@ -179,14 +190,18 @@ object or call `get_sc_cache_status()` after each step you're unsure of.
 | `find_neighbours_sc` | an embedding matching `embd_to_use` |
 | `find_clusters_sc` | `find_neighbours_sc` (the neighbour graph) |
 | `fast_mnn_sc`, `seurat_cca_sc`, `seurat_rpca_sc` | `batch_hvg_genes` from `find_hvg_batch_aware_sc` |
-| `umap_sc(use_knn = TRUE)` | a kNN |
+| `umap_sc()`, `densmap_sc()`, `forceatlas2_sc()` with `use_knn = TRUE` (default) | a kNN |
 | metacell generators, `run_paga_sc`, `run_palantir_sc`, `meld_sc`, miloR | a kNN |
 | `run_gene_trends_sc` | `run_magic_sc` |
 | `find_hvg_sc(method = "residual")`, `calculate_pca_sc(residuals = TRUE)` | `fit_residuals_sc` |
 | `cellsweep_sc` | cell type labels on the raw barcodes |
 
 The residual path is the exception to warn-and-return: a missing fit, a moved
-cell filter or a PCA setting it can't honour all error.
+cell filter or a PCA setting it can't honour all error. So are `NA` labels in a
+batch or group column: batch correction and its metrics, Symphony, MELD,
+`fit_residuals_sc()`, PAGA and DIALOGUE all refuse them. Group labels sort by
+code point (`method = "radix"`), not by locale, so mixed-case levels can come
+out in a different order than `sort()` gives you.
 
 ### Filter first, then HVG and PCA
 
@@ -210,7 +225,7 @@ Two tiers by default: getters warn, `assert_sc_state()` errors.
 | Call | Indexing |
 |---|---|
 | `get_cells_to_keep()` | returns **0-based** |
-| `get_hvg()` | returns **0-based** |
+| `get_hvg()` | returns **0-based**, `MetaCells` included |
 | `set_cells_to_keep()` | takes cell ids, or **1-based** numerics |
 | `set_hvg()` | takes gene ids, or **1-based** numerics |
 | `calculate_pca_sc(hvg = ...)` | takes **1-based** |
@@ -261,12 +276,35 @@ Related: `obj[[...]]` is filtered, `get_sc_obs(obj)` defaults to
 `find_all_markers_sc()` downsamples the rest-group to 100k cells unless
 `downsampling = FALSE`. Both message, neither errors.
 
+### The neighbour graph stays in Rust
+
+`get_connectivities()` returns a `SingleCellConnectivity`, an S3 list holding a
+pointer to the Rust graph plus its size and build method, **not** an igraph.
+Convert with `as_igraph(get_connectivities(obj))` before calling igraph
+functions. `set_connectivities()` still takes an igraph. `to_bytes()` /
+`from_bytes()` serialise it; `save_sc_exp_to_disk()` does that for you.
+
+### 2D embeddings
+
+All go through manifoldsR (0.6.0 or later). `umap_sc()`, `densmap_sc()` and
+`forceatlas2_sc()` reuse the cached kNN by default, and its width wins over `k`
+(they warn if the two disagree). `umap_sc()` takes
+`umap_params = manifoldsR::params_umap(optimiser = ...)`: `"adam_parallel"`,
+`"sgd"`, `"sgd_parallel"` or `"adam"`. `"sgd_parallel"` (Hogwild!) isn't
+reproducible with more than one thread. `phate_sc()` defaults to
+`use_knn = FALSE`: PHATE wants a `6 * k + 5` wide graph, far wider than the
+cached one, so it runs its own search. `modality = "wnn"` always uses the WNN
+graph.
+
 ## Clustering and markers
 
 ```r
 obj <- find_clusters_sc(obj, cluster_algorithm = "leiden", res = 1,
                         name = "leiden_clusters")
 ```
+
+Leave `name` out and the column is `"<algorithm>_clustering"`, so Louvain
+writes `louvain_clustering`.
 
 `find_clusters_sc()` runs on the graph `find_neighbours_sc()` built, and
 `knn_sym` picks which: `"snn"` (bluster/Seurat sNN, the default), `"umap"` (the
@@ -299,8 +337,8 @@ which you then hand to `find_neighbours_sc(embd_to_use = ...)`.
 
 | Function | Embedding | Params |
 |---|---|---|
-| `harmony_sc()` | `"harmony"` | `params_sc_harmony()` |
-| `harmony_v2_sc()` | `"harmony_v2"` | `params_sc_harmony_v2()` |
+| `harmony_sc()` (v2) | `"harmony"` | `params_sc_harmony_v2()` |
+| `harmony_v1_sc()` | `"harmony_v1"` | `params_sc_harmony()` |
 | `fast_mnn_sc()` | `"mnn"` | `params_sc_fastmnn()` |
 | `seurat_cca_sc()` | `"cca"` | `params_sc_seurat_cca()` |
 | `seurat_rpca_sc()` | `"rpca"` | `params_sc_seurat_rpca()` |
@@ -477,9 +515,15 @@ obj <- apply_pipeline(pipe, obj)
 per_group <- apply_pipeline_per_group(pipe, obj, group_col = "sample_id")
 ```
 
-Nine steps: `step_hvg_sc`, `step_pca_sc`, `step_neighbours_sc`,
-`step_clusters_sc`, `step_harmony_sc`, `step_harmony_v2_sc`, `step_bbknn_sc`,
-`step_fast_mnn_sc`, `step_metacells_sc`.
+Nine steps: `step_hvg_sc`, `step_pca_sc` (takes `residuals`),
+`step_neighbours_sc`, `step_clusters_sc`, `step_harmony_sc` (Harmony v2),
+`step_harmony_v1_sc`, `step_bbknn_sc`, `step_fast_mnn_sc`, `step_metacells_sc`
+(`method = "bootstrapped" | "seacells" | "supercells" | "metacells2"`).
+Pipelines run on `SingleCells`, `SingleCellsSubset` and
+`SingleCellsMultiModal`.
+
+A misspelt or missing step argument errors when the step is built, not halfway
+through the run. A step that returns `NULL` stops the pipeline.
 
 `apply_pipeline()` runs `validate_pipeline()` up front. Be clear on what that
 buys you: it checks **class dispatch**, that each step has a method for whatever
@@ -502,7 +546,10 @@ It shares the parent's count pointer (no copy) and keeps indices in the
 **parent's** index space, so no translation is needed. It gets a fresh empty
 cache and **deliberately drops the parent's HVG**, because highly variable genes
 within one cell type are not the same set. So the chain restarts at
-`find_hvg_sc()`.
+`find_hvg_sc()`. The HVG statistics land in the subset's own var table; the
+parent's DuckDB isn't touched. `aucell_sc()`, `vision_sc()`,
+`vision_w_autocor_sc()`, `hotspot_autocor_sc()` and `hotspot_gene_cor_sc()`
+work on subsets too.
 
 Push labels back up with `merge_subset_obs()`.
 
@@ -513,7 +560,8 @@ and needs the `qs2` package). `merge_sc_experiments()` combines objects.
 `save_h5ad(obj, h5_path)` writes a whole `SingleCells` object to a
 spec-compliant h5ad for ScanPy: kept cells only, counts streamed, obs/var plus
 the cached PCA, embeddings and neighbour graph (`assay = "norm"` puts the
-normalised counts in `X`). `write_h5ad_sc()`, `write_h5ad_sc_dense()`,
+normalised counts in `X`). `varm/PCs` sits on the genes the PCA ran on, even if
+the HVGs changed since, and is only written alongside `X_pca`. `write_h5ad_sc()`, `write_h5ad_sc_dense()`,
 `write_tenx_h5_sc()` and `write_cellranger_output()` export raw matrices to the
 usual interchange formats.
 

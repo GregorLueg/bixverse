@@ -9,9 +9,7 @@
 \arguments{
 \item{obs}{data.table. The unfiltered obs table, with \code{lib_size}.}
 
-\item{empty_params}{List. See \code{\link[=params_sc_empty_droplets]{params_sc_empty_droplets()}}. Required: there
-is no safe default, since the recommended \code{method = "supplied"} needs the
-name of the obs column holding the mask.}
+\item{empty_params}{List. See \code{\link[=params_sc_empty_droplets]{params_sc_empty_droplets()}}.}
 
 \item{.verbose}{Logical. Controls verbosity.}
 }

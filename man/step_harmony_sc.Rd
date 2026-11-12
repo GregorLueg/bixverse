@@ -8,7 +8,7 @@ step_harmony_sc(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
-  harmony_params = params_sc_harmony(),
+  harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -23,7 +23,7 @@ columns to regress out. If \code{NULL}, only the primary batch column is used.}
 \item{modality}{String. One of \code{c("rna", "adt")}. You can only use \code{"adt"}
 on \code{SingleCellsMultiModal} class.}
 
-\item{harmony_params}{List. Output of \code{\link[=params_sc_harmony]{params_sc_harmony()}}.}
+\item{harmony_params}{List. Output of \code{\link[=params_sc_harmony_v2]{params_sc_harmony_v2()}}.}
 
 \item{seed}{Integer. For reproducibility.}
 
@@ -35,7 +35,7 @@ verbosity.}
 An \code{ScStep}.
 }
 \description{
-Wraps \code{\link[=harmony_sc]{harmony_sc()}} as an \code{ScStep}.
+Wraps \code{\link[=harmony_sc]{harmony_sc()}} (Harmony v2) as an \code{ScStep}.
 }
 \examples{
 # correct the PCA, then build the graph on the corrected embedding

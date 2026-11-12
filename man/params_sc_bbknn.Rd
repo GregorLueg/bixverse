@@ -25,14 +25,15 @@ Defaults to \code{1.0}.}
 
 \item{trim}{Integer or \code{NULL}. Trim the neighbours of each cell to these many
 top connectivities. May help with population independence and improve the
-tidiness of clustering. If \code{NULL}, it defaults to \code{10 * neighbours_within_batch}. Defaults to \code{NULL}.}
+tidiness of clustering. If \code{NULL}, it defaults to \code{10 * neighbours_within_batch * n_batches}, as in the reference implementation.
+Defaults to \code{NULL}.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{extract_knn}, \code{m}, \code{ef_construction},
-\code{ef_search}, \code{n_list} and \code{n_probe}. See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the
-available elements. Defaults to \code{list()}.}
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
+and \code{n_probe}. See \code{\link[=params_knn_defaults]{params_knn_defaults()}} for the available elements.
+Defaults to \code{list()}.}
 }
 \value{
 A named list with the following elements:
@@ -46,7 +47,8 @@ how many nearest neighbours of each cell are assumed to be fully connected.
 Defaults to \code{1.0}.
 \item trim - Integer or \code{NULL}. Trim the neighbours of each cell to these
 many top connectivities. May help with population independence and improve
-the tidiness of clustering. If \code{NULL}, it defaults to \code{10 * neighbours_within_batch}. Defaults to \code{NULL}.
+the tidiness of clustering. If \code{NULL}, it defaults to \code{10 * neighbours_within_batch * n_batches}, as in the reference implementation.
+Defaults to \code{NULL}.
 \item The elements of \code{\link[=params_knn_defaults]{params_knn_defaults()}}, overridden by \code{knn}, spliced
 in at this position.
 }

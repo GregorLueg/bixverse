@@ -70,7 +70,7 @@
   obs <- get_sc_obs(
     object,
     cols = c("cell_idx", group_by),
-    filtered = TRUE
+    filtered = FALSE
   )
 
   obs <- obs[obs$cell_idx %in% (cells_to_use + 1L), ]
@@ -461,7 +461,7 @@
   if (boost_params$fast_cluster & is.null(boost_params$n_centroids)) {
     message(paste(
       "Fast clustering activated without any n_centroids set.",
-      "Setting n_centroids to sqrt(N) * 2"
+      "Setting n_centroids to floor(4 * sqrt(N))"
     ))
     boost_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
   }
@@ -517,7 +517,7 @@
   ) {
     message(paste(
       "Fast clustering activated without any n_centroids set.",
-      "Setting n_centroids to sqrt(N) * 2"
+      "Setting n_centroids to floor(4 * sqrt(N))"
     ))
     scdblfinder_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
   }
@@ -536,7 +536,7 @@
   features <- if (return_features) {
     feature_matrix <- res$features$feature_mat
     colnames(feature_matrix) <- res$features$feature_names
-    rownames(feature_matrix) <- get_cell_names(object, filtered = TRUE)[
+    rownames(feature_matrix) <- get_cell_names(object, filtered = FALSE)[
       cells_to_use + 1L
     ]
     feature_matrix
@@ -1414,6 +1414,9 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
       )
     )
 
+    # the gene names travel with the loadings, so the h5ad export can place
+    # them even if the HVGs are re-run later
+    rownames(pca_loadings) <- get_gene_names(object)[selected_hvg + 1L]
     object <- set_pca_factors(object, pca_factors)
     object <- set_pca_loadings(object, pca_loadings)
     object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
@@ -1443,6 +1446,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
       )
     )
 
+    rownames(sparse_pca_loadings) <- get_gene_names(object)[selected_hvg + 1L]
     object <- set_pca_factors(object, sparse_pca_factors)
     object <- set_pca_loadings(object, sparse_pca_loadings)
     object <- set_pca_singular_vals(
@@ -1545,8 +1549,8 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
 #' [params_knn_graph_defaults()].
 #' @param .verbose Boolean or integer. Controls verbosity.
 #'
-#' @returns Undirected, weighted igraph with the method in the `method` graph
-#' attribute.
+#' @returns A `SingleCellConnectivity` holding the undirected, weighted Rust
+#' graph, with the method in `method`.
 #'
 #' @keywords internal
 .knn_to_graph <- function(knn, graph_params, .verbose = TRUE) {
@@ -1558,23 +1562,14 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     message(sprintf("Generating the %s graph.", graph_params$knn_sym))
   }
 
-  knn_mat <- get_knn_mat(knn)
-  graph_rs <- rs_sc_knn_graph(
-    knn_mat = knn_mat,
+  ptr <- rs_sc_knn_graph(
+    knn_mat = get_knn_mat(knn),
     knn_dist = if (graph_params$knn_sym == "umap") get_knn_dist(knn) else NULL,
     graph_params = graph_params,
     verbose = parse_verbosity(.verbose)
   )
 
-  g <- igraph::make_empty_graph(n = nrow(knn_mat), directed = FALSE)
-  g <- igraph::add_edges(
-    g,
-    graph_rs$edges,
-    attr = list(weight = graph_rs$weights)
-  )
-  igraph::graph_attr(g, "method") <- graph_params$knn_sym
-
-  g
+  .new_sc_connectivity(ptr, method = graph_params$knn_sym)
 }
 
 ### clustering -----------------------------------------------------------------
@@ -1586,13 +1581,17 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
-  name = "leiden_clustering",
+  name = NULL,
   modality = c("rna", "adt", "wnn"),
   seed = 42L,
+  .verbose = TRUE,
   ...
 ) {
   cluster_algorithm <- match.arg(cluster_algorithm)
   modality <- match.arg(modality)
+  if (is.null(name)) {
+    name <- sprintf("%s_clustering", cluster_algorithm)
+  }
 
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) ||
@@ -1603,6 +1602,7 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   checkmate::qassert(name, "S1")
   checkmate::assertChoice(cluster_algorithm, c("leiden", "louvain"))
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
     stop(sprintf(
@@ -1624,6 +1624,14 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
       )
     )
     return(object)
+  }
+
+  if (.verbose) {
+    message(sprintf(
+      "Running %s clustering at resolution %s.",
+      cluster_algorithm,
+      res
+    ))
   }
 
   clusters <- leiden_clustering(
@@ -1849,10 +1857,8 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 #'   sets. A benign race condition is leveraged during index build, making the
 #'   build non-deterministic. Bigger impact on smaller data sets.
 #'   \item `nndescent` - Nearest neighbour descent. Leverages concepts from
-#'   `PyNNDescent` and works well on very large data sets similar to `hnsw`.
-#'   Set `extract_knn = TRUE` in the kNN parameters to hand back the descent
-#'   graph directly instead of beam searching it. That drops the query pass
-#'   altogether, so it is much faster, but recall goes down a little.
+#'   `PyNNDescent`. Hands back the graph the descent built, with no index and
+#'   no query pass, and works well on very large data sets.
 #'   \item `ivf` - Inverted file index. Uses first k-means clustering to
 #'   identify Voronoi cells and leverages these during querying. Works well
 #'   on large data sets with high dimensionality and when you need to return
@@ -1959,8 +1965,12 @@ S7::method(generate_knn_sc, SingleCells) <- function(
     return(NULL)
   }
 
+  if (!is.null(no_embd_to_use)) {
+    embd <- embd[, seq_len(min(no_embd_to_use, ncol(embd))), drop = FALSE]
+  }
+
   if (!is.null(cells_to_use)) {
-    embd <- embd[which(rownames(embd) %in% cells_to_use), ]
+    embd <- embd[which(rownames(embd) %in% cells_to_use), , drop = FALSE]
   }
 
   knn_data <- rs_sc_knn_w_dist(

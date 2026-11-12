@@ -343,7 +343,20 @@ S7::method(run_paga_sc, ScOrMc) <- function(
     return(NULL)
   }
 
-  clusters <- as.factor(unlist(object[[cluster_col]], use.names = FALSE))
+  clusters <- unlist(object[[cluster_col]], use.names = FALSE)
+  if (!is.factor(clusters)) {
+    clusters <- factor(
+      clusters,
+      levels = sort(unique(clusters), method = "radix")
+    )
+  }
+  if (anyNA(clusters)) {
+    stop(sprintf(
+      "`%s` has %i NA labels; PAGA needs a cluster for every cell.",
+      cluster_col,
+      sum(is.na(clusters))
+    ))
+  }
 
   # the kNN rows and the (filtered) obs rows are aligned positionally, which is
   # also how clusterings get written back in find_clusters_sc()
