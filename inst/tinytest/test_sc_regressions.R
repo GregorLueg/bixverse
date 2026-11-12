@@ -88,9 +88,10 @@ expect_equal(
 
 # row 0: neighbours stored by column index with descending distances
 bbknn <- rs_bbknn_filtering(
-  indptr = c(0L, 3L, 5L),
-  indices = c(0L, 1L, 2L, 0L, 1L),
-  data = c(3, 2, 1, 0.5, 0.5),
+  indptr = c(0L, 3L, 5L, 6L),
+  indices = c(0L, 1L, 2L, 0L, 1L, 2L),
+  data = c(3, 2, 1, 0.5, 0.5, 0),
+  batch_labels = c(0L, 0L, 0L),
   no_neighbours_to_keep = 2L
 )
 
