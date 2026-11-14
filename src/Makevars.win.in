@@ -6,7 +6,7 @@ TARGET = $(if $(CARGO_BUILD_TARGET),$(CARGO_BUILD_TARGET),$(subst 64,x86_64,$(su
 TARGET_DIR = @TARGET_DIR@
 LIBDIR = $(TARGET_DIR)/$(TARGET)/@LIBDIR@
 STATLIB = $(LIBDIR)/libbixverse.a
-PKG_LIBS = -L"$(LIBDIR)" -lbixverse @HDF5_LIBS@-lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
+PKG_LIBS = -L"$(LIBDIR)" -lbixverse @HDF5_LIBS@-lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll -lsynchronization
 
 all: $(SHLIB) rust_clean
 
