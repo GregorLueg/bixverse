@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,7 +126,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Bulk differential expression with BulkDge</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-12</p>
+      <p class="date">2026-11-14</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -168,6 +168,8 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"airway"</span>, package <span class="op">=</span> <span class="st">"airway"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">airway</span>, <span class="st">"counts"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: replacing previous import 'S4Arrays::makeNindexFromArrayViewport' by</span></span>
+<span><span class="co">#&gt; 'DelayedArray::makeNindexFromArrayViewport' when loading 'SummarizedExperiment'</span></span>
 <span></span>
 <span><span class="va">meta_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">airway</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -505,7 +507,7 @@
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    max_abs_diff_logfc max_abs_diff_t max_abs_diff_log10p</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;          &lt;num&gt;               &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        1.24345e-14   1.374545e-10        6.883738e-11</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        1.24345e-14   1.433733e-10        7.178436e-11</span></span></code></pre></div>
 </div>
 <p>Or as plots:</p>
 <div class="cell">
@@ -601,8 +603,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;     limma 1446.3794 1452.8172 1622.4844 1485.8221 1534.3621 2193.0413     5</span></span>
-<span><span class="co">#&gt;  bixverse  164.0823  168.8845  171.2247  170.8798  170.9931  181.2835     5</span></span></code></pre></div>
+<span><span class="co">#&gt;     limma 1490.3437 1492.7734 1658.4710 1530.1280 1542.9827 2236.1272     5</span></span>
+<span><span class="co">#&gt;  bixverse  178.4123  178.6041  183.5871  179.6249  184.9638  196.3303     5</span></span></code></pre></div>
 </div>
 <p>And the edgeR quasi-likelihood chain, same counts and design as <code><a href="../reference/run_edger_ql.html">run_edger_ql()</a></code> above:</p>
 <div class="cell">
@@ -625,8 +627,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;     edgeR 683.4489 702.2105 703.2979 706.9613 709.8074 714.0614     5</span></span>
-<span><span class="co">#&gt;  bixverse 208.9930 209.3436 215.7302 210.1996 210.9925 239.1225     5</span></span></code></pre></div>
+<span><span class="co">#&gt;     edgeR 848.9435 868.4518 877.7141 889.2775 890.1175 891.7804     5</span></span>
+<span><span class="co">#&gt;  bixverse 261.0896 261.1288 261.7217 261.8331 262.2164 262.3404     5</span></span></code></pre></div>
 </div>
 <p>Both land a few times faster on the Rust side, on eight samples. Mileage on bigger cohorts will vary with your machine, but some benchmarks have shown the delta tends to increase with Rust getting comparably faster with larger N.</p>
 </section><section class="level3"><h3 id="where-the-results-differ-on-purpose">Where the results differ on purpose<a class="anchor" aria-label="anchor" href="#where-the-results-differ-on-purpose"></a>

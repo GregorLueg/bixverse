@@ -530,7 +530,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v2"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.7982191  0.977846 0.6423357      0.9493217     1     0.6677088
+#> 1:   harmony   0.7964081 0.9768899 0.6423357      0.9481919     1     0.6679183
 #>    graph_connectivity     method
 #>                 <num>     <char>
 #> 1:          0.9499137 Harmony v2
@@ -614,10 +614,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v1"]
 #>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v1   0.8827347 0.9754045 0.6423357      0.9817465     1
+#> 1: harmony_v1   0.8828856 0.9766962 0.6423357      0.9821214     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
-#> 1:     0.6671693          0.9499659 Harmony v1
+#> 1:     0.6674088          0.9499659 Harmony v1
 ```
 
 ``` r
@@ -971,7 +971,7 @@ rbindlist(purrr::map(
 #>            clustering n_clusters n_unmixed_clusters share_cells_in_unmixed
 #>                <char>      <int>              <int>                  <num>
 #> 1: leiden_uncorrected         22                 17            0.971174162
-#> 2:     leiden_harmony         15                  1            0.005131301
+#> 2:     leiden_harmony         17                  1            0.004376698
 #> 3:       leiden_bbknn         18                 13            0.876546936
 ```
 
@@ -1026,8 +1026,8 @@ metrics_dt[, .(
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01297917 0.9063555 0.0000000             NA     1
 #> 2:     fastMNN  0.68457591 0.9736488 0.4705881      0.9600038     1
-#> 3:  Harmony v2  0.79821914 0.9778460 0.6423357      0.9493217     1
-#> 4:  Harmony v1  0.88273468 0.9754045 0.6423357      0.9817465     1
+#> 3:  Harmony v2  0.79640809 0.9768899 0.6423357      0.9481919     1
+#> 4:  Harmony v1  0.88288560 0.9766962 0.6423357      0.9821214     1
 #> 5:  Seurat CCA  0.77377000 0.9569454 0.4705881      0.9784447     1
 #> 6: Seurat rPCA  0.81316028 0.9678163 0.6423357      0.9419804     1
 #> 7:       BBKNN  1.00000000        NA 0.9911504             NA     1
@@ -1035,8 +1035,8 @@ metrics_dt[, .(
 #>            <num>              <num>
 #> 1:     0.6508355          0.9501534
 #> 2:     0.6492018          0.9489644
-#> 3:     0.6677088          0.9499137
-#> 4:     0.6671693          0.9499659
+#> 3:     0.6679183          0.9499137
+#> 4:     0.6674088          0.9499659
 #> 5:     0.6653001          0.9499659
 #> 6:     0.6631780          0.9495387
 #> 7:            NA          0.9501534
