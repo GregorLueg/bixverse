@@ -36,7 +36,7 @@ multi-modal versions with the added data.}
 \item{.verbose}{Boolean or integer. Controls verbosity.}
 
 \item{...}{Further parameters for \code{\link[=leiden_clustering]{leiden_clustering()}}: \code{n_iterations},
-\code{beta}, \code{min_gain} and \code{local_moving}.}
+\code{beta}, \code{min_gain}, \code{local_moving} and \code{node_order}.}
 }
 \value{
 The object with added clustering in the obs table.

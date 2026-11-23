@@ -6,7 +6,8 @@
 \usage{
 params_sc_fast_cluster(
   n_centroids = NULL,
-  km_type = c("standard", "minibatch"),
+  km_type = c("emeans", "standard", "minibatch"),
+  e_means_epochs = NULL,
   k_means_iter = 100L,
   batch_size = 4096L,
   drift_threshold = 1e-04,
@@ -20,7 +21,8 @@ params_sc_fast_cluster(
   n_iterations = NULL,
   beta = 0.01,
   min_gain = 0,
-  local_moving = c("queue", "coloured"),
+  local_moving = NULL,
+  node_order = NULL,
   multi_level = TRUE,
   max_evals = 10L
 )
@@ -29,11 +31,14 @@ params_sc_fast_cluster(
 \item{n_centroids}{Integer or \code{NULL}. Number of k-means centroids. If \code{NULL},
 defaults to \code{floor(4 * sqrt(n_cells))}. Defaults to \code{NULL}.}
 
-\item{km_type}{String. Which k-means to run for the coarsening. One of
-\code{c("standard", "minibatch")}. Defaults to \code{"standard"}.}
+\item{km_type}{String. Which k-means to run for the coarsening: \code{"emeans"},
+\code{"standard"} (Lloyd's) or \code{"minibatch"}. One of \code{c("emeans", "standard", "minibatch")}. Defaults to \code{"emeans"}.}
 
-\item{k_means_iter}{Integer. Number of k-means iterations. Defaults to
-\code{100L}.}
+\item{e_means_epochs}{Numeric or \code{NULL}. \code{km_type = "emeans"} only. Passes
+over the data. \code{NULL} takes the Rust default of 5. Defaults to \code{NULL}.}
+
+\item{k_means_iter}{Integer. Number of k-means iterations. Ignored by
+e-means. Defaults to \code{100L}.}
 
 \item{batch_size}{Integer. \code{km_type = "minibatch"} only. Batch size. Defaults
 to \code{4096L}.}
@@ -69,9 +74,8 @@ available elements. Defaults to \code{list()}.}
 \code{c("louvain", "leiden")}. Defaults to \code{"louvain"}.}
 
 \item{n_iterations}{Integer or \code{NULL}. Number of iterations of the community
-detection. A negative value iterates until stable. If \code{NULL}, \code{2L} for
-Louvain and \code{5L} for Leiden, which gave the best modularity across synthetic
-graphs. Defaults to \code{NULL}.}
+detection. A negative value iterates until stable. If \code{NULL}, \code{2L}. Defaults
+to \code{NULL}.}
 
 \item{beta}{Numeric. Leiden only. Randomness of the refinement step. Defaults
 to \code{0.01}.}
@@ -79,10 +83,14 @@ to \code{0.01}.}
 \item{min_gain}{Numeric. With a negative \code{n_iterations}, also stop once an
 iteration gains no more than this in modularity. Defaults to \code{0.0}.}
 
-\item{local_moving}{String. \code{"queue"} is Traag's sequential queue.
+\item{local_moving}{String or \code{NULL}. \code{"queue"} is Traag's sequential queue.
 \code{"coloured"} moves the nodes of one colour class in parallel, which only
-kicks in on larger levels of the graph. One of \code{c("queue", "coloured")}.
-Defaults to \code{"queue"}.}
+kicks in on larger levels of the graph. \code{NULL} is \code{"queue"} for Leiden and
+\code{"coloured"} for Louvain. Defaults to \code{NULL}.}
+
+\item{node_order}{String or \code{NULL}. Visit order of the queue, \code{"bfs"} (sweep
+in BFS order from a random start) or \code{"shuffle"} (as igraph). \code{NULL} is
+\code{"bfs"} for Leiden and \code{"shuffle"} for Louvain. Defaults to \code{NULL}.}
 
 \item{multi_level}{Boolean. Shall the communities be aggregated and refined
 in levels. Defaults to \code{TRUE}.}
@@ -95,10 +103,12 @@ A named list with the following elements:
 \itemize{
 \item n_centroids - Integer or \code{NULL}. Number of k-means centroids. If
 \code{NULL}, defaults to \code{floor(4 * sqrt(n_cells))}. Defaults to \code{NULL}.
-\item km_type - String. Which k-means to run for the coarsening. One of
-\code{c("standard", "minibatch")}. Defaults to \code{"standard"}.
-\item k_means_iter - Integer. Number of k-means iterations. Defaults to
-\code{100L}.
+\item km_type - String. Which k-means to run for the coarsening: \code{"emeans"},
+\code{"standard"} (Lloyd's) or \code{"minibatch"}. One of \code{c("emeans", "standard", "minibatch")}. Defaults to \code{"emeans"}.
+\item e_means_epochs - Numeric or \code{NULL}. \code{km_type = "emeans"} only. Passes
+over the data. \code{NULL} takes the Rust default of 5. Defaults to \code{NULL}.
+\item k_means_iter - Integer. Number of k-means iterations. Ignored by
+e-means. Defaults to \code{100L}.
 \item batch_size - Integer. \code{km_type = "minibatch"} only. Batch size.
 Defaults to \code{4096L}.
 \item drift_threshold - Numeric. \code{km_type = "minibatch"} only. The mini
@@ -123,17 +133,19 @@ kNN. Only used if \code{cell_mediated = FALSE}. Defaults to \code{15L}.
 \item algorithm - String. Community detection on the centroid graph. One of
 \code{c("louvain", "leiden")}. Defaults to \code{"louvain"}.
 \item n_iterations - Integer or \code{NULL}. Number of iterations of the
-community detection. A negative value iterates until stable. If \code{NULL}, \code{2L}
-for Louvain and \code{5L} for Leiden, which gave the best modularity across
-synthetic graphs. Defaults to \code{NULL}.
+community detection. A negative value iterates until stable. If \code{NULL},
+\code{2L}. Defaults to \code{NULL}.
 \item beta - Numeric. Leiden only. Randomness of the refinement step.
 Defaults to \code{0.01}.
 \item min_gain - Numeric. With a negative \code{n_iterations}, also stop once an
 iteration gains no more than this in modularity. Defaults to \code{0.0}.
-\item local_moving - String. \code{"queue"} is Traag's sequential queue.
-\code{"coloured"} moves the nodes of one colour class in parallel, which only
-kicks in on larger levels of the graph. One of \code{c("queue", "coloured")}.
-Defaults to \code{"queue"}.
+\item local_moving - String or \code{NULL}. \code{"queue"} is Traag's sequential
+queue. \code{"coloured"} moves the nodes of one colour class in parallel, which
+only kicks in on larger levels of the graph. \code{NULL} is \code{"queue"} for Leiden
+and \code{"coloured"} for Louvain. Defaults to \code{NULL}.
+\item node_order - String or \code{NULL}. Visit order of the queue, \code{"bfs"}
+(sweep in BFS order from a random start) or \code{"shuffle"} (as igraph). \code{NULL}
+is \code{"bfs"} for Leiden and \code{"shuffle"} for Louvain. Defaults to \code{NULL}.
 \item multi_level - Boolean. Shall the communities be aggregated and refined
 in levels. Defaults to \code{TRUE}.
 \item max_evals - Integer. Cap on the node evaluations per local moving

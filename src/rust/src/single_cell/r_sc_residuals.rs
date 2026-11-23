@@ -11,17 +11,16 @@
 //! whichever model the list carries.
 
 use bixverse_r::prelude::*;
-use bixverse_r::single_cell::sc_data::bin_merge_io::gene_store_to_cell_store;
+use bixverse_r::single_cell::sc_data::store::merge::gene_store_to_cell_store;
 use bixverse_r::single_cell::sc_processing::analytic_pearson::model::AprParams;
+use bixverse_r::single_cell::sc_processing::analytic_pearson::stream::AprGroupedFit;
 use bixverse_r::single_cell::sc_processing::pca::SingleCellPcaParams;
 use bixverse_r::single_cell::sc_processing::residual_fit::{
     fit_residuals_on_store, pca_residuals_on_store, residual_variance_on_store,
-    sct_corrected_counts_on_store, ResidualFit, ResidualModel, ResidualParams,
-    ResidualVarianceRes,
+    sct_corrected_counts_on_store, ResidualFit, ResidualModel, ResidualParams, ResidualVarianceRes,
 };
 use bixverse_r::single_cell::sc_processing::sctransform::model::{SctCovariates, SctParams};
 use bixverse_r::single_cell::sc_processing::sctransform::stream::{SctGroupedFit, SctStreamOpts};
-use bixverse_r::single_cell::sc_processing::analytic_pearson::stream::AprGroupedFit;
 use extendr_api::prelude::*;
 
 /////////////
@@ -320,8 +319,7 @@ pub(crate) fn residual_variance_to_r_list(res: &ResidualVarianceRes) -> List {
     let n_groups = res.variance.len();
 
     // groups are the columns, so a single-group fit comes back as one column
-    let variance_matrix =
-        RArray::new_matrix(n_genes, n_groups, |row, col| res.variance[col][row]);
+    let variance_matrix = RArray::new_matrix(n_genes, n_groups, |row, col| res.variance[col][row]);
 
     list!(
         genes = res.genes.iter().map(|&g| g as i32).collect::<Vec<i32>>(),

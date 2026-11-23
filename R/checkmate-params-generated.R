@@ -176,6 +176,7 @@ checkScBoostParams <- function(x) {
       "n_list",
       "n_probe",
       "km_type",
+      "e_means_epochs",
       "n_centroids",
       "k_means_iter",
       "batch_size",
@@ -215,6 +216,7 @@ checkScBoostParams <- function(x) {
       ef_search = "I1[1,)",
       n_list = c("I1[1,)", "0"),
       n_probe = c("I1[1,)", "0"),
+      e_means_epochs = c("N1(0,)", "0"),
       n_centroids = c("I1", "0"),
       k_means_iter = "I1",
       batch_size = "I1",
@@ -256,7 +258,7 @@ checkScBoostParams <- function(x) {
         "exhaustive"
       ),
       ann_dist = c("euclidean", "cosine"),
-      km_type = c("minibatch", "standard")
+      km_type = c("emeans", "standard", "minibatch")
     ),
     label = "Boost params",
     hint = paste(
@@ -1072,7 +1074,13 @@ assertEdgeRQlParams <- checkmate::makeAssertionFunction(checkEdgeRQlParams)
 checkFastClusterDefaultParams <- function(x) {
   res <- check_list_shape(
     x,
-    c("km_type", "n_centroids", "k_means_iter", "batch_size")
+    c(
+      "km_type",
+      "e_means_epochs",
+      "n_centroids",
+      "k_means_iter",
+      "batch_size"
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -1081,6 +1089,7 @@ checkFastClusterDefaultParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
+      e_means_epochs = c("N1(0,)", "0"),
       n_centroids = c("I1", "0"),
       k_means_iter = "I1",
       batch_size = "I1"
@@ -1088,7 +1097,8 @@ checkFastClusterDefaultParams <- function(x) {
     label = "FastCluster params",
     hint = paste(
       "batch_size and k_means_iter must be integers; n_centroids must",
-      "be an integer or NULL."
+      "be an integer or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -1098,12 +1108,13 @@ checkFastClusterDefaultParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      km_type = c("minibatch", "standard")
+      km_type = c("emeans", "standard", "minibatch")
     ),
     label = "FastCluster params",
     hint = paste(
       "batch_size and k_means_iter must be integers; n_centroids must",
-      "be an integer or NULL."
+      "be an integer or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -1457,7 +1468,14 @@ assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
 checkKMeansParams <- function(x) {
   res <- check_list_shape(
     x,
-    c("k_means_iter", "k_means_init", "gemm", "hamerly")
+    c(
+      "k_means_algorithm",
+      "e_means_epochs",
+      "k_means_iter",
+      "k_means_init",
+      "gemm",
+      "hamerly"
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -1466,6 +1484,7 @@ checkKMeansParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1",
       gemm = c("B1", "0"),
       hamerly = c("B1", "0")
@@ -1473,7 +1492,8 @@ checkKMeansParams <- function(x) {
     label = "k-means params",
     hint = paste(
       "k_means_iter must be an integer; gemm and hamerly must be",
-      "booleans or NULL."
+      "booleans or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -1483,12 +1503,14 @@ checkKMeansParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      k_means_algorithm = c("emeans", "lloyd"),
       k_means_init = c("parallel", "random")
     ),
     label = "k-means params",
     hint = paste(
       "k_means_iter must be an integer; gemm and hamerly must be",
-      "booleans or NULL."
+      "booleans or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -2369,7 +2391,6 @@ checkNmfConsensusParams <- function(x) {
       "consensus_target",
       "n_neighbours",
       "density_threshold",
-      "kmeans_iters",
       "kmeans_n_init"
     )
   )
@@ -2382,15 +2403,13 @@ checkNmfConsensusParams <- function(x) {
     list(
       n_neighbours = "I1[0,)",
       density_threshold = "N1[0,2]",
-      kmeans_iters = "I1[1,)",
       kmeans_n_init = "I1[1,)"
     ),
     label = "NMF consensus params",
     hint = paste(
       "n_neighbours must be a non-negative integer (0 = auto);",
       "density_threshold must be a numeric in [0, 2] (>= 2 disables the",
-      "filter); kmeans_iters and kmeans_n_init must be positive",
-      "integers."
+      "filter); kmeans_n_init must be a positive integer."
     )
   )
   if (!isTRUE(res)) {
@@ -2406,8 +2425,7 @@ checkNmfConsensusParams <- function(x) {
     hint = paste(
       "n_neighbours must be a non-negative integer (0 = auto);",
       "density_threshold must be a numeric in [0, 2] (>= 2 disables the",
-      "filter); kmeans_iters and kmeans_n_init must be positive",
-      "integers."
+      "filter); kmeans_n_init must be a positive integer."
     )
   )
   if (!isTRUE(res)) {
@@ -3352,6 +3370,7 @@ checkScFastClusterParams <- function(x) {
     c(
       "n_centroids",
       "km_type",
+      "e_means_epochs",
       "k_means_iter",
       "batch_size",
       "drift_threshold",
@@ -3372,6 +3391,7 @@ checkScFastClusterParams <- function(x) {
       "beta",
       "min_gain",
       "local_moving",
+      "node_order",
       "multi_level",
       "max_evals"
     )
@@ -3384,6 +3404,7 @@ checkScFastClusterParams <- function(x) {
     x,
     list(
       n_centroids = c("I1[2,)", "0"),
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1[1,)",
       batch_size = "I1[1,)",
       drift_threshold = "N1",
@@ -3399,6 +3420,8 @@ checkScFastClusterParams <- function(x) {
       n_iterations = c("I1", "0"),
       beta = "N1(0,)",
       min_gain = "N1[0,)",
+      local_moving = c("S1", "0"),
+      node_order = c("S1", "0"),
       multi_level = "B1",
       max_evals = "I1[1,)"
     ),
@@ -3407,7 +3430,8 @@ checkScFastClusterParams <- function(x) {
       "n_centroids must be NULL or an integer >= 2; k_means_iter,",
       "batch_size, n_anchors, centroid_k and max_evals must be integers",
       ">= 1; n_iterations must be NULL or a non-zero integer;",
-      "cell_mediated and multi_level must be booleans."
+      "cell_mediated and multi_level must be booleans; local_moving and",
+      "node_order must be NULL or one of their choices."
     )
   )
   if (!isTRUE(res)) {
@@ -3417,23 +3441,36 @@ checkScFastClusterParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      km_type = c("standard", "minibatch"),
+      km_type = c("emeans", "standard", "minibatch"),
       dist = c("euclidean", "cosine"),
       knn_sym = c("snn", "umap", "knn"),
       snn_similarity = c("jaccard", "rank"),
-      algorithm = c("louvain", "leiden"),
-      local_moving = c("queue", "coloured")
+      algorithm = c("louvain", "leiden")
     ),
     label = "fast clustering params",
     hint = paste(
       "n_centroids must be NULL or an integer >= 2; k_means_iter,",
       "batch_size, n_anchors, centroid_k and max_evals must be integers",
       ">= 1; n_iterations must be NULL or a non-zero integer;",
-      "cell_mediated and multi_level must be booleans."
+      "cell_mediated and multi_level must be booleans; local_moving and",
+      "node_order must be NULL or one of their choices."
     )
   )
   if (!isTRUE(res)) {
     return(res)
+  }
+
+  if (!checkmate::qtest(x$local_moving, c("0", "S1"))) {
+    return("The element `local_moving` must be NULL or a string.")
+  }
+  if (!is.null(x$local_moving) && !x$local_moving %in% c("queue", "coloured")) {
+    return("The element `local_moving` must be one of `queue` or `coloured`.")
+  }
+  if (!checkmate::qtest(x$node_order, c("0", "S1"))) {
+    return("The element `node_order` must be NULL or a string.")
+  }
+  if (!is.null(x$node_order) && !x$node_order %in% c("bfs", "shuffle")) {
+    return("The element `node_order` must be one of `bfs` or `shuffle`.")
   }
 
   return(TRUE)
@@ -3671,6 +3708,8 @@ checkScHarmonyParams <- function(x) {
       "epsilon_kmeans",
       "epsilon_harmony",
       "window_size",
+      "k_means_algorithm",
+      "e_means_epochs",
       "k_means_iter",
       "k_means_init",
       "gemm",
@@ -3694,6 +3733,7 @@ checkScHarmonyParams <- function(x) {
       epsilon_kmeans = "N1(0,)",
       epsilon_harmony = "N1(0,)",
       window_size = "I1[1,)",
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1",
       gemm = c("B1", "0"),
       hamerly = c("B1", "0")
@@ -3714,6 +3754,7 @@ checkScHarmonyParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      k_means_algorithm = c("emeans", "lloyd"),
       k_means_init = c("parallel", "random")
     ),
     label = "Harmony params",
@@ -3773,6 +3814,8 @@ checkScHarmonyV2Params <- function(x) {
       "tau",
       "batch_proportion_cutoff",
       "use_dynamic_lambda",
+      "k_means_algorithm",
+      "e_means_epochs",
       "k_means_iter",
       "k_means_init",
       "gemm",
@@ -3800,6 +3843,7 @@ checkScHarmonyV2Params <- function(x) {
       tau = "N1[0,)",
       batch_proportion_cutoff = "N1(0,)",
       use_dynamic_lambda = "B1",
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1",
       gemm = c("B1", "0"),
       hamerly = c("B1", "0")
@@ -3822,6 +3866,7 @@ checkScHarmonyV2Params <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      k_means_algorithm = c("emeans", "lloyd"),
       k_means_init = c("parallel", "random")
     ),
     label = "Harmony v2 params",
@@ -5980,6 +6025,7 @@ checkScDblFinderParams <- function(x) {
       "n_list",
       "n_probe",
       "km_type",
+      "e_means_epochs",
       "n_centroids",
       "k_means_iter",
       "batch_size",
@@ -6027,6 +6073,7 @@ checkScDblFinderParams <- function(x) {
       ef_search = "I1[1,)",
       n_list = c("I1[1,)", "0"),
       n_probe = c("I1[1,)", "0"),
+      e_means_epochs = c("N1(0,)", "0"),
       n_centroids = c("I1", "0"),
       k_means_iter = "I1",
       batch_size = "I1",
@@ -6068,7 +6115,7 @@ checkScDblFinderParams <- function(x) {
         "exhaustive"
       ),
       ann_dist = c("euclidean", "cosine"),
-      km_type = c("minibatch", "standard")
+      km_type = c("emeans", "standard", "minibatch")
     ),
     label = "scDblFinder params"
   )

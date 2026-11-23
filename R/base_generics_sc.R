@@ -1527,7 +1527,7 @@ find_neighbours_sc <- S7::new_generic(
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity.
 #' @param ... Further parameters for [leiden_clustering()]: `n_iterations`,
-#' `beta`, `min_gain` and `local_moving`.
+#' `beta`, `min_gain`, `local_moving` and `node_order`.
 #'
 #' @returns The object with added clustering in the obs table.
 #'
@@ -2103,20 +2103,21 @@ archive_sc_exp <- S7::new_generic(
   }
 )
 
-#' Upgrade the on-disk counts to the v4 file format
+#' Upgrade the on-disk counts to the v5 file format
 #'
 #' @description
-#' Stores written by older versions use the v3 binary format. They still load
-#' and work, but the v4 format is several times smaller on disk and faster to
-#' scan. This converts `counts_cells.bin` and `counts_genes.bin` in place. The
-#' result is checked before it replaces the originals, so a failure leaves the
-#' store untouched. Stores already in v4 are left alone. Do not run this while
+#' Stores written by older versions use the v3 or v4 binary format. v3 stores
+#' no longer open at all; v4 stores still load, with a warning. This converts
+#' `counts_cells.bin` and `counts_genes.bin` in place. The result is checked
+#' before it replaces the originals, so a failure leaves the store untouched.
+#' Stores already in v5 are left alone. Do not run this while
 #' anything else (another R session, a background job) uses the files.
 #'
 #' @param object `SingleCells` class.
 #' @param codec String. Chunk compression, one of `c("lz4", "zstd", "none")`.
 #' `"lz4"` decodes fastest, `"zstd"` gives smaller files but decodes slower.
-#' @param keep_backup Boolean. Keep the original files as `<file>.v3.bak`.
+#' @param keep_backup Boolean. Keep the original files as `<file>.v<n>.bak`,
+#' `n` being their version.
 #' They are as large as the original store, delete them yourself once you are
 #' happy with the result.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -2126,7 +2127,7 @@ archive_sc_exp <- S7::new_generic(
 #' @export
 #'
 #' @examples
-#' # demo stores are written in v4 already, so this is a no-op
+#' # demo stores are written in v5 already, so this is a no-op
 #' sc <- demo_single_cells()
 #' sc <- upgrade_sc_store(sc, .verbose = FALSE)
 #'

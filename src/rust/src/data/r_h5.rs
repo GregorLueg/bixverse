@@ -3,15 +3,15 @@ use extendr_api::prelude::*;
 use std::mem::discriminant;
 
 use bixverse_r::prelude::*;
-use bixverse_r::single_cell::sc_data::h5_10x_io::{
-    detect_tenx_version, get_tenx_dimensions, write_tenx_h5, TenxFeatures, TenxVersion,
-};
-use bixverse_r::single_cell::sc_data::h5_scan::{detect_raw_count_slot, get_h5ad_dimensions};
-use bixverse_r::single_cell::sc_data::h5ad_frame_io::{
+use bixverse_r::single_cell::sc_data::h5::h5ad::*;
+use bixverse_r::single_cell::sc_data::h5::h5ad_frame::{
     list_h5_group, read_h5_attrs, read_h5_column, read_h5_matrix, read_h5ad_frame,
     write_h5ad_plain, ColumnData, PlainX,
 };
-use bixverse_r::single_cell::sc_data::h5ad_io::*;
+use bixverse_r::single_cell::sc_data::h5::scan::{detect_raw_count_slot, get_h5ad_dimensions};
+use bixverse_r::single_cell::sc_data::h5::tenx::{
+    detect_tenx_version, get_tenx_dimensions, write_tenx_h5, TenxFeatures, TenxVersion,
+};
 
 /////////////
 // extendR //
@@ -217,7 +217,7 @@ fn rs_h5ad_data(
                 .to_extendr()?
         }
         CompressedSparseFormat::Csc => {
-            parse_h5_csc_quality(&f_path, (nrows, ncols), &cell_quality, &raw_slot, verbose)
+            parse_h5_csc_quality(&f_path, (nrows, ncols), &raw_slot, &cell_quality, verbose)
                 .to_extendr()?
         }
     };

@@ -10,12 +10,14 @@ params_fast_cluster_default()
 \value{
 A named list with the following elements:
 \itemize{
-\item km_type - String. The type of k-means clustering. One of
-\code{c("minibatch", "standard")}. Defaults to \code{"minibatch"}.
+\item km_type - String. The type of k-means clustering: \code{"emeans"},
+\code{"standard"} (Lloyd's) or \code{"minibatch"}. One of \code{c("emeans", "standard", "minibatch")}. Defaults to \code{"emeans"}.
+\item e_means_epochs - Numeric or \code{NULL}. \code{km_type = "emeans"} only. Passes
+over the data. \code{NULL} takes the Rust default of 5. Defaults to \code{NULL}.
 \item n_centroids - Integer or \code{NULL}. The number of centroids to use.
 \code{NULL} uses \code{sqrt(N_cells) * 4} centroids. Defaults to \code{NULL}.
-\item k_means_iter - Integer. Number of maximum k-means iterations. Defaults
-to \code{100L}.
+\item k_means_iter - Integer. Number of maximum k-means iterations. Ignored
+by e-means. Defaults to \code{100L}.
 \item batch_size - Integer. Max batch size, capped at \code{N_cells / 2}
 depending on the data set. Defaults to \code{4098L}.
 }

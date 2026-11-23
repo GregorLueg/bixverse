@@ -4759,7 +4759,7 @@ rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, k
 #' @param resolutions Numeric vector. The resolutions to iterate through.
 #' @param fc_params Named list. The fast clustering parameters, see
 #' [params_sc_fast_cluster()]. Also carries the k-means keys (`km_type`,
-#' `kmeans_iters`, `batch_size`, `drift_threshold`, `lr_alpha`).
+#' `k_means_iter`, `batch_size`, `drift_threshold`, `lr_alpha`).
 #' @param n_seeds Integer. Number of seeds per resolution. `1L` runs a single
 #' pass without stability metrics.
 #' @param seed Integer. For reproducibility.
@@ -7944,13 +7944,13 @@ rs_tenx_frame_to_parquet <- function(h5_path, version, frame, keep, out_path) .C
 #'}
 #'}
 #'
-#'\subsection{Method `upgrade_to_v4`}{
-#'Convert both binaries to the v4 file format in place
+#'\subsection{Method `upgrade_to_v5`}{
+#'Convert both binaries to the v5 file format in place
 #'
 #' \subsection{Arguments}{
 #'\describe{
 #'\item{`codec`}{(`character`)\cr One of `"lz4"`, `"zstd"` or `"none"`.}
-#'\item{`keep_backup`}{(`logical`)\cr Keep the original files as `<path>.v3.bak`.}
+#'\item{`keep_backup`}{(`logical`)\cr Keep the original files as `<path>.v<n>.bak`, `n` their version.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{description}{
@@ -8080,7 +8080,7 @@ SingleCellCountData$restore_archive <- function(f_path_archive, max_mem_gb, verb
 
 SingleCellCountData$get_file_versions <- function() .Call(wrap__SingleCellCountData__get_file_versions, self)
 
-SingleCellCountData$upgrade_to_v4 <- function(codec, keep_backup, verbose) .Call(wrap__SingleCellCountData__upgrade_to_v4, self, codec, keep_backup, verbose)
+SingleCellCountData$upgrade_to_v5 <- function(codec, keep_backup, verbose) .Call(wrap__SingleCellCountData__upgrade_to_v5, self, codec, keep_backup, verbose)
 
 SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_genes_by_indices, self, indices, assay)
 

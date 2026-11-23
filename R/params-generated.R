@@ -203,7 +203,7 @@ params_blitzgsea <- function(
 #' @param fast_cluster_params List. Optional overrides for the fast clustering
 #' parameters. Only relevant if `fast_cluster = TRUE`. See
 #' [params_fast_cluster_default()] for available parameters: `km_type`,
-#' `n_centroids`, `k_means_iter` and `batch_size`. See
+#' `e_means_epochs`, `n_centroids`, `k_means_iter` and `batch_size`. See
 #' [params_fast_cluster_default()] for the available elements. Defaults to
 #' `list()`.
 #'
@@ -1114,12 +1114,15 @@ params_edger_ql <- function(
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item km_type - String. The type of k-means clustering. One of
-#'  `c("minibatch", "standard")`. Defaults to `"minibatch"`.
+#'  \item km_type - String. The type of k-means clustering: `"emeans"`,
+#'  `"standard"` (Lloyd's) or `"minibatch"`. One of `c("emeans", "standard",
+#'  "minibatch")`. Defaults to `"emeans"`.
+#'  \item e_means_epochs - Numeric or `NULL`. `km_type = "emeans"` only. Passes
+#'  over the data. `NULL` takes the Rust default of 5. Defaults to `NULL`.
 #'  \item n_centroids - Integer or `NULL`. The number of centroids to use.
 #'  `NULL` uses `sqrt(N_cells) * 4` centroids. Defaults to `NULL`.
-#'  \item k_means_iter - Integer. Number of maximum k-means iterations. Defaults
-#'  to `100L`.
+#'  \item k_means_iter - Integer. Number of maximum k-means iterations. Ignored
+#'  by e-means. Defaults to `100L`.
 #'  \item batch_size - Integer. Max batch size, capped at `N_cells / 2`
 #'  depending on the data set. Defaults to `4098L`.
 #' }
@@ -1127,7 +1130,8 @@ params_edger_ql <- function(
 #' @export
 params_fast_cluster_default <- function() {
   list(
-    km_type = "minibatch",
+    km_type = "emeans",
+    e_means_epochs = NULL,
     n_centroids = NULL,
     k_means_iter = 100L,
     batch_size = 4098L
@@ -1477,6 +1481,12 @@ params_ica_randomisation <- function(
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
+#'  \item k_means_algorithm - String. The k-means algorithm. `"emeans"` (Bessa
+#'  et al., 2026) runs mini-batch EMA updates and ignores `k_means_iter`,
+#'  `k_means_init`, `gemm` and `hamerly`. `"lloyd"` is Lloyd's algorithm. One of
+#'  `c("emeans", "lloyd")`. Defaults to `"emeans"`.
+#'  \item e_means_epochs - Numeric or `NULL`. e-means only. Passes over the
+#'  data. `NULL` takes the Rust default of 5. Defaults to `NULL`.
 #'  \item k_means_iter - Integer. The number of iterations to use for the
 #'  clustering. Defaults to `30L`.
 #'  \item k_means_init - String. The initialisation. One of `c("parallel",
@@ -1491,6 +1501,8 @@ params_ica_randomisation <- function(
 #' @export
 params_kmeans_defaults <- function() {
   list(
+    k_means_algorithm = "emeans",
+    e_means_epochs = NULL,
     k_means_iter = 30L,
     k_means_init = "parallel",
     gemm = FALSE,
@@ -2374,7 +2386,6 @@ params_nebula <- function(
 #' their neighbours exceeds this are dropped as unstable. Cosine distance cannot
 #' exceed 2, so any value `>= 2` disables the filter entirely. Defaults to
 #' `0.5`.
-#' @param kmeans_iters Integer. Maximum k-means iterations. Defaults to `100L`.
 #' @param kmeans_n_init Integer. Number of k-means restarts. Defaults to `3L`.
 #'
 #' @returns A named list with the following elements:
@@ -2391,8 +2402,6 @@ params_nebula <- function(
 #'  their neighbours exceeds this are dropped as unstable. Cosine distance
 #'  cannot exceed 2, so any value `>= 2` disables the filter entirely. Defaults
 #'  to `0.5`.
-#'  \item kmeans_iters - Integer. Maximum k-means iterations. Defaults to
-#'  `100L`.
 #'  \item kmeans_n_init - Integer. Number of k-means restarts. Defaults to `3L`.
 #' }
 #'
@@ -2403,7 +2412,6 @@ params_nmf_consensus <- function(
   consensus_target = c("h", "w"),
   n_neighbours = 0L,
   density_threshold = 0.5,
-  kmeans_iters = 100L,
   kmeans_n_init = 3L
 ) {
   consensus_target <- match.arg(consensus_target)
@@ -2412,7 +2420,6 @@ params_nmf_consensus <- function(
   checkmate::assertChoice(consensus_target, c("h", "w"))
   checkmate::qassert(n_neighbours, "I1[0,)")
   checkmate::qassert(density_threshold, "N1[0,2]")
-  checkmate::qassert(kmeans_iters, "I1[1,)")
   checkmate::qassert(kmeans_n_init, "I1[1,)")
 
   # Return
@@ -2420,7 +2427,6 @@ params_nmf_consensus <- function(
     consensus_target = consensus_target,
     n_neighbours = n_neighbours,
     density_threshold = density_threshold,
-    kmeans_iters = kmeans_iters,
     kmeans_n_init = kmeans_n_init
   )
 }
@@ -3461,10 +3467,13 @@ params_sc_empty_droplets <- function(
 #'
 #' @param n_centroids Integer or `NULL`. Number of k-means centroids. If `NULL`,
 #' defaults to `floor(4 * sqrt(n_cells))`. Defaults to `NULL`.
-#' @param km_type String. Which k-means to run for the coarsening. One of
-#' `c("standard", "minibatch")`. Defaults to `"standard"`.
-#' @param k_means_iter Integer. Number of k-means iterations. Defaults to
-#' `100L`.
+#' @param km_type String. Which k-means to run for the coarsening: `"emeans"`,
+#' `"standard"` (Lloyd's) or `"minibatch"`. One of `c("emeans", "standard",
+#' "minibatch")`. Defaults to `"emeans"`.
+#' @param e_means_epochs Numeric or `NULL`. `km_type = "emeans"` only. Passes
+#' over the data. `NULL` takes the Rust default of 5. Defaults to `NULL`.
+#' @param k_means_iter Integer. Number of k-means iterations. Ignored by
+#' e-means. Defaults to `100L`.
 #' @param batch_size Integer. `km_type = "minibatch"` only. Batch size. Defaults
 #' to `4096L`.
 #' @param drift_threshold Numeric. `km_type = "minibatch"` only. The mini batch
@@ -3490,17 +3499,19 @@ params_sc_empty_droplets <- function(
 #' @param algorithm String. Community detection on the centroid graph. One of
 #' `c("louvain", "leiden")`. Defaults to `"louvain"`.
 #' @param n_iterations Integer or `NULL`. Number of iterations of the community
-#' detection. A negative value iterates until stable. If `NULL`, `2L` for
-#' Louvain and `5L` for Leiden, which gave the best modularity across synthetic
-#' graphs. Defaults to `NULL`.
+#' detection. A negative value iterates until stable. If `NULL`, `2L`. Defaults
+#' to `NULL`.
 #' @param beta Numeric. Leiden only. Randomness of the refinement step. Defaults
 #' to `0.01`.
 #' @param min_gain Numeric. With a negative `n_iterations`, also stop once an
 #' iteration gains no more than this in modularity. Defaults to `0.0`.
-#' @param local_moving String. `"queue"` is Traag's sequential queue.
+#' @param local_moving String or `NULL`. `"queue"` is Traag's sequential queue.
 #' `"coloured"` moves the nodes of one colour class in parallel, which only
-#' kicks in on larger levels of the graph. One of `c("queue", "coloured")`.
-#' Defaults to `"queue"`.
+#' kicks in on larger levels of the graph. `NULL` is `"queue"` for Leiden and
+#' `"coloured"` for Louvain. Defaults to `NULL`.
+#' @param node_order String or `NULL`. Visit order of the queue, `"bfs"` (sweep
+#' in BFS order from a random start) or `"shuffle"` (as igraph). `NULL` is
+#' `"bfs"` for Leiden and `"shuffle"` for Louvain. Defaults to `NULL`.
 #' @param multi_level Boolean. Shall the communities be aggregated and refined
 #' in levels. Defaults to `TRUE`.
 #' @param max_evals Integer. Cap on the node evaluations per local moving phase,
@@ -3510,10 +3521,13 @@ params_sc_empty_droplets <- function(
 #' \itemize{
 #'  \item n_centroids - Integer or `NULL`. Number of k-means centroids. If
 #'  `NULL`, defaults to `floor(4 * sqrt(n_cells))`. Defaults to `NULL`.
-#'  \item km_type - String. Which k-means to run for the coarsening. One of
-#'  `c("standard", "minibatch")`. Defaults to `"standard"`.
-#'  \item k_means_iter - Integer. Number of k-means iterations. Defaults to
-#'  `100L`.
+#'  \item km_type - String. Which k-means to run for the coarsening: `"emeans"`,
+#'  `"standard"` (Lloyd's) or `"minibatch"`. One of `c("emeans", "standard",
+#'  "minibatch")`. Defaults to `"emeans"`.
+#'  \item e_means_epochs - Numeric or `NULL`. `km_type = "emeans"` only. Passes
+#'  over the data. `NULL` takes the Rust default of 5. Defaults to `NULL`.
+#'  \item k_means_iter - Integer. Number of k-means iterations. Ignored by
+#'  e-means. Defaults to `100L`.
 #'  \item batch_size - Integer. `km_type = "minibatch"` only. Batch size.
 #'  Defaults to `4096L`.
 #'  \item drift_threshold - Numeric. `km_type = "minibatch"` only. The mini
@@ -3538,17 +3552,19 @@ params_sc_empty_droplets <- function(
 #'  \item algorithm - String. Community detection on the centroid graph. One of
 #'  `c("louvain", "leiden")`. Defaults to `"louvain"`.
 #'  \item n_iterations - Integer or `NULL`. Number of iterations of the
-#'  community detection. A negative value iterates until stable. If `NULL`, `2L`
-#'  for Louvain and `5L` for Leiden, which gave the best modularity across
-#'  synthetic graphs. Defaults to `NULL`.
+#'  community detection. A negative value iterates until stable. If `NULL`,
+#'  `2L`. Defaults to `NULL`.
 #'  \item beta - Numeric. Leiden only. Randomness of the refinement step.
 #'  Defaults to `0.01`.
 #'  \item min_gain - Numeric. With a negative `n_iterations`, also stop once an
 #'  iteration gains no more than this in modularity. Defaults to `0.0`.
-#'  \item local_moving - String. `"queue"` is Traag's sequential queue.
-#'  `"coloured"` moves the nodes of one colour class in parallel, which only
-#'  kicks in on larger levels of the graph. One of `c("queue", "coloured")`.
-#'  Defaults to `"queue"`.
+#'  \item local_moving - String or `NULL`. `"queue"` is Traag's sequential
+#'  queue. `"coloured"` moves the nodes of one colour class in parallel, which
+#'  only kicks in on larger levels of the graph. `NULL` is `"queue"` for Leiden
+#'  and `"coloured"` for Louvain. Defaults to `NULL`.
+#'  \item node_order - String or `NULL`. Visit order of the queue, `"bfs"`
+#'  (sweep in BFS order from a random start) or `"shuffle"` (as igraph). `NULL`
+#'  is `"bfs"` for Leiden and `"shuffle"` for Louvain. Defaults to `NULL`.
 #'  \item multi_level - Boolean. Shall the communities be aggregated and refined
 #'  in levels. Defaults to `TRUE`.
 #'  \item max_evals - Integer. Cap on the node evaluations per local moving
@@ -3560,7 +3576,8 @@ params_sc_empty_droplets <- function(
 #' @export
 params_sc_fast_cluster <- function(
   n_centroids = NULL,
-  km_type = c("standard", "minibatch"),
+  km_type = c("emeans", "standard", "minibatch"),
+  e_means_epochs = NULL,
   k_means_iter = 100L,
   batch_size = 4096L,
   drift_threshold = 1e-04,
@@ -3574,18 +3591,19 @@ params_sc_fast_cluster <- function(
   n_iterations = NULL,
   beta = 0.01,
   min_gain = 0.0,
-  local_moving = c("queue", "coloured"),
+  local_moving = NULL,
+  node_order = NULL,
   multi_level = TRUE,
   max_evals = 10L
 ) {
   km_type <- match.arg(km_type)
   dist <- match.arg(dist)
   algorithm <- match.arg(algorithm)
-  local_moving <- match.arg(local_moving)
 
   # Checks
   checkmate::qassert(n_centroids, c("I1[2,)", "0"))
-  checkmate::assertChoice(km_type, c("standard", "minibatch"))
+  checkmate::assertChoice(km_type, c("emeans", "standard", "minibatch"))
+  checkmate::qassert(e_means_epochs, c("N1(0,)", "0"))
   checkmate::qassert(k_means_iter, "I1[1,)")
   checkmate::qassert(batch_size, "I1[1,)")
   checkmate::qassert(drift_threshold, "N1")
@@ -3598,7 +3616,8 @@ params_sc_fast_cluster <- function(
   checkmate::qassert(n_iterations, c("I1", "0"))
   checkmate::qassert(beta, "N1(0,)")
   checkmate::qassert(min_gain, "N1[0,)")
-  checkmate::assertChoice(local_moving, c("queue", "coloured"))
+  checkmate::qassert(local_moving, c("S1", "0"))
+  checkmate::qassert(node_order, c("S1", "0"))
   checkmate::qassert(multi_level, "B1")
   checkmate::qassert(max_evals, "I1[1,)")
 
@@ -3614,6 +3633,7 @@ params_sc_fast_cluster <- function(
     list(
       n_centroids = n_centroids,
       km_type = km_type,
+      e_means_epochs = e_means_epochs,
       k_means_iter = k_means_iter,
       batch_size = batch_size,
       drift_threshold = drift_threshold,
@@ -3630,6 +3650,7 @@ params_sc_fast_cluster <- function(
       beta = beta,
       min_gain = min_gain,
       local_moving = local_moving,
+      node_order = node_order,
       multi_level = multi_level,
       max_evals = max_evals
     )
@@ -3823,10 +3844,10 @@ params_sc_gene_trends <- function(
 #' @param window_size Integer. Number of previous iterations to consider when
 #' checking convergence. Defaults to `3L`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
-#' Possible parameters are `"k_means_iter"` (10 here, as in R harmony),
-#' `"k_means_init"`, `"gemm"` and `"hamerly"`, see [params_kmeans_defaults()].
-#' See [params_kmeans_defaults()] for the available elements. Defaults to
-#' `list()`.
+#' Possible parameters are `"k_means_algorithm"`, `"e_means_epochs"`,
+#' `"k_means_iter"` (10 here, as in R harmony), `"k_means_init"`, `"gemm"` and
+#' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
+#' for the available elements. Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3930,7 +3951,7 @@ params_sc_harmony <- function(
 #' `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 #' @param block_size Numeric. Fraction of cells to update per block during
 #' optimisation (0.0-1.0). Lower values reduce memory usage but increase
-#' computation time. Defaults to `0.2`.
+#' computation time. Defaults to `0.05`.
 #' @param max_iter_kmeans Integer. Maximum number of k-means iterations per
 #' Harmony round. Defaults to `4L`.
 #' @param max_iter_harmony Integer. Maximum number of Harmony outer iterations.
@@ -3953,10 +3974,10 @@ params_sc_harmony <- function(
 #' as `alpha` times the expected counts, as in R harmony v2, instead of using
 #' the fixed `lambda` value. Defaults to `TRUE`.
 #' @param kmeans List. Optional overrides for the k-means clustering algorithm
-#' Possible parameters are `"k_means_iter"` (10 here, as in R harmony),
-#' `"k_means_init"`, `"gemm"` and `"hamerly"`, see [params_kmeans_defaults()].
-#' See [params_kmeans_defaults()] for the available elements. Defaults to
-#' `list()`.
+#' Possible parameters are `"k_means_algorithm"`, `"e_means_epochs"`,
+#' `"k_means_iter"` (10 here, as in R harmony), `"k_means_init"`, `"gemm"` and
+#' `"hamerly"`, see [params_kmeans_defaults()]. See [params_kmeans_defaults()]
+#' for the available elements. Defaults to `list()`.
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
@@ -3975,7 +3996,7 @@ params_sc_harmony <- function(
 #'  `use_dynamic_lambda = TRUE`. Defaults to `1.0`.
 #'  \item block_size - Numeric. Fraction of cells to update per block during
 #'  optimisation (0.0-1.0). Lower values reduce memory usage but increase
-#'  computation time. Defaults to `0.2`.
+#'  computation time. Defaults to `0.05`.
 #'  \item max_iter_kmeans - Integer. Maximum number of k-means iterations per
 #'  Harmony round. Defaults to `4L`.
 #'  \item max_iter_harmony - Integer. Maximum number of Harmony outer
@@ -4008,7 +4029,7 @@ params_sc_harmony_v2 <- function(
   sigma = 0.1,
   theta = 2.0,
   lambda = 1.0,
-  block_size = 0.2,
+  block_size = 0.05,
   max_iter_kmeans = 4L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 0.001,
@@ -6077,7 +6098,7 @@ params_sc_wnn <- function(
 #' @param fast_cluster_params List. Optional overrides for the fast clustering
 #' parameters. Only relevant if `fast_cluster = TRUE`. See
 #' [params_fast_cluster_default()] for available parameters: `km_type`,
-#' `n_centroids`, `k_means_iter` and `batch_size`. See
+#' `e_means_epochs`, `n_centroids`, `k_means_iter` and `batch_size`. See
 #' [params_fast_cluster_default()] for the available elements. Defaults to
 #' `list()`.
 #'

@@ -2,7 +2,7 @@
 % Please edit documentation in R/base_generics_sc.R
 \name{upgrade_sc_store}
 \alias{upgrade_sc_store}
-\title{Upgrade the on-disk counts to the v4 file format}
+\title{Upgrade the on-disk counts to the v5 file format}
 \usage{
 upgrade_sc_store(
   object,
@@ -17,7 +17,8 @@ upgrade_sc_store(
 \item{codec}{String. Chunk compression, one of \code{c("lz4", "zstd", "none")}.
 \code{"lz4"} decodes fastest, \code{"zstd"} gives smaller files but decodes slower.}
 
-\item{keep_backup}{Boolean. Keep the original files as \verb{<file>.v3.bak}.
+\item{keep_backup}{Boolean. Keep the original files as \verb{<file>.v<n>.bak},
+\code{n} being their version.
 They are as large as the original store, delete them yourself once you are
 happy with the result.}
 
@@ -27,15 +28,15 @@ happy with the result.}
 The object, invisibly.
 }
 \description{
-Stores written by older versions use the v3 binary format. They still load
-and work, but the v4 format is several times smaller on disk and faster to
-scan. This converts \code{counts_cells.bin} and \code{counts_genes.bin} in place. The
-result is checked before it replaces the originals, so a failure leaves the
-store untouched. Stores already in v4 are left alone. Do not run this while
+Stores written by older versions use the v3 or v4 binary format. v3 stores
+no longer open at all; v4 stores still load, with a warning. This converts
+\code{counts_cells.bin} and \code{counts_genes.bin} in place. The result is checked
+before it replaces the originals, so a failure leaves the store untouched.
+Stores already in v5 are left alone. Do not run this while
 anything else (another R session, a background job) uses the files.
 }
 \examples{
-# demo stores are written in v4 already, so this is a no-op
+# demo stores are written in v5 already, so this is a no-op
 sc <- demo_single_cells()
 sc <- upgrade_sc_store(sc, .verbose = FALSE)
 

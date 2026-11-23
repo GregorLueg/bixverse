@@ -30,8 +30,7 @@ use std::cmp::Ordering;
 
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
-    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_indices_processing,
-    nebula_res_to_r_list,
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_indices_processing, nebula_res_to_r_list,
     optional_knn, panel_size_from_mem, prep_nichenet_network, r_list_to_index_vecs,
     random_sig_genes, vision_autocor_to_r_list,
 };
@@ -744,7 +743,7 @@ fn rs_lm_activity_sc(
 ) -> Result<List> {
     let cells_to_keep = cells_to_keep.r_int_convert();
     let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
-    let net = r_list_to_feature_set_weights(gs_list, reader.get_header().total_genes)?;
+    let net = r_list_to_feature_set_weights(gs_list, reader.dims().total_genes)?;
     let params = LmActivityParams::from_r_list(lm_params)?;
 
     let res =
@@ -1717,7 +1716,6 @@ fn rs_meld_sc(
     let meld_params = MeldParams::from_r_list(meld_params)?;
     let labels = labels.r_int_convert_shift();
     let verbosity = parse_verbosity_level(verbose);
-
 
     let (knn_indices, knn_dist) = knn_or_generate(
         optional_knn(knn_data)?,

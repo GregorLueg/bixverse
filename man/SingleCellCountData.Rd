@@ -376,13 +376,13 @@ An integer vector \code{c(cells, genes)} with the file versions.
 }
 }
 
-\subsection{Method \code{upgrade_to_v4}}{
-Convert both binaries to the v4 file format in place
+\subsection{Method \code{upgrade_to_v5}}{
+Convert both binaries to the v5 file format in place
 
 \subsection{Arguments}{
 \describe{
 \item{\code{codec}}{(\code{character})\cr One of \code{"lz4"}, \code{"zstd"} or \code{"none"}.}
-\item{\code{keep_backup}}{(\code{logical})\cr Keep the original files as \verb{<path>.v3.bak}.}
+\item{\code{keep_backup}}{(\code{logical})\cr Keep the original files as \verb{<path>.v<n>.bak}, \code{n} their version.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{description}{

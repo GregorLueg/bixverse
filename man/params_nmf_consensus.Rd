@@ -8,7 +8,6 @@ params_nmf_consensus(
   consensus_target = c("h", "w"),
   n_neighbours = 0L,
   density_threshold = 0.5,
-  kmeans_iters = 100L,
   kmeans_n_init = 3L
 )
 }
@@ -28,8 +27,6 @@ their neighbours exceeds this are dropped as unstable. Cosine distance cannot
 exceed 2, so any value \verb{>= 2} disables the filter entirely. Defaults to
 \code{0.5}.}
 
-\item{kmeans_iters}{Integer. Maximum k-means iterations. Defaults to \code{100L}.}
-
 \item{kmeans_n_init}{Integer. Number of k-means restarts. Defaults to \code{3L}.}
 }
 \value{
@@ -46,8 +43,6 @@ estimate. \code{0L} picks \code{ceiling(0.3 * n_runs)} for you. Defaults to \cod
 their neighbours exceeds this are dropped as unstable. Cosine distance
 cannot exceed 2, so any value \verb{>= 2} disables the filter entirely. Defaults
 to \code{0.5}.
-\item kmeans_iters - Integer. Maximum k-means iterations. Defaults to
-\code{100L}.
 \item kmeans_n_init - Integer. Number of k-means restarts. Defaults to \code{3L}.
 }
 }

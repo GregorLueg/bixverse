@@ -229,7 +229,8 @@ spec_boost <- param_spec(
         "Optional overrides for the fast clustering parameters. Only",
         "relevant if `fast_cluster = TRUE`. See",
         "[params_fast_cluster_default()] for available parameters:",
-        "`km_type`, `n_centroids`, `k_means_iter` and `batch_size`."
+        "`km_type`, `e_means_epochs`, `n_centroids`, `k_means_iter` and",
+        "`batch_size`."
       )
     )
   )
@@ -425,7 +426,8 @@ spec_scdblfinder <- param_spec(
         "Optional overrides for the fast clustering parameters. Only",
         "relevant if `fast_cluster = TRUE`. See",
         "[params_fast_cluster_default()] for available parameters:",
-        "`km_type`, `n_centroids`, `k_means_iter` and `batch_size`."
+        "`km_type`, `e_means_epochs`, `n_centroids`, `k_means_iter` and",
+        "`batch_size`."
       )
     )
   )
@@ -475,6 +477,7 @@ spec_sc_fast_cluster <- param_spec(
   return_order = c(
     "n_centroids",
     "km_type",
+    "e_means_epochs",
     "k_means_iter",
     "batch_size",
     "drift_threshold",
@@ -489,6 +492,7 @@ spec_sc_fast_cluster <- param_spec(
     "beta",
     "min_gain",
     "local_moving",
+    "node_order",
     "multi_level",
     "max_evals"
   ),
@@ -498,8 +502,25 @@ spec_sc_fast_cluster <- param_spec(
     "n_centroids must be NULL or an integer >= 2; k_means_iter, batch_size,",
     "n_anchors, centroid_k and max_evals must be integers >= 1;",
     "n_iterations must be NULL or a non-zero integer; cell_mediated and",
-    "multi_level must be booleans."
+    "multi_level must be booleans; local_moving and node_order must be NULL",
+    "or one of their choices."
   ),
+  extra_check = quote({
+    if (!checkmate::qtest(x$local_moving, c("0", "S1"))) {
+      return("The element `local_moving` must be NULL or a string.")
+    }
+    if (
+      !is.null(x$local_moving) && !x$local_moving %in% c("queue", "coloured")
+    ) {
+      return("The element `local_moving` must be one of `queue` or `coloured`.")
+    }
+    if (!checkmate::qtest(x$node_order, c("0", "S1"))) {
+      return("The element `node_order` must be NULL or a string.")
+    }
+    if (!is.null(x$node_order) && !x$node_order %in% c("bfs", "shuffle")) {
+      return("The element `node_order` must be one of `bfs` or `shuffle`.")
+    }
+  }),
   fields = list(
     n_centroids = p_int(
       NULL,
@@ -511,14 +532,26 @@ spec_sc_fast_cluster <- param_spec(
       )
     ),
     km_type = p_choice(
-      "standard",
-      c("standard", "minibatch"),
-      doc = "Which k-means to run for the coarsening."
+      "emeans",
+      c("emeans", "standard", "minibatch"),
+      doc = paste(
+        "Which k-means to run for the coarsening: `\"emeans\"`,",
+        "`\"standard\"` (Lloyd's) or `\"minibatch\"`."
+      )
+    ),
+    e_means_epochs = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = paste(
+        "`km_type = \"emeans\"` only. Passes over the data. `NULL` takes the Rust default",
+        "of 5."
+      )
     ),
     k_means_iter = p_int(
       100L,
       range = "[1,)",
-      doc = "Number of k-means iterations."
+      doc = "Number of k-means iterations. Ignored by e-means."
     ),
     batch_size = p_int(
       4096L,
@@ -585,8 +618,7 @@ spec_sc_fast_cluster <- param_spec(
       null_ok = TRUE,
       doc = paste(
         "Number of iterations of the community detection. A negative value",
-        "iterates until stable. If `NULL`, `2L` for Louvain and `5L` for",
-        "Leiden, which gave the best modularity across synthetic graphs."
+        "iterates until stable. If `NULL`, `2L`."
       )
     ),
     beta = p_dbl(
@@ -602,13 +634,23 @@ spec_sc_fast_cluster <- param_spec(
         "no more than this in modularity."
       )
     ),
-    local_moving = p_choice(
-      "queue",
-      c("queue", "coloured"),
+    local_moving = p_chr(
+      NULL,
+      null_ok = TRUE,
       doc = paste(
         "`\"queue\"` is Traag's sequential queue. `\"coloured\"` moves the",
         "nodes of one colour class in parallel, which only kicks in on",
-        "larger levels of the graph."
+        "larger levels of the graph. `NULL` is `\"queue\"` for Leiden and",
+        "`\"coloured\"` for Louvain."
+      )
+    ),
+    node_order = p_chr(
+      NULL,
+      null_ok = TRUE,
+      doc = paste(
+        "Visit order of the queue, `\"bfs\"` (sweep in BFS order from a",
+        "random start) or `\"shuffle\"` (as igraph). `NULL` is `\"bfs\"`",
+        "for Leiden and `\"shuffle\"` for Louvain."
       )
     ),
     multi_level = p_lgl(
@@ -1761,7 +1803,8 @@ spec_sc_harmony <- param_spec(
       overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "Possible parameters are `\"k_means_algorithm\"`,",
+        "`\"e_means_epochs\"`, `\"k_means_iter\"` (10 here, as in",
         "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
         "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )
@@ -1826,7 +1869,7 @@ spec_sc_harmony_v2 <- param_spec(
       )
     ),
     block_size = p_dbl(
-      0.2,
+      0.05,
       range = "(0,1]",
       doc = paste(
         "Fraction of cells to update per block during optimisation",
@@ -1906,7 +1949,8 @@ spec_sc_harmony_v2 <- param_spec(
       overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "Possible parameters are `\"k_means_algorithm\"`,",
+        "`\"e_means_epochs\"`, `\"k_means_iter\"` (10 here, as in",
         "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
         "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )

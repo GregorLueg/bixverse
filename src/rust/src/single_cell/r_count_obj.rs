@@ -7,24 +7,17 @@ use std::time::Instant;
 use bixverse_r::prelude::*;
 use bixverse_r::sc_r_wrappers::cellsweep_sample_from_r_list;
 use bixverse_r::single_cell::sc_data::{
-    archive_io::*,
-    bin_merge_io::*,
-    data_io::peek_file_version,
-    gene_file_io::*,
-    h5_10x_io::*,
-    h5_10x_multifile_io::*,
-    h5ad_io::*,
-    h5ad_multifile_io::*,
-    mtx_io::*,
-    mtx_multifile_io::*,
-    r_obj_io::*,
-    v4_io::{upgrade_store_to_v4, ChunkCodec},
+    h5::{h5ad::*, h5ad_multifile::*, tenx::*, tenx_multifile::*},
+    mtx::{multifile::*, *},
+    r_obj::*,
+    store::{
+        archive::*, convert::upgrade_store_to_v5, gene_file::*, merge::*,
+        reader::peek_file_version, v4::ChunkCodec,
+    },
 };
 use bixverse_r::single_cell::sc_processing::cellsweep::{
     run_cellsweep, CellSweepParams, CellSweepSample,
 };
-
-use crate::single_cell::utils::norm_counts_to_f32;
 
 /////////////
 // extendR //
@@ -127,14 +120,14 @@ impl AssayData {
 fn get_cell_data(
     indices: &[u32],
     data_raw: &RawCounts,
-    data_norm: &[F16],
+    data_norm: &[f32],
     assay_type: &AssayType,
 ) -> (Vec<i32>, AssayData) {
     let all_indices: Vec<i32> = indices.iter().map(|&x| x as i32).collect();
 
     let data = match assay_type {
         AssayType::Raw => AssayData::Raw(data_raw.iter().map(|x| x as i32).collect()),
-        AssayType::Norm => AssayData::Norm(norm_counts_to_f32(data_norm).collect()),
+        AssayType::Norm => AssayData::Norm(data_norm.to_vec()),
     };
 
     (all_indices, data)
@@ -155,14 +148,14 @@ fn get_cell_data(
 fn get_gene_data(
     indices: &[u32],
     data_raw: &RawCounts,
-    data_norm: &[F16],
+    data_norm: &[f32],
     assay_type: &AssayType,
 ) -> (Vec<i32>, AssayData) {
     let all_indices: Vec<i32> = indices.iter().map(|&x| x as i32).collect();
 
     let data = match assay_type {
         AssayType::Raw => AssayData::Raw(data_raw.iter().map(|x| x as i32).collect()),
-        AssayType::Norm => AssayData::Norm(norm_counts_to_f32(data_norm).collect()),
+        AssayType::Norm => AssayData::Norm(data_norm.to_vec()),
     };
 
     (all_indices, data)
@@ -266,9 +259,9 @@ impl SingleCellCountData {
     /// @returns Invisible `NULL`.
     pub fn set_from_file(&mut self) -> Result<(), extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
-        let header = reader.get_header();
-        self.n_cells = header.total_cells;
-        self.n_genes = header.total_genes;
+        let dims = reader.dims();
+        self.n_cells = dims.total_cells;
+        self.n_genes = dims.total_genes;
 
         Ok(())
     }
@@ -529,6 +522,7 @@ impl SingleCellCountData {
             no_genes,
             qc_params,
             raw_slot,
+            None,
             verbose,
         )
         .to_extendr()?;
@@ -1184,7 +1178,7 @@ impl SingleCellCountData {
         Ok(vec![cells as i32, genes as i32])
     }
 
-    /// Convert both binaries to the v4 file format in place
+    /// Convert both binaries to the v5 file format in place
     ///
     /// @description
     /// Converts into temporary files, checks the result opens and matches,
@@ -1194,12 +1188,12 @@ impl SingleCellCountData {
     /// @param codec (`character`)\cr
     /// One of `"lz4"`, `"zstd"` or `"none"`.
     /// @param keep_backup (`logical`)\cr
-    /// Keep the original files as `<path>.v3.bak`.
+    /// Keep the original files as `<path>.v<n>.bak`, `n` their version.
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
     /// @returns Invisible `NULL`.
-    pub fn upgrade_to_v4(
+    pub fn upgrade_to_v5(
         &self,
         codec: &str,
         keep_backup: bool,
@@ -1216,7 +1210,7 @@ impl SingleCellCountData {
             }
         };
 
-        upgrade_store_to_v4(
+        upgrade_store_to_v5(
             &self.f_path_cells,
             Some(&self.f_path_genes),
             codec,
@@ -1254,7 +1248,7 @@ impl SingleCellCountData {
             extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
         })?;
 
-        let no_cells = reader.get_header().total_cells;
+        let no_cells = reader.dims().total_cells;
 
         let indices = indices
             .iter()
@@ -1452,7 +1446,7 @@ impl SingleCellCountData {
         .to_extendr()?;
 
         self.n_cells = result.cell_order.len();
-        self.n_genes = reader.get_header().total_genes;
+        self.n_genes = reader.dims().total_genes;
 
         let fits: List = result
             .fits

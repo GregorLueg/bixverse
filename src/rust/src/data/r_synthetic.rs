@@ -2,7 +2,7 @@ use extendr_api::prelude::*;
 
 use bixverse_r::core::synthetic_data::*;
 use bixverse_r::prelude::*;
-use bixverse_r::single_cell::sc_data::sc_synthetic_data::*;
+use bixverse_r::single_cell::sc_data::synthetic::*;
 
 /////////////
 // extendR //

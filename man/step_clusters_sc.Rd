@@ -30,7 +30,7 @@ multi-modal versions with the added data.}
 \item{seed}{Integer. For reproducibility.}
 
 \item{...}{Further parameters for \code{\link[=leiden_clustering]{leiden_clustering()}}: \code{n_iterations},
-\code{beta}, \code{min_gain} and \code{local_moving}.}
+\code{beta}, \code{min_gain}, \code{local_moving} and \code{node_order}.}
 }
 \value{
 An \code{ScStep}.

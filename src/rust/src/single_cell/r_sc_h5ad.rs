@@ -9,8 +9,6 @@ use scx_core::ir::{
 };
 use sprs::CsMatI;
 
-use crate::single_cell::utils::norm_counts_to_f32;
-
 /////////////
 // extendR //
 /////////////
@@ -290,7 +288,7 @@ fn rs_save_h5ad(
             indptr.push(indices.len() as u64);
         }
         if norm {
-            data.extend(cells.iter().flat_map(|c| norm_counts_to_f32(&c.data_norm)));
+            data.extend(cells.iter().flat_map(|c| c.data_norm.iter().copied()));
         } else {
             data.extend(
                 cells
