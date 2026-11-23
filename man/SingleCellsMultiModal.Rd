@@ -29,8 +29,8 @@ wrappers to interact with the table-like data for this experiment.}
 \item{count_connection}{This contains an R6-like environment that points
 to Rust functions that can work on the RNAseq counts more specifically.}
 \item{adt_counts}{...}
-\item{peak_connection}{Future feature: to store ATAC Seq counts in the
-future.}
+\item{peak_connection}{Rust connection to the ATAC peak or tile store in
+\verb{<dir_data>/atac}, \code{NULL} until ATAC is added.}
 \item{dir_data}{Path to the directory in which the data will be saved on
 disk.}
 \item{sc_cache}{Class with cached data. Contains less memory-heavy objects
@@ -47,6 +47,8 @@ indices, cells to keep, etc.}
 \item{other_data}{List that contains additional data and results, such
 as for example the WNN graph.}
 \item{dims}{Dimensions of the original data.}
+\item{atac_info}{\code{AtacInfo} with the ATAC store state and the LSI fit,
+\code{NULL} until ATAC is added.}
 }
 }
 

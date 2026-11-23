@@ -894,8 +894,8 @@ prepare_cell_markers <- function(obj, marker_df) {
 
 #' Parse an optional modality suffix from a feature id
 #'
-#' @param feature String. Feature id, optionally suffixed with `_rna` or
-#' `_adt`.
+#' @param feature String. Feature id, optionally suffixed with `_rna`,
+#' `_adt` or `_atac`.
 #' @param default_modality String. Modality used when no suffix is present.
 #'
 #' @returns A list with `id` and `modality`.
@@ -906,6 +906,8 @@ prepare_cell_markers <- function(obj, marker_df) {
     list(id = sub("_rna$", "", feature), modality = "rna")
   } else if (grepl("_adt$", feature)) {
     list(id = sub("_adt$", "", feature), modality = "adt")
+  } else if (grepl("_atac$", feature)) {
+    list(id = sub("_atac$", "", feature), modality = "atac")
   } else {
     list(id = feature, modality = default_modality)
   }
@@ -1281,9 +1283,9 @@ extract_milo_plot_data <- function(
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
 #' @param obs_col Optional character vector. Obs columns to attach.
 #' @param expr_modality String. Modality the expression is pulled from. One of
-#' `c("rna", "adt")`.
+#' `c("rna", "adt", "atac")`.
 #' @param embd_modality String. Modality the embedding is pulled from. One of
-#' `c("rna", "adt", "wnn")`. Use `"wnn"` for WNN-derived embeddings.
+#' `c("rna", "adt", "atac", "wnn")`. Use `"wnn"` for WNN-derived embeddings.
 #' @param layer String. One of `c("norm", "magic")`, forwarded to
 #' [extract_gene_expression()]. Use `"magic"` to colour the embedding by the
 #' imputed layer [run_magic_sc()] wrote.
@@ -1313,8 +1315,8 @@ extract_feature_plot_data <- function(
   scale = FALSE,
   clip = NULL,
   obs_col = NULL,
-  expr_modality = c("rna", "adt"),
-  embd_modality = c("rna", "adt", "wnn"),
+  expr_modality = c("rna", "adt", "atac"),
+  embd_modality = c("rna", "adt", "atac", "wnn"),
   layer = c("norm", "magic"),
   ...
 ) {
@@ -1366,7 +1368,7 @@ extract_feature_plot_data <- function(
 #' @param grouping_variable String. Obs column to group by.
 #' @param scale Boolean. Whether to z-score the expression values.
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
-#' @param modality String. One of `c("rna", "adt")`.
+#' @param modality String. One of `c("rna", "adt", "atac")`.
 #' @param layer String. One of `c("norm", "magic")`, forwarded to
 #' [extract_gene_expression()].
 #'
@@ -1391,7 +1393,7 @@ extract_gene_violin_data <- function(
   grouping_variable,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
@@ -1443,7 +1445,7 @@ extract_gene_violin_data <- function(
 #' @param scale Boolean. Whether to z-score the expression values per feature.
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
 #' @param modality String. Fallback modality for unsuffixed features. One of
-#' `c("rna", "adt")`.
+#' `c("rna", "adt", "atac")`.
 #' @param layer String. One of `c("norm", "magic")`, forwarded to
 #' [extract_gene_expression()]. Applies to both features, and an `_adt`
 #' suffixed one will error under `"magic"`.
@@ -1468,7 +1470,7 @@ extract_feature_pair <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
@@ -1510,4 +1512,85 @@ extract_feature_pair <- function(
   data.table::setattr(dt, "features", c(feature_1, feature_2))
 
   dt
+}
+
+## feature kind guards ---------------------------------------------------------
+
+#' What the features of an object's store are
+#'
+#' @param object The single cell object.
+#'
+#' @returns String. One of `"gene"`, `"peak"`, `"tile"`, `"snp"`,
+#' `"protein"` or `"gene_activity"`. Meta cells carry no store and read as
+#' `"gene"`.
+#'
+#' @keywords internal
+.store_feature_kind <- function(object) {
+  if (S7::S7_inherits(object, MetaCells)) {
+    return("gene")
+  }
+
+  rs_store_feature_kind(get_rust_count_cell_f_path(object))
+}
+
+#' Refuse a gene-only method on a peak or tile store
+#'
+#' @param object The single cell object.
+#' @param method String. The method name, for the message.
+#'
+#' @returns Invisible `NULL`, or an error for a peak or tile store.
+#'
+#' @keywords internal
+.refuse_atac_features <- function(object, method) {
+  kind <- .store_feature_kind(object)
+  if (kind %in% c("peak", "tile")) {
+    stop(sprintf(
+      paste(
+        "%s works on genes; this store holds %s features. For ATAC use",
+        "run_tfidf_sc() and calculate_lsi_sc()."
+      ),
+      method,
+      kind
+    ))
+  }
+
+  invisible(NULL)
+}
+
+#' Refuse or warn on a method that assumes RNA counts
+#'
+#' @description
+#' Peak, tile, SNP and protein stores are refused. A gene activity store is
+#' refused for methods built on an mRNA count model (`refuse = TRUE`) and
+#' warned about for the rest, which gene length and fragments shared by
+#' neighbouring genes bias.
+#'
+#' @param object The single cell object.
+#' @param method String. The method name, for the message.
+#' @param refuse Boolean. Refuse a gene activity store instead of warning.
+#'
+#' @returns Invisible `NULL`.
+#'
+#' @keywords internal
+.check_rna_counts <- function(object, method, refuse) {
+  kind <- .store_feature_kind(object)
+  if (kind == "gene") {
+    return(invisible(NULL))
+  }
+  if (kind == "gene_activity" && !refuse) {
+    warning(sprintf(
+      paste(
+        "%s assumes RNA counts, and this store holds gene activity: long",
+        "genes score high in every cell and neighbouring genes share",
+        "fragments. Read the result with that in mind."
+      ),
+      method
+    ))
+    return(invisible(NULL))
+  }
+  stop(sprintf(
+    "%s needs RNA counts; this store holds %s features.",
+    method,
+    kind
+  ))
 }

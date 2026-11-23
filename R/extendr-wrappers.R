@@ -3715,6 +3715,50 @@ rs_symphony_map_query <- function(f_path_query, cell_indices_query, gene_means, 
 #' @keywords internal
 rs_transfer_labels_symphony <- function(reference_z_corr, query_z_corr, reference_labels, n_labels, knn_params, seed, verbose) .Call(wrap__rs_transfer_labels_symphony, reference_z_corr, query_z_corr, reference_labels, n_labels, knn_params, seed, verbose)
 
+#' Seurat label transfer
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Seurat's `FindTransferAnchors(reduction = "cca")` followed by
+#' `TransferData()`. The anchors come from a CCA between the reference and the
+#' query on the given features; the label scores are weighted by the anchors'
+#' neighbourhoods in `weight_embedding`. Works for an RNA or a gene activity
+#' query.
+#'
+#' @param ref_genes String. Path to the gene-based file of the reference.
+#' @param ref_cells Integer vector. Reference cells (0-indexed).
+#' @param ref_features Integer vector. Reference features (0-indexed).
+#' @param query_genes String. Path to the gene-based file of the query.
+#' @param query_cells Integer vector. Query cells (0-indexed), rows of
+#' `weight_embedding`.
+#' @param query_features Integer vector. Query features (0-indexed), matching
+#' `ref_features` in order.
+#' @param ref_labels Integer vector. 0-indexed label code per reference cell.
+#' @param n_labels Integer. Number of label codes.
+#' @param weight_embedding Numeric matrix. Query cells x dimensions, the
+#' embedding of the weights.
+#' @param n_cc Integer. Number of canonical correlation vectors.
+#' @param k_anchor Integer. Neighbours for the anchors.
+#' @param k_score Integer. Neighbours for the anchor scores.
+#' @param scale_max Numeric. Clip of the scaled features.
+#' @param l2_norm Boolean. L2 normalise the CCA space.
+#' @param k_weight Integer. Anchors per query cell in the weights.
+#' @param sd Numeric. Bandwidth divisor of the weights.
+#' @param knn_params List. The kNN parameters, see
+#' [bixverse::params_knn_defaults()].
+#' @param seed Integer. Seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns Numeric matrix of query cells x labels with the label scores.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+#'
+#' @keywords internal
+rs_transfer_labels_seurat <- function(ref_genes, ref_cells, ref_features, query_genes, query_cells, query_features, ref_labels, n_labels, weight_embedding, n_cc, k_anchor, k_score, scale_max, l2_norm, k_weight, sd, knn_params, seed, verbose) .Call(wrap__rs_transfer_labels_seurat, ref_genes, ref_cells, ref_features, query_genes, query_cells, query_features, ref_labels, n_labels, weight_embedding, n_cc, k_anchor, k_score, scale_max, l2_norm, k_weight, sd, knn_params, seed, verbose)
+
 #' Calculate kBET type scores
 #'
 #' @description
@@ -4180,38 +4224,40 @@ rs_mc_bonsai <- function(sparse_data, gene_indices, bonsai_params, verbose) .Cal
 #' @keywords internal
 rs_bonsai_layout <- function(parent, branch, n_leaves, layout, hyperbolic) .Call(wrap__rs_bonsai_layout, parent, branch, n_leaves, layout, hyperbolic)
 
-#' Write a single cell experiment to h5ad
+#' Write a single cell experiment to h5ad or AnnData Zarr
 #'
 #' @description
 #' Streams the counts out of the cell-based binary file, cell batch by cell
-#' batch, into a spec-compliant h5ad file via
-#' [scx-core](https://github.com/btraven00/scx), together with the obs and
-#' var tables, dense embeddings and sparse cell x cell graphs supplied from
-#' R. Counts are stored as `float32`. All inputs are checked before the file
-#' is created.
+#' batch, into a spec-compliant h5ad file (or an AnnData Zarr v3 store) via
+#' `bixverse-sc-export`, together with the obs and var tables, dense
+#' embeddings and sparse cell x cell graphs supplied from R. Counts are stored
+#' as `float32`. All inputs are checked before the output is created.
 #'
 #' @param f_path_cells String. Path to the `counts_cells.bin` file.
-#' @param h5_path String. Path of the h5ad file to create.
+#' @param h5_path String. Path of the h5ad file or Zarr directory to create.
 #' @param cell_indices Integer vector. The cells to write (0-indexed!), in
 #' the order they shall appear in the file.
 #' @param norm Boolean. Write the normalised instead of the raw counts.
 #' @param obs_index Character vector. One name per cell.
 #' @param obs Named list. The obs columns, see the R wrapper for the types.
-#' @param var_index Character vector. One name per gene.
+#' @param var_index Character vector. One name per written gene.
 #' @param var Named list. The var columns.
 #' @param obsm Named list of numeric matrices with one row per cell.
-#' @param varm Named list of numeric matrices with one row per gene.
+#' @param varm Named list of numeric matrices with one row per written gene.
 #' @param obsp Named list of CSR matrices, each a list with `indptr`,
 #' `indices` (0-indexed) and `data`.
 #' @param uns_json String. JSON object written to `uns`.
 #' @param chunk_size Integer. Number of cells per streaming batch.
+#' @param zarr Boolean. Write an AnnData Zarr store instead of an h5ad file.
+#' @param gene_indices Optional integer vector. The genes to write
+#' (0-indexed!), in output order. `NULL` writes every gene.
 #'
 #' @returns Invisible `NULL`.
 #'
 #' @export
 #'
 #' @keywords internal
-rs_save_h5ad <- function(f_path_cells, h5_path, cell_indices, norm, obs_index, obs, var_index, var, obsm, varm, obsp, uns_json, chunk_size) .Call(wrap__rs_save_h5ad, f_path_cells, h5_path, cell_indices, norm, obs_index, obs, var_index, var, obsm, varm, obsp, uns_json, chunk_size)
+rs_save_h5ad <- function(f_path_cells, h5_path, cell_indices, norm, obs_index, obs, var_index, var, obsm, varm, obsp, uns_json, chunk_size, zarr, gene_indices) .Call(wrap__rs_save_h5ad, f_path_cells, h5_path, cell_indices, norm, obs_index, obs, var_index, var, obsm, varm, obsp, uns_json, chunk_size, zarr, gene_indices)
 
 #' Scrublet Rust interface
 #'
@@ -5171,6 +5217,102 @@ rs_calculate_dge_one_vs_rest <- function(f_path, cell_groups, min_prop, alternat
 #' @keywords internal
 rs_calculate_dge_one_vs_many <- function(f_path, cell_groups, references, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_one_vs_many, f_path, cell_groups, references, min_prop, alternative, verbose)
 
+#' Calculate DGEs between cells with a logistic regression test
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Seurat's `LRDETest()` with the library size as the latent variable: a
+#' logistic regression of group membership on the gene and the library size,
+#' against one on the library size alone, compared by a likelihood ratio
+#' test. The default marker test for ATAC data.
+#'
+#' @param f_path_cell String. Path to the `counts_cells.bin` file, for the
+#' library sizes.
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param cell_indices_1 Integer. Index positions (0-indexed) of the cells
+#' of group 1.
+#' @param cell_indices_2 Integer. Index positions (0-indexed) of the cells
+#' of group 2.
+#' @param min_prop Numeric. Minimum proportion of expression in at least one
+#' of the two groups to be tested.
+#' @param alternative String. One of `c("twosided", "greater", "less")`. Null
+#' hypothesis.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item lfc - Log fold changes between the two groups.
+#'   \item prop1 - Proportion of cells expressing the gene in group 1.
+#'   \item prop2 - Proportion of cells expressing the gene in group 2.
+#'   \item z_scores - Signed root of the likelihood ratio statistic.
+#'   \item p_values - P-values of the likelihood ratio test.
+#'   \item fdr - False discovery rate after BH adjustment
+#'   \item genes_to_keep - Boolean indicating which genes were tested.
+#' }
+#'
+#' @export
+#'
+#' @references Ntranos, et al., Nat Methods, 2019
+#'
+#' @keywords internal
+rs_calculate_dge_lr <- function(f_path_cell, f_path_gene, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_lr, f_path_cell, f_path_gene, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
+
+#' Calculate one-vs-rest logistic regression DGEs for every cell group
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The logistic regression twin of [rs_calculate_dge_one_vs_rest()].
+#'
+#' @param f_path_cell String. Path to the `counts_cells.bin` file, for the
+#' library sizes.
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param cell_groups List. List of integer vectors, each containing the index
+#' positions (0-indexed) of the cells of one group.
+#' @param min_prop Numeric. Minimum proportion of expression in the group or in
+#' the rest to be tested.
+#' @param alternative String. One of `c("twosided", "greater", "less")`. Null
+#' hypothesis.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with `group`, `gene_idx` (both 0-indexed), `lfc`,
+#' `prop1`, `prop2`, `z_scores`, `p_values` and `fdr`, one entry per tested
+#' gene and group, flattened group-major.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_calculate_dge_one_vs_rest_lr <- function(f_path_cell, f_path_gene, cell_groups, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_one_vs_rest_lr, f_path_cell, f_path_gene, cell_groups, min_prop, alternative, verbose)
+
+#' Calculate one-vs-many specific markers with logistic regression p-values
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The logistic regression twin of [rs_calculate_dge_one_vs_many()]: AUROC
+#' summaries as there, p-values from the likelihood ratio test.
+#'
+#' @param f_path_cell String. Path to the `counts_cells.bin` file, for the
+#' library sizes.
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param cell_groups List. List of integer vectors, each containing the index
+#' positions (0-indexed) of the cells of one group.
+#' @param references Integer. Index positions (0-indexed) into `cell_groups` of
+#' the reference groups to report.
+#' @param min_prop Numeric. Minimum proportion of expression in at least one
+#' of the groups to be tested.
+#' @param alternative String. One of `c("twosided", "greater", "less")`. Null
+#' hypothesis.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns The list described in [rs_calculate_dge_one_vs_many()].
+#'
+#' @export
+#'
+#' @keywords internal
+rs_calculate_dge_one_vs_many_lr <- function(f_path_cell, f_path_gene, cell_groups, references, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_one_vs_many_lr, f_path_cell, f_path_gene, cell_groups, references, min_prop, alternative, verbose)
+
 #' Calculate AUCell in Rust
 #'
 #' @description
@@ -6121,6 +6263,584 @@ rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .
 #'
 #' @keywords internal
 rs_sc_cellphonedb <- function(f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params, verbose) .Call(wrap__rs_sc_cellphonedb, f_path_gene, partner_a, partner_b, clusters, pair_a, pair_b, deg_genes, statistical, params, verbose)
+
+#' Read a BED file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the first three columns of a BED file, plain or gzip.
+#'
+#' @param path String. The BED file.
+#'
+#' @returns A list with `chrom`, `start` (0-based) and `end` (exclusive).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_read_bed <- function(path) .Call(wrap__rs_atac_read_bed, path)
+
+#' Fixed-width tiles over chromosomes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param chroms Character vector. Chromosome names.
+#' @param sizes Integer vector. Their lengths.
+#' @param width Integer. The tile width.
+#'
+#' @returns A list with `chrom`, `start` and `end`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_genome_tiles <- function(chroms, sizes, width) .Call(wrap__rs_atac_genome_tiles, chroms, sizes, width)
+
+#' Merge overlapping and abutting regions
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param chrom Character vector. Chromosomes.
+#' @param start Integer vector. 0-based starts.
+#' @param end Integer vector. Exclusive ends.
+#'
+#' @returns A list with `chrom`, `start` and `end` of the merged regions and
+#' `members`, a list with the input indices (0-based) each one absorbed.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_reduce_regions <- function(chrom, start, end) .Call(wrap__rs_atac_reduce_regions, chrom, start, end)
+
+#' Flag regions that overlap any of another set
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param chrom,start,end The regions to test.
+#' @param other_chrom,other_start,other_end The set to test against.
+#'
+#' @returns Logical vector, one flag per region.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_overlaps_any <- function(chrom, start, end, other_chrom, other_start, other_end) .Call(wrap__rs_atac_overlaps_any, chrom, start, end, other_chrom, other_start, other_end)
+
+#' TSS positions from a GTF
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param path String. The GTF, plain or gzip.
+#' @param biotypes Character vector. Biotypes to keep, empty for all.
+#'
+#' @returns A list with `chrom`, `pos` (0-based), `strand` (`-1` minus, `1`
+#' plus), `gene_id` and `gene_name`, one entry per kept gene.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_tss_positions <- function(path, biotypes) .Call(wrap__rs_atac_tss_positions, path, biotypes)
+
+#' Gene body plus promoter regions from a GTF
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The regions of Signac's `GeneActivity()`.
+#'
+#' @param path String. The GTF.
+#' @param upstream Integer. Bases added upstream.
+#' @param downstream Integer. Bases added downstream.
+#' @param max_width Integer. Genes this long or longer are dropped.
+#' @param biotypes Character vector. Biotypes to keep, empty for all.
+#'
+#' @returns A list with `chrom`, `start`, `end`, `name` (unique) and
+#' `gene_id` (as in the GTF).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_gene_activity_regions <- function(path, upstream, downstream, max_width, biotypes) .Call(wrap__rs_atac_gene_activity_regions, path, upstream, downstream, max_width, biotypes)
+
+#' The closest gene body to every region
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param gtf String. The GTF.
+#' @param biotypes Character vector. Biotypes to keep, empty for all.
+#' @param chrom,start,end The regions.
+#'
+#' @returns A list with `gene_name` and `gene_id` (`NA` on a chromosome
+#' without genes), `distance` (0 when overlapping) and `tss_distance` (region
+#' centre to TSS, positive downstream).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_closest_genes <- function(gtf, biotypes, chrom, start, end) .Call(wrap__rs_atac_closest_genes, gtf, biotypes, chrom, start, end)
+
+#' The `Peaks` modality of a 10x multiome h5 into a peak store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param h5_path String. The Cell Ranger ARC h5.
+#' @param f_path_cells String. Cell-based file to write.
+#' @param f_path_genes String. Gene-based file to write.
+#' @param barcodes Character vector. Cells in store order.
+#' @param max_mem_gb Optional numeric. Budget of the gene file conversion.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal; `2L` - detailed.
+#'
+#' @returns A list with `name`, `chrom`, `start`, `end` per peak and
+#' `lib_size`, `nnz` per cell.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_tenx_peaks_to_store <- function(h5_path, f_path_cells, f_path_genes, barcodes, max_mem_gb, verbose) .Call(wrap__rs_atac_tenx_peaks_to_store, h5_path, f_path_cells, f_path_genes, barcodes, max_mem_gb, verbose)
+
+#' Count fragments into features and write the store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param fragments String. The fragment file.
+#' @param f_path_cells String. Cell-based file to write.
+#' @param f_path_genes String. Gene-based file to write.
+#' @param barcodes Character vector. Cells in store order.
+#' @param chrom,start,end The features.
+#' @param mode String. `"insertion"`, `"paired-insertion"` or `"fragment"`.
+#' @param kind String. `"peak"`, `"tile"` or `"gene_activity"`.
+#' @param target_size Numeric. Target size of the initial log-CPM norm.
+#' @param max_mem_gb Optional numeric. Budget of the gene file conversion.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal; `2L` - detailed.
+#'
+#' @returns A list with `lib_size` and `nnz` per cell, plus `cells_missing`,
+#' `off_target_fraction` and `off_target_chroms` of the pass.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_fragments_to_store <- function(fragments, f_path_cells, f_path_genes, barcodes, chrom, start, end, mode, kind, target_size, max_mem_gb, verbose) .Call(wrap__rs_atac_fragments_to_store, fragments, f_path_cells, f_path_genes, barcodes, chrom, start, end, mode, kind, target_size, max_mem_gb, verbose)
+
+#' Per-cell QC from a fragment file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Signac's fragment-based metrics: fragments per cell, nucleosome signal,
+#' TSS enrichment and the mitochondrial fraction.
+#'
+#' @param fragments String. The fragment file.
+#' @param barcodes Character vector. Cells, output order.
+#' @param tss_chrom Character vector. TSS chromosomes.
+#' @param tss_pos Integer vector. TSS positions (0-based).
+#' @param mito_chroms Character vector. Names of the mitochondrial genome.
+#'
+#' @returns A list with per-cell `n_fragments`, `nucleosome_signal`,
+#' `tss_enrichment` and `mito_fraction`, plus the coverage keys (off target:
+#' on a chromosome without a TSS).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_fragment_qc <- function(fragments, barcodes, tss_chrom, tss_pos, mito_chroms) .Call(wrap__rs_atac_fragment_qc, fragments, barcodes, tss_chrom, tss_pos, mito_chroms)
+
+#' TSS profiles and fragment length histograms per group of cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' SnapATAC2's `TSS_profile` and `frag_size_distr`.
+#'
+#' @param fragments String. The fragment file.
+#' @param barcodes Character vector. Cells.
+#' @param groups Integer vector. Group of each cell, `0..n_groups`.
+#' @param tss_chrom Character vector. TSS chromosomes.
+#' @param tss_pos Integer vector. TSS positions (0-based).
+#' @param tss_strand Integer vector. TSS strands, `-1` minus, else plus.
+#' @param half_width Integer. Profile half width.
+#' @param max_len Integer. Longest fragment with its own bin.
+#'
+#' @returns A list with `tss` (groups x `2 * half_width + 1`), `lengths`
+#' (groups x `max_len + 1`, bin 0 the longer fragments) and the coverage keys.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_fragment_profiles <- function(fragments, barcodes, groups, tss_chrom, tss_pos, tss_strand, half_width, max_len) .Call(wrap__rs_atac_fragment_profiles, fragments, barcodes, groups, tss_chrom, tss_pos, tss_strand, half_width, max_len)
+
+#' Fragments per barcode
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Counts every barcode in the file.
+#'
+#' @param fragments String. The fragment file.
+#' @param exclude_chroms Character vector. Chromosomes not counted.
+#'
+#' @returns A list with `barcode` (sorted) and `n_fragments`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_barcode_fragment_counts <- function(fragments, exclude_chroms) .Call(wrap__rs_atac_barcode_fragment_counts, fragments, exclude_chroms)
+
+#' Merge fragment files into one indexed file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Barcodes get a prefix and suffix per input, so samples stay apart.
+#'
+#' @param paths Character vector. The inputs.
+#' @param prefixes Character vector. Barcode prefix per input.
+#' @param suffixes Character vector. Barcode suffix per input.
+#' @param out String. Output path; the index goes to `<out>.tbi`.
+#'
+#' @returns A list with `n_fragments` per input and `chroms` of the output.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_merge_fragments <- function(paths, prefixes, suffixes, out) .Call(wrap__rs_atac_merge_fragments, paths, prefixes, suffixes, out)
+
+#' Peak to gene links over groups of cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' ArchR's `addPeak2GeneLinks()` on pseudobulked counts.
+#'
+#' @param peak_counts Numeric matrix. Groups x peaks, summed counts.
+#' @param gene_counts Numeric matrix. Groups x genes, summed counts.
+#' @param chrom,start,end The peaks.
+#' @param tss_chrom Character vector. TSS chromosome per gene column.
+#' @param tss_pos Integer vector. TSS position per gene column.
+#' @param max_distance Integer. Largest peak to TSS distance.
+#' @param scale Numeric. Normalisation scale.
+#'
+#' @returns A list with `peak`, `gene` (0-based column indices), `distance`,
+#' `r`, `p` and `fdr`, one entry per tested pair.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_peak_to_gene <- function(peak_counts, gene_counts, chrom, start, end, tss_chrom, tss_pos, max_distance, scale) .Call(wrap__rs_atac_peak_to_gene, peak_counts, gene_counts, chrom, start, end, tss_chrom, tss_pos, max_distance, scale)
+
+#' Call peaks per group of cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' A port of MACS3 `callpeak` without control.
+#'
+#' @param fragments String. The fragment file.
+#' @param barcodes Character vector. Cells.
+#' @param groups Integer vector. Group of each cell, `0..n_groups`.
+#' @param tag_source String. `"insertion"` or `"fragment_start"`.
+#' @param keep_dup Optional integer. Tags kept per position, `NULL` for all.
+#' @param shift Integer. Tag shift before extension.
+#' @param extsize Integer. Tag extension.
+#' @param genome_size Numeric. Effective genome size.
+#' @param llocal Integer. Local lambda window.
+#' @param q_value Numeric. q-value cutoff.
+#' @param min_length Optional integer. Minimum peak length, `NULL` for
+#' `extsize`.
+#' @param max_gap Optional integer. Largest merged gap, `NULL` for MACS's tag
+#' size.
+#' @param max_mem_gb Optional numeric. Tag budget of the first pass, `NULL`
+#' for one chromosome at a time.
+#' @param tmp_dir Optional string. Directory of the tag scratch file, `NULL`
+#' for the system one.
+#'
+#' @returns A list with `group` (0-based), `chrom`, `start`, `end`, `summit`
+#' (0-based), `pileup`, `pscore`, `fold` and `qscore`. Groups in order, peaks
+#' by chromosome name and position.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_call_peaks <- function(fragments, barcodes, groups, tag_source, keep_dup, shift, extsize, genome_size, llocal, q_value, min_length, max_gap, max_mem_gb, tmp_dir) .Call(wrap__rs_atac_call_peaks, fragments, barcodes, groups, tag_source, keep_dup, shift, extsize, genome_size, llocal, q_value, min_length, max_gap, max_mem_gb, tmp_dir)
+
+#' AMULET multiplet detection from fragment overlaps
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param fragments String. The fragment file.
+#' @param barcodes Character vector. Cells to test.
+#' @param restrict_beds Character vector. BED files of regions to drop
+#' (repeats, segmental duplications, blacklists).
+#' @param max_overlap Integer. Overlapping fragments a diploid cell can
+#' explain.
+#' @param max_fragment_len Integer. Longest valid fragment.
+#' @param repeat_q Numeric. q-value under which a site is a repeat.
+#' @param multiplet_q Numeric. q-value under which a cell is a multiplet.
+#' @param chroms Optional character vector. Chromosomes to use, `NULL` for the
+#' autosomes.
+#' @param max_mem_gb Optional numeric. Read budget, `NULL` for one chromosome
+#' at a time.
+#' @param count_trailing_loci Boolean. Count loci no later fragment passes.
+#'
+#' @returns A list with per-cell `n_overlaps`, `n_sites`, `p_value`,
+#' `q_value` and `multiplet`.
+#'
+#' @export
+#'
+#' @references Thibodeau, et al., Genome Biol, 2021
+#'
+#' @keywords internal
+rs_atac_amulet <- function(fragments, barcodes, restrict_beds, max_overlap, max_fragment_len, repeat_q, multiplet_q, chroms, max_mem_gb, count_trailing_loci) .Call(wrap__rs_atac_amulet, fragments, barcodes, restrict_beds, max_overlap, max_fragment_len, repeat_q, multiplet_q, chroms, max_mem_gb, count_trailing_loci)
+
+#' Switch a store to TF-IDF over a set of cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Header-only change of the norm; the chunks are not rewritten.
+#'
+#' @param f_path_cells String. Cell-based file.
+#' @param f_path_genes String. Gene-based file.
+#' @param cells Optional integer vector. Cells for the IDF (0-based), `NULL`
+#' for all.
+#' @param scale Numeric. Scale factor.
+#'
+#' @returns The IDF per feature.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_set_tf_idf <- function(f_path_cells, f_path_genes, cells, scale) .Call(wrap__rs_atac_set_tf_idf, f_path_cells, f_path_genes, cells, scale)
+
+#' Total counts per feature and the top features
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Signac's `FindTopFeatures()`.
+#'
+#' @param f_path_genes String. Gene-based file.
+#' @param cells Optional integer vector. Cells to sum over (0-based), `NULL`
+#' for all.
+#' @param min_cutoff Optional string. `"q<N>"` keeps features above the N-th
+#' percentile, a number those with more counts, `NULL` or `"all"` every
+#' feature.
+#'
+#' @returns A list with `count`, `percentile` and `top_feature`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_feature_totals <- function(f_path_genes, cells, min_cutoff) .Call(wrap__rs_atac_feature_totals, f_path_genes, cells, min_cutoff)
+
+#' LSI of a TF-IDF store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param f_path_cells String. Cell-based file.
+#' @param f_path_genes String. Gene-based file.
+#' @param cells Integer vector. Cells (0-based), output row order.
+#' @param features Integer vector. Features to use (0-based).
+#' @param n_comp Integer. Number of components.
+#' @param solver String. `"auto"`, `"exact"`, `"randomised"` or
+#' `"covariance"`.
+#' @param scale_embeddings Boolean. Z-score each component.
+#' @param scale_max Optional numeric. Clip of the z-scores.
+#' @param seed Integer. Seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal; `2L` - detailed.
+#'
+#' @returns A list with `embedding` (cells x `n_comp`), `loadings`
+#' (features x `n_comp`), `singular_values` and `depth_cor`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_lsi <- function(f_path_cells, f_path_genes, cells, features, n_comp, solver, scale_embeddings, scale_max, seed, verbose) .Call(wrap__rs_atac_lsi, f_path_cells, f_path_genes, cells, features, n_comp, solver, scale_embeddings, scale_max, seed, verbose)
+
+#' Project cells of a TF-IDF store onto a fitted LSI
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Seurat's `ProjectSVD(mode = "lsi")`: the query's own TF-IDF times the
+#' loadings over the singular values, no centring or scaling.
+#'
+#' @param f_path_cells String. Cell-based file of the query.
+#' @param f_path_genes String. Gene-based file of the query (TF-IDF norm).
+#' @param cells Integer vector. Query cells (0-based), output row order.
+#' @param features Integer vector. Query features (0-based), in the row order
+#' of `loadings`.
+#' @param loadings Numeric matrix. Features x components of the fit.
+#' @param singular_values Numeric vector. Singular values of the fit.
+#'
+#' @returns Numeric matrix, cells x components.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_atac_project_lsi <- function(f_path_cells, f_path_genes, cells, features, loadings, singular_values) .Call(wrap__rs_atac_project_lsi, f_path_cells, f_path_genes, cells, features, loadings, singular_values)
+
+#' rLSI integration of an embedding over a peak or tile store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Signac's `IntegrateEmbeddings()` with `reduction = "rlsi"`: per-batch LSIs
+#' give the anchor space, the anchors then correct `embedding`.
+#'
+#' @param f_path_cells String. Cell-based file.
+#' @param f_path_genes String. Gene-based file.
+#' @param cells Integer vector. Cells (0-based), rows of `embedding`.
+#' @param features Integer vector. Features of the per-batch LSIs (0-based).
+#' @param batch Integer vector. 0-based batch per cell.
+#' @param embedding Numeric matrix. Cells x dimensions to integrate.
+#' @param dims Integer vector. 0-based LSI components the anchors use.
+#' @param n_comp Integer. Components of the per-batch LSIs.
+#' @param solver String. SVD solver.
+#' @param k_anchor Integer. Neighbours for the anchors.
+#' @param k_score Integer. Neighbours for the anchor scores.
+#' @param k_weight Integer. Anchors per cell in the correction weights.
+#' @param sd Numeric. Bandwidth divisor of the weights.
+#' @param l2_norm Boolean. Scale and L2 normalise the anchor spaces.
+#' @param knn_params List. The kNN parameters, see
+#' [bixverse::params_knn_defaults()].
+#' @param seed Integer. Seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal; `2L` - detailed.
+#'
+#' @returns The integrated embedding, cells x dimensions.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Nat Methods, 2021
+#'
+#' @keywords internal
+rs_atac_rlsi <- function(f_path_cells, f_path_genes, cells, features, batch, embedding, dims, n_comp, solver, k_anchor, k_score, k_weight, sd, l2_norm, knn_params, seed, verbose) .Call(wrap__rs_atac_rlsi, f_path_cells, f_path_genes, cells, features, batch, embedding, dims, n_comp, solver, k_anchor, k_score, k_weight, sd, l2_norm, knn_params, seed, verbose)
+
+#' Read what the features of a store are
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the header only.
+#'
+#' @param path String. A cell- or gene-based binary (v4 or v5).
+#'
+#' @returns One of `"gene"`, `"peak"`, `"tile"`, `"snp"`, `"protein"` or
+#' `"gene_activity"`. A v4 file is `"gene"`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_store_feature_kind <- function(path) .Call(wrap__rs_store_feature_kind, path)
+
+#' Read how the norm of a store derives
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the header only.
+#'
+#' @param path String. A cell- or gene-based binary (v4 or v5).
+#'
+#' @returns One of `"none"`, `"log_cpm"` or `"tf_idf"`. A v4 file is
+#' `"log_cpm"`.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_store_norm_kind <- function(path) .Call(wrap__rs_store_norm_kind, path)
+
+#' Caller metadata of a store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param path String. A cell- or gene-based binary.
+#'
+#' @returns A named character vector of the `key = value` pairs, empty for a
+#' v4 file.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_store_metadata <- function(path) .Call(wrap__rs_store_metadata, path)
+
+#' Set caller metadata on both files of a v5 store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Given keys replace, all others are kept.
+#'
+#' @param f_path_cells String. Cell-based binary.
+#' @param f_path_genes String. Gene-based binary.
+#' @param keys Character vector. The keys.
+#' @param values Character vector. The values, same length as `keys`.
+#'
+#' @returns Invisible `NULL`. Errors for a multi-line key or value, or a v4
+#' store.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_set_store_metadata <- function(f_path_cells, f_path_genes, keys, values) .Call(wrap__rs_set_store_metadata, f_path_cells, f_path_genes, keys, values)
+
+#' Check every chunk of a store file against its checksums
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param path String. A cell- or gene-based binary.
+#'
+#' @returns `TRUE` when every chunk matched, `FALSE` for a file without
+#' checksums (v4). Errors on a corrupt chunk.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_verify_store <- function(path) .Call(wrap__rs_verify_store, path)
+
+#' Error unless a cell file and a gene file belong to the same store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the headers only.
+#'
+#' @param f_path_cells String. Cell-based binary.
+#' @param f_path_genes String. Gene-based binary.
+#'
+#' @returns Invisible `NULL`, or an error naming the field that differs.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_check_store_pair <- function(f_path_cells, f_path_genes) .Call(wrap__rs_check_store_pair, f_path_cells, f_path_genes)
+
+#' Record the cell IDs of a v5 store in both headers
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Only their hash is stored. Stores that share a cell axis (a gene activity
+#' store and its source) carry the same one.
+#'
+#' @param f_path_cells String. Cell-based binary.
+#' @param f_path_genes String. Gene-based binary.
+#' @param ids Character vector. Cell IDs in store order.
+#'
+#' @returns Invisible `NULL`. Errors for a store that is not v5 or a wrong
+#' number of IDs.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_set_cell_ids <- function(f_path_cells, f_path_genes, ids) .Call(wrap__rs_set_cell_ids, f_path_cells, f_path_genes, ids)
+
+#' The cell-ID hash in a binary's header
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param path String. A cell- or gene-based binary.
+#'
+#' @returns The 16-byte hash as hex, `NULL` when the store records no cell
+#' IDs.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_cell_id_hash <- function(path) .Call(wrap__rs_cell_id_hash, path)
 
 #' Generate meta cells (hdWGCNA method)
 #'

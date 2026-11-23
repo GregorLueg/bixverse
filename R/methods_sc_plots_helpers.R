@@ -8,12 +8,12 @@
 #'
 #' @param x `SingleCells`, `MetaCells` object from which to extract the kNN
 #' data.
-#' @param modality String. One of `c("rna", "adt")`.
+#' @param modality String. One of `c("rna", "adt", "atac")`.
 #'
 #' @returns The manifoldsR `NearestNeigbours` if possible
 #'
 #' @keywords internal
-.get_manifoldsr_knn <- function(x, modality = c("rna", "adt")) {
+.get_manifoldsr_knn <- function(x, modality = c("rna", "adt", "atac")) {
   modality <- match.arg(modality)
   checkmate::assertTRUE(
     S7::S7_inherits(x, SingleCells) ||
@@ -71,7 +71,7 @@
 #' available in the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
-#' @param modality String. One of `c("rna", "adt", "wnn")`.
+#' @param modality String. One of `c("rna", "adt", "atac", "wnn")`.
 #' @param k Optional integer. Neighbour count the caller asked for. Only feeds
 #' the mismatch warning and the returned `k`.
 #'
@@ -104,15 +104,10 @@
   checkmate::qassert(use_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
-  checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
+  checkmate::assertChoice(modality, c("rna", "adt", "atac", "wnn"))
   checkmate::qassert(k, c("0", "I1"))
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   # wnn takes the integrated graph; embeddings still read/write the rna cache
   cache_modality <- if (modality == "wnn") "rna" else modality
@@ -238,7 +233,7 @@
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param modality String. On which modality to run the UMAP. One of
-#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' `c("rna", "adt", "atac", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of UMAP dimensions. Defaults to `2L`.
 #' @param k Integer. Number of nearest neighbours. Defaults to `15L`.
@@ -274,7 +269,7 @@ umap_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "umap",
     no_embd_to_use = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     n_dim = 2L,
     k = 15L,
     min_dist = 0.5,
@@ -303,7 +298,7 @@ S7::method(umap_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "umap",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -403,7 +398,7 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param modality String. On which modality to run densMAP. One of
-#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' `c("rna", "adt", "atac", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of densMAP dimensions. Defaults to `2L`.
 #' @param k Integer. Number of nearest neighbours. Defaults to `15L`.
@@ -443,7 +438,7 @@ densmap_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "densmap",
     no_embd_to_use = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     n_dim = 2L,
     k = 15L,
     min_dist = 0.5,
@@ -473,7 +468,7 @@ S7::method(densmap_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "densmap",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -592,7 +587,7 @@ S7::method(densmap_sc, ScOrMc) <- function(
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param modality String. On which modality to run the t-SNE. One of
-#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' `c("rna", "adt", "atac", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of t-SNE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
@@ -630,7 +625,7 @@ tsne_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "tsne",
     no_embd_to_use = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     n_dim = 2L,
     perplexity = 10.0,
     approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
@@ -658,7 +653,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "tsne",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   perplexity = 10.0,
   approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
@@ -752,7 +747,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param modality String. On which modality to run den-SNE. One of
-#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' `c("rna", "adt", "atac", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of den-SNE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
@@ -794,7 +789,7 @@ densne_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "densne",
     no_embd_to_use = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     n_dim = 2L,
     perplexity = 10.0,
     approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
@@ -823,7 +818,7 @@ S7::method(densne_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "densne",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   perplexity = 10.0,
   approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
@@ -932,7 +927,7 @@ S7::method(densne_sc, ScOrMc) <- function(
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param modality String. On which modality to run PHATE. One of
-#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' `c("rna", "adt", "atac", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of PHATE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
@@ -967,7 +962,7 @@ phate_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "phate",
     no_embd_to_use = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     n_dim = 2L,
     k = 5L,
     knn_method = c(
@@ -994,7 +989,7 @@ S7::method(phate_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "phate",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   k = 5L,
   knn_method = c(
@@ -1100,7 +1095,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param init_embd Optional string. Name of a stored 2D embedding, e.g.
 #' `"umap"`, to initialise the layout with. `"connectivities"` only. Defaults to `NULL`.
 #' @param modality String. On which modality to run ForceAtlas2. One of
-#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' `c("rna", "adt", "atac", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param k Integer. Number of nearest neighbours. Defaults to `15L`. `"knn"`
 #' only.
@@ -1144,7 +1139,7 @@ forceatlas2_sc <- S7::new_generic(
     slot_name = "fa2",
     no_embd_to_use = NULL,
     init_embd = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     k = 15L,
     knn_method = c(
       "kmknn",
@@ -1172,7 +1167,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
   slot_name = "fa2",
   no_embd_to_use = NULL,
   init_embd = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   k = 15L,
   knn_method = c(
     "kmknn",
@@ -1242,12 +1237,7 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
         S7::S7_inherits(object, MetaCells) ||
         S7::S7_inherits(object, SingleCellsSubset)
     )
-    if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-      stop(sprintf(
-        "modality = '%s' is only supported for SingleCellsMultiModal.",
-        modality
-      ))
-    }
+    modality <- .resolve_modality(object, modality)
 
     # the graph and the init both live under the write modality, wnn included
     assert_sc_state(object, artefacts = "connectivities", modality = modality)
@@ -1433,6 +1423,49 @@ S7::method(forceatlas2_sc, ScOrMc) <- function(
   mat[kept, , drop = FALSE]
 }
 
+#' Kept-cell matrix of ADT or ATAC features of a multi-modal object
+#'
+#' @description
+#' The normalised ADT counts, or for ATAC the normalised counts of the
+#' requested features read from the ATAC store (log-CPM, or TF-IDF after
+#' [bixverse::run_tfidf_sc()]), as a dense matrix over the kept cells.
+#'
+#' @param object `SingleCellsMultiModal` class.
+#' @param modality String. One of `c("adt", "atac")`.
+#' @param features Character vector. The requested feature ids.
+#'
+#' @returns A list with `mat` (kept cells x features, cell ids as row names,
+#' feature ids as column names) and `features` (the matched feature ids).
+#'
+#' @keywords internal
+.mm_feature_matrix <- function(object, modality, features) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
+  checkmate::assertChoice(modality, c("adt", "atac"))
+  checkmate::qassert(features, "S+")
+
+  if (modality == "adt") {
+    adt <- S7::prop(object, "adt_counts")
+    if (is.null(adt)) {
+      stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
+    }
+    features <- .match_features(features, colnames(adt$norm_counts))
+    return(list(mat = .adt_kept_rows(object, adt$norm_counts), features))
+  }
+
+  .require_atac(object)
+  feature_ids <- .atac_var(object, cols = "feature_id")$feature_id
+  features <- .match_features(features, feature_ids)
+  mat <- as.matrix(get_sc_counts(
+    object,
+    assay = "norm",
+    gene_indices = match(features, feature_ids),
+    modality = "atac",
+    .verbose = FALSE
+  ))
+
+  list(mat = mat, features = features)
+}
+
 #' Extract dense expression for in-memory count matrices
 #'
 #' @param mat Numeric matrix. Cells x features, with cell ids as row names and
@@ -1522,7 +1555,7 @@ S7::method(extract_dot_plot_data, ScOrScSubset) <- function(
   features,
   grouping_variable,
   scale_exp = TRUE,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 ) {
   modality <- match.arg(modality)
   checkmate::assertTRUE(
@@ -1533,12 +1566,7 @@ S7::method(extract_dot_plot_data, ScOrScSubset) <- function(
   checkmate::qassert(grouping_variable, "S1")
   checkmate::qassert(scale_exp, "B1")
 
-  if (modality != "rna") {
-    stop(paste(
-      "SingleCells only supports modality = 'rna'.",
-      "Use SingleCellsMultiModal for ADT."
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   resolved <- .resolve_gene_features(object, features)
   features <- resolved$features
@@ -1584,7 +1612,7 @@ S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
   features,
   grouping_variable,
   scale_exp = TRUE,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 ) {
   modality <- match.arg(modality)
 
@@ -1601,18 +1629,12 @@ S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
     ))
   }
 
-  # ADT path
+  # ADT and ATAC path
   checkmate::qassert(features, "S+")
   checkmate::qassert(grouping_variable, "S1")
   checkmate::qassert(scale_exp, "B1")
 
-  adt <- S7::prop(object, "adt_counts")
-  if (is.null(adt)) {
-    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
-  }
-
-  features <- .match_features(features, colnames(adt$norm_counts))
-  mat <- .adt_kept_rows(object, adt$norm_counts)
+  c(mat, features) %<-% .mm_feature_matrix(object, modality, features)
   obs_dt <- get_sc_obs(
     object,
     cols = unique(c("cell_id", grouping_variable)),
@@ -1635,7 +1657,7 @@ S7::method(extract_dot_plot_data, MetaCells) <- function(
   features,
   grouping_variable,
   scale_exp = TRUE,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 ) {
   modality <- match.arg(modality)
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
@@ -1643,12 +1665,7 @@ S7::method(extract_dot_plot_data, MetaCells) <- function(
   checkmate::qassert(grouping_variable, "S1")
   checkmate::qassert(scale_exp, "B1")
 
-  if (modality != "rna") {
-    stop(paste(
-      "MetaCells only supports modality = 'rna'.",
-      "Use SingleCellsMultiModal for ADT."
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   mat <- get_sc_counts(object, assay = "norm")
   features <- .match_features(features, colnames(mat))
@@ -1669,7 +1686,7 @@ S7::method(extract_gene_expression, ScOrScSubset) <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
@@ -1683,12 +1700,7 @@ S7::method(extract_gene_expression, ScOrScSubset) <- function(
   checkmate::qassert(scale, "B1")
   checkmate::qassert(clip, c("0", "N1(0,)"))
 
-  if (modality != "rna") {
-    stop(paste(
-      "SingleCells only supports modality = 'rna'.",
-      "Use SingleCellsMultiModal for ADT."
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   dt <- if (identical(layer, "magic")) {
     # the imputed layer is already dense and in memory, so it takes the same
@@ -1756,7 +1768,7 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
@@ -1777,7 +1789,7 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
     ))
   }
 
-  # ADT path
+  # ADT and ATAC path
   if (identical(layer, "magic")) {
     stop(paste(
       "The imputed layer holds RNA counts.",
@@ -1790,18 +1802,8 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
   checkmate::qassert(scale, "B1")
   checkmate::qassert(clip, c("0", "N1(0,)"))
 
-  adt <- S7::prop(object, "adt_counts")
-  if (is.null(adt)) {
-    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
-  }
-
-  features <- .match_features(features, colnames(adt$norm_counts))
-  dt <- .extract_expr_in_memory(
-    .adt_kept_rows(object, adt$norm_counts),
-    features,
-    scale,
-    clip
-  )
+  c(mat, features) %<-% .mm_feature_matrix(object, modality, features)
+  dt <- .extract_expr_in_memory(mat, features, scale, clip)
 
   if (!is.null(obs_cols)) {
     dt <- .attach_obs_by_id(dt, object, obs_cols)
@@ -1819,7 +1821,7 @@ S7::method(extract_gene_expression, MetaCells) <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
@@ -1830,12 +1832,7 @@ S7::method(extract_gene_expression, MetaCells) <- function(
   checkmate::qassert(scale, "B1")
   checkmate::qassert(clip, c("0", "N1(0,)"))
 
-  if (modality != "rna") {
-    stop(paste(
-      "MetaCells only supports modality = 'rna'.",
-      "Use SingleCellsMultiModal for ADT."
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   if (identical(layer, "magic")) {
     stop(paste(

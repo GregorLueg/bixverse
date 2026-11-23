@@ -8,7 +8,7 @@ run_palantir_sc(
   object,
   early_cell,
   terminal_states = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   palantir_params = params_sc_palantir(),
   seed = 42L,
   .verbose = TRUE
@@ -27,7 +27,7 @@ vector (e.g. \code{c(Ery = "Run4_2005...")}) and those labels become the column
 names of \code{branch_probs}, which saves relabelling the fate columns by hand
 downstream.}
 
-\item{modality}{String. One of \code{c("rna", "adt", "wnn")}. Which kNN graph to
+\item{modality}{String. One of \code{c("rna", "adt", "atac", "wnn")}. Which kNN graph to
 run over. Anything but \code{"rna"} requires a \code{SingleCellsMultiModal} object.}
 
 \item{palantir_params}{List. See \code{\link[=params_sc_palantir]{params_sc_palantir()}}.}

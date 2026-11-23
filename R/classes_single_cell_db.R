@@ -202,11 +202,33 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @returns The var adt table (if found) as a data.table with optionally
     #' selected indices and/or columns.
     get_vars_adt_table = function(indices = NULL, cols = NULL) {
-      # checks
-      checkmate::qassert(indices, c("0", "I+"))
-      checkmate::qassert(cols, c("S+", "0"))
       private$check_var_adt_exists()
+      private$read_feature_table("var_adt", indices = indices, cols = cols)
+    },
 
+    #' @description
+    #' Returns the var table of the ATAC features from the DuckDB.
+    #'
+    #' @param indices Optional feature indices (1-based).
+    #' @param cols Optional column names to return.
+    #'
+    #' @returns The var atac table as a data.table, keyed `feature_idx` /
+    #' `feature_id`, with optionally selected indices and/or columns.
+    get_vars_atac_table = function(indices = NULL, cols = NULL) {
+      if (!self$has_table("var_atac")) {
+        stop("Var table for ATAC was not found in the DB.")
+      }
+      private$read_feature_table("var_atac", indices = indices, cols = cols)
+    },
+
+    #' @description
+    #' Checks whether a table exists in the DuckDB.
+    #'
+    #' @param name String. The table name.
+    #'
+    #' @returns Boolean.
+    has_table = function(name) {
+      checkmate::qassert(name, "S1")
       con <- private$connect_db()
       on.exit(
         {
@@ -215,31 +237,7 @@ SingleCellDuckDBBase <- R6::R6Class(
           }
         }
       )
-
-      col_part <- if (is.null(cols)) {
-        "*"
-      } else {
-        paste(sprintf('"%s"', cols), collapse = ", ")
-      }
-
-      sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM var_adt ORDER BY feature_idx", col_part)
-      } else {
-        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
-        sprintf(
-          "SELECT %s FROM var_adt WHERE feature_idx IN (%s) ORDER BY feature_idx",
-          col_part,
-          placeholders
-        )
-      }
-
-      var_adt_dt <- data.table::setDT(DBI::dbGetQuery(
-        conn = con,
-        statement = sql_query,
-        params = as.list(indices)
-      ))
-
-      return(var_adt_dt)
+      name %in% DBI::dbGetQuery(con, "SHOW TABLES")[, "name"]
     },
 
     #' @description
@@ -742,6 +740,65 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       DBI::dbExecute(con, "DROP TABLE new_data")
     },
+    # Read a feature table keyed `feature_idx` (var_adt, var_atac), with
+    # optional 1-based indices and columns.
+    read_feature_table = function(table, indices = NULL, cols = NULL) {
+      checkmate::qassert(indices, c("0", "I+"))
+      checkmate::qassert(cols, c("S+", "0"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      col_part <- if (is.null(cols)) {
+        "*"
+      } else {
+        paste(sprintf('"%s"', cols), collapse = ", ")
+      }
+
+      sql_query <- if (is.null(indices)) {
+        sprintf("SELECT %s FROM %s ORDER BY feature_idx", col_part, table)
+      } else {
+        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
+        sprintf(
+          "SELECT %s FROM %s WHERE feature_idx IN (%s) ORDER BY feature_idx",
+          col_part,
+          table,
+          placeholders
+        )
+      }
+
+      data.table::setDT(DBI::dbGetQuery(
+        conn = con,
+        statement = sql_query,
+        params = as.list(indices)
+      ))
+    },
+    # Write a feature table keyed `feature_idx` / `feature_id`, replacing it.
+    write_feature_table = function(table, var_dt) {
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+      data.table::setcolorder(
+        var_dt,
+        c(
+          "feature_idx",
+          "feature_id",
+          setdiff(names(var_dt), c("feature_idx", "feature_id"))
+        )
+      )
+      DBI::dbWriteTable(con, table, var_dt, overwrite = TRUE)
+    },
     # Helper to connect to the DB
     connect_db = function() {
       # `shared_home` is not about the database file, it is where duckdb keeps
@@ -895,7 +952,10 @@ SingleCellDuckDB <- R6::R6Class(
       filter = NULL,
       cell_id_col = NULL
     ) {
-      checkmate::assertFileExists(h5_path)
+      checkmate::assert(
+        checkmate::checkFileExists(h5_path),
+        checkmate::checkDirectoryExists(h5_path)
+      )
       checkmate::qassert(filter, c("I+", "0"))
       checkmate::qassert(cell_id_col, c("S1", "0"))
 
@@ -937,7 +997,10 @@ SingleCellDuckDB <- R6::R6Class(
     #' @returns Returns invisible self. As a side effect, it will load in the
     #' var data from the h5ad file into the DuckDB.
     populate_vars_from_h5ad = function(h5_path, filter = NULL) {
-      checkmate::assertFileExists(h5_path)
+      checkmate::assert(
+        checkmate::checkFileExists(h5_path),
+        checkmate::checkDirectoryExists(h5_path)
+      )
       checkmate::qassert(filter, c("I+", "0"))
 
       parquet_path <- tempfile(fileext = ".parquet")
@@ -1260,35 +1323,28 @@ SingleCellDuckDB <- R6::R6Class(
       checkmate::qassert(filter, c("I+", "0"))
 
       var_dt <- data.table::copy(var_dt)
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
       if (!is.null(filter)) {
         var_dt <- var_dt[filter]
       }
+      private$write_feature_table("var_adt", var_dt)
 
-      data.table::setcolorder(
-        var_dt,
-        c(
-          "feature_idx",
-          "feature_id",
-          setdiff(names(var_dt), c("feature_idx", "feature_id"))
-        )
-      )
+      invisible(self)
+    },
 
-      DBI::dbWriteTable(
-        con,
-        "var_adt",
-        var_dt,
-        overwrite = TRUE
-      )
+    #' Function to populate the var_atac table from R
+    #'
+    #' @param var_dt data.table with a `feature_id` column, one row per ATAC
+    #' feature in store order. `feature_idx` is set to `1..n`.
+    #'
+    #' @returns Invisible self and populates the internal var_atac table.
+    populate_var_atac_from_data.table = function(var_dt) {
+      # checks
+      checkmate::assertDataTable(var_dt)
+      checkmate::assertSubset("feature_id", names(var_dt))
+
+      var_dt <- data.table::copy(var_dt)
+      var_dt[, feature_idx := .I]
+      private$write_feature_table("var_atac", var_dt)
 
       invisible(self)
     },

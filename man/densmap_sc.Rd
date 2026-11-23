@@ -10,7 +10,7 @@ densmap_sc(
   embd_to_use = "pca",
   slot_name = "densmap",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -39,7 +39,7 @@ Defaults to \code{"densmap"}.}
 use. If \code{NULL} all will be used.}
 
 \item{modality}{String. On which modality to run densMAP. One of
-\code{c("rna", "adt", "wnn")}. The two latter options are only available for
+\code{c("rna", "adt", "atac", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
 
 \item{n_dim}{Integer. Number of densMAP dimensions. Defaults to \code{2L}.}

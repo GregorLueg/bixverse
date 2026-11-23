@@ -19,6 +19,8 @@ use bixverse_r::single_cell::sc_processing::cellsweep::{
     run_cellsweep, CellSweepParams, CellSweepSample,
 };
 
+use crate::single_cell::utils::max_nnz;
+
 /////////////
 // extendR //
 /////////////
@@ -1084,7 +1086,7 @@ impl SingleCellCountData {
         max_mem_gb: Option<f64>,
         verbose: bool,
     ) -> Result<(), extendr_api::Error> {
-        let max_nnz = max_mem_gb.map(|gb| ((gb * 1e9) as usize / GENE_FILE_BYTES_PER_NNZ).max(1));
+        let max_nnz = max_nnz(max_mem_gb);
 
         write_gene_file(&self.f_path_cells, &self.f_path_genes, max_nnz, verbose).to_extendr()
     }
@@ -1148,7 +1150,7 @@ impl SingleCellCountData {
         max_mem_gb: Option<f64>,
         verbose: bool,
     ) -> Result<(), extendr_api::Error> {
-        let max_nnz = max_mem_gb.map(|gb| ((gb * 1e9) as usize / GENE_FILE_BYTES_PER_NNZ).max(1));
+        let max_nnz = max_nnz(max_mem_gb);
 
         restore_archive(
             f_path_archive,

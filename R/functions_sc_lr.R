@@ -1221,6 +1221,7 @@ cellphonedb_sc <- function(
   params = params_sc_cellphonedb(),
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "cellphonedb_sc()", refuse = FALSE)
   method <- match.arg(method)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(celltype_colname, "S1")

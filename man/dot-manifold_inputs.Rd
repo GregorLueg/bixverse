@@ -24,7 +24,7 @@ available in the object.}
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
 
-\item{modality}{String. One of \code{c("rna", "adt", "wnn")}.}
+\item{modality}{String. One of \code{c("rna", "adt", "atac", "wnn")}.}
 
 \item{k}{Optional integer. Neighbour count the caller asked for. Only feeds
 the mismatch warning and the returned \code{k}.}

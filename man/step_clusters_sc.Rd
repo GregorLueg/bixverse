@@ -8,7 +8,7 @@ step_clusters_sc(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
   name = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   seed = 42L,
   ...
 )
@@ -24,7 +24,7 @@ gives \code{"leiden_clustering"} or \code{"louvain_clustering"}, following
 \code{cluster_algorithm}.}
 
 \item{modality}{String. On which modality to cluster. One of
-\code{c("rna", "adt", "wnn")}. The two latter options are only available for
+\code{c("rna", "adt", "atac", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
 
 \item{seed}{Integer. For reproducibility.}

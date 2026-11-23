@@ -813,6 +813,7 @@ S7::method(load_r_data, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -1015,6 +1016,7 @@ S7::method(load_h5ad, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -1192,6 +1194,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -1453,6 +1456,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
 
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
@@ -1466,32 +1470,35 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 
 #### export --------------------------------------------------------------------
 
-#' Save a `SingleCells` object to h5ad
+#' Write a `SingleCells` object to h5ad
 #'
 #' @description
 #' Writes the counts, the DuckDB obs/var tables and whatever is cached in
-#' memory (PCA, embeddings, neighbour graph) to a spec-compliant h5ad file, so that
-#' the experiment can be handed to ScanPy or shared. The counts are streamed
-#' cell batch by cell batch and never fully materialised in R.
+#' memory (PCA, embeddings, neighbour graph) to a spec-compliant h5ad file, so
+#' that the experiment can be handed to ScanPy or shared. The counts are
+#' streamed cell batch by cell batch and never fully materialised in R.
 #'
 #' Only the cells that are currently kept are written, i.e. the export matches
 #' what `object[]` and `object[[]]` return. Counts are stored as `float32`,
-#' which is the ScanPy convention.
+#' which is the ScanPy convention. A failed write leaves no file behind.
 #'
 #' A `SingleCellsMultiModal` object inherits this method and exports its RNA
-#' modality; the ADT layer is not written.
+#' modality; the ADT and ATAC layers are not written.
 #'
 #' @param object `SingleCells` class.
 #' @param h5_path File path to write the h5ad file to.
 #' @param assay String. One of `c("raw", "norm")`. Which count assay to place
 #' in `X`.
+#' @param genes Optional character vector of gene ids or integer vector of
+#' (1-based) gene indices to write, in the column order wanted. `NULL` writes
+#' every gene.
 #' @param chunk_size Integer. Number of cells per streaming batch. Defaults to
 #' `10000L`.
 #' @param overwrite Boolean. Shall an existing file be overwritten. Defaults to
 #' `TRUE`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return Returns the path to the written file, invisibly.
+#' @returns Returns the path to the written file, invisibly.
 #'
 #' @export
 save_h5ad <- S7::new_generic(
@@ -1501,6 +1508,7 @@ save_h5ad <- S7::new_generic(
     object,
     h5_path,
     assay = c("raw", "norm"),
+    genes = NULL,
     chunk_size = 10000L,
     overwrite = TRUE,
     .verbose = TRUE
@@ -1516,29 +1524,121 @@ S7::method(save_h5ad, SingleCells) <- function(
   object,
   h5_path,
   assay = c("raw", "norm"),
+  genes = NULL,
   chunk_size = 10000L,
   overwrite = TRUE,
   .verbose = TRUE
 ) {
   assay <- match.arg(assay)
+  .save_ad(
+    object = object,
+    path = h5_path,
+    zarr = FALSE,
+    assay = assay,
+    genes = genes,
+    chunk_size = chunk_size,
+    overwrite = overwrite,
+    .verbose = .verbose
+  )
+}
 
+#' Write a `SingleCells` object to an AnnData Zarr store
+#'
+#' @description
+#' Writes what [bixverse::save_h5ad()] writes, as an AnnData Zarr (v3)
+#' directory that `anndata.read_zarr()` opens. A failed write leaves no store
+#' behind.
+#'
+#' @inheritParams save_h5ad
+#' @param zarr_path Directory to write the Zarr store to.
+#'
+#' @returns Returns the path to the written store, invisibly.
+#'
+#' @export
+save_zarr <- S7::new_generic(
+  name = "save_zarr",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    zarr_path,
+    assay = c("raw", "norm"),
+    genes = NULL,
+    chunk_size = 10000L,
+    overwrite = TRUE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method save_zarr SingleCells
+#'
+#' @export
+S7::method(save_zarr, SingleCells) <- function(
+  object,
+  zarr_path,
+  assay = c("raw", "norm"),
+  genes = NULL,
+  chunk_size = 10000L,
+  overwrite = TRUE,
+  .verbose = TRUE
+) {
+  assay <- match.arg(assay)
+  .save_ad(
+    object = object,
+    path = zarr_path,
+    zarr = TRUE,
+    assay = assay,
+    genes = genes,
+    chunk_size = chunk_size,
+    overwrite = overwrite,
+    .verbose = .verbose
+  )
+}
+
+#' The shared body of `save_h5ad()` and `save_zarr()`
+#'
+#' @param object `SingleCells` class.
+#' @param path String. The h5ad file or Zarr directory to write.
+#' @param zarr Boolean. Write an AnnData Zarr store instead of an h5ad file.
+#' @param assay String. One of `c("raw", "norm")`.
+#' @param genes Optional character vector of gene ids or integer vector of
+#' 1-based gene indices.
+#' @param chunk_size Integer. Number of cells per streaming batch.
+#' @param overwrite Boolean. Shall an existing output be overwritten.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns The written path, invisibly.
+#'
+#' @keywords internal
+.save_ad <- function(
+  object,
+  path,
+  zarr,
+  assay,
+  genes,
+  chunk_size,
+  overwrite,
+  .verbose
+) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  checkmate::qassert(h5_path, "S1")
+  checkmate::qassert(path, "S1")
+  checkmate::qassert(zarr, "B1")
   checkmate::assertChoice(assay, c("raw", "norm"))
-  checkmate::qassert(chunk_size, "I1")
-  checkmate::assertTRUE(chunk_size > 0L)
+  checkmate::qassert(genes, c("0", "S+", "X+[1,)"))
+  checkmate::qassert(chunk_size, "I1[1,)")
   checkmate::qassert(overwrite, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  h5_path <- path.expand(h5_path)
-  checkmate::assertPathForOutput(h5_path, overwrite = TRUE)
+  path <- path.expand(path)
+  checkmate::assertPathForOutput(path, overwrite = TRUE)
 
-  if (file.exists(h5_path)) {
+  if (file.exists(path)) {
     if (!overwrite) {
-      stop("The h5ad file already exists and overwrite = FALSE.")
+      stop("The output already exists and overwrite = FALSE.")
     }
-    file.remove(h5_path)
+    unlink(path, recursive = TRUE)
   }
 
   obs <- .h5ad_export_obs(object)
@@ -1554,26 +1654,46 @@ S7::method(save_h5ad, SingleCells) <- function(
 
   cache <- .h5ad_export_cache(object = object, .verbose = .verbose)
 
+  gene_idx <- NULL
+  if (!is.null(genes)) {
+    gene_idx <- if (is.character(genes)) {
+      get_gene_indices(object, gene_ids = genes, rust_index = FALSE)
+    } else {
+      as.integer(genes)
+    }
+    checkmate::assertIntegerish(
+      gene_idx,
+      lower = 1L,
+      upper = nrow(var),
+      any.missing = FALSE,
+      unique = TRUE
+    )
+    var <- var[gene_idx]
+    cache$varm <- purrr::map(cache$varm, \(m) m[gene_idx, , drop = FALSE])
+  }
+
   if (.verbose) {
     message(sprintf(
-      "Writing %i cells x %i genes to h5ad.",
+      "Writing %i cells x %i genes to %s.",
       nrow(obs),
-      nrow(var)
+      nrow(var),
+      if (zarr) "Zarr" else "h5ad"
     ))
   }
 
-  # a failed write must not leave a half written file behind that looks valid
+  # a failed write must not leave a half written output behind that looks
+  # valid
   written <- FALSE
   on.exit(
-    if (!written && file.exists(h5_path)) {
-      file.remove(h5_path)
+    if (!written && file.exists(path)) {
+      unlink(path, recursive = TRUE)
     },
     add = TRUE
   )
 
   rs_save_h5ad(
     f_path_cells = get_rust_count_cell_f_path(object),
-    h5_path = h5_path,
+    h5_path = path,
     cell_indices = as.integer(cell_indices),
     norm = assay == "norm",
     obs_index = as.character(obs[["cell_id"]]),
@@ -1584,11 +1704,13 @@ S7::method(save_h5ad, SingleCells) <- function(
     varm = cache$varm,
     obsp = cache$obsp,
     uns_json = cache$uns_json,
-    chunk_size = chunk_size
+    chunk_size = chunk_size,
+    zarr = zarr,
+    gene_indices = if (is.null(gene_idx)) NULL else as.integer(gene_idx - 1L)
   )
   written <- TRUE
 
-  invisible(h5_path)
+  invisible(path)
 }
 
 ##### export helpers -----------------------------------------------------------
@@ -1978,6 +2100,7 @@ S7::method(load_mtx, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -2155,6 +2278,7 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
 
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
@@ -2318,6 +2442,7 @@ S7::method(load_tenx_h5, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -2488,6 +2613,7 @@ S7::method(load_multi_tenx_h5, SingleCells) <- function(
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
+  .stamp_store_cell_ids(S7::prop(object, "dir_data"))
 
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
@@ -2529,6 +2655,9 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
   dir <- S7::prop(object, "dir_data")
 
   to_save <- list(sc_map = sc_map, sc_cache = sc_cache)
+  if (S7::S7_inherits(object, SingleCellsAtac)) {
+    to_save$atac_lsi <- .atac_lsi_payload(S7::prop(object, "atac_info"))
+  }
 
   if (type == "qs2") {
     if (!requireNamespace("qs2", quietly = TRUE)) {
@@ -2758,9 +2887,14 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
 
   # function body
   .check_store_version(rust_con)
+  rs_check_store_pair(
+    file.path(dir_data, "counts_cells.bin"),
+    file.path(dir_data, "counts_genes.bin")
+  )
   rust_con$set_from_file()
 
   duckdb_con <- get_sc_duckdb(object)
+  saved_atac_lsi <- NULL
 
   if (any(c("memory.qs2", "memory.rds") %in% list.files(dir_data))) {
     if (.verbose) {
@@ -2784,6 +2918,7 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
     # objects saved before a slot was added come back without it
     S7::prop(object, "sc_map") <- .migrate_sc_map(saved_data$sc_map)
     S7::prop(object, "sc_cache") <- .migrate_sc_cache(saved_data$sc_cache)
+    saved_atac_lsi <- saved_data$atac_lsi
 
     # check that memory-stored data agrees with Rust to avoid panics...
 
@@ -2821,6 +2956,9 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
     )
   }
 
+  if (S7::S7_inherits(object, SingleCellsAtac)) {
+    S7::prop(object, "atac_info") <- .read_atac_info(dir_data, saved_atac_lsi)
+  }
   return(object)
 }
 
@@ -2875,7 +3013,8 @@ S7::method(save_sc_exp_to_disk, SingleCellsMultiModal) <- function(
     adt_cache = adt_cache,
     atac_cache = atac_cache,
     adt_counts = adt_counts,
-    other_data = other_data
+    other_data = other_data,
+    atac_lsi = .atac_lsi_payload(S7::prop(object, "atac_info"))
   )
 
   if (type == "qs2") {
@@ -2913,9 +3052,23 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
   # function body
   rust_con <- get_sc_rust_ptr(object)
   .check_store_version(rust_con)
+  if (
+    rs_store_feature_kind(file.path(dir_data, "counts_cells.bin")) %in%
+      c("peak", "tile")
+  ) {
+    stop(sprintf(
+      "%s is an ATAC-only experiment; open it with SingleCellsAtac().",
+      dir_data
+    ))
+  }
+  rs_check_store_pair(
+    file.path(dir_data, "counts_cells.bin"),
+    file.path(dir_data, "counts_genes.bin")
+  )
   rust_con$set_from_file()
 
   duckdb_con <- get_sc_duckdb(object)
+  saved_atac_lsi <- NULL
 
   if (any(c("memory.qs2", "memory.rds") %in% list.files(dir_data))) {
     if (.verbose) {
@@ -2944,6 +3097,7 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
     S7::prop(object, "other_data") <- .migrate_other_data(
       saved_data$other_data
     )
+    saved_atac_lsi <- saved_data$atac_lsi
 
     if (
       (length(get_cell_names(object)) != rust_con$get_shape()[1]) |
@@ -2994,5 +3148,13 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
     )
   }
 
+  atac_dir <- file.path(dir_data, "atac")
+  if (file.exists(file.path(atac_dir, "counts_cells.bin"))) {
+    S7::prop(object, "peak_connection") <- SingleCellCountData$new(
+      f_path_cells = file.path(atac_dir, "counts_cells.bin"),
+      f_path_genes = file.path(atac_dir, "counts_genes.bin")
+    )
+    S7::prop(object, "atac_info") <- .read_atac_info(atac_dir, saved_atac_lsi)
+  }
   return(object)
 }

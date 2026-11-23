@@ -6,10 +6,28 @@ use bixverse_r::single_cell::sc_analysis::dialogue::{DialogueResult, ProgrammeSi
 use bixverse_r::single_cell::sc_analysis::nebula::NebulaScRes;
 use bixverse_r::single_cell::sc_analysis::vision::{SignatureGenes, VisionAutocorRes};
 use bixverse_r::single_cell::sc_annotation::sc_type::CellTypeMarkers;
+use bixverse_r::single_cell::sc_data::store::gene_file::GENE_FILE_BYTES_PER_NNZ;
 use bixverse_r::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgRes, HvgScranRes};
 use std::collections::HashMap;
 
 use extendr_api::*;
+
+/////////////
+// Helpers //
+/////////////
+
+/// Turn a memory budget into a cap on the non-zeros held in memory
+///
+/// ### Params
+///
+/// * `max_mem_gb` - Budget in GB, `None` for no cap
+///
+/// ### Returns
+///
+/// The cap on the non-zeros, at least 1, or `None`.
+pub fn max_nnz(max_mem_gb: Option<f64>) -> Option<usize> {
+    max_mem_gb.map(|gb| ((gb * 1e9) as usize / GENE_FILE_BYTES_PER_NNZ).max(1))
+}
 
 ///////////
 // Types //

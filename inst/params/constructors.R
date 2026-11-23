@@ -3534,3 +3534,321 @@ spec_sc_empty_droplets <- param_spec(
     )
   )
 )
+
+# atac -------------------------------------------------------------------------
+
+spec_atac_call_peaks <- param_spec(
+  name = "atac_call_peaks",
+  title = "Wrapper function for the ATAC peak calling parameters",
+  description = paste(
+    "Parameters of [bixverse::call_peaks_sc()], a native port of MACS3",
+    "`callpeak --nomodel` without a control track."
+  ),
+  references = "Zhang, et al., Genome Biol, 2008.",
+  checker = "AtacCallPeaks",
+  label = "peak calling params",
+  hint = paste(
+    "keep_dup, min_length and max_gap must be NULL or integers >= 1;",
+    "extsize and llocal must be integers >= 1; genome_size must be > 0;",
+    "q_value must be in (0, 1)."
+  ),
+  fields = list(
+    tag_source = p_choice(
+      "insertion",
+      c("insertion", "fragment_start"),
+      doc = paste(
+        "`\"insertion\"` takes both Tn5 insertions of a fragment,",
+        "`\"fragment_start\"` the fragment start only, which is what MACS",
+        "reads from the fragment file Signac hands it."
+      )
+    ),
+    keep_dup = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Tags kept per position. `NULL` keeps all. MACS's default, and so",
+        "Signac's, is 1."
+      )
+    ),
+    shift = p_int(-100L, doc = "Tag shift before extension (`--shift`)."),
+    extsize = p_int(
+      200L,
+      range = "[1,)",
+      doc = "Tag extension, the fragment size (`--extsize`)."
+    ),
+    genome_size = p_dbl(
+      2.7e9,
+      range = "(0,)",
+      doc = paste(
+        "Effective genome size (`-g`). The default is Signac's, MACS3's own",
+        "`hs` is 2.913e9."
+      )
+    ),
+    llocal = p_int(
+      10000L,
+      range = "[1,)",
+      doc = "Window of the local lambda (`--llocal`)."
+    ),
+    q_value = p_dbl(0.05, range = "(0,1)", doc = "q-value cutoff (`-q`)."),
+    min_length = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = "Minimum peak length. `NULL` uses `extsize`."
+    ),
+    max_gap = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Largest gap merged into a peak. `NULL` uses MACS's tag size: 1 for",
+        "insertions, the mean length of the group's first fragments for",
+        "fragment starts."
+      )
+    )
+  )
+)
+
+spec_atac_amulet <- param_spec(
+  name = "atac_amulet",
+  title = "Wrapper function for the AMULET parameters",
+  description = paste(
+    "Parameters of [bixverse::amulet_sc()], multiplet detection from",
+    "fragment overlaps."
+  ),
+  references = "Thibodeau, et al., Genome Biol, 2021.",
+  checker = "AtacAmulet",
+  label = "AMULET params",
+  hint = paste(
+    "max_overlap and max_fragment_len must be integers >= 1; repeat_q and",
+    "multiplet_q must be in (0, 1); chroms must be NULL or a character",
+    "vector; count_trailing_loci must be a boolean."
+  ),
+  fields = list(
+    max_overlap = p_int(
+      2L,
+      range = "[1,)",
+      doc = "Overlapping fragments a cell can explain; 2 for diploid."
+    ),
+    max_fragment_len = p_int(
+      900L,
+      range = "[1,)",
+      doc = "Longest valid fragment."
+    ),
+    repeat_q = p_dbl(
+      0.01,
+      range = "(0,1)",
+      doc = "q-value under which a site is a repeat."
+    ),
+    multiplet_q = p_dbl(
+      0.01,
+      range = "(0,1)",
+      doc = "q-value under which a cell is a multiplet."
+    ),
+    chroms = p_chr(
+      NULL,
+      null_ok = TRUE,
+      len = "+",
+      doc = "Chromosomes to use. `NULL` uses the autosomes."
+    ),
+    count_trailing_loci = p_lgl(
+      FALSE,
+      doc = paste(
+        "Count a cell's last loci on the last chromosome used, which the",
+        "reference implementation drops."
+      )
+    )
+  )
+)
+
+spec_atac_gene_activity <- param_spec(
+  name = "atac_gene_activity",
+  title = "Wrapper function for the gene activity parameters",
+  description = paste(
+    "Parameters of [bixverse::gene_activity_sc()], Signac's",
+    "`GeneActivity()`: per gene, the longest span of its biotype, under",
+    "`max_width`, extended `upstream` of the TSS."
+  ),
+  references = "Stuart, et al., Nat Methods, 2021.",
+  checker = "AtacGeneActivity",
+  label = "gene activity params",
+  hint = paste(
+    "upstream and downstream must be integers >= 0; max_width must be an",
+    "integer >= 1; biotypes must be NULL or a character vector."
+  ),
+  fields = list(
+    upstream = p_int(
+      2000L,
+      range = "[0,)",
+      doc = "Bases added upstream of the TSS."
+    ),
+    downstream = p_int(
+      0L,
+      range = "[0,)",
+      doc = "Bases added downstream of the gene end."
+    ),
+    max_width = p_int(
+      500000L,
+      range = "[1,)",
+      doc = "Genes this long or longer are dropped."
+    ),
+    biotypes = p_chr(
+      "protein_coding",
+      null_ok = TRUE,
+      len = "+",
+      doc = "Gene biotypes to keep. `NULL` keeps all."
+    )
+  )
+)
+
+spec_atac_lsi <- param_spec(
+  name = "atac_lsi",
+  title = "Wrapper function for the ATAC LSI parameters",
+  description = paste(
+    "Parameters of [bixverse::calculate_lsi_sc()], Signac's `RunSVD()` on",
+    "the TF-IDF."
+  ),
+  checker = "AtacLsi",
+  label = "LSI params",
+  hint = paste(
+    "n_comp must be an integer >= 2; drop_first must be a boolean;",
+    "scale_max must be NULL or > 0."
+  ),
+  fields = list(
+    n_comp = p_int(50L, range = "[2,)", doc = "Components to compute."),
+    drop_first = p_lgl(
+      TRUE,
+      doc = paste(
+        "Leave component 1 out of the embedding. It usually tracks",
+        "sequencing depth; [bixverse::get_lsi_depth_cor()] shows whether it",
+        "does."
+      )
+    ),
+    solver = p_choice(
+      "auto",
+      c("auto", "exact", "randomised", "covariance"),
+      doc = "SVD solver, see [bixverse::params_sc_pca()] for the trade-offs."
+    ),
+    scale_max = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = "Clip the z-scored components to `+-scale_max`."
+    )
+  )
+)
+
+spec_atac_rlsi <- param_spec(
+  name = "atac_rlsi",
+  title = "Wrapper function for the rLSI integration parameters",
+  description = paste(
+    "Parameters of [bixverse::run_rlsi_sc()], Signac's",
+    "`FindIntegrationAnchors(reduction = \"rlsi\")` followed by",
+    "`IntegrateEmbeddings()`."
+  ),
+  references = "Stuart, et al., Nat Methods, 2021.",
+  checker = "AtacRlsi",
+  label = "rLSI params",
+  hint = paste(
+    "dims must be integers >= 1; n_comp, k_anchor, k_score and k_weight",
+    "must be integers >= 1; sd must be > 0; l2_norm must be a boolean."
+  ),
+  fields = list(
+    dims = p_int(
+      2L:30L,
+      range = "[1,)",
+      len = "+",
+      doc = paste(
+        "Per-batch LSI components the anchors use, 1-based. The default is",
+        "Signac's `dims = 2:30`."
+      )
+    ),
+    n_comp = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Components of the per-batch LSIs; must reach `max(dims)`."
+    ),
+    k_anchor = p_int(5L, range = "[1,)", doc = "Neighbours for the anchors."),
+    k_score = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Neighbours for the anchor scores."
+    ),
+    k_weight = p_int(
+      100L,
+      range = "[1,)",
+      doc = "Anchors per cell in the correction weights."
+    ),
+    sd = p_dbl(1, range = "(0,)", doc = "Bandwidth divisor of the weights."),
+    l2_norm = p_lgl(
+      TRUE,
+      doc = "Scale and L2 normalise the anchor spaces."
+    ),
+    solver = p_choice(
+      "auto",
+      c("auto", "exact", "randomised", "covariance"),
+      doc = "SVD solver of the per-batch LSIs."
+    ),
+    knn = p_merge(
+      "knn_defaults",
+      doc = paste(
+        "Optional overrides for kNN parameters. See",
+        "[bixverse::params_knn_defaults()] for available parameters. Only",
+        "the backend is used; the neighbour counts are `k_anchor`,",
+        "`k_score` and `k_weight`."
+      )
+    )
+  )
+)
+
+spec_sc_seurat_transfer <- param_spec(
+  name = "sc_seurat_transfer",
+  title = "Wrapper function for the Seurat label transfer parameters",
+  description = paste(
+    "Parameters of [bixverse::transfer_labels_seurat_sc()], Seurat's",
+    "`FindTransferAnchors(reduction = \"cca\")` followed by",
+    "`TransferData()`."
+  ),
+  references = "Stuart, et al., Cell, 2019.",
+  checker = "ScSeuratTransfer",
+  label = "Seurat transfer params",
+  hint = paste(
+    "n_cc, k_anchor, k_score and k_weight must be integers >= 1; scale_max",
+    "and sd must be > 0; l2_norm must be a boolean."
+  ),
+  fields = list(
+    n_cc = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Canonical correlation vectors."
+    ),
+    k_anchor = p_int(5L, range = "[1,)", doc = "Neighbours for the anchors."),
+    k_score = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Neighbours for the anchor scores."
+    ),
+    scale_max = p_dbl(
+      10,
+      range = "(0,)",
+      doc = "Clip of the scaled features."
+    ),
+    l2_norm = p_lgl(TRUE, doc = "L2 normalise the CCA space."),
+    k_weight = p_int(
+      50L,
+      range = "[1,)",
+      doc = "Anchors per query cell in the weights."
+    ),
+    sd = p_dbl(1, range = "(0,)", doc = "Bandwidth divisor of the weights."),
+    knn = p_merge(
+      "knn_defaults",
+      doc = paste(
+        "Optional overrides for kNN parameters. See",
+        "[bixverse::params_knn_defaults()] for available parameters. Only",
+        "the backend is used; the neighbour counts are `k_anchor`,",
+        "`k_score` and `k_weight`."
+      )
+    )
+  )
+)

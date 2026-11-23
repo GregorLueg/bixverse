@@ -861,18 +861,11 @@ S7::method(get_sc_var, SingleCells) <- function(
   object,
   indices = NULL,
   cols = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 ) {
   modality <- match.arg(modality)
 
-  if (modality != "rna") {
-    stop(
-      paste(
-        "MetaCells only supports modality = 'rna'.",
-        "Use SingleCellsMultiModal for ADT."
-      )
-    )
-  }
+  modality <- .resolve_modality(object, modality)
 
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -987,20 +980,13 @@ S7::method(get_sc_counts, SingleCells) <- function(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   .verbose = TRUE
 ) {
   assay <- match.arg(assay)
   return_format <- match.arg(return_format)
   modality <- match.arg(modality)
-  if (modality != "rna") {
-    stop(
-      paste(
-        "SingleCells only supports modality = 'rna'.",
-        "Use SingleCellsMultiModal for ADT."
-      )
-    )
-  }
+  modality <- .resolve_modality(object, modality)
 
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -2116,6 +2102,9 @@ S7::method(set_cells_to_keep, SingleCells) <- function(
   duckdb_con$set_cells_to_keep(
     cell_idx_to_keep = as.integer(get_cells_to_keep(x) + 1)
   )
+  if (S7::S7_inherits(x, SingleCellsAtac)) {
+    .sync_gene_activity_filter(x)
+  }
 
   # anything cached was computed against the old cell set. say so now rather
   # than letting it surface three calls later in Rust. deliberately
@@ -2157,6 +2146,9 @@ S7::method(reset_cells_to_keep, SingleCells) <- function(
 
   object <- .reset_sc_cells(object)
   S7::prop(object, "sc_cache") <- new_sc_cache()
+  if (S7::S7_inherits(object, SingleCellsAtac)) {
+    .sync_gene_activity_filter(object)
+  }
 
   return(object)
 }

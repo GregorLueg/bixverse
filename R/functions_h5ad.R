@@ -35,7 +35,10 @@ detect_raw_count_slot <- function(
   n_sample = 10000L,
   threshold = 0.99
 ) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
   candidates <- match.arg(
     candidates,
     c("layers.counts", "raw.X", "X"),
@@ -225,7 +228,10 @@ prescan_h5ad_files <- function(
 #'
 #' unlink(f_path)
 get_h5ad_dimensions <- function(f_path) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
 
   res <- rs_h5ad_dimensions(f_path = f_path)
 
@@ -266,7 +272,10 @@ get_h5ad_dimensions <- function(f_path) {
 #'
 #' unlink(f_path)
 read_h5ad_metadata <- function(f_path) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
 
   meta <- get_h5ad_dimensions(f_path)
 
@@ -325,7 +334,10 @@ read_h5ad_metadata <- function(f_path) {
 #'
 #' unlink(f_path)
 read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
 
   meta <- get_h5ad_dimensions(f_path)
 

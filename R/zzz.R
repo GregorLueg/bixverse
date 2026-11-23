@@ -40,7 +40,8 @@
     "GeneTrendsRes",
     "ScSpecificMarkers",
     "ScNebula",
-    "ScResidualFit"
+    "ScResidualFit",
+    "AtacInfo"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))

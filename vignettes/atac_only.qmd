@@ -1,0 +1,314 @@
+---
+title: "Single cell ATAC without RNA"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Single cell ATAC without RNA}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+Most single cell ATAC data has no RNA next to it: Cell Ranger ATAC runs, or
+public fragment files. This vignette starts from a fragment file alone: cells
+called from the fragment counts, QC and multiplets, peaks per cluster, TF-IDF
+and LSI, clusters and differential accessibility, then gene activity and
+labels transferred from an RNA reference.
+
+The fragments are the ATAC half of the 10x PBMC 3k multiome used in the
+[multiome vignette](https://gregorlueg.github.io/bixverse/articles/atac_multiome.html).
+That has a use here: its RNA half is a reference built from the very same
+nuclei, so we can check the transferred labels against the RNA clusters of
+each cell, which a real ATAC-only data set cannot offer.
+
+An ATAC-only experiment is a `SingleCellsAtac`: its own store holds the peaks
+or tiles, and the ATAC functions take it exactly as they take the ATAC side of
+a `SingleCellsMultiModal`. `modality = "atac"` and the default both name its
+store.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(bixverse.plots)
+library(patchwork)
+library(ggplot2)
+library(data.table)
+```
+
+```{r}
+#| label: paths
+data_dir <- download_pbmc_multiome()
+fragments <- file.path(data_dir, "pbmc_unsorted_3k_atac_fragments.tsv.gz")
+gtf <- file.path(data_dir, "gencode.v32.primary_assembly.annotation.gtf.gz")
+blacklist <- file.path(data_dir, "hg38-blacklist.v2.bed.gz")
+cr_peaks <- file.path(data_dir, "pbmc_unsorted_3k_atac_peaks.bed")
+h5_path <- file.path(data_dir, "pbmc_unsorted_3k_filtered_feature_bc_matrix.h5")
+
+new_dir <- function(name) {
+  path <- file.path(tempdir(), name)
+  dir.create(path, showWarnings = FALSE)
+  path
+}
+```
+
+## Calling cells
+
+Without a barcode list the cells come from the fragment counts: real cells
+carry thousands of fragments, empty droplets a handful. The knee plot of
+fragments per barcode, sorted, shows where the two meet. With Cell Ranger
+ATAC output, `cellranger = "singlecell.csv"` takes its calls instead.
+
+```{r}
+#| label: knee plot
+counts <- barcode_fragment_counts(fragments)
+counts[, rank := seq_len(.N)]
+
+ggplot(counts, aes(x = rank, y = n_fragments)) +
+  geom_line() +
+  geom_hline(yintercept = 3000, linetype = "dashed", colour = "grey") +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(x = "Barcode rank", y = "Fragments") +
+  theme_bx()
+```
+
+The knee sits near 3,000 fragments. We call cells there and count them into
+the peaks Cell Ranger called on all cells pooled, which every Cell Ranger ATAC
+run ships. They are good enough to cluster on; better peaks come from the
+clusters below.
+
+```{r}
+#| label: first load
+first <- load_atac_fragments(
+  SingleCellsAtac(dir_data = new_dir("atac_first")),
+  fragments = fragments,
+  peaks = cr_peaks,
+  min_fragments = 3000L,
+  .verbose = FALSE
+)
+
+first
+```
+
+## Quality control
+
+The same metrics as with RNA next to it: fragments, nucleosome signal, TSS
+enrichment, and AMULET's multiplet calls, which need nothing but the
+fragments.
+
+```{r}
+#| label: qc
+#| fig-width: 10
+#| fig-height: 3.6
+first <- fragment_qc_sc(first, fragments = fragments, gtf = gtf)
+first <- amulet_sc(first, fragments = fragments, restrict_beds = blacklist)
+profiles <- fragment_profiles_sc(first, fragments = fragments, gtf = gtf)
+
+p_tss <- ggplot(profiles$tss, aes(x = offset, y = enrichment)) +
+  geom_line() +
+  labs(x = "Distance to TSS (bp)", y = "TSS enrichment") +
+  theme_bx()
+p_len <- ggplot(profiles$lengths, aes(x = length, y = fraction)) +
+  geom_line() +
+  labs(x = "Fragment length (bp)", y = "Fraction of fragments") +
+  theme_bx()
+
+p_tss + p_len
+```
+
+```{r}
+#| label: filter
+obs <- first[[c(
+  "cell_id",
+  "atac_n_fragments",
+  "atac_nucleosome_signal",
+  "atac_tss_enrichment",
+  "amulet_multiplet"
+)]]
+keep <- obs$atac_nucleosome_signal < 2 &
+  obs$atac_tss_enrichment > 2 &
+  !obs$amulet_multiplet
+sprintf("keeping %i of %i cells", sum(keep), nrow(obs))
+
+first <- set_cells_to_keep(first, obs$cell_id[keep])
+```
+
+## First clusters
+
+TF-IDF, LSI and Leiden on Cell Ranger's peaks give the clusters to call peaks
+on.
+
+```{r}
+#| label: first clusters
+first <- run_tfidf_sc(first)
+first <- find_top_features_sc(first, min_cutoff = "q25")
+first <- calculate_lsi_sc(
+  first,
+  lsi_params = params_atac_lsi(n_comp = 30L),
+  .verbose = FALSE
+)
+first <- find_neighbours_sc(first, embd_to_use = "lsi", .verbose = FALSE)
+first <- find_clusters_sc(first, res = 0.8, .verbose = FALSE)
+```
+
+## Peaks
+
+Peaks per cluster, merged, blacklist and contigs dropped, then the fragments
+counted against them into the experiment we keep, for the cells that passed
+QC.
+
+```{r}
+#| label: peaks
+peaks <- call_peaks_sc(
+  first,
+  fragments = fragments,
+  group_by = "leiden_clustering"
+)
+peaks <- peaks[grepl("^chr[0-9XY]+$", chrom)]
+peaks <- remove_blacklisted(peaks, blacklist)
+
+atac <- load_atac_fragments(
+  SingleCellsAtac(dir_data = new_dir("atac_peaks")),
+  fragments = fragments,
+  peaks = peaks,
+  barcodes = get_cell_names(first, filtered = TRUE),
+  .verbose = FALSE
+)
+atac <- fragment_qc_sc(atac, fragments = fragments, gtf = gtf)
+atac <- annotate_peaks_sc(atac, gtf = gtf)
+
+atac
+```
+
+## TF-IDF, LSI, clusters
+
+```{r}
+#| label: lsi
+atac <- run_tfidf_sc(atac)
+atac <- find_top_features_sc(atac, min_cutoff = "q25")
+atac <- calculate_lsi_sc(atac, .verbose = FALSE)
+
+ggplot(
+  get_lsi_depth_cor(atac),
+  aes(x = component, y = depth_cor, shape = dropped)
+) +
+  geom_point() +
+  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 1)) +
+  labs(x = "LSI component", y = "Correlation with depth") +
+  theme_bx()
+```
+
+```{r}
+#| label: clusters
+atac <- find_neighbours_sc(
+  atac,
+  embd_to_use = "lsi",
+  no_embd_to_use = 30L,
+  .verbose = FALSE
+)
+atac <- find_clusters_sc(atac, res = 0.8, .verbose = FALSE)
+atac <- umap_sc(atac, embd_to_use = "lsi", .verbose = FALSE)
+
+embedding_plot_sc(
+  atac,
+  embedding = "umap",
+  colour_by = "leiden_clustering",
+  discrete = TRUE,
+  point_size = 0.5
+)
+```
+
+## Differential accessibility
+
+On an ATAC experiment the marker functions test peaks by default, with the
+logistic regression that takes the library size as covariate. As in the
+multiome vignette, treat the p-values as a ranking.
+
+```{r}
+#| label: differential accessibility
+da <- find_all_markers_sc(
+  atac,
+  column_of_interest = "leiden_clustering",
+  .verbose = FALSE
+)
+annotation <- get_sc_var(atac, cols = c("gene_id", "closest_gene"))
+setnames(annotation, "gene_id", "feature_id")
+da <- merge(da, annotation, by = "feature_id", all.x = TRUE)
+
+head(da[fdr < 0.05][order(-lfc)], 10)
+```
+
+## Labels from an RNA reference
+
+Gene activity puts the ATAC cells in gene space, where an RNA reference can
+meet them. The reference here is the RNA of the same 3k nuclei, clustered the
+usual way; in practice it would be any annotated RNA data set of the tissue.
+
+```{r}
+#| label: rna reference
+rna <- load_tenx_h5(
+  SingleCells(dir_data = new_dir("atac_rna")),
+  h5_path = h5_path,
+  .verbose = FALSE
+)
+rna <- find_hvg_sc(rna, hvg_no = 2000L, .verbose = FALSE)
+rna <- calculate_pca_sc(rna, no_pcs = 30L, .verbose = FALSE)
+rna <- find_neighbours_sc(rna, .verbose = FALSE)
+rna <- find_clusters_sc(
+  rna,
+  res = 0.8,
+  name = "rna_cluster",
+  .verbose = FALSE
+)
+```
+
+```{r}
+#| label: transfer
+ga <- gene_activity_sc(atac, fragments = fragments, gtf = gtf, .verbose = FALSE)
+
+transfer <- transfer_labels_seurat_sc(
+  reference = rna,
+  query = ga,
+  label_column = "rna_cluster",
+  weight_embedding = get_embedding(atac, "lsi"),
+  .verbose = FALSE
+)
+```
+
+Each ATAC cell's predicted cluster against the RNA cluster of the same
+barcode:
+
+```{r}
+#| label: agreement
+truth <- rna[[c("cell_id", "rna_cluster")]]
+pred <- merge(
+  transfer[, .(cell_id, predicted = predicted_rna_cluster)],
+  truth,
+  by = "cell_id"
+)
+sprintf(
+  "%i shared cells; the transferred label is right for %.1f%%",
+  nrow(pred),
+  100 * mean(pred$predicted == as.character(pred$rna_cluster))
+)
+```
+
+```{r}
+#| label: predicted labels on the umap
+umap_dt <- data.table(
+  get_embedding(atac, "umap"),
+  predicted = transfer$predicted_rna_cluster
+)
+setnames(umap_dt, 1:2, c("UMAP_1", "UMAP_2"))
+
+ggplot(umap_dt, aes(UMAP_1, UMAP_2, colour = predicted)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  theme_bx()
+```

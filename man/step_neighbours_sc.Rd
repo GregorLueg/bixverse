@@ -7,7 +7,7 @@
 step_neighbours_sc(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
@@ -20,7 +20,7 @@ needs to be part of the object.}
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
 
-\item{modality}{String. One of \code{c("rna", "adt")}. You can only use \code{"adt"}
+\item{modality}{String. One of \code{c("rna", "adt", "atac")}. You can only use \code{"adt"}
 on \code{SingleCellsMultiModal} class.}
 
 \item{neighbours_params}{List. Output of \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.

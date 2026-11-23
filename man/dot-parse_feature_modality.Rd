@@ -7,8 +7,8 @@
 .parse_feature_modality(feature, default_modality)
 }
 \arguments{
-\item{feature}{String. Feature id, optionally suffixed with \verb{_rna} or
-\verb{_adt}.}
+\item{feature}{String. Feature id, optionally suffixed with \verb{_rna},
+\verb{_adt} or \verb{_atac}.}
 
 \item{default_modality}{String. Modality used when no suffix is present.}
 }

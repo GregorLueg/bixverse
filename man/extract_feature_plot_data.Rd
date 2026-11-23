@@ -11,8 +11,8 @@ extract_feature_plot_data(
   scale = FALSE,
   clip = NULL,
   obs_col = NULL,
-  expr_modality = c("rna", "adt"),
-  embd_modality = c("rna", "adt", "wnn"),
+  expr_modality = c("rna", "adt", "atac"),
+  embd_modality = c("rna", "adt", "atac", "wnn"),
   layer = c("norm", "magic"),
   ...
 )
@@ -32,10 +32,10 @@ extract_feature_plot_data(
 \item{obs_col}{Optional character vector. Obs columns to attach.}
 
 \item{expr_modality}{String. Modality the expression is pulled from. One of
-\code{c("rna", "adt")}.}
+\code{c("rna", "adt", "atac")}.}
 
 \item{embd_modality}{String. Modality the embedding is pulled from. One of
-\code{c("rna", "adt", "wnn")}. Use \code{"wnn"} for WNN-derived embeddings.}
+\code{c("rna", "adt", "atac", "wnn")}. Use \code{"wnn"} for WNN-derived embeddings.}
 
 \item{layer}{String. One of \code{c("norm", "magic")}, forwarded to
 \code{\link[=extract_gene_expression]{extract_gene_expression()}}. Use \code{"magic"} to colour the embedding by the

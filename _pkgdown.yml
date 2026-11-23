@@ -89,6 +89,10 @@ navbar:
           href: articles/cell_type_annotation.html
         - text: "Multi-modal analysis"
           href: articles/multi_modal_single_cells.html
+        - text: "Joint RNA and ATAC (multiome)"
+          href: articles/atac_multiome.html
+        - text: "ATAC without RNA"
+          href: articles/atac_only.html
         - text: -------
         - text: "Others"
         - text: Analysing 1 million cells on a laptop
@@ -149,6 +153,8 @@ articles:
       - bonsai
       - single_cell_big_data
       - multi_modal_single_cells
+      - atac_multiome
+      - atac_only
       - single_cell_visualisation
       - cell_type_annotation
       - ligand_receptor
@@ -493,6 +499,7 @@ reference:
       - read_h5ad_metadata
       - read_h5ad_x_summary
       - save_h5ad
+      - save_zarr
       - save_sc_exp_to_disk
       - archive_sc_exp
       - upgrade_sc_store
@@ -656,6 +663,41 @@ reference:
       - params_dialogue_pmd
       - params_dialogue_hlm
       - params_dialogue_refine
+  # Single cell ATAC
+  - title: Single cell ATAC
+    desc:
+      ATAC-only experiments and ATAC next to the RNA. Loading from fragment
+      files or 10x peak matrices, fragment QC, multiplets, peak calling, TF-IDF
+      and LSI, integration, gene activity and peak to gene links.
+    contents:
+      - SingleCellsAtac
+      - load_atac_fragments
+      - load_atac_tenx
+      - add_atac_tenx_sc
+      - add_atac_fragments_sc
+      - barcode_fragment_counts
+      - read_cellranger_barcodes
+      - merge_fragments
+      - fragment_qc_sc
+      - fragment_profiles_sc
+      - amulet_sc
+      - params_atac_amulet
+      - call_peaks_sc
+      - params_atac_call_peaks
+      - remove_blacklisted
+      - annotate_peaks_sc
+      - run_tfidf_sc
+      - find_top_features_sc
+      - calculate_lsi_sc
+      - params_atac_lsi
+      - get_lsi_depth_cor
+      - project_lsi_sc
+      - run_rlsi_sc
+      - params_atac_rlsi
+      - gene_activity_sc
+      - get_gene_activity
+      - params_atac_gene_activity
+      - peak_to_gene_sc
   # Single cell analysis
   - title: Single cell multi-modal analysis methods
     desc: 
@@ -690,6 +732,8 @@ reference:
       - add_symphony_labels
       - build_symphony_ref
       - transfer_labels_symphony
+      - transfer_labels_seurat_sc
+      - params_sc_seurat_transfer
       - get_symphony_hvg_names
       - get_symphony_labels
       - get_symphony_loadings
@@ -793,6 +837,7 @@ reference:
       - download_demuxlet_pbmc
       - download_pbmc_batches
       - download_pbmc_totalseq_data
+      - download_pbmc_multiome
       - download_pbmc8k
       - download_pbmc_1k_5p
       - calculate_sparsity_stats

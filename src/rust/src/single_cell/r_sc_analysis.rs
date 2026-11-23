@@ -7,6 +7,9 @@ use bixverse_r::prelude::*;
 use bixverse_r::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
 use bixverse_r::single_cell::sc_analysis::{
     cellphonedb::*,
+    dge_lr::{
+        calculate_dge_grps_lr, calculate_dge_one_vs_many_lr, calculate_dge_one_vs_rest_lr, DgeLrRes,
+    },
     dge_pathway_scores::*,
     dialogue::{dialogue_run, DialogueParams},
     hotspot::*,
@@ -45,6 +48,9 @@ extendr_module! {
     fn rs_calculate_dge_mann_whitney;
     fn rs_calculate_dge_one_vs_rest;
     fn rs_calculate_dge_one_vs_many;
+    fn rs_calculate_dge_lr;
+    fn rs_calculate_dge_one_vs_rest_lr;
+    fn rs_calculate_dge_one_vs_many_lr;
     // aucell
     fn rs_aucell;
     fn rs_regulon_thresholds;
@@ -375,7 +381,21 @@ fn rs_calculate_dge_one_vs_many(
     )
     .to_extendr()?;
 
-    let n_groups = groups.len();
+    Ok(one_vs_many_to_r_list(groups.len(), &references, &arms))
+}
+
+/// Flatten one-vs-many marker results into an R list
+///
+/// ### Params
+///
+/// * `n_groups` - Number of cell groups
+/// * `references` - 0-based positions of the reference groups
+/// * `arms` - One result per reference, in reference order
+///
+/// ### Returns
+///
+/// The list described in [rs_calculate_dge_one_vs_many].
+fn one_vs_many_to_r_list(n_groups: usize, references: &[usize], arms: &[DgeAurocMultiRes]) -> List {
     let genes_to_keep = arms
         .first()
         .map(|a| a.genes_to_keep.clone())
@@ -386,7 +406,7 @@ fn rs_calculate_dge_one_vs_many(
     let mut rival: Vec<i32> = Vec::new();
     let mut summary_reference: Vec<i32> = Vec::new();
     let mut worst_rival: Vec<i32> = Vec::new();
-    for (&r, arm) in references.iter().zip(&arms) {
+    for (&r, arm) in references.iter().zip(arms) {
         let rivals: Vec<usize> = (0..n_groups).filter(|&k| k != r).collect();
         for &k in &rivals {
             reference.extend(std::iter::repeat_n(r as i32, n_kept));
@@ -419,7 +439,7 @@ fn rs_calculate_dge_one_vs_many(
         .flat_map(|a| a.min_rank.iter().map(|&x| x as i32))
         .collect();
 
-    Ok(list!(
+    list!(
         reference = reference,
         rival = rival,
         auroc = per_comp_f32(|a| &a.auroc),
@@ -441,7 +461,239 @@ fn rs_calculate_dge_one_vs_many(
         max_p = summary_f64(|a| &a.max_p),
         max_p_fdr = summary_f64(|a| &a.max_p_fdr),
         genes_to_keep = genes_to_keep
+    )
+}
+
+/// Flatten per-group logistic regression results into an R list
+///
+/// ### Params
+///
+/// * `arms` - One result per group, in group order
+///
+/// ### Returns
+///
+/// The list described in [rs_calculate_dge_one_vs_rest_lr].
+fn lr_arms_to_r_list(arms: &[DgeLrRes]) -> List {
+    let mut group: Vec<i32> = Vec::new();
+    let mut gene_idx: Vec<i32> = Vec::new();
+    for (g, arm) in arms.iter().enumerate() {
+        for (gene, _) in arm.genes_to_keep.iter().enumerate().filter(|(_, &k)| k) {
+            group.push(g as i32);
+            gene_idx.push(gene as i32);
+        }
+    }
+    let concat_f32 = |f: fn(&DgeLrRes) -> &Vec<f32>| -> Vec<f64> {
+        arms.iter()
+            .flat_map(|a| f(a).iter().map(|&x| x as f64))
+            .collect()
+    };
+    let concat_f64 = |f: fn(&DgeLrRes) -> &Vec<f64>| -> Vec<f64> {
+        arms.iter().flat_map(|a| f(a).iter().copied()).collect()
+    };
+    list!(
+        group = group,
+        gene_idx = gene_idx,
+        lfc = concat_f32(|a| &a.lfc),
+        prop1 = concat_f32(|a| &a.prop1),
+        prop2 = concat_f32(|a| &a.prop2),
+        z_scores = concat_f64(|a| &a.z_scores),
+        p_values = concat_f64(|a| &a.p_vals),
+        fdr = concat_f64(|a| &a.fdr)
+    )
+}
+
+/// Every cell's library size, the latent covariate of the logistic
+/// regression tests
+///
+/// ### Params
+///
+/// * `f_path_cell` - The cell-based binary
+///
+/// ### Returns
+///
+/// The library sizes as `f64`.
+fn store_library_sizes(f_path_cell: &str) -> extendr_api::Result<Vec<f64>> {
+    let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+    let cells: Vec<usize> = (0..reader.dims().total_cells).collect();
+    let lib = reader.read_cell_library_sizes(&cells).to_extendr()?;
+    Ok(lib.into_iter().map(|l| l as f64).collect())
+}
+
+/// Calculate DGEs between cells with a logistic regression test
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Seurat's `LRDETest()` with the library size as the latent variable: a
+/// logistic regression of group membership on the gene and the library size,
+/// against one on the library size alone, compared by a likelihood ratio
+/// test. The default marker test for ATAC data.
+///
+/// @param f_path_cell String. Path to the `counts_cells.bin` file, for the
+/// library sizes.
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param cell_indices_1 Integer. Index positions (0-indexed) of the cells
+/// of group 1.
+/// @param cell_indices_2 Integer. Index positions (0-indexed) of the cells
+/// of group 2.
+/// @param min_prop Numeric. Minimum proportion of expression in at least one
+/// of the two groups to be tested.
+/// @param alternative String. One of `c("twosided", "greater", "less")`. Null
+/// hypothesis.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following elements
+/// \itemize{
+///   \item lfc - Log fold changes between the two groups.
+///   \item prop1 - Proportion of cells expressing the gene in group 1.
+///   \item prop2 - Proportion of cells expressing the gene in group 2.
+///   \item z_scores - Signed root of the likelihood ratio statistic.
+///   \item p_values - P-values of the likelihood ratio test.
+///   \item fdr - False discovery rate after BH adjustment
+///   \item genes_to_keep - Boolean indicating which genes were tested.
+/// }
+///
+/// @export
+///
+/// @references Ntranos, et al., Nat Methods, 2019
+///
+/// @keywords internal
+#[extendr]
+fn rs_calculate_dge_lr(
+    f_path_cell: String,
+    f_path_gene: String,
+    cell_indices_1: &[i32],
+    cell_indices_2: &[i32],
+    min_prop: f64,
+    alternative: String,
+    verbose: usize,
+) -> extendr_api::Result<List> {
+    let c1 = cell_indices_1.r_int_convert();
+    let c2 = cell_indices_2.r_int_convert();
+    let latent = store_library_sizes(&f_path_cell)?;
+    let reader = ParallelSparseReader::new(&f_path_gene).to_extendr()?;
+    let res = calculate_dge_grps_lr(
+        &reader,
+        &c1,
+        &c2,
+        &latent,
+        min_prop as f32,
+        &alternative,
+        verbose,
+    )
+    .to_extendr()?;
+    Ok(list!(
+        lfc = res.lfc.iter().map(|&x| x as f64).collect::<Vec<f64>>(),
+        prop1 = res.prop1.iter().map(|&x| x as f64).collect::<Vec<f64>>(),
+        prop2 = res.prop2.iter().map(|&x| x as f64).collect::<Vec<f64>>(),
+        z_scores = res.z_scores,
+        p_values = res.p_vals,
+        fdr = res.fdr,
+        genes_to_keep = res.genes_to_keep
     ))
+}
+
+/// Calculate one-vs-rest logistic regression DGEs for every cell group
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The logistic regression twin of [rs_calculate_dge_one_vs_rest()].
+///
+/// @param f_path_cell String. Path to the `counts_cells.bin` file, for the
+/// library sizes.
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param cell_groups List. List of integer vectors, each containing the index
+/// positions (0-indexed) of the cells of one group.
+/// @param min_prop Numeric. Minimum proportion of expression in the group or in
+/// the rest to be tested.
+/// @param alternative String. One of `c("twosided", "greater", "less")`. Null
+/// hypothesis.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with `group`, `gene_idx` (both 0-indexed), `lfc`,
+/// `prop1`, `prop2`, `z_scores`, `p_values` and `fdr`, one entry per tested
+/// gene and group, flattened group-major.
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_calculate_dge_one_vs_rest_lr(
+    f_path_cell: String,
+    f_path_gene: String,
+    cell_groups: List,
+    min_prop: f64,
+    alternative: String,
+    verbose: usize,
+) -> extendr_api::Result<List> {
+    let groups = r_cell_groups_to_rust(&cell_groups)?;
+    let latent = store_library_sizes(&f_path_cell)?;
+    let reader = ParallelSparseReader::new(&f_path_gene).to_extendr()?;
+    let arms = calculate_dge_one_vs_rest_lr(
+        &reader,
+        &groups,
+        &latent,
+        min_prop as f32,
+        &alternative,
+        verbose,
+    )
+    .to_extendr()?;
+    Ok(lr_arms_to_r_list(&arms))
+}
+
+/// Calculate one-vs-many specific markers with logistic regression p-values
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The logistic regression twin of [rs_calculate_dge_one_vs_many()]: AUROC
+/// summaries as there, p-values from the likelihood ratio test.
+///
+/// @param f_path_cell String. Path to the `counts_cells.bin` file, for the
+/// library sizes.
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param cell_groups List. List of integer vectors, each containing the index
+/// positions (0-indexed) of the cells of one group.
+/// @param references Integer. Index positions (0-indexed) into `cell_groups` of
+/// the reference groups to report.
+/// @param min_prop Numeric. Minimum proportion of expression in at least one
+/// of the groups to be tested.
+/// @param alternative String. One of `c("twosided", "greater", "less")`. Null
+/// hypothesis.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns The list described in [rs_calculate_dge_one_vs_many()].
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_calculate_dge_one_vs_many_lr(
+    f_path_cell: String,
+    f_path_gene: String,
+    cell_groups: List,
+    references: &[i32],
+    min_prop: f64,
+    alternative: String,
+    verbose: usize,
+) -> extendr_api::Result<List> {
+    let groups = r_cell_groups_to_rust(&cell_groups)?;
+    let references = references.r_int_convert();
+    let latent = store_library_sizes(&f_path_cell)?;
+    let reader = ParallelSparseReader::new(&f_path_gene).to_extendr()?;
+    let arms = calculate_dge_one_vs_many_lr(
+        &reader,
+        &groups,
+        &references,
+        &latent,
+        min_prop as f32,
+        &alternative,
+        verbose,
+    )
+    .to_extendr()?;
+    Ok(one_vs_many_to_r_list(groups.len(), &references, &arms))
 }
 
 ////////////////////////

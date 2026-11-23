@@ -69,9 +69,8 @@ fn rs_cistarget(
 ) -> extendr_api::Result<List> {
     let rankings = r_matrix_to_faer(&rankings);
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
-    let rcc_method = parse_rcc_type(&method).ok_or_else(|| {
-        extendr_api::Error::Other(format!("Unknown rcc method '{method}'."))
-    })?;
+    let rcc_method = parse_rcc_type(&method)
+        .ok_or_else(|| extendr_api::Error::Other(format!("Unknown rcc method '{method}'.")))?;
     for i in 0..gs_list.len() {
         let list_elem = gs_list.elt(i)?;
         let elem = list_elem

@@ -7,7 +7,7 @@
 run_magic_sc(
   object,
   features,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   magic_params = params_sc_magic(),
   .verbose = TRUE
 )
@@ -20,7 +20,7 @@ supported.}
 \item{features}{Character vector. The genes to impute. Anything not found in
 the object is dropped with a warning.}
 
-\item{modality}{String. One of \code{c("rna", "adt", "wnn")}. Which kNN graph does
+\item{modality}{String. One of \code{c("rna", "adt", "atac", "wnn")}. Which kNN graph does
 the smoothing. Anything but \code{"rna"} requires a \code{SingleCellsMultiModal}
 object. The counts themselves always come from the RNA store, and the layer
 is always written to the RNA cache.}

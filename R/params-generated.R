@@ -3,6 +3,360 @@
 
 # parameter wrappers -----------------------------------------------------------
 
+#' Wrapper function for the AMULET parameters
+#'
+#' @description Parameters of [bixverse::amulet_sc()], multiplet detection from
+#' fragment overlaps.
+#'
+#' @param max_overlap Integer. Overlapping fragments a cell can explain; 2 for
+#' diploid. Defaults to `2L`.
+#' @param max_fragment_len Integer. Longest valid fragment. Defaults to `900L`.
+#' @param repeat_q Numeric. q-value under which a site is a repeat. Defaults to
+#' `0.01`.
+#' @param multiplet_q Numeric. q-value under which a cell is a multiplet.
+#' Defaults to `0.01`.
+#' @param chroms String vector or `NULL`. Chromosomes to use. `NULL` uses the
+#' autosomes. Defaults to `NULL`.
+#' @param count_trailing_loci Boolean. Count a cell's last loci on the last
+#' chromosome used, which the reference implementation drops. Defaults to
+#' `FALSE`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item max_overlap - Integer. Overlapping fragments a cell can explain; 2 for
+#'  diploid. Defaults to `2L`.
+#'  \item max_fragment_len - Integer. Longest valid fragment. Defaults to
+#'  `900L`.
+#'  \item repeat_q - Numeric. q-value under which a site is a repeat. Defaults
+#'  to `0.01`.
+#'  \item multiplet_q - Numeric. q-value under which a cell is a multiplet.
+#'  Defaults to `0.01`.
+#'  \item chroms - String vector or `NULL`. Chromosomes to use. `NULL` uses the
+#'  autosomes. Defaults to `NULL`.
+#'  \item count_trailing_loci - Boolean. Count a cell's last loci on the last
+#'  chromosome used, which the reference implementation drops. Defaults to
+#'  `FALSE`.
+#' }
+#'
+#' @references Thibodeau, et al., Genome Biol, 2021.
+#'
+#' @export
+params_atac_amulet <- function(
+  max_overlap = 2L,
+  max_fragment_len = 900L,
+  repeat_q = 0.01,
+  multiplet_q = 0.01,
+  chroms = NULL,
+  count_trailing_loci = FALSE
+) {
+  # Checks
+  checkmate::qassert(max_overlap, "I1[1,)")
+  checkmate::qassert(max_fragment_len, "I1[1,)")
+  checkmate::qassert(repeat_q, "N1(0,1)")
+  checkmate::qassert(multiplet_q, "N1(0,1)")
+  checkmate::qassert(chroms, c("S+", "0"))
+  checkmate::qassert(count_trailing_loci, "B1")
+
+  # Return
+  list(
+    max_overlap = max_overlap,
+    max_fragment_len = max_fragment_len,
+    repeat_q = repeat_q,
+    multiplet_q = multiplet_q,
+    chroms = chroms,
+    count_trailing_loci = count_trailing_loci
+  )
+}
+
+#' Wrapper function for the ATAC peak calling parameters
+#'
+#' @description Parameters of [bixverse::call_peaks_sc()], a native port of
+#' MACS3 `callpeak --nomodel` without a control track.
+#'
+#' @param tag_source String. `"insertion"` takes both Tn5 insertions of a
+#' fragment, `"fragment_start"` the fragment start only, which is what MACS
+#' reads from the fragment file Signac hands it. One of `c("insertion",
+#' "fragment_start")`. Defaults to `"insertion"`.
+#' @param keep_dup Integer or `NULL`. Tags kept per position. `NULL` keeps all.
+#' MACS's default, and so Signac's, is 1. Defaults to `NULL`.
+#' @param shift Integer. Tag shift before extension (`--shift`). Defaults to
+#' `-100L`.
+#' @param extsize Integer. Tag extension, the fragment size (`--extsize`).
+#' Defaults to `200L`.
+#' @param genome_size Numeric. Effective genome size (`-g`). The default is
+#' Signac's, MACS3's own `hs` is 2.913e9. Defaults to `2700000000.0`.
+#' @param llocal Integer. Window of the local lambda (`--llocal`). Defaults to
+#' `10000L`.
+#' @param q_value Numeric. q-value cutoff (`-q`). Defaults to `0.05`.
+#' @param min_length Integer or `NULL`. Minimum peak length. `NULL` uses
+#' `extsize`. Defaults to `NULL`.
+#' @param max_gap Integer or `NULL`. Largest gap merged into a peak. `NULL` uses
+#' MACS's tag size: 1 for insertions, the mean length of the group's first
+#' fragments for fragment starts. Defaults to `NULL`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item tag_source - String. `"insertion"` takes both Tn5 insertions of a
+#'  fragment, `"fragment_start"` the fragment start only, which is what MACS
+#'  reads from the fragment file Signac hands it. One of `c("insertion",
+#'  "fragment_start")`. Defaults to `"insertion"`.
+#'  \item keep_dup - Integer or `NULL`. Tags kept per position. `NULL` keeps
+#'  all. MACS's default, and so Signac's, is 1. Defaults to `NULL`.
+#'  \item shift - Integer. Tag shift before extension (`--shift`). Defaults to
+#'  `-100L`.
+#'  \item extsize - Integer. Tag extension, the fragment size (`--extsize`).
+#'  Defaults to `200L`.
+#'  \item genome_size - Numeric. Effective genome size (`-g`). The default is
+#'  Signac's, MACS3's own `hs` is 2.913e9. Defaults to `2700000000.0`.
+#'  \item llocal - Integer. Window of the local lambda (`--llocal`). Defaults to
+#'  `10000L`.
+#'  \item q_value - Numeric. q-value cutoff (`-q`). Defaults to `0.05`.
+#'  \item min_length - Integer or `NULL`. Minimum peak length. `NULL` uses
+#'  `extsize`. Defaults to `NULL`.
+#'  \item max_gap - Integer or `NULL`. Largest gap merged into a peak. `NULL`
+#'  uses MACS's tag size: 1 for insertions, the mean length of the group's first
+#'  fragments for fragment starts. Defaults to `NULL`.
+#' }
+#'
+#' @references Zhang, et al., Genome Biol, 2008.
+#'
+#' @export
+params_atac_call_peaks <- function(
+  tag_source = c("insertion", "fragment_start"),
+  keep_dup = NULL,
+  shift = -100L,
+  extsize = 200L,
+  genome_size = 2700000000.0,
+  llocal = 10000L,
+  q_value = 0.05,
+  min_length = NULL,
+  max_gap = NULL
+) {
+  tag_source <- match.arg(tag_source)
+
+  # Checks
+  checkmate::assertChoice(tag_source, c("insertion", "fragment_start"))
+  checkmate::qassert(keep_dup, c("I1[1,)", "0"))
+  checkmate::qassert(shift, "I1")
+  checkmate::qassert(extsize, "I1[1,)")
+  checkmate::qassert(genome_size, "N1(0,)")
+  checkmate::qassert(llocal, "I1[1,)")
+  checkmate::qassert(q_value, "N1(0,1)")
+  checkmate::qassert(min_length, c("I1[1,)", "0"))
+  checkmate::qassert(max_gap, c("I1[1,)", "0"))
+
+  # Return
+  list(
+    tag_source = tag_source,
+    keep_dup = keep_dup,
+    shift = shift,
+    extsize = extsize,
+    genome_size = genome_size,
+    llocal = llocal,
+    q_value = q_value,
+    min_length = min_length,
+    max_gap = max_gap
+  )
+}
+
+#' Wrapper function for the gene activity parameters
+#'
+#' @description Parameters of [bixverse::gene_activity_sc()], Signac's
+#' `GeneActivity()`: per gene, the longest span of its biotype, under
+#' `max_width`, extended `upstream` of the TSS.
+#'
+#' @param upstream Integer. Bases added upstream of the TSS. Defaults to
+#' `2000L`.
+#' @param downstream Integer. Bases added downstream of the gene end. Defaults
+#' to `0L`.
+#' @param max_width Integer. Genes this long or longer are dropped. Defaults to
+#' `500000L`.
+#' @param biotypes String vector or `NULL`. Gene biotypes to keep. `NULL` keeps
+#' all. Defaults to `"protein_coding"`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item upstream - Integer. Bases added upstream of the TSS. Defaults to
+#'  `2000L`.
+#'  \item downstream - Integer. Bases added downstream of the gene end. Defaults
+#'  to `0L`.
+#'  \item max_width - Integer. Genes this long or longer are dropped. Defaults
+#'  to `500000L`.
+#'  \item biotypes - String vector or `NULL`. Gene biotypes to keep. `NULL`
+#'  keeps all. Defaults to `"protein_coding"`.
+#' }
+#'
+#' @references Stuart, et al., Nat Methods, 2021.
+#'
+#' @export
+params_atac_gene_activity <- function(
+  upstream = 2000L,
+  downstream = 0L,
+  max_width = 500000L,
+  biotypes = "protein_coding"
+) {
+  # Checks
+  checkmate::qassert(upstream, "I1[0,)")
+  checkmate::qassert(downstream, "I1[0,)")
+  checkmate::qassert(max_width, "I1[1,)")
+  checkmate::qassert(biotypes, c("S+", "0"))
+
+  # Return
+  list(
+    upstream = upstream,
+    downstream = downstream,
+    max_width = max_width,
+    biotypes = biotypes
+  )
+}
+
+#' Wrapper function for the ATAC LSI parameters
+#'
+#' @description Parameters of [bixverse::calculate_lsi_sc()], Signac's
+#' `RunSVD()` on the TF-IDF.
+#'
+#' @param n_comp Integer. Components to compute. Defaults to `50L`.
+#' @param drop_first Boolean. Leave component 1 out of the embedding. It usually
+#' tracks sequencing depth; [bixverse::get_lsi_depth_cor()] shows whether it
+#' does. Defaults to `TRUE`.
+#' @param solver String. SVD solver, see [bixverse::params_sc_pca()] for the
+#' trade-offs. One of `c("auto", "exact", "randomised", "covariance")`. Defaults
+#' to `"auto"`.
+#' @param scale_max Numeric or `NULL`. Clip the z-scored components to
+#' `+-scale_max`. Defaults to `NULL`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_comp - Integer. Components to compute. Defaults to `50L`.
+#'  \item drop_first - Boolean. Leave component 1 out of the embedding. It
+#'  usually tracks sequencing depth; [bixverse::get_lsi_depth_cor()] shows
+#'  whether it does. Defaults to `TRUE`.
+#'  \item solver - String. SVD solver, see [bixverse::params_sc_pca()] for the
+#'  trade-offs. One of `c("auto", "exact", "randomised", "covariance")`.
+#'  Defaults to `"auto"`.
+#'  \item scale_max - Numeric or `NULL`. Clip the z-scored components to
+#'  `+-scale_max`. Defaults to `NULL`.
+#' }
+#'
+#' @export
+params_atac_lsi <- function(
+  n_comp = 50L,
+  drop_first = TRUE,
+  solver = c("auto", "exact", "randomised", "covariance"),
+  scale_max = NULL
+) {
+  solver <- match.arg(solver)
+
+  # Checks
+  checkmate::qassert(n_comp, "I1[2,)")
+  checkmate::qassert(drop_first, "B1")
+  checkmate::assertChoice(
+    solver,
+    c("auto", "exact", "randomised", "covariance")
+  )
+  checkmate::qassert(scale_max, c("N1(0,)", "0"))
+
+  # Return
+  list(
+    n_comp = n_comp,
+    drop_first = drop_first,
+    solver = solver,
+    scale_max = scale_max
+  )
+}
+
+#' Wrapper function for the rLSI integration parameters
+#'
+#' @description Parameters of [bixverse::run_rlsi_sc()], Signac's
+#' `FindIntegrationAnchors(reduction = "rlsi")` followed by
+#' `IntegrateEmbeddings()`.
+#'
+#' @param dims Integer vector. Per-batch LSI components the anchors use,
+#' 1-based. The default is Signac's `dims = 2:30`. Defaults to `2:30`.
+#' @param n_comp Integer. Components of the per-batch LSIs; must reach
+#' `max(dims)`. Defaults to `30L`.
+#' @param k_anchor Integer. Neighbours for the anchors. Defaults to `5L`.
+#' @param k_score Integer. Neighbours for the anchor scores. Defaults to `30L`.
+#' @param k_weight Integer. Anchors per cell in the correction weights. Defaults
+#' to `100L`.
+#' @param sd Numeric. Bandwidth divisor of the weights. Defaults to `1.0`.
+#' @param l2_norm Boolean. Scale and L2 normalise the anchor spaces. Defaults to
+#' `TRUE`.
+#' @param solver String. SVD solver of the per-batch LSIs. One of `c("auto",
+#' "exact", "randomised", "covariance")`. Defaults to `"auto"`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters. Only the backend
+#' is used; the neighbour counts are `k_anchor`, `k_score` and `k_weight`. See
+#' [params_knn_defaults()] for the available elements. Defaults to `list()`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item dims - Integer vector. Per-batch LSI components the anchors use,
+#'  1-based. The default is Signac's `dims = 2:30`. Defaults to `2:30`.
+#'  \item n_comp - Integer. Components of the per-batch LSIs; must reach
+#'  `max(dims)`. Defaults to `30L`.
+#'  \item k_anchor - Integer. Neighbours for the anchors. Defaults to `5L`.
+#'  \item k_score - Integer. Neighbours for the anchor scores. Defaults to
+#'  `30L`.
+#'  \item k_weight - Integer. Anchors per cell in the correction weights.
+#'  Defaults to `100L`.
+#'  \item sd - Numeric. Bandwidth divisor of the weights. Defaults to `1.0`.
+#'  \item l2_norm - Boolean. Scale and L2 normalise the anchor spaces. Defaults
+#'  to `TRUE`.
+#'  \item solver - String. SVD solver of the per-batch LSIs. One of `c("auto",
+#'  "exact", "randomised", "covariance")`. Defaults to `"auto"`.
+#'  \item The elements of [params_knn_defaults()], overridden by `knn`, spliced
+#'  in at this position.
+#' }
+#'
+#' @references Stuart, et al., Nat Methods, 2021.
+#'
+#' @export
+params_atac_rlsi <- function(
+  dims = 2:30,
+  n_comp = 30L,
+  k_anchor = 5L,
+  k_score = 30L,
+  k_weight = 100L,
+  sd = 1.0,
+  l2_norm = TRUE,
+  solver = c("auto", "exact", "randomised", "covariance"),
+  knn = list()
+) {
+  solver <- match.arg(solver)
+
+  # Checks
+  checkmate::qassert(dims, "I+[1,)")
+  checkmate::qassert(n_comp, "I1[1,)")
+  checkmate::qassert(k_anchor, "I1[1,)")
+  checkmate::qassert(k_score, "I1[1,)")
+  checkmate::qassert(k_weight, "I1[1,)")
+  checkmate::qassert(sd, "N1(0,)")
+  checkmate::qassert(l2_norm, "B1")
+  checkmate::assertChoice(
+    solver,
+    c("auto", "exact", "randomised", "covariance")
+  )
+
+  # Merge
+  knn <- utils::modifyList(params_knn_defaults(), knn, keep.null = TRUE)
+
+  # Return
+  c(
+    list(
+      dims = dims,
+      n_comp = n_comp,
+      k_anchor = k_anchor,
+      k_score = k_score,
+      k_weight = k_weight,
+      sd = sd,
+      l2_norm = l2_norm,
+      solver = solver
+    ),
+    knn
+  )
+}
+
 #' Wrapper function for parameters for binary heatmap data
 #'
 #' @description Controls filtering, ordering and binning in
@@ -5456,6 +5810,79 @@ params_sc_seurat_rpca <- function(
     ),
     knn,
     pca
+  )
+}
+
+#' Wrapper function for the Seurat label transfer parameters
+#'
+#' @description Parameters of [bixverse::transfer_labels_seurat_sc()], Seurat's
+#' `FindTransferAnchors(reduction = "cca")` followed by `TransferData()`.
+#'
+#' @param n_cc Integer. Canonical correlation vectors. Defaults to `30L`.
+#' @param k_anchor Integer. Neighbours for the anchors. Defaults to `5L`.
+#' @param k_score Integer. Neighbours for the anchor scores. Defaults to `30L`.
+#' @param scale_max Numeric. Clip of the scaled features. Defaults to `10.0`.
+#' @param l2_norm Boolean. L2 normalise the CCA space. Defaults to `TRUE`.
+#' @param k_weight Integer. Anchors per query cell in the weights. Defaults to
+#' `50L`.
+#' @param sd Numeric. Bandwidth divisor of the weights. Defaults to `1.0`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters. Only the backend
+#' is used; the neighbour counts are `k_anchor`, `k_score` and `k_weight`. See
+#' [params_knn_defaults()] for the available elements. Defaults to `list()`.
+#'
+#' @returns A named list with the following elements:
+#' \itemize{
+#'  \item n_cc - Integer. Canonical correlation vectors. Defaults to `30L`.
+#'  \item k_anchor - Integer. Neighbours for the anchors. Defaults to `5L`.
+#'  \item k_score - Integer. Neighbours for the anchor scores. Defaults to
+#'  `30L`.
+#'  \item scale_max - Numeric. Clip of the scaled features. Defaults to `10.0`.
+#'  \item l2_norm - Boolean. L2 normalise the CCA space. Defaults to `TRUE`.
+#'  \item k_weight - Integer. Anchors per query cell in the weights. Defaults to
+#'  `50L`.
+#'  \item sd - Numeric. Bandwidth divisor of the weights. Defaults to `1.0`.
+#'  \item The elements of [params_knn_defaults()], overridden by `knn`, spliced
+#'  in at this position.
+#' }
+#'
+#' @references Stuart, et al., Cell, 2019.
+#'
+#' @export
+params_sc_seurat_transfer <- function(
+  n_cc = 30L,
+  k_anchor = 5L,
+  k_score = 30L,
+  scale_max = 10.0,
+  l2_norm = TRUE,
+  k_weight = 50L,
+  sd = 1.0,
+  knn = list()
+) {
+  # Checks
+  checkmate::qassert(n_cc, "I1[1,)")
+  checkmate::qassert(k_anchor, "I1[1,)")
+  checkmate::qassert(k_score, "I1[1,)")
+  checkmate::qassert(scale_max, "N1(0,)")
+  checkmate::qassert(l2_norm, "B1")
+  checkmate::qassert(k_weight, "I1[1,)")
+  checkmate::qassert(sd, "N1(0,)")
+
+  # Merge
+  knn <- utils::modifyList(params_knn_defaults(), knn, keep.null = TRUE)
+
+  # Return
+  c(
+    list(
+      n_cc = n_cc,
+      k_anchor = k_anchor,
+      k_score = k_score,
+      scale_max = scale_max,
+      l2_norm = l2_norm,
+      k_weight = k_weight,
+      sd = sd
+    ),
+    knn
   )
 }
 

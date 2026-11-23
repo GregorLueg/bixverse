@@ -12,6 +12,7 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
   streaming = NULL,
   .verbose = TRUE
 ) {
+  .refuse_atac_features(object, "find_hvg_sc()")
   checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(hvg_no, "I1")
   assertScHvgParams(hvg_params)
@@ -84,6 +85,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   residuals = FALSE,
   .verbose = TRUE
 ) {
+  .refuse_atac_features(object, "calculate_pca_sc()")
   checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(no_pcs, "I1")
   assertScPcaParams(pca_params)

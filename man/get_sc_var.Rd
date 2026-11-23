@@ -4,7 +4,12 @@
 \alias{get_sc_var}
 \title{Getter the var table}
 \usage{
-get_sc_var(object, indices = NULL, cols = NULL, modality = c("rna", "adt"))
+get_sc_var(
+  object,
+  indices = NULL,
+  cols = NULL,
+  modality = c("rna", "adt", "atac")
+)
 }
 \arguments{
 \item{object}{\code{SingleCells}, \code{MetaCells}, \code{SingleCellsMultiModal} class.}
@@ -14,7 +19,7 @@ to return.}
 
 \item{cols}{Optional string vector. The columns from the var table to return.}
 
-\item{modality}{String. The modality to return. One of \code{c("rna", "adt")}.}
+\item{modality}{String. The modality to return. One of \code{c("rna", "adt", "atac")}.}
 }
 \value{
 The vars table

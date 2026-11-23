@@ -62,6 +62,7 @@ pub use single_cell::r_count_obj;
 pub use single_cell::r_sc_adt;
 pub use single_cell::r_sc_analysis;
 pub use single_cell::r_sc_annotation;
+pub use single_cell::r_sc_atac;
 pub use single_cell::r_sc_batch_corr;
 pub use single_cell::r_sc_bonsai;
 pub use single_cell::r_sc_h5ad;
@@ -71,6 +72,7 @@ pub use single_cell::r_sc_obs_var;
 pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
 pub use single_cell::r_sc_residuals;
+pub use single_cell::r_sc_store;
 pub use single_cell::r_sc_trajectory;
 
 // meta cell
@@ -136,6 +138,8 @@ extendr_module! {
     use r_sc_processing;
     use r_sc_residuals;
     use r_sc_analysis;
+    use r_sc_atac;
+    use r_sc_store;
     use r_sc_metacells;
     use r_sc_plot_extraction;
     use r_sc_trajectory;

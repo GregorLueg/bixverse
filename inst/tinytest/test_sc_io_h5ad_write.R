@@ -523,7 +523,9 @@ expect_error(
     varm = list(),
     obsp = list(),
     uns_json = "{}",
-    chunk_size = 5L
+    chunk_size = 5L,
+    zarr = FALSE,
+    gene_indices = NULL
   ),
   pattern = "too_short",
   info = "h5ad export - a column of the wrong length is rejected"

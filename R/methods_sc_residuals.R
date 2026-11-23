@@ -112,6 +112,7 @@ S7::method(fit_residuals_sc, ScOrScSubset) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "fit_residuals_sc()", refuse = TRUE)
   method <- match.arg(method)
 
   # checks
@@ -265,6 +266,7 @@ S7::method(sct_corrected_counts_sc, ScOrScSubset) <- function(
   gene_batch_size = NULL,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "sct_corrected_counts_sc()", refuse = TRUE)
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) ||

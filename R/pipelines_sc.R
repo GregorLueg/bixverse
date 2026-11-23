@@ -618,7 +618,7 @@ step_pca_sc <- function(
 step_neighbours_sc <- function(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
@@ -658,7 +658,7 @@ step_clusters_sc <- function(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
   name = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   seed = 42L,
   ...
 ) {
@@ -697,7 +697,7 @@ step_clusters_sc <- function(
 step_harmony_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
@@ -734,7 +734,7 @@ step_harmony_sc <- function(
 step_harmony_v1_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   harmony_params = params_sc_harmony(),
   seed = 42L,
   .verbose = TRUE

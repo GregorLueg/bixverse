@@ -8,9 +8,10 @@ find_markers_sc(
   object,
   cells_1,
   cells_2,
-  method = c("wilcox"),
+  method = NULL,
   alternative = c("twosided", "greater", "less"),
   min_prop = 0.05,
+  modality = c("rna", "atac"),
   .verbose = TRUE
 )
 }
@@ -23,15 +24,21 @@ of the cell names in the object, see \code{\link[=get_cell_names]{get_cell_names
 \item{cells_2}{String. The names of the cells in group 2. Need to be part
 of the cell names in the object, see \code{\link[=get_cell_names]{get_cell_names()}}.}
 
-\item{method}{String. Which method to use for the calculations of the DGE.
-At the moment the only option is \code{"wilcox"}, but the parameter is reserved
-for future features.}
+\item{method}{Optional string. One of \code{c("wilcox", "lr")}: the Wilcoxon
+rank sum test, or Seurat's logistic regression test (\code{LRDETest()}) with the
+library size as the latent variable. \code{NULL} picks \code{"lr"} on ATAC data and
+\code{"wilcox"} otherwise.}
 
 \item{alternative}{String. Test alternative. One of
 \code{c("twosided", "greater", "less")}. Function will default to \code{"twosided"}.}
 
 \item{min_prop}{Numeric. The minimum proportion of cells that need to express
 the gene to be tested in any of the two groups.}
+
+\item{modality}{String. One of \code{c("rna", "atac")}. \code{"atac"} tests the
+features of the ATAC store of a \code{SingleCellsMultiModal}; on a
+\code{SingleCellsAtac} both name its own store. Results are then keyed by
+\code{feature_id}.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed

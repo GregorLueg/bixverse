@@ -449,8 +449,8 @@ get_adt_names.ADTCounts <- function(x) {
 #'   \item{count_connection}{This contains an R6-like environment that points
 #'   to Rust functions that can work on the RNAseq counts more specifically.}
 #'   \item{adt_counts}{...}
-#'   \item{peak_connection}{Future feature: to store ATAC Seq counts in the
-#'   future.}
+#'   \item{peak_connection}{Rust connection to the ATAC peak or tile store in
+#'   `<dir_data>/atac`, `NULL` until ATAC is added.}
 #'   \item{dir_data}{Path to the directory in which the data will be saved on
 #'   disk.}
 #'   \item{sc_cache}{Class with cached data. Contains less memory-heavy objects
@@ -467,6 +467,8 @@ get_adt_names.ADTCounts <- function(x) {
 #'   \item{other_data}{List that contains additional data and results, such
 #'   as for example the WNN graph.}
 #'   \item{dims}{Dimensions of the original data.}
+#'   \item{atac_info}{`AtacInfo` with the ATAC store state and the LSI fit,
+#'   `NULL` until ATAC is added.}
 #' }
 #'
 #' @returns Returns the `SingleCellsMultiModal` class for further operations.
@@ -503,7 +505,8 @@ SingleCellsMultiModal <- S7::new_class(
     atac_cache = S7::class_any,
     sc_map = S7::class_any,
     other_data = S7::class_list,
-    dims = S7::class_integer
+    dims = S7::class_integer,
+    atac_info = S7::class_any
   ),
   constructor = function(dir_data) {
     checkmate::assertDirectoryExists(dir_data)
@@ -514,7 +517,8 @@ SingleCellsMultiModal <- S7::new_class(
       peak_connection = NULL,
       adt_cache = new_sc_cache(),
       atac_cache = new_sc_cache(),
-      other_data = list()
+      other_data = list(),
+      atac_info = NULL
     )
   }
 )
@@ -557,6 +561,17 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
     "none"
   }
 
+  # ATAC status
+  atac <- S7::prop(x, "atac_info")
+  atac_present <- !is.null(atac)
+  atac_cache <- S7::prop(x, "atac_cache")
+  atac_other <- names(atac_cache[["other_embeddings"]])
+  atac_other_str <- if (length(atac_other) > 0) {
+    paste(atac_other, collapse = ", ")
+  } else {
+    "none"
+  }
+
   cat(
     "Single cell experiment (Multi-modal).\n",
     sprintf("  No cells (original): %i\n", dims[1]),
@@ -575,7 +590,20 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
     sprintf("    Other embeddings: %s\n", adt_other_str),
     sprintf("    KNN generated: %s\n", adt_knn),
     sprintf("    Graph generated: %s\n", adt_graph),
-    "  ATAC: not yet implemented\n",
+    "  ATAC:\n",
+    sprintf("    Present: %s\n", atac_present),
+    sprintf(
+      "    Kind: %s\n",
+      if (atac_present)
+        sprintf("%s (%s counts)", atac$kind, atac$count_mode) else "none"
+    ),
+    sprintf("    TF-IDF: %s\n", isTRUE(atac$tf_idf)),
+    sprintf("    Other embeddings: %s\n", atac_other_str),
+    sprintf("    KNN generated: %s\n", !is.null(atac_cache[["knn"]])),
+    sprintf(
+      "    Graph generated: %s\n",
+      !is.null(atac_cache[["connectivities"]])
+    ),
     sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )
@@ -594,21 +622,22 @@ S7::method(get_sc_var, SingleCellsMultiModal) <- function(
   object,
   indices = NULL,
   cols = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 ) {
   modality <- match.arg(modality)
 
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(indices, c("0", "I+"))
-  checkmate::assertChoice(modality, c("rna", "adt"))
+  checkmate::assertChoice(modality, c("rna", "adt", "atac"))
 
   duckdb_con <- get_sc_duckdb(object)
 
   var_table <- switch(
     modality,
     rna = duckdb_con$get_vars_table(indices = indices, cols = cols),
-    adt = duckdb_con$get_vars_adt_table(indices = indices, cols = cols)
+    adt = duckdb_con$get_vars_adt_table(indices = indices, cols = cols),
+    atac = duckdb_con$get_vars_atac_table(indices = indices, cols = cols)
   )
 
   return(var_table)
@@ -731,7 +760,7 @@ S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   .verbose = TRUE
 ) {
   modality <- match.arg(modality)
@@ -748,6 +777,18 @@ S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
       gene_indices = gene_indices,
       use_cells_to_keep = use_cells_to_keep,
       modality = "rna",
+      .verbose = .verbose
+    ))
+  }
+
+  if (modality == "atac") {
+    return(.get_atac_counts(
+      object = object,
+      assay = assay,
+      return_format = return_format,
+      cell_indices = cell_indices,
+      gene_indices = gene_indices,
+      use_cells_to_keep = use_cells_to_keep,
       .verbose = .verbose
     ))
   }
@@ -799,6 +840,82 @@ S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
   mat
 }
 
+#' Read counts from the ATAC store of a multi-modal object
+#'
+#' @description
+#' The ATAC twin of the RNA path of [bixverse::get_sc_counts()]: same cell
+#' filter, same matrix shapes, the features named by their `feature_id`.
+#'
+#' @param object `SingleCellsMultiModal` class with ATAC.
+#' @param assay String. One of `c("raw", "norm")`.
+#' @param return_format String. One of `c("cell", "gene")`.
+#' @param cell_indices Optional integer vector of 1-based cell indices.
+#' @param gene_indices Optional integer vector of 1-based feature indices.
+#' @param use_cells_to_keep Boolean. Restrict to the kept cells.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @returns A sparse matrix, as [bixverse::get_sc_counts()].
+#'
+#' @keywords internal
+.get_atac_counts <- function(
+  object,
+  assay,
+  return_format,
+  cell_indices,
+  gene_indices,
+  use_cells_to_keep,
+  .verbose
+) {
+  checkmate::qassert(cell_indices, c("0", "I+"))
+  checkmate::qassert(gene_indices, c("0", "I+"))
+  .require_atac(object)
+
+  paths <- .atac_paths(object)
+  rust_con <- SingleCellCountData$new(
+    f_path_cells = paths$cells,
+    f_path_genes = paths$genes
+  )
+  rust_con$set_from_file()
+
+  cells_to_keep <- get_cells_to_keep(object)
+  if (use_cells_to_keep && length(cells_to_keep) > 0) {
+    cell_indices <- if (is.null(cell_indices)) {
+      as.integer(cells_to_keep + 1L)
+    } else {
+      as.integer(intersect(cell_indices, cells_to_keep + 1L))
+    }
+  }
+
+  sc_map <- set_gene_mapping(
+    get_sc_map(object),
+    gene_map = stats::setNames(
+      seq_len(rust_con$get_shape()[2]),
+      .atac_var(object, cols = "feature_id")$feature_id
+    )
+  )
+
+  count_data <- get_counts_from_rust(
+    rust_con = rust_con,
+    assay = assay,
+    return_format = return_format,
+    cell_indices = cell_indices,
+    gene_indices = gene_indices,
+    .verbose = .verbose
+  )
+  count_data <- create_sparse_matrix(
+    count_data = count_data,
+    return_format = return_format
+  )
+
+  finalise_matrix(
+    matrix = count_data,
+    return_format = return_format,
+    cell_indices = cell_indices,
+    gene_indices = gene_indices,
+    sc_map = sc_map
+  )
+}
+
 S7::method(`[`, SingleCellsMultiModal) <- function(
   x,
   i,
@@ -807,7 +924,7 @@ S7::method(`[`, SingleCellsMultiModal) <- function(
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   use_cells_to_keep = TRUE,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   drop = TRUE
 ) {
   modality <- match.arg(modality)
@@ -825,6 +942,9 @@ S7::method(`[`, SingleCellsMultiModal) <- function(
   if (checkmate::qtest(j, "S+")) {
     if (modality == "rna") {
       j <- get_gene_indices(x = x, gene_ids = j, rust_index = FALSE)
+    } else if (modality == "atac") {
+      feature_ids <- .atac_var(x, cols = "feature_id")$feature_id
+      j <- match(.match_features(j, feature_ids), feature_ids)
     } else {
       feature_names <- .adt_feature_names(x)
       j_match <- match(j, feature_names)
@@ -861,7 +981,7 @@ S7::method(`[`, SingleCellsMultiModal) <- function(
 S7::method(set_pca_factors, SingleCellsMultiModal) <- function(
   x,
   pca_factor,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -879,7 +999,7 @@ S7::method(set_pca_factors, SingleCellsMultiModal) <- function(
 S7::method(set_pca_loadings, SingleCellsMultiModal) <- function(
   x,
   pca_loading,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -892,7 +1012,7 @@ S7::method(set_pca_loadings, SingleCellsMultiModal) <- function(
 S7::method(set_pca_singular_vals, SingleCellsMultiModal) <- function(
   x,
   singular_vals,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -906,7 +1026,7 @@ S7::method(set_embedding, SingleCellsMultiModal) <- function(
   x,
   embd,
   name,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -947,7 +1067,7 @@ S7::method(set_embedding, SingleCellsMultiModal) <- function(
 S7::method(set_knn, SingleCellsMultiModal) <- function(
   x,
   knn,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -965,7 +1085,7 @@ S7::method(set_knn, SingleCellsMultiModal) <- function(
 S7::method(set_connectivities, SingleCellsMultiModal) <- function(
   x,
   connectivities,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -985,7 +1105,7 @@ S7::method(set_connectivities, SingleCellsMultiModal) <- function(
 
 S7::method(remove_knn, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -996,7 +1116,7 @@ S7::method(remove_knn, SingleCellsMultiModal) <- function(
 
 S7::method(remove_connectivities, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1043,7 +1163,7 @@ S7::method(reset_cells_to_keep, SingleCellsMultiModal) <- function(
 
 S7::method(get_pca_factors, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1061,7 +1181,7 @@ S7::method(get_pca_factors, SingleCellsMultiModal) <- function(
 
 S7::method(get_pca_loadings, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1083,7 +1203,7 @@ S7::method(get_pca_loadings, SingleCellsMultiModal) <- function(
 
 S7::method(get_pca_singular_val, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1094,7 +1214,7 @@ S7::method(get_pca_singular_val, SingleCellsMultiModal) <- function(
 S7::method(get_embedding, SingleCellsMultiModal) <- function(
   x,
   embd_name,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1136,7 +1256,7 @@ S7::method(get_embedding, SingleCellsMultiModal) <- function(
 
 S7::method(get_available_embeddings, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1157,7 +1277,7 @@ S7::method(get_available_embeddings, SingleCellsMultiModal) <- function(
 
 S7::method(get_knn_mat, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1174,7 +1294,7 @@ S7::method(get_knn_mat, SingleCellsMultiModal) <- function(
 
 S7::method(get_knn_dist, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   ...
 ) {
   modality <- match.arg(modality)
@@ -1191,7 +1311,7 @@ S7::method(get_knn_dist, SingleCellsMultiModal) <- function(
 
 S7::method(get_knn_obj, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   ...
 ) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
@@ -1209,7 +1329,7 @@ S7::method(get_knn_obj, SingleCellsMultiModal) <- function(
 
 S7::method(get_connectivities, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   ...
 ) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))

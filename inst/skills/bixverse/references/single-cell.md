@@ -13,11 +13,11 @@ Plus two lightweight side-cars living on the S7 object itself: `ScMap` (name to
 index maps, cells-to-keep, HVG indices) and `ScCache` (PCA factors, embeddings,
 kNN, neighbour graph, MAGIC, residual fit).
 
-The binaries come in two on-disk versions. New stores are v4 (delta bit-packed,
-several times smaller and faster to scan). v3 stores still load and work, but
-`load_existing()` warns; convert them in place with `upgrade_sc_store()`
-(`codec = "lz4"` by default, `keep_backup = TRUE` leaves `<file>.v3.bak` copies
-you delete yourself). Do not run it while another session uses the files.
+New stores are written in the v5 format (delta bit-packed chunks, plus header
+fields for the feature and norm kind, a cell-id hash and checksums). v4 stores
+still load, `load_existing()` warns; v3 stores no longer open. Convert either
+in place with `upgrade_sc_store()` (`codec = "lz4"` by default,
+`keep_backup = TRUE` leaves `<file>.v<n>.bak` copies you delete yourself). Do not run it while another session uses the files.
 
 Consequences you have to work with:
 

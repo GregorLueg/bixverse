@@ -128,6 +128,7 @@ S7::method(aucell_sc, ScOrScSubset) <- function(
   streaming = NULL,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "aucell_sc()", refuse = FALSE)
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) ||
@@ -347,6 +348,7 @@ S7::method(lm_activity_sc, SingleCells) <- function(
   lm_params = params_lm_activity(),
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "lm_activity_sc()", refuse = FALSE)
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertDataFrame(net)
@@ -628,6 +630,7 @@ S7::method(hotspot_gene_cor_sc, ScOrScSubset) <- function(
   random_seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "hotspot_gene_cor_sc()", refuse = FALSE)
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) ||
@@ -775,6 +778,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   random_seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "scenic_grn_sc()", refuse = FALSE)
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(tf_ids, "S+")
@@ -963,6 +967,7 @@ S7::method(nmf_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "nmf_sc()", refuse = FALSE)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(k, "I1[1,)")
   checkmate::qassert(cell_ids, c("0", "S+"))
@@ -1022,6 +1027,7 @@ S7::method(stabilised_nmf_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "stabilised_nmf_sc()", refuse = FALSE)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(k, "I1[1,)")
   checkmate::qassert(cell_ids, c("0", "S+"))
@@ -1085,6 +1091,7 @@ S7::method(consensus_nmf_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "consensus_nmf_sc()", refuse = FALSE)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(k, "I1[2,)")
   checkmate::qassert(cell_ids, c("0", "S+"))
@@ -1159,6 +1166,7 @@ S7::method(nmf_k_sweep_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "nmf_k_sweep_sc()", refuse = FALSE)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   k_range <- .assert_nmf_k_range(k_range)
   checkmate::qassert(cell_ids, c("0", "S+"))

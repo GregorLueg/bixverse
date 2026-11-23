@@ -3,8 +3,8 @@ use bixverse_r::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
 use bixverse_r::single_cell::mc_analysis::metacell_density::*;
 use bixverse_r::single_cell::mc_generation::cell_aggregation_utils::*;
 use bixverse_r::single_cell::mc_generation::generate::{
-    bootstrapped_metacells_on_store, metacells2_on_store, seacells_on_store,
-    supercells_on_store, MetaCellsRes,
+    bootstrapped_metacells_on_store, metacells2_on_store, seacells_on_store, supercells_on_store,
+    MetaCellsRes,
 };
 use bixverse_r::single_cell::mc_generation::hdwgcna_meta_cells::*;
 use bixverse_r::single_cell::mc_generation::metacells2::{DacParams, MetacellsParams};
@@ -64,7 +64,6 @@ fn exclusive_assignments(res: &MetaCellsRes) -> Vec<Option<usize>> {
     }
     out
 }
-
 
 /////////////
 // extendR //
