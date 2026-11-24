@@ -103,14 +103,22 @@ compiled and linked correctly.
 
 ## Keeping this skill current
 
-The skill is versioned with the package. After upgrading bixverse:
+The skill is versioned with the package and stamped with the version it came
+from. `library(bixverse)` warns when an installed copy is older. After
+upgrading bixverse:
 
 ```r
 bixverse::install_agent_skill(overwrite = TRUE)
 ```
 
-Other agents work too. `agent = "codex"` (or `"generic"` with an explicit
-`dest`) writes the entry file as `AGENTS.md` with the Claude-specific
-frontmatter stripped. The `references/` files are plain markdown and portable as
-they are. Only Claude Code auto-discovers the skill, so elsewhere you have to
-point the agent at the directory yourself.
+or from a shell, with the library the project uses:
+
+```sh
+Rscript -e 'bixverse::skill_cli()' skill install --force
+Rscript -e 'bixverse::skill_cli()' skill status
+```
+
+`agent = "codex"` installs to `.agents/skills`, the open standard's location
+that Codex and other agents scan. `scope = "project"` (`--project`) installs
+under the working directory instead of the home directory, so each project sees
+the API of its own bixverse version.

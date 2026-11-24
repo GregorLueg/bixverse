@@ -23,12 +23,20 @@
   `manifoldsR::params_umap(optimiser = "adam_v06", init = "recursive")`.
 * Methods that assume RNA counts refuse peak, tile and protein stores, and
   refuse or warn on gene activity.
+* The agent skill is stamped with the package version and `library(bixverse)`
+  warns when an installed copy lags. `agent_skill_status()` lists installs,
+  `skill_cli()` installs and checks from a shell
+  (`Rscript -e 'bixverse::skill_cli()' skill install`).
 
 ## Breaking changes
 
 * Store format v5. v4 stores load with a warning, v3 stores no longer open.
   `upgrade_sc_store()` converts both.
 * `params_nmf_consensus()` loses `kmeans_iters`.
+* `install_agent_skill()` follows the Python package: `agent = "codex"`
+  installs `SKILL.md` to `.agents/skills`, `scope = "project"` installs under
+  the working directory, `agent = "generic"` and the `AGENTS.md` rewrite are
+  gone.
 * New defaults, ported from the Python front end. Results move at the same
   seed:
   * k-means is e-means: `km_type` in `params_sc_fast_cluster()` and

@@ -51,3 +51,7 @@
   registerS3method("dim", "BulkModuleResult", dim.BulkModuleResult)
   registerS3method("dim", "LdaResult", dim.LdaResult)
 }
+
+.onAttach <- function(...) {
+  .warn_stale_agent_skills()
+}

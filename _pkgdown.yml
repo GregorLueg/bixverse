@@ -868,6 +868,8 @@ reference:
       - AnnDataParser
       - find_threshold_otsu
       - install_agent_skill
+      - agent_skill_status
+      - skill_cli
       - knn_graph_label_propagation
       - params_label_propagation
       - upper_triangle_to_sparse

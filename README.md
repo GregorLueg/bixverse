@@ -167,7 +167,9 @@ entry point. Three routes depending on what you're after:
   for a first end-to-end run on a small data set.
 
 Working with an LLM coding agent? `install_agent_skill()` drops a bixverse
-skill into your agent set up so it stops guessing at the API.
+skill into your agent set up so it stops guessing at the API. From a shell:
+`Rscript -e 'bixverse::skill_cli()' skill install`. `library(bixverse)` tells
+you when the installed skill is older than the package.
 
 ## Roadmap
 
