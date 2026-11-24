@@ -84,7 +84,7 @@ NetworkDiffusions <- S7::new_class(
 
     # Finalise object
     S7::new_object(
-      S7::S7_object(),
+      BixverseBaseClass(),
       graph = graph,
       diffusion_res = vector(mode = "numeric"),
       diffusion_perm = vector(mode = "numeric"),
@@ -311,7 +311,7 @@ RbhGraph <- S7::new_class(
 
     # Finalise object
     S7::new_object(
-      S7::S7_object(),
+      BixverseBaseClass(),
       module_data = data,
       rbh_edge_df = data.table(),
       rbh_graph = NULL,
@@ -504,7 +504,7 @@ SimilarityNetworkFusion <- S7::new_class(
 
     # Finalise object
     S7::new_object(
-      S7::S7_object(),
+      BixverseBaseClass(),
       adj_matrices = adj_matrices,
       snf_adj = NULL,
       params = list(
