@@ -246,6 +246,8 @@
 #' computed from the embedding.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param umap_params Named list. See [manifoldsR::params_umap()].
+#' `optimiser = "adam_v06"` and `init = "recursive"` give the umap-learn
+#' 0.6 Adam optimiser and initialisation.
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity.
 #'

@@ -837,7 +837,7 @@ S7::method(load_r_data, SingleCells) <- function(
 #' transformation will occur automatically.
 #'
 #' @param object `SingleCells` class.
-#' @param h5_path File path to the h5ad object you wish to load in.
+#' @param h5_path Path to the h5ad file or AnnData Zarr store to load.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
 #' list with the following elements:
 #' \itemize{
@@ -860,7 +860,9 @@ S7::method(load_r_data, SingleCells) <- function(
 #' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
 #' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
 #' (default) converts in one pass and holds the whole matrix. Set a cap for
-#' large data sets; every extra phase re-reads the cell file once.
+#' large data sets; every extra phase re-reads the cell file once. With
+#' `h5ad_streaming = TRUE` it also bounds the cell-major transpose of a CSC
+#' file.
 #' @param streaming,batch_size,max_genes_in_memory,cell_batch_size Replaced by
 #' `csc_mem_gb` and ignored. `r lifecycle::badge("deprecated")`
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -965,21 +967,28 @@ S7::method(load_h5ad, SingleCells) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  h5ad_to_file <- if (h5ad_streaming) {
-    rust_con$h5ad_to_file_streaming
+  file_res <- if (h5ad_streaming) {
+    rust_con$h5ad_to_file_streaming(
+      cs_type = h5_meta$type,
+      h5_path = h5_path,
+      no_cells = h5_meta$dims["obs"],
+      no_genes = h5_meta$dims["var"],
+      qc_params = sc_qc_param,
+      slot = raw_count_slot,
+      max_mem_gb = csc_mem_gb,
+      verbose = .verbose
+    )
   } else {
-    rust_con$h5ad_to_file
+    rust_con$h5ad_to_file(
+      cs_type = h5_meta$type,
+      h5_path = h5_path,
+      no_cells = h5_meta$dims["obs"],
+      no_genes = h5_meta$dims["var"],
+      qc_params = sc_qc_param,
+      slot = raw_count_slot,
+      verbose = .verbose
+    )
   }
-
-  file_res <- h5ad_to_file(
-    cs_type = h5_meta$type,
-    h5_path = h5_path,
-    no_cells = h5_meta$dims["obs"],
-    no_genes = h5_meta$dims["var"],
-    qc_params = sc_qc_param,
-    slot = raw_count_slot,
-    verbose = .verbose
-  )
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
@@ -1042,7 +1051,7 @@ S7::method(load_h5ad, SingleCells) <- function(
 #' `norm = log1p(x / lib_size * target_size)`
 #'
 #' @param object `SingleCells` class.
-#' @param h5_path File path to the h5ad object you wish to load in.
+#' @param h5_path Path to the h5ad file or AnnData Zarr store to load.
 #' @param obs_lib_size_col String. Name of the obs column containing the total
 #' counts per cell or spot (e.g. `"nCount_RNA"`).
 #' @param target_size Numeric. The target size used in the original
@@ -1214,7 +1223,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' backwards compatibility. Prefer calling [bixverse::load_h5ad()] directly.
 #'
 #' @param object `SingleCells` class.
-#' @param h5_path File path to the h5ad object.
+#' @param h5_path Path to the h5ad file or AnnData Zarr store.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
 #' @param raw_count_slot Where raw counts live. `"auto"` detects per file via
 #' [detect_raw_count_slot()]; otherwise one of `"X"`, `"raw.X"`,
@@ -2304,7 +2313,8 @@ S7::method(load_multi_mtx, SingleCells) <- function(
 #' @param h5_path File path to the 10x h5 file.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
 #' @param feature_type String. Modality to keep. Defaults to
-#' `"Gene Expression"`. Ignored for v2 (single modality).
+#' `"Gene Expression"`. Ignored for v2 (single modality). `"Peaks"` errors,
+#' see [bixverse::load_atac_tenx()] and [bixverse::add_atac_tenx_sc()].
 #' @param csc_mem_gb Optional numeric. Memory in GB for the buffers of the
 #' cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL`
 #' (default) converts in one pass and holds the whole matrix. Set a cap for
@@ -2388,6 +2398,15 @@ S7::method(load_tenx_h5, SingleCells) <- function(
   checkmate::qassert(feature_type, c("S1", "0"))
   checkmate::qassert(csc_mem_gb, c("0", "N1(0,)"))
   checkmate::qassert(.verbose, "B1")
+  if (identical(feature_type, "Peaks")) {
+    stop(
+      paste(
+        "Peaks are not genes: load them with load_atac_tenx() (ATAC only) or",
+        "add_atac_tenx_sc() (next to the RNA)."
+      ),
+      call. = FALSE
+    )
+  }
 
   h5_path <- path.expand(h5_path)
   meta <- get_tenx_h5_metadata(h5_path)

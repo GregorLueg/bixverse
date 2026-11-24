@@ -8433,6 +8433,7 @@ rs_tenx_frame_to_parquet <- function(h5_path, version, frame, keep, out_path) .C
 #'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5 file.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for CellXGene data) or `"layers.counts"`. Unmatched values fall back to `"X"`.}
+#'\item{`max_mem_gb`}{(`numeric` or `NULL`)\cr Memory in GB for the cell-major transpose of a CSC file. `NULL` holds the whole matrix. Ignored for CSR.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{description}{
@@ -8774,7 +8775,7 @@ SingleCellCountData$h5ad_to_file <- function(cs_type, h5_path, no_cells, no_gene
 
 SingleCellCountData$norm_h5ad_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingleCellCountData__norm_h5ad_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
 
-SingleCellCountData$h5ad_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, slot, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, slot, verbose)
+SingleCellCountData$h5ad_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, slot, max_mem_gb, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, slot, max_mem_gb, verbose)
 
 SingleCellCountData$multi_h5ad_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_h5ad_to_file, self, file_tasks, universe_size, qc_params, verbose)
 

@@ -56,7 +56,9 @@ computed from the embedding.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}.}
 
-\item{umap_params}{Named list. See \code{\link[manifoldsR:params_umap]{manifoldsR::params_umap()}}.}
+\item{umap_params}{Named list. See \code{\link[manifoldsR:params_umap]{manifoldsR::params_umap()}}.
+\code{optimiser = "adam_v06"} and \code{init = "recursive"} give the umap-learn
+0.6 Adam optimiser and initialisation.}
 
 \item{seed}{Integer. For reproducibility.}
 

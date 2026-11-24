@@ -20,7 +20,7 @@ stream_h5ad(
 \arguments{
 \item{object}{\code{SingleCells} class.}
 
-\item{h5_path}{File path to the h5ad object.}
+\item{h5_path}{Path to the h5ad file or AnnData Zarr store.}
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 

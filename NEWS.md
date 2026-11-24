@@ -2,7 +2,7 @@
 
 ## Features
 
-* `bixverse-r` 0.11.0 under the hood.
+* `bixverse-r` 0.11.0 under the hood, needs `manifoldsR` 0.7.0.
 * Single cell ATAC. `SingleCellsAtac` for ATAC on its own, an ATAC layer on
   `SingleCellsMultiModal` for multiome. Load from fragments or Cell Ranger
   output (`load_atac_fragments()`, `load_atac_tenx()` and their `add_*_sc()`
@@ -17,7 +17,10 @@
 * `transfer_labels_seurat_sc()`: Seurat's anchor based label transfer, e.g.
   from an RNA reference onto ATAC gene activity.
 * `save_zarr()` writes an AnnData Zarr store. It and `save_h5ad()` take
-  `genes` to write a subset.
+  `genes` to write a subset. The h5ad loaders, `prescan_h5ad_files()` and the
+  h5ad readers take Zarr stores too.
+* `umap_sc()` takes the umap-learn 0.6 Adam optimiser and initialisation via
+  `manifoldsR::params_umap(optimiser = "adam_v06", init = "recursive")`.
 * Methods that assume RNA counts refuse peak, tile and protein stores, and
   refuse or warn on gene activity.
 
@@ -35,6 +38,14 @@
     `node_order` default to `NULL`: `"queue"` / `"bfs"` for Leiden,
     `"coloured"` / `"shuffle"` for Louvain, so Louvain moves too.
   * Harmony v2 `block_size` is 0.05 instead of 0.2.
+  * manifoldsR 0.7.0 moves UMAP, densMAP and ForceAtlas2 coordinates.
+
+## Fixes
+
+* `load_h5ad(csc_mem_gb = ...)` also caps the cell-major transpose of a
+  streamed CSC file. Results are unchanged.
+* `load_tenx_h5(feature_type = "Peaks")` errors and points to the ATAC
+  loaders instead of building an RNA store of peaks.
 
 # bixverse 0.9.2
 

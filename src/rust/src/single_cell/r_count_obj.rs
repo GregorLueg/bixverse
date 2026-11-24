@@ -490,6 +490,9 @@ impl SingleCellCountData {
     /// Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for
     /// CellXGene data) or `"layers.counts"`. Unmatched values fall back to
     /// `"X"`.
+    /// @param max_mem_gb (`numeric` or `NULL`)\cr
+    /// Memory in GB for the cell-major transpose of a CSC file. `NULL` holds
+    /// the whole matrix. Ignored for CSR.
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
@@ -504,6 +507,7 @@ impl SingleCellCountData {
         no_genes: usize,
         qc_params: List,
         slot: String,
+        max_mem_gb: Option<f64>,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
@@ -524,7 +528,7 @@ impl SingleCellCountData {
             no_genes,
             qc_params,
             raw_slot,
-            None,
+            max_nnz(max_mem_gb),
             verbose,
         )
         .to_extendr()?;

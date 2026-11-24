@@ -78,7 +78,7 @@ save_sc_exp_to_disk(obj, type = "qs2")
 | Input | Function |
 |---|---|
 | Cell Ranger MTX directory | `load_mtx()`, with `get_cell_ranger_params(path)` |
-| h5ad | `load_h5ad()`, or `load_h5ad_norm()` for pre-normalised, or `stream_h5ad()` for big files |
+| h5ad or AnnData Zarr | `load_h5ad()`, or `load_h5ad_norm()` for pre-normalised, or `stream_h5ad()` for big files; all take a `.zarr` directory too |
 | 10x HDF5 | `load_tenx_h5()` |
 | Seurat object | `load_seurat()` |
 | `SingleCellExperiment` | `load_sce()`, with `assay_name` naming the raw counts |
@@ -286,12 +286,13 @@ functions. `set_connectivities()` still takes an igraph. `to_bytes()` /
 
 ### 2D embeddings
 
-All go through manifoldsR (0.6.0 or later). `umap_sc()`, `densmap_sc()` and
+All go through manifoldsR (0.7.0 or later). `umap_sc()`, `densmap_sc()` and
 `forceatlas2_sc()` reuse the cached kNN by default, and its width wins over `k`
 (they warn if the two disagree). `umap_sc()` takes
 `umap_params = manifoldsR::params_umap(optimiser = ...)`: `"adam_parallel"`,
-`"sgd"`, `"sgd_parallel"` or `"adam"`. `"sgd_parallel"` (Hogwild!) isn't
-reproducible with more than one thread. `phate_sc()` defaults to
+`"sgd"`, `"sgd_parallel"`, `"adam"` or `"adam_v06"` (umap-learn 0.6, pair it
+with `init = "recursive"`). `"sgd_parallel"` (Hogwild!) isn't reproducible
+with more than one thread. `phate_sc()` defaults to
 `use_knn = FALSE`: PHATE wants a `6 * k + 5` wide graph, far wider than the
 cached one, so it runs its own search. `modality = "wnn"` always uses the WNN
 graph.
@@ -561,7 +562,9 @@ and needs the `qs2` package). `merge_sc_experiments()` combines objects.
 spec-compliant h5ad for ScanPy: kept cells only, counts streamed, obs/var plus
 the cached PCA, embeddings and neighbour graph (`assay = "norm"` puts the
 normalised counts in `X`). `varm/PCs` sits on the genes the PCA ran on, even if
-the HVGs changed since, and is only written alongside `X_pca`. `write_h5ad_sc()`, `write_h5ad_sc_dense()`,
+the HVGs changed since, and is only written alongside `X_pca`. `save_zarr()`
+writes the same as an AnnData Zarr store; both take `genes` for a subset.
+`write_h5ad_sc()`, `write_h5ad_sc_dense()`,
 `write_tenx_h5_sc()` and `write_cellranger_output()` export raw matrices to the
 usual interchange formats.
 

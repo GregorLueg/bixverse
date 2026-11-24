@@ -25,7 +25,8 @@ load_tenx_h5(
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 
 \item{feature_type}{String. Modality to keep. Defaults to
-\code{"Gene Expression"}. Ignored for v2 (single modality).}
+\code{"Gene Expression"}. Ignored for v2 (single modality). \code{"Peaks"} errors,
+see \code{\link[=load_atac_tenx]{load_atac_tenx()}} and \code{\link[=add_atac_tenx_sc]{add_atac_tenx_sc()}}.}
 
 \item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
 cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}

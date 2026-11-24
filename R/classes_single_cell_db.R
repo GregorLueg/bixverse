@@ -1049,7 +1049,10 @@ SingleCellDuckDB <- R6::R6Class(
       on.exit(unlink(parquet_paths), add = TRUE)
 
       parts <- purrr::map2(per_file_info, parquet_paths, \(fi, path) {
-        checkmate::assertFileExists(fi$h5_path)
+        checkmate::assert(
+          checkmate::checkFileExists(fi$h5_path),
+          checkmate::checkDirectoryExists(fi$h5_path)
+        )
         checkmate::qassert(fi$exp_id, "S1")
         checkmate::qassert(fi$cell_filter, "I+")
 

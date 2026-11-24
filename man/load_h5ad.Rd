@@ -22,7 +22,7 @@ load_h5ad(
 \arguments{
 \item{object}{\code{SingleCells} class.}
 
-\item{h5_path}{File path to the h5ad object you wish to load in.}
+\item{h5_path}{Path to the h5ad file or AnnData Zarr store to load.}
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}. A
 list with the following elements:
@@ -50,7 +50,9 @@ Recommended for large files. Defaults to \code{TRUE}.}
 \item{csc_mem_gb}{Optional numeric. Memory in GB for the buffers of the
 cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. \code{NULL}
 (default) converts in one pass and holds the whole matrix. Set a cap for
-large data sets; every extra phase re-reads the cell file once.}
+large data sets; every extra phase re-reads the cell file once. With
+\code{h5ad_streaming = TRUE} it also bounds the cell-major transpose of a CSC
+file.}
 
 \item{streaming, batch_size, max_genes_in_memory, cell_batch_size}{Replaced by
 \code{csc_mem_gb} and ignored. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}

@@ -145,6 +145,7 @@ Write an h5ad file to disk using streaming
 \item{\code{no_genes}}{(\code{integer})\cr Number of genes in the h5 file.}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
 \item{\code{slot}}{(\code{character})\cr Where to find the raw counts. One of \code{"X"}, \code{"raw.X"} (or \code{"raw"}, for CellXGene data) or \code{"layers.counts"}. Unmatched values fall back to \code{"X"}.}
+\item{\code{max_mem_gb}}{(\code{numeric} or \code{NULL})\cr Memory in GB for the cell-major transpose of a CSC file. \code{NULL} holds the whole matrix. Ignored for CSR.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{description}{

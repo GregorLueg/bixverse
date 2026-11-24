@@ -7,7 +7,7 @@
 read_h5ad_x_summary(f_path, n_sample = 10000L)
 }
 \arguments{
-\item{f_path}{File path to the \code{.h5ad} file.}
+\item{f_path}{Path to the \code{.h5ad} file or AnnData Zarr store.}
 
 \item{n_sample}{Number of non-zero values to sample for the preview. NULL
 reads all.}

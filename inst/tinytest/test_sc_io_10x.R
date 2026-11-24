@@ -323,6 +323,22 @@ expect_error(
   info = "tenx multi modal - requesting absent feature_type errors"
 )
 
+## peaks guard -----------------------------------------------------------------
+
+dir_peaks <- file.path(test_temp_dir, "sc_peaks")
+dir.create(dir_peaks, recursive = TRUE, showWarnings = FALSE)
+
+expect_error(
+  load_tenx_h5(
+    object = SingleCells(dir_data = dir_peaks),
+    h5_path = f_path_v3,
+    feature_type = "Peaks",
+    .verbose = FALSE
+  ),
+  pattern = "load_atac_tenx",
+  info = "tenx h5 - feature_type Peaks points to the ATAC loaders"
+)
+
 ## full object load ------------------------------------------------------------
 
 dir_full <- file.path(test_temp_dir, "sc_full")
