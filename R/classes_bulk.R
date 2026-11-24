@@ -79,7 +79,7 @@ BulkCoExp <- S7::new_class(
     )
 
     S7::new_object(
-      S7::S7_object(),
+      BixverseBaseClass(),
       raw_data = raw_data,
       meta_data = meta_data,
       variable_info = variable_info,
@@ -187,7 +187,7 @@ BulkDge <- S7::new_class(
     )
 
     S7::new_object(
-      S7::S7_object(),
+      BixverseBaseClass(),
       raw_counts = raw_counts,
       meta_data = meta_data,
       variable_info = variable_info,

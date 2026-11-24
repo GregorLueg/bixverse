@@ -506,35 +506,15 @@ SingleCellsMultiModal <- S7::new_class(
     dims = S7::class_integer
   ),
   constructor = function(dir_data) {
-    # checks
     checkmate::assertDirectoryExists(dir_data)
 
-    dir_data <- path.expand(dir_data)
-
-    # generate the Rust pointer
-    count_connection <- SingleCellCountData$new(
-      f_path_cells = file.path(dir_data, "counts_cells.bin"),
-      f_path_genes = file.path(dir_data, "counts_genes.bin")
-    )
-
-    # generate the DuckDB connector
-    db_connection <- SingleCellDuckDB$new(
-      db_dir = dir_data
-    )
-
     S7::new_object(
-      S7::S7_object(),
-      db_connection = db_connection,
-      count_connection = count_connection,
+      SingleCells(dir_data = dir_data),
       adt_counts = NULL,
       peak_connection = NULL,
-      dir_data = path.expand(dir_data),
-      sc_cache = new_sc_cache(),
       adt_cache = new_sc_cache(),
       atac_cache = new_sc_cache(),
-      sc_map = new_sc_mapper(),
-      other_data = list(),
-      dims = c(0L, 0L)
+      other_data = list()
     )
   }
 )

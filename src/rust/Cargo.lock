@@ -491,7 +491,7 @@ dependencies = [
 
 [[package]]
 name = "bixverse"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "bixverse-r",
  "edge-rs",

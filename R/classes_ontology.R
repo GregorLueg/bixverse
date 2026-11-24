@@ -174,7 +174,7 @@ OntologySim <- S7::new_class(
 
     # Finalise object
     S7::new_object(
-      S7::S7_object(),
+      BixverseBaseClass(),
       parent_child_dt = parent_child_dt,
       outputs = list(),
       sim_mat = NULL,
