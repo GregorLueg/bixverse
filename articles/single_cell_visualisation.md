@@ -398,12 +398,12 @@ dt <- extract_embedding_data(
 head(dt)
 #>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
 #>              <char>     <num>     <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1  4.435234 -1.229581    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1  6.547646 -3.803758    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1 -5.450504 -1.379464 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1  1.897550 -3.307201         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1  5.469646 -2.998428    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1  4.530323 -2.423811         NK               2 0.4165899
+#> 1: AAACATACAACCAC-1 -5.532514 1.4303284    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -6.901820 4.0647011    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  6.087878 0.6221395 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.533025 2.6208754         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -6.294994 3.1010923    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -5.315051 2.4977725         NK               2 0.4165899
 ```
 
 ## Other 2D embeddings
@@ -577,12 +577,12 @@ dt <- extract_feature_plot_data(
 head(dt)
 #>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
 #>              <char>     <num>     <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1  4.435234 -1.229581    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1  6.547646 -3.803758    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1 -5.450504 -1.379464 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1  1.897550 -3.307201         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1  5.469646 -2.998428    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1  4.530323 -2.423811         NK               2 0.4165899
+#> 1: AAACATACAACCAC-1 -5.532514 1.4303284    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -6.901820 4.0647011    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  6.087878 0.6221395 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.533025 2.6208754         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -6.294994 3.1010923    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -5.315051 2.4977725         NK               2 0.4165899
 #>               gene expression
 #>             <fctr>      <num>
 #> 1: ENSG00000156738          0

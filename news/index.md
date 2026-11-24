@@ -1,5 +1,10 @@
 # Changelog
 
+## bixverse 0.9.2
+
+- Works with S7 1.0.0, which rejected the bulk, graph, ontology and
+  multi-modal constructors.
+
 ## bixverse 0.9.1
 
 - `bixverse-r` 0.10.3 under the hood.

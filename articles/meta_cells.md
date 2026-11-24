@@ -567,7 +567,7 @@ purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
 #>        method      mean    median
 #>        <char>     <num>     <num>
 #> 1:    hdWGCNA 0.8830769 0.9615385
-#> 2:   SEACells 0.8998204 1.0000000
+#> 2:   SEACells 0.9036492 1.0000000
 #> 3: SuperCells 0.8994530 0.9933382
 #> 4: MetaCells2 0.8571434 0.9200000
 ```
@@ -703,16 +703,16 @@ metrics_dt[,
 ]
 #>        method mean_separation median_separation mean_compactness
 #>        <char>           <num>             <num>            <num>
-#> 1:    hdWGCNA       0.2339972         0.1693764       0.04087567
-#> 2:   SEACells       0.3295148         0.2996956       0.04603253
-#> 3: SuperCells       0.3207075         0.2726718       0.03308521
-#> 4: MetaCells2       0.2619803         0.1558320       0.07146483
+#> 1:    hdWGCNA       0.2339971         0.1693765       0.04087564
+#> 2:   SEACells       0.3140203         0.2912224       0.04399582
+#> 3: SuperCells       0.3207074         0.2726717       0.03308518
+#> 4: MetaCells2       0.2619802         0.1558320       0.07146478
 #>    median_compactness
 #>                 <num>
-#> 1:         0.02295963
-#> 2:         0.02322349
-#> 3:         0.01812798
-#> 4:         0.03415733
+#> 1:         0.02295962
+#> 2:         0.02331191
+#> 3:         0.01812797
+#> 4:         0.03415730
 ```
 
 Some differences are visible here. hdWGCNA has the worst separation and
@@ -743,32 +743,32 @@ setorder(per_region_stats, method, region)
 per_region_stats[]
 #>         method region mean_separation median_separation mean_compactness
 #>         <char> <fctr>           <num>             <num>            <num>
-#>  1: MetaCells2   high      0.05668045        0.04667924       0.02743041
-#>  2: MetaCells2    mid      0.22697929        0.19642377       0.04119692
-#>  3: MetaCells2    low      0.61963095        0.49672365       0.19611929
-#>  4:   SEACells   high      0.07712428        0.06820391       0.01625168
-#>  5:   SEACells    mid      0.29030701        0.25955026       0.02791226
-#>  6:   SEACells    low      0.42959607        0.40353322       0.06697925
-#>  7: SuperCells   high      0.09665626        0.08661903       0.01280926
-#>  8: SuperCells    mid      0.25111712        0.22342816       0.01421472
-#>  9: SuperCells    low      0.46611313        0.45285365       0.05986448
-#> 10:    hdWGCNA   high      0.06435016        0.06328148       0.02032015
-#> 11:    hdWGCNA    mid      0.19515546        0.18222143       0.02435654
-#> 12:    hdWGCNA    low      0.50090880        0.43333557       0.10098691
+#>  1: MetaCells2   high      0.05668044        0.04667933       0.02743040
+#>  2: MetaCells2    mid      0.22697925        0.19642372       0.04119690
+#>  3: MetaCells2    low      0.61963063        0.49672353       0.19611914
+#>  4:   SEACells   high      0.07922575        0.07095433       0.01588880
+#>  5:   SEACells    mid      0.27792062        0.24623594       0.01811619
+#>  6:   SEACells    low      0.40741538        0.38700494       0.06932360
+#>  7: SuperCells   high      0.09665619        0.08661912       0.01280926
+#>  8: SuperCells    mid      0.25111706        0.22342810       0.01421471
+#>  9: SuperCells    low      0.46611302        0.45285332       0.05986442
+#> 10:    hdWGCNA   high      0.06435013        0.06328148       0.02032014
+#> 11:    hdWGCNA    mid      0.19515540        0.18222128       0.02435652
+#> 12:    hdWGCNA    low      0.50090874        0.43333557       0.10098680
 #>     median_compactness
 #>                  <num>
-#>  1:         0.02388687
-#>  2:         0.03373686
-#>  3:         0.18128243
-#>  4:         0.01589959
-#>  5:         0.01588389
-#>  6:         0.05387336
-#>  7:         0.01208876
-#>  8:         0.01235253
-#>  9:         0.05131565
-#> 10:         0.01789759
-#> 11:         0.01973436
-#> 12:         0.09385924
+#>  1:         0.02388686
+#>  2:         0.03373685
+#>  3:         0.18128230
+#>  4:         0.01521645
+#>  5:         0.01599382
+#>  6:         0.05783278
+#>  7:         0.01208875
+#>  8:         0.01235252
+#>  9:         0.05131561
+#> 10:         0.01789758
+#> 11:         0.01973435
+#> 12:         0.09385921
 ```
 
 We can also look at this per density region in the manifold where we can
@@ -916,8 +916,8 @@ external_dt[,
 ]
 #>    assignment median_compactness median_separation
 #>        <char>              <num>             <num>
-#> 1:   SEACells         0.02322349         0.2996956
-#> 2:     random         0.71745831         0.2570072
+#> 1:   SEACells         0.02331191         0.2912224
+#> 2:     random         0.71670786         0.2527286
 ```
 
 The SEACells numbers match what
@@ -1048,7 +1048,7 @@ scenic_res <- tf_to_genes_correlations(
 
 # no motif filter here, so the leading edge column does not exist yet
 tf_to_gene_ls <- build_regulons(scenic_res, use_leading_edge = FALSE)
-#> Built 571 regulons (134 dropped below 10 genes). Median size: 354
+#> Built 580 regulons (117 dropped below 10 genes). Median size: 308
 ```
 
 In a proper situation we would filter down the TF to gene associations
@@ -1125,21 +1125,21 @@ mc_k_sweep
 #>   Source class:     MetaCells
 #>   k range:          2 to 12
 #>   No runs per k:    10
-#>   Most stable k:    2 (stability = 0.9999)
+#>   Most stable k:    2 (stability = 0.9998)
 #> 
 #>         k stability best_error median_error consensus_failed n_dropped
 #>     <int>     <num>      <num>        <num>           <lgcl>     <int>
-#>  1:     2 0.9998916 0.16550216   0.16550638            FALSE         0
-#>  2:     3 0.9996629 0.13259889   0.13261017            FALSE         0
-#>  3:     4 0.9867086 0.11613743   0.11619368            FALSE         0
-#>  4:     5 0.9142960 0.10370810   0.10375506            FALSE         0
-#>  5:     6 0.8318058 0.09325371   0.09329979            FALSE         0
-#>  6:     7 0.8803599 0.08629599   0.08773988            FALSE         0
-#>  7:     8 0.8966097 0.08218080   0.08264162            FALSE         0
-#>  8:     9 0.8886490 0.07849617   0.07872819            FALSE         0
-#>  9:    10 0.9913691 0.07503599   0.07505216            FALSE         0
-#> 10:    11 0.8304781 0.07283549   0.07297927            FALSE         0
-#> 11:    12 0.8572711 0.07143181   0.07151616            FALSE         0
+#>  1:     2 0.9998408 0.16993909   0.16994593            FALSE         0
+#>  2:     3 0.8823990 0.13567118   0.13568515            FALSE         0
+#>  3:     4 0.9835801 0.11895520   0.11901334            FALSE         0
+#>  4:     5 0.9378940 0.10600561   0.10604621            FALSE         0
+#>  5:     6 0.8818142 0.09547094   0.09550080            FALSE         0
+#>  6:     7 0.9290716 0.08832391   0.08835417            FALSE         0
+#>  7:     8 0.9345667 0.08412663   0.08448355            FALSE         0
+#>  8:     9 0.8272932 0.08024389   0.08045826            FALSE         0
+#>  9:    10 0.9911507 0.07684430   0.07688291            FALSE         0
+#> 10:    11 0.9214025 0.07465325   0.07485404            FALSE         0
+#> 11:    12 0.7295322 0.07329123   0.07354356            FALSE         0
 #>     n_empty_clusters n_converged
 #>                <int>       <int>
 #>  1:                0          10
@@ -1188,8 +1188,8 @@ mc_nmf
 #>   No cells:         250
 #>   No components:    7
 #>   No runs:          10
-#>   Stability:        0.9098
-#>   Relative error:   0.08629
+#>   Stability:        0.9286
+#>   Relative error:   0.08834
 #>   Dropped:          0 / 70 components
 #>   Preprocessing:    none
 ```
@@ -1203,15 +1203,15 @@ where it landed.
 
 mc_nmf_diag <- get_stability(mc_nmf)
 mc_nmf_diag$stability
-#> [1] 0.9098174
+#> [1] 0.9285743
 mc_nmf_diag$cluster_sizes
 #>    cluster     n
 #>      <int> <int>
 #> 1:       1    10
-#> 2:       2     7
-#> 3:       3    10
+#> 2:       2    10
+#> 3:       3    11
 #> 4:       4    10
-#> 5:       5    12
+#> 5:       5     8
 #> 6:       6    11
 #> 7:       7    10
 ```
@@ -1268,12 +1268,12 @@ top_genes <- lapply(colnames(mc_w), \(comp) {
 names(top_genes) <- colnames(mc_w)
 top_genes[1:3]
 #> $comp_01
-#>  [1] "NEGR1"      "DNTT"       "MSI2"       "IGLL1"      "EBF1"      
-#>  [6] "GAPDH"      "MIR181A1HG" "SSBP2"      "CDK6"       "CHST11"    
+#>  [1] "XACT"    "ZNF385D" "RYR3"    "S100A6"  "GAPDH"   "S100A4"  "ANK1"   
+#>  [8] "HBB"     "NFIA"    "STXBP5" 
 #> 
 #> $comp_02
-#>  [1] "LYZ"       "CST3"      "SAMHD1"    "SLC8A1"    "AFF3"      "LGALS1"   
-#>  [7] "S100A4"    "RAB11FIP1" "S100A6"    "PIK3R5"   
+#>  [1] "DIAPH3" "ASPM"   "TOP2A"  "POLQ"   "MKI67"  "RRM2"   "CIT"    "NUSAP1"
+#>  [9] "KIF15"  "AURKB" 
 #> 
 #> $comp_03
 #>  [1] "NKAIN2"  "ZNF385D" "MSI2"    "MEIS1"   "CALN1"   "INPP4B"  "ANGPT1" 

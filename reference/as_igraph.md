@@ -36,9 +36,9 @@ An undirected, weighted `igraph`.
 ``` r
 conn <- as_sc_connectivity(igraph::make_graph("Zachary"))
 as_igraph(conn)
-#> IGRAPH 37f21fa U-W- 34 78 -- 
+#> IGRAPH 55203bd U-W- 34 78 -- 
 #> + attr: weight (e/n)
-#> + edges from 37f21fa:
+#> + edges from 55203bd:
 #>  [1]  1-- 2  1-- 3  1-- 4  1-- 5  1-- 6  1-- 7  1-- 8  1-- 9  1--11  1--12
 #> [11]  1--13  1--14  1--18  1--20  1--22  1--32  2-- 3  2-- 4  2-- 8  2--14
 #> [21]  2--18  2--20  2--22  2--31  3-- 4  3-- 8  3-- 9  3--10  3--14  3--28

@@ -244,10 +244,10 @@ dcast(n_clusters, resolution ~ graph, value.var = "n_clusters")
 #> Key: <resolution>
 #>    resolution   knn   snn  umap
 #>         <num> <int> <int> <int>
-#> 1:        0.5     9    12    12
-#> 2:        1.0    14    17    15
-#> 3:        1.5    17    20    20
-#> 4:        2.0    21    21    24
+#> 1:        0.5    10    13    11
+#> 2:        1.0    12    15    16
+#> 3:        1.5    17    20    22
+#> 4:        2.0    23    22    26
 ```
 
 The point of this table: **resolutions do not carry over between
@@ -442,24 +442,24 @@ fc_stats <- rbindlist(list(
 fc_stats
 #>    resolution  mean_ari median_ari mean_conductance median_conductance
 #>         <num>     <num>      <num>            <num>              <num>
-#> 1:        2.0 0.9149607  0.9129672       0.23121047         0.18598148
-#> 2:        1.5 0.9917504  0.9851506       0.05954609         0.06342463
-#> 3:        1.0 0.9986987  1.0000000       0.05631957         0.06320890
-#> 4:        0.5 1.0000000  1.0000000       0.05617394         0.06293917
-#> 5:        2.0 0.9064795  0.8962232       0.20228615         0.16444685
-#> 6:        1.5 0.9051338  0.8786204       0.17031376         0.14842887
-#> 7:        1.0 0.9208306  0.9190093       0.14346918         0.12880361
-#> 8:        0.5 0.9314443  0.9739174       0.07150107         0.06015927
+#> 1:        2.0 0.9828833  0.9823357       0.19748537         0.18767531
+#> 2:        1.5 1.0000000  1.0000000       0.05310797         0.06072441
+#> 3:        1.0 1.0000000  1.0000000       0.05228200         0.05938450
+#> 4:        0.5 1.0000000  1.0000000       0.05178834         0.05776583
+#> 5:        2.0 0.9464080  0.9424633       0.23830207         0.18086970
+#> 6:        1.5 0.9378425  0.9501527       0.18763205         0.14751919
+#> 7:        1.0 0.9744326  0.9712801       0.11759994         0.12176237
+#> 8:        0.5 0.9500480  0.9645567       0.08086254         0.07918369
 #>    mean_n_comms         graph
 #>           <num>        <char>
-#> 1:          7.7  centroid kNN
+#> 1:          8.0  centroid kNN
 #> 2:          5.0  centroid kNN
 #> 3:          5.0  centroid kNN
 #> 4:          5.0  centroid kNN
-#> 5:         12.7 cell-mediated
-#> 6:         11.6 cell-mediated
-#> 7:          9.9 cell-mediated
-#> 8:          5.9 cell-mediated
+#> 5:         14.6 cell-mediated
+#> 6:         12.6 cell-mediated
+#> 7:          9.0 cell-mediated
+#> 8:          6.8 cell-mediated
 
 melt(
   fc_stats,
@@ -610,9 +610,9 @@ sctype_cells <- assign_sc_type(
 
 sctype_cells
 #> ScTypeCellResults: 6626 cells, 10 cell types
-#>   Unknown cells:  69
+#>   Unknown cells:  70
 #>   Smoothing used: TRUE
-#>   Mixed clusters: 9 out of 17
+#>   Mixed clusters: 8 out of 15
 
 sc_ref[[c("sc_type_cell", "sc_type_hybrid", "sc_type_margin")]] <- list(
   sc_type_cell = sctype_cells$assignments,
@@ -629,42 +629,38 @@ than one cell type:
 sctype_cells$composition
 #>     cluster_id n_cells n_unknown   dominant    purity     second
 #>          <int>   <int>     <int>     <char>     <num>     <char>
-#>  1:          0    1100         0 CD14+ Mono 0.9881818   Platelet
-#>  2:          1    1046        23    T cells 0.7552581     CD4+ T
-#>  3:          2     871         2     CD8+ T 0.4247991         NK
-#>  4:          3     806         4    T cells 0.6364764     CD4+ T
-#>  5:          4     596         0    B cells 0.9949664        pDC
-#>  6:          5     534         0     CD8+ T 0.8726591    T cells
-#>  7:          6     423        39    T cells 0.6241135     CD4+ T
-#>  8:          7     338         0    B cells 0.9526627        mDC
-#>  9:          8     334         0         NK 0.9880239 CD16+ Mono
-#> 10:          9     313         0 CD16+ Mono 0.9169329 CD14+ Mono
-#> 11:         10     122         0        mDC 0.9344262 CD14+ Mono
-#> 12:         11      40         0        pDC 1.0000000       <NA>
-#> 13:         12      29         1    T cells 0.6896552     CD4+ T
-#> 14:         13      26         0   Platelet 1.0000000       <NA>
-#> 15:         14      25         0    T cells 0.4000000     CD8+ T
-#> 16:         15      13         0   Platelet 0.4615385    T cells
-#> 17:         16      10         0        mDC 0.8000000     CD4+ T
+#>  1:          0    1304        62    T cells 0.7285276     CD4+ T
+#>  2:          1    1106         0 CD14+ Mono 0.9882459   Platelet
+#>  3:          2     956         5    T cells 0.6359833     CD4+ T
+#>  4:          3     873         2     CD8+ T 0.4226804         NK
+#>  5:          4     592         0    B cells 0.9966216        pDC
+#>  6:          5     540         0     CD8+ T 0.8629630    T cells
+#>  7:          6     343         0    B cells 0.9504373        mDC
+#>  8:          7     338         0         NK 0.9881657 CD16+ Mono
+#>  9:          8     306         0 CD16+ Mono 0.9346405 CD14+ Mono
+#> 10:          9     130         0        mDC 0.8692307 CD14+ Mono
+#> 11:         10      40         0        pDC 1.0000000       <NA>
+#> 12:         11      34         1    T cells 0.6176471     CD4+ T
+#> 13:         12      28         0    T cells 0.5000000     CD8+ T
+#> 14:         13      25         0   Platelet 1.0000000       <NA>
+#> 15:         14      11         0        mDC 0.7272727     CD4+ T
 #>     second_fraction    entropy cluster_mixed
 #>               <num>      <num>        <lgcl>
-#>  1:     0.006363636 0.07960797         FALSE
-#>  2:     0.177820265 0.80946016          TRUE
-#>  3:     0.280137777 1.27172554          TRUE
-#>  4:     0.307692319 0.90816867          TRUE
-#>  5:     0.005033557 0.03165658         FALSE
-#>  6:     0.112359554 0.44721305          TRUE
-#>  7:     0.125295505 1.21412170          TRUE
-#>  8:     0.038461540 0.21909255         FALSE
-#>  9:     0.005988024 0.07734797         FALSE
-#> 10:     0.073482431 0.32200491         FALSE
-#> 11:     0.065573767 0.24203616         FALSE
-#> 12:     0.000000000 0.00000000         FALSE
-#> 13:     0.275862068 0.72763455          TRUE
+#>  1:     0.143404901 0.96370196          TRUE
+#>  2:     0.006329114 0.07924042         FALSE
+#>  3:     0.308577418 0.90547264          TRUE
+#>  4:     0.278350502 1.27517283          TRUE
+#>  5:     0.003378378 0.02259685         FALSE
+#>  6:     0.122222222 0.46605775          TRUE
+#>  7:     0.037900876 0.23082455         FALSE
+#>  8:     0.005917160 0.07657434         FALSE
+#>  9:     0.058823530 0.26271373         FALSE
+#> 10:     0.084615387 0.49354321          TRUE
+#> 11:     0.000000000 0.00000000         FALSE
+#> 12:     0.352941185 0.76889431          TRUE
+#> 13:     0.214285716 1.31297684          TRUE
 #> 14:     0.000000000 0.00000000         FALSE
-#> 15:     0.239999995 1.42420530          TRUE
-#> 16:     0.153846160 1.52470744          TRUE
-#> 17:     0.200000003 0.50040245          TRUE
+#> 15:     0.272727281 0.58595264          TRUE
 ```
 
 Most of the mixed clusters are T cell clusters split between `"T cells"`
@@ -740,7 +736,7 @@ embedding_plot_sc(
     title = "Reference cell types (scType, hybrid)",
     colour = "Cell type:"
   )
-#> Warning: Removed 69 rows containing missing values or values outside the scale range
+#> Warning: Removed 70 rows containing missing values or values outside the scale range
 #> (`geom_point()`).
 ```
 
@@ -994,7 +990,7 @@ head(predicted)
 #>                      <char>                     <num>
 #> 1:                  B cells                 1.0000000
 #> 2:               CD14+ Mono                 1.0000000
-#> 3:                   CD4+ T                 0.6666667
+#> 3:                   CD4+ T                 0.6000000
 #> 4:                  T cells                 0.9333333
 #> 5:               CD14+ Mono                 1.0000000
 #> 6:               CD14+ Mono                 1.0000000
@@ -1075,7 +1071,7 @@ ggplot(conf_dt, aes(x = predicted_sc_type, y = sc_type_confidence)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
   ylim(0, 1.025)
-#> Warning: Removed 107 rows containing missing values or values outside the scale range
+#> Warning: Removed 105 rows containing missing values or values outside the scale range
 #> (`geom_point()`).
 ```
 
