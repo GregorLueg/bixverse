@@ -105,22 +105,18 @@ fragments.
 
 ```{r}
 #| label: qc
-#| fig-width: 10
-#| fig-height: 3.6
 first <- fragment_qc_sc(first, fragments = fragments, gtf = gtf)
 first <- amulet_sc(first, fragments = fragments, restrict_beds = blacklist)
+```
+
+```{r}
+#| label: fragment profiles
+#| fig-width: 10
+#| fig-height: 3.6
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
 profiles <- fragment_profiles_sc(first, fragments = fragments, gtf = gtf)
 
-p_tss <- ggplot(profiles$tss, aes(x = offset, y = enrichment)) +
-  geom_line() +
-  labs(x = "Distance to TSS (bp)", y = "TSS enrichment") +
-  theme_bx()
-p_len <- ggplot(profiles$lengths, aes(x = length, y = fraction)) +
-  geom_line() +
-  labs(x = "Fragment length (bp)", y = "Fraction of fragments") +
-  theme_bx()
-
-p_tss + p_len
+tss_profile_plot_sc(profiles$tss) + fragment_length_plot_sc(profiles$lengths)
 ```
 
 ```{r}
@@ -194,15 +190,12 @@ atac
 atac <- run_tfidf_sc(atac)
 atac <- find_top_features_sc(atac, min_cutoff = "q25")
 atac <- calculate_lsi_sc(atac, .verbose = FALSE)
+```
 
-ggplot(
-  get_lsi_depth_cor(atac),
-  aes(x = component, y = depth_cor, shape = dropped)
-) +
-  geom_point() +
-  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 1)) +
-  labs(x = "LSI component", y = "Correlation with depth") +
-  theme_bx()
+```{r}
+#| label: lsi depth correlation
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+lsi_depth_plot_sc(get_lsi_depth_cor(atac))
 ```
 
 ```{r}

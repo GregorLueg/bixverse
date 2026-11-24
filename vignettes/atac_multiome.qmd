@@ -113,18 +113,10 @@ distribution means a failed library, whatever the per-cell numbers say.
 #| label: fragment profiles
 #| fig-width: 10
 #| fig-height: 3.6
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
 profiles <- fragment_profiles_sc(sc_object, fragments = fragments, gtf = gtf)
 
-p_tss <- ggplot(profiles$tss, aes(x = offset, y = enrichment)) +
-  geom_line() +
-  labs(x = "Distance to TSS (bp)", y = "TSS enrichment") +
-  theme_bx()
-p_len <- ggplot(profiles$lengths, aes(x = length, y = fraction)) +
-  geom_line() +
-  labs(x = "Fragment length (bp)", y = "Fraction of fragments") +
-  theme_bx()
-
-p_tss + p_len
+tss_profile_plot_sc(profiles$tss) + fragment_length_plot_sc(profiles$lengths)
 ```
 
 ```{r}
@@ -312,15 +304,12 @@ sprintf(
 )
 
 sc_object <- calculate_lsi_sc(sc_object, .verbose = FALSE)
+```
 
-ggplot(
-  get_lsi_depth_cor(sc_object),
-  aes(x = component, y = depth_cor, shape = dropped)
-) +
-  geom_point() +
-  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 1)) +
-  labs(x = "LSI component", y = "Correlation with depth") +
-  theme_bx()
+```{r}
+#| label: lsi depth correlation
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+lsi_depth_plot_sc(get_lsi_depth_cor(sc_object))
 ```
 
 ```{r}
@@ -338,16 +327,19 @@ sc_object <- umap_sc(
   modality = "atac",
   .verbose = FALSE
 )
+```
 
-atac_umap <- data.table(
-  get_embedding(sc_object, "umap", modality = "atac"),
-  cluster = factor(sc_object[["leiden_clustering", filtered = TRUE]][[1]])
+```{r}
+#| label: atac umap plot
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  embd_modality = "atac",
+  colour_by = "leiden_clustering",
+  discrete = TRUE,
+  point_size = 0.5
 )
-setnames(atac_umap, 1:2, c("UMAP_1", "UMAP_2"))
-
-ggplot(atac_umap, aes(UMAP_1, UMAP_2, colour = cluster)) +
-  geom_point(size = 0.5, alpha = 0.5) +
-  theme_bx()
 ```
 
 The RNA clusters stay together on the ATAC UMAP: the two modalities come from
@@ -440,6 +432,24 @@ Gene activity is a separate `SingleCells`, so the RNA tools run on it.
 Methods built on an mRNA count model (residuals, doublet scores) refuse it,
 and those that gene length biases (AUCell, ScType, NMF) warn.
 
+The same markers as above, as gene activity instead of expression:
+
+```{r}
+#| label: gene activity of markers
+#| fig-width: 10
+#| fig-height: 8
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+feature_plot_sc(
+  sc_object,
+  features = marker_ids,
+  feature_labels = setNames(markers, marker_ids),
+  embedding = "umap",
+  embd_modality = "wnn",
+  expr_sc = ga,
+  point_size = 0.5
+)
+```
+
 ## Differential accessibility
 
 The marker functions take `modality = "atac"` and test peaks instead of genes,
@@ -481,23 +491,17 @@ A top peak's accessibility on the WNN UMAP:
 
 ```{r}
 #| label: top peak plot
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
 top_peak <- da[fdr < 0.05][order(-lfc)]$feature_id[1]
 
-peak_dt <- data.table(
-  get_embedding(sc_object, "umap", modality = "wnn"),
-  accessibility = extract_gene_expression(
-    sc_object,
-    features = top_peak,
-    modality = "atac"
-  )[[top_peak]]
+feature_plot_sc(
+  sc_object,
+  features = top_peak,
+  embedding = "umap",
+  expr_modality = "atac",
+  embd_modality = "wnn",
+  point_size = 0.5
 )
-setnames(peak_dt, 1:2, c("UMAP_1", "UMAP_2"))
-
-ggplot(peak_dt[order(accessibility)], aes(UMAP_1, UMAP_2)) +
-  geom_point(aes(colour = accessibility), size = 0.5) +
-  scale_colour_viridis_c() +
-  ggtitle(top_peak) +
-  theme_bx()
 ```
 
 ## Peak to gene links

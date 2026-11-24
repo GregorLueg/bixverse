@@ -97,8 +97,9 @@ The heavy numerical code does **not** live in this repo. It sits in the
 standalone [`bixverse-rs`](https://crates.io/crates/bixverse-rs) crate, which
 reaches this repo through `bixverse-r` (extendr conversions, re-exports
 `bixverse-rs`). `src/rust/Cargo.toml` declares it with features `single-cell`,
-`multi-modal`, `dge`, `bonsai`, `accelerate` and `h5`, plus `hdf5-filters` off
-Windows and `hdf5-static` by default. See "Local development" above for the
+`multi-modal`, `atac`, `dge`, `bonsai`, `accelerate`, `h5`, `parquet`, `zarr`
+and `export-zarr`, plus `hdf5-filters` and `zarr-blosc` off Windows and
+`hdf5-static` by default. See "Local development" above for the
 patch block. Everything under `src/rust/src/` is a thin extendr binding layer,
 one module per domain
 (`base`, `data`, `enrichment`, `graph`, `meta_cell`, `methods`, `ontology`,
@@ -156,8 +157,15 @@ Two lightweight S3 side-cars ride along in the S7 object: `ScMap` (gene/cell
 name to index maps, cells-to-keep, HVG indices) and `ScCache` (PCA factors,
 loadings and singular values, other embeddings, kNN, connectivities graph,
 MAGIC, residual fit). `SingleCellsMultiModal`
-(`R/classes_single_cell_multimodal.R`) extends this with additional assay
-layers: ADT today, the ATAC slots are placeholders.
+(`R/classes_single_cell_multimodal.R`) extends this with ADT and ATAC assay
+layers. `SingleCellsAtac` (`R/classes_single_cell_atac.R`) is a `SingleCells`
+whose own store holds peaks or tiles; on it `modality = "atac"` names its own
+cache. Gene activity is a separate `SingleCells` under `gene_activity/` in the
+experiment directory.
+
+The ATAC tests need the chr22 fixtures from the `bixverse-rs` checkout, see
+`inst/tinytest/helper_atac.R`; set `BIXVERSE_ATAC_FIXTURES` if it is not a
+sibling. Without them the ATAC test files are skipped.
 
 Gotcha: `ScMap` stores **0-based** indices for Rust. Setters like
 `set_cells_to_keep()` subtract 1 on the way in; anything reading those slots and

@@ -456,8 +456,67 @@ Constraints:
   the ADT rownames.
 - ADT normalisation (CLR or DSB) is baked into `add_adt_counts_sc()`, there is
   no separate step.
-- Three caches, selected by the `modality` argument: `"rna"`, `"adt"`, `"wnn"`.
+- Four caches, selected by the `modality` argument: `"rna"`, `"adt"`,
+  `"atac"`, `"wnn"`.
   Passing `modality != "rna"` to a generic on a plain `SingleCells` errors.
 - `generate_wnn_graph_sc()` needs a PCA on **both** modalities.
 
 Getters: `get_adt_names()`, `get_adt_feature_info()`, `get_adt_sample_info()`.
+
+## Single cell ATAC
+
+Two hosts. `SingleCellsAtac` is ATAC on its own: a `SingleCells` whose store
+holds peaks or tiles, so `modality = "atac"` and the default both name it.
+`SingleCellsMultiModal` carries ATAC as a third arm next to RNA (and ADT);
+pass `modality = "atac"` to the shared generics. Feature ids are
+`chr:start-end`, 0-based half-open. Vignettes: `atac_only` and
+`atac_multiome`.
+
+```r
+# ATAC only, cells called from fragment counts (or cellranger = "singlecell.csv")
+atac <- load_atac_fragments(
+  SingleCellsAtac(dir_data = dir),
+  fragments = fragments, peaks = peaks_bed, min_fragments = 3000L
+)
+
+# multiome: RNA first, then the ATAC store over the same cells
+mm <- SingleCellsMultiModal(dir_data = dir)
+mm <- load_tenx_h5(mm, h5_path = h5)
+mm <- add_atac_tenx_sc(mm, h5_path = h5)    # or add_atac_fragments_sc()
+
+# QC: atac_n_fragments, atac_nucleosome_signal, atac_tss_enrichment, ...
+atac <- fragment_qc_sc(atac, fragments = fragments, gtf = gtf)
+atac <- amulet_sc(atac, fragments = fragments, restrict_beds = blacklist)
+profiles <- fragment_profiles_sc(atac, fragments = fragments, gtf = gtf)
+
+# better peaks: call per cluster, then recount
+peaks <- call_peaks_sc(atac, fragments = fragments, group_by = "leiden_clustering")
+peaks <- remove_blacklisted(peaks, blacklist)
+atac  <- annotate_peaks_sc(atac, gtf = gtf)  # closest_gene, distance_to_tss
+
+# embedding
+atac <- run_tfidf_sc(atac)
+atac <- find_top_features_sc(atac, min_cutoff = "q25")
+atac <- calculate_lsi_sc(atac, lsi_params = params_atac_lsi())  # or run_rlsi_sc()
+get_lsi_depth_cor(atac)                     # component 1 usually tracks depth
+atac <- find_neighbours_sc(atac, embd_to_use = "lsi")
+atac <- umap_sc(atac, embd_to_use = "lsi")
+```
+
+Downstream:
+
+- Markers test peaks with `modality = "atac"` (multiome) or by default
+  (`SingleCellsAtac`). `method = NULL` picks `"lr"` on ATAC: logistic
+  regression with library size as covariate. Results keyed by `feature_id`.
+- `harmony_sc(obj, embd_to_use = "lsi", modality = "atac")` for batches.
+- WNN: `generate_wnn_graph_sc(mm, modality_2 = "atac", embd_to_use_2 = "lsi")`.
+- `gene_activity_sc()` returns a separate `SingleCells` (gene body plus
+  promoter counts, `gene_id` without version). Reopen with
+  `get_gene_activity()`. RNA tools run on it; mRNA-model methods (residuals,
+  doublets) refuse it, gene length biased ones warn.
+- `transfer_labels_seurat_sc(reference = rna, query = ga, label_column = ...,
+  weight_embedding = get_embedding(atac, "lsi"))` moves RNA labels onto ATAC
+  cells.
+- `peak_to_gene_sc(mm, gtf = gtf, group_by = "fine_clusters")` correlates
+  peaks with nearby genes over groups of cells, multiome only.
+- Gene-only methods refuse peak or tile stores outright.

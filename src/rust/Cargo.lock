@@ -529,7 +529,8 @@ dependencies = [
 [[package]]
 name = "bixverse-atac"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70230360321f80b56b3a5bb3e08d05802edeff8866d8e52300f36cedab4696cc"
 dependencies = [
  "bixverse-core",
  "bixverse-sc",
@@ -548,7 +549,8 @@ dependencies = [
 [[package]]
 name = "bixverse-core"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fde7cfb1fbaadc7302b1275b4ce616ebd7cab9cb729c3b98136681d0ed1097a3"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -572,7 +574,8 @@ dependencies = [
 [[package]]
 name = "bixverse-gpu"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73619470001fa6be5d48ae637743c8ea168e00c86d445519b9183ca7228f1ca0"
 dependencies = [
  "ann-search-rs",
  "bixverse-core",
@@ -592,7 +595,8 @@ dependencies = [
 [[package]]
 name = "bixverse-methods"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26a9074723c5267b2c611b8b0b7a76f53f6a7cf789693d78a0eff333453257cd"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -615,7 +619,8 @@ dependencies = [
 [[package]]
 name = "bixverse-r"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1c306049ddb67f1d02266193298deae44798ac5263a5296116ce29677adbda3"
 dependencies = [
  "ann-search-rs",
  "bixverse-rs",
@@ -634,7 +639,8 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3da3466232c969f5830023d615b204131cab3486367fd12d5022c87c154b87be"
 dependencies = [
  "bixverse-atac",
  "bixverse-core",
@@ -650,7 +656,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sc"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "330622d356430f27726d8c9e59982915eec43d67c6bd459c2b5ebd5656ed0779"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -676,7 +683,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sc-data"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "525183ae25e9d0231cb92c448a1ec5c7c7cc829683d74dd2b3e635954bac2432"
 dependencies = [
  "approx 0.5.1",
  "bincode",
@@ -713,7 +721,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sc-export"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95bd0b00e7f6d73caeb36ba17d269c83f99af0ea11482ad62d54d25b37920950"
 dependencies = [
  "bixverse-sc-data",
  "document-features",
@@ -725,7 +734,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sc-gpu"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82323ff7cc30534be5fe83c3e8e037da1df2705e4be9cf851faa6e50c40ca661"
 dependencies = [
  "ann-search-rs",
  "approx 0.5.1",
@@ -753,7 +763,8 @@ dependencies = [
 [[package]]
 name = "bixverse-sparse"
 version = "0.11.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=review-atacseq#48f574e823cba1bba49df61bbf05324fcabe6c0d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b80befb44cb1fd03aaef139acc68bba98ad5e72b3ebaea07a9b09368325ce006"
 dependencies = [
  "bincode",
  "num-traits",

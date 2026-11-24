@@ -1,3 +1,41 @@
+# bixverse 0.10.0
+
+## Features
+
+* `bixverse-r` 0.11.0 under the hood.
+* Single cell ATAC. `SingleCellsAtac` for ATAC on its own, an ATAC layer on
+  `SingleCellsMultiModal` for multiome. Load from fragments or Cell Ranger
+  output (`load_atac_fragments()`, `load_atac_tenx()` and their `add_*_sc()`
+  twins), then fragment QC and profiles, AMULET multiplets, peak calling per
+  group, TF-IDF, LSI and RLSI, peak annotation, gene activity and peak to gene
+  links. Two new vignettes.
+* kNN, clustering, UMAP, WNN and Harmony take `modality = "atac"`.
+  `harmony_sc()` corrects any cached embedding via `embd_to_use`.
+* The marker functions gain `method = "lr"` (Seurat's logistic regression,
+  library size as covariate) and `modality = "atac"`. `NULL` picks `"lr"` on
+  ATAC and `"wilcox"` otherwise.
+* `transfer_labels_seurat_sc()`: Seurat's anchor based label transfer, e.g.
+  from an RNA reference onto ATAC gene activity.
+* `save_zarr()` writes an AnnData Zarr store. It and `save_h5ad()` take
+  `genes` to write a subset.
+* Methods that assume RNA counts refuse peak, tile and protein stores, and
+  refuse or warn on gene activity.
+
+## Breaking changes
+
+* Store format v5. v4 stores load with a warning, v3 stores no longer open.
+  `upgrade_sc_store()` converts both.
+* `params_nmf_consensus()` loses `kmeans_iters`.
+* New defaults, ported from the Python front end. Results move at the same
+  seed:
+  * k-means is e-means: `km_type` in `params_sc_fast_cluster()` and
+    `params_fast_cluster_default()` (boost, scDblFinder), `k_means_algorithm`
+    in `params_kmeans_defaults()` (Harmony v1 and v2).
+  * Leiden runs 2 iterations instead of 5. `local_moving` and the new
+    `node_order` default to `NULL`: `"queue"` / `"bfs"` for Leiden,
+    `"coloured"` / `"shuffle"` for Louvain, so Louvain moves too.
+  * Harmony v2 `block_size` is 0.05 instead of 0.2.
+
 # bixverse 0.9.2
 
 * Works with S7 1.0.0, which rejected the bulk, graph, ontology and

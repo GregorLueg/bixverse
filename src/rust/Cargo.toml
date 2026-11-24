@@ -60,9 +60,6 @@ bixverse-r = { version = "0.11.0", default-features = false, features = [
     "zarr-blosc",
 ] }
 
-[patch.crates-io]
-bixverse-r = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "review-atacseq" }
-
 [[bin]]
 name = "document"
 path = "document.rs"
