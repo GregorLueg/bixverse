@@ -1,3 +1,15 @@
 project:
   render:
-  - '*.qmd'
+    - "*.qmd"
+
+# Vignettes execute locally and the results are committed under
+# vignettes/_freeze/, so CI does not rerun every vignette on each push.
+#
+# "auto" and not "true": the freeze cache stores the whole executed document,
+# prose included. Under "true" quarto never re-executes, so a prose edit that
+# was not re-rendered locally would publish the OLD prose with no warning.
+# Under "auto" a changed .qmd re-executes, so the worst case is a slow CI run
+# rather than a silently stale page. Re-render locally after editing and commit
+# _freeze/ alongside the .qmd.
+execute:
+  freeze: auto
