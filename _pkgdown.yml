@@ -500,6 +500,7 @@ reference:
       - read_h5ad_x_summary
       - save_h5ad
       - save_zarr
+      - write_tenx_h5_sc
       - save_sc_exp_to_disk
       - archive_sc_exp
       - upgrade_sc_store
