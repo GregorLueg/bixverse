@@ -18,7 +18,8 @@
   from an RNA reference onto ATAC gene activity.
 * `save_zarr()` writes an AnnData Zarr store. It and `save_h5ad()` take
   `genes` to write a subset. The h5ad loaders, `prescan_h5ad_files()` and the
-  h5ad readers take Zarr stores too.
+  h5ad readers take Zarr stores too. No Zarr export on Windows: `save_zarr()`
+  errors there, reading works.
 * `umap_sc()` takes the umap-learn 0.6 Adam optimiser and initialisation via
   `manifoldsR::params_umap(optimiser = "adam_v06", init = "recursive")`.
 * Methods that assume RNA counts refuse peak, tile and protein stores, and

@@ -1558,6 +1558,10 @@ S7::method(save_h5ad, SingleCells) <- function(
 #' directory that `anndata.read_zarr()` opens. A failed write leaves no store
 #' behind.
 #'
+#' Not available on Windows, where it errors: the Zarr writer pulls in Blosc,
+#' whose bundled pthread shim clashes with the one Rust links there. Use
+#' [bixverse::save_h5ad()] instead. Reading Zarr stores works on Windows.
+#'
 #' @inheritParams save_h5ad
 #' @param zarr_path Directory to write the Zarr store to.
 #'

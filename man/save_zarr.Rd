@@ -41,4 +41,8 @@ Returns the path to the written store, invisibly.
 Writes what \code{\link[=save_h5ad]{save_h5ad()}} writes, as an AnnData Zarr (v3)
 directory that \code{anndata.read_zarr()} opens. A failed write leaves no store
 behind.
+
+Not available on Windows, where it errors: the Zarr writer pulls in Blosc,
+whose bundled pthread shim clashes with the one Rust links there. Use
+\code{\link[=save_h5ad]{save_h5ad()}} instead. Reading Zarr stores works on Windows.
 }
