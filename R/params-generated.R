@@ -6835,12 +6835,16 @@ params_scenic_binarise <- function(
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item n_trees - Any. TODO Defaults to `500L`.
-#'  \item min_samples_leaf - Any. TODO Defaults to `50L`.
-#'  \item n_features_split - Any. TODO Defaults to `0L`.
-#'  \item n_thresholds - Any. TODO Defaults to `1L`.
-#'  \item max_depth - Any. TODO Defaults to `8L`.
-#'  \item subsample_frac - Any. TODO Defaults to `NULL`.
+#'  \item n_trees - Any. Number of trees to build. Defaults to `500L`.
+#'  \item min_samples_leaf - Any. Minimum number of samples per leaf node.
+#'  Defaults to `50L`.
+#'  \item n_features_split - Any. Number of features considered per split. `0L`
+#'  means `sqrt(n_features)`. Defaults to `0L`.
+#'  \item n_thresholds - Any. Number of random thresholds tested per feature per
+#'  node. Defaults to `1L`.
+#'  \item max_depth - Any. Maximum tree depth. Defaults to `8L`.
+#'  \item subsample_frac - Any. Optional. Fraction of cells to subsample per
+#'  tree. `NULL` uses all cells. Defaults to `NULL`.
 #' }
 #'
 #' @export
@@ -6860,13 +6864,22 @@ params_scenic_extra_trees_defaults <- function() {
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item n_trees_max - Any. TODO Defaults to `1000L`.
-#'  \item learning_rate - Any. TODO Defaults to `0.01`.
-#'  \item max_depth - Any. TODO Defaults to `3L`.
-#'  \item min_samples_leaf - Any. TODO Defaults to `50L`.
-#'  \item early_stop_window - Any. TODO Defaults to `25L`.
-#'  \item subsample_rate - Any. TODO Defaults to `0.9`.
-#'  \item n_features_split - Any. TODO Defaults to `0L`.
+#'  \item n_trees_max - Any. Maximum number of boosting rounds. Early stopping
+#'  usually triggers well before this. Defaults to `1000L`.
+#'  \item learning_rate - Any. Shrinkage applied to each tree's predictions.
+#'  Defaults to `0.01`.
+#'  \item max_depth - Any. Maximum tree depth. Shallow trees (3 to 5) work best.
+#'  Defaults to `3L`.
+#'  \item min_samples_leaf - Any. Minimum number of training samples per leaf
+#'  node. Defaults to `50L`.
+#'  \item early_stop_window - Any. Number of recent out-of-bag improvements
+#'  averaged for early stopping. Boosting stops once that rolling average drops
+#'  to zero or below. Defaults to `25L`.
+#'  \item subsample_rate - Any. Fraction of samples used to train each tree. The
+#'  rest form the out-of-bag set for early stopping. Defaults to `0.9`.
+#'  \item n_features_split - Any. Number of features evaluated per split. `0L`
+#'  means all features (unlike the forest learners, where it means
+#'  `sqrt(n_features)`). Defaults to `0L`.
 #' }
 #'
 #' @export
@@ -6886,13 +6899,18 @@ params_scenic_gradient_boosting_defaults <- function() {
 #'
 #' @returns A named list with the following elements:
 #' \itemize{
-#'  \item n_trees - Any. TODO Defaults to `250L`.
-#'  \item min_samples_leaf - Any. TODO Defaults to `50L`.
-#'  \item n_features_split - Any. TODO Defaults to `0L`.
-#'  \item subsample_rate - Any. TODO Defaults to `0.632`.
-#'  \item bootstrap - Any. TODO Defaults to `FALSE`.
-#'  \item max_depth - Any. TODO Defaults to `8L`.
-#'  \item subsample_frac - Any. TODO Defaults to `NULL`.
+#'  \item n_trees - Any. Number of trees to build. Defaults to `250L`.
+#'  \item min_samples_leaf - Any. Minimum number of samples per leaf node.
+#'  Defaults to `50L`.
+#'  \item n_features_split - Any. Number of features considered per split. `0L`
+#'  means `sqrt(n_features)`. Defaults to `0L`.
+#'  \item subsample_rate - Any. Fraction of samples drawn per tree, without
+#'  replacement unless `bootstrap = TRUE`. Defaults to `0.632`.
+#'  \item bootstrap - Any. Whether to sample with replacement. Defaults to
+#'  `FALSE`.
+#'  \item max_depth - Any. Maximum tree depth. Defaults to `8L`.
+#'  \item subsample_frac - Any. Optional. Fraction of cells to subsample per
+#'  tree. If set, overrides `subsample_rate`. Defaults to `NULL`.
 #' }
 #'
 #' @export

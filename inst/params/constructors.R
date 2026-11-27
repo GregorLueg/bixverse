@@ -2136,13 +2136,37 @@ spec_scenic_random_forest_defaults <- param_defaults(
   ),
   checker = NULL,
   fields = list(
-    n_trees = p_free(250L, doc = "TODO"),
-    min_samples_leaf = p_free(50L, doc = "TODO"),
-    n_features_split = p_free(0L, doc = "TODO"),
-    subsample_rate = p_free(0.632, doc = "TODO"),
-    bootstrap = p_free(FALSE, doc = "TODO"),
-    max_depth = p_free(8L, doc = "TODO"),
-    subsample_frac = p_free(NULL, doc = "TODO")
+    n_trees = p_free(250L, doc = "Number of trees to build."),
+    min_samples_leaf = p_free(
+      50L,
+      doc = "Minimum number of samples per leaf node."
+    ),
+    n_features_split = p_free(
+      0L,
+      doc = paste(
+        "Number of features considered per split. `0L` means",
+        "`sqrt(n_features)`."
+      )
+    ),
+    subsample_rate = p_free(
+      0.632,
+      doc = paste(
+        "Fraction of samples drawn per tree, without replacement",
+        "unless `bootstrap = TRUE`."
+      )
+    ),
+    bootstrap = p_free(
+      FALSE,
+      doc = "Whether to sample with replacement."
+    ),
+    max_depth = p_free(8L, doc = "Maximum tree depth."),
+    subsample_frac = p_free(
+      NULL,
+      doc = paste(
+        "Optional. Fraction of cells to subsample per tree. If set,",
+        "overrides `subsample_rate`."
+      )
+    )
   )
 )
 
@@ -2154,12 +2178,30 @@ spec_scenic_extra_trees_defaults <- param_defaults(
   ),
   checker = NULL,
   fields = list(
-    n_trees = p_free(500L, doc = "TODO"),
-    min_samples_leaf = p_free(50L, doc = "TODO"),
-    n_features_split = p_free(0L, doc = "TODO"),
-    n_thresholds = p_free(1L, doc = "TODO"),
-    max_depth = p_free(8L, doc = "TODO"),
-    subsample_frac = p_free(NULL, doc = "TODO")
+    n_trees = p_free(500L, doc = "Number of trees to build."),
+    min_samples_leaf = p_free(
+      50L,
+      doc = "Minimum number of samples per leaf node."
+    ),
+    n_features_split = p_free(
+      0L,
+      doc = paste(
+        "Number of features considered per split. `0L` means",
+        "`sqrt(n_features)`."
+      )
+    ),
+    n_thresholds = p_free(
+      1L,
+      doc = "Number of random thresholds tested per feature per node."
+    ),
+    max_depth = p_free(8L, doc = "Maximum tree depth."),
+    subsample_frac = p_free(
+      NULL,
+      doc = paste(
+        "Optional. Fraction of cells to subsample per tree. `NULL`",
+        "uses all cells."
+      )
+    )
   )
 )
 
@@ -2171,13 +2213,48 @@ spec_scenic_gradient_boosting_defaults <- param_defaults(
   ),
   checker = NULL,
   fields = list(
-    n_trees_max = p_free(1000L, doc = "TODO"),
-    learning_rate = p_free(0.01, doc = "TODO"),
-    max_depth = p_free(3L, doc = "TODO"),
-    min_samples_leaf = p_free(50L, doc = "TODO"),
-    early_stop_window = p_free(25L, doc = "TODO"),
-    subsample_rate = p_free(0.9, doc = "TODO"),
-    n_features_split = p_free(0L, doc = "TODO")
+    n_trees_max = p_free(
+      1000L,
+      doc = paste(
+        "Maximum number of boosting rounds. Early stopping usually",
+        "triggers well before this."
+      )
+    ),
+    learning_rate = p_free(
+      0.01,
+      doc = "Shrinkage applied to each tree's predictions."
+    ),
+    max_depth = p_free(
+      3L,
+      doc = "Maximum tree depth. Shallow trees (3 to 5) work best."
+    ),
+    min_samples_leaf = p_free(
+      50L,
+      doc = "Minimum number of training samples per leaf node."
+    ),
+    early_stop_window = p_free(
+      25L,
+      doc = paste(
+        "Number of recent out-of-bag improvements averaged for early",
+        "stopping. Boosting stops once that rolling average drops to zero or",
+        "below."
+      )
+    ),
+    subsample_rate = p_free(
+      0.9,
+      doc = paste(
+        "Fraction of samples used to train each tree. The rest form",
+        "the out-of-bag set for early stopping."
+      )
+    ),
+    n_features_split = p_free(
+      0L,
+      doc = paste(
+        "Number of features evaluated per split. `0L` means all",
+        "features (unlike the forest learners, where it means",
+        "`sqrt(n_features)`)."
+      )
+    )
   )
 )
 

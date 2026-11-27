@@ -9,12 +9,16 @@ params_scenic_extra_trees_defaults()
 \value{
 A named list with the following elements:
 \itemize{
-\item n_trees - Any. TODO Defaults to \code{500L}.
-\item min_samples_leaf - Any. TODO Defaults to \code{50L}.
-\item n_features_split - Any. TODO Defaults to \code{0L}.
-\item n_thresholds - Any. TODO Defaults to \code{1L}.
-\item max_depth - Any. TODO Defaults to \code{8L}.
-\item subsample_frac - Any. TODO Defaults to \code{NULL}.
+\item n_trees - Any. Number of trees to build. Defaults to \code{500L}.
+\item min_samples_leaf - Any. Minimum number of samples per leaf node.
+Defaults to \code{50L}.
+\item n_features_split - Any. Number of features considered per split. \code{0L}
+means \code{sqrt(n_features)}. Defaults to \code{0L}.
+\item n_thresholds - Any. Number of random thresholds tested per feature per
+node. Defaults to \code{1L}.
+\item max_depth - Any. Maximum tree depth. Defaults to \code{8L}.
+\item subsample_frac - Any. Optional. Fraction of cells to subsample per
+tree. \code{NULL} uses all cells. Defaults to \code{NULL}.
 }
 }
 \description{
