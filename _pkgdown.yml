@@ -883,10 +883,33 @@ reference:
       There is a lot more under the hood... 
     contents:
       - rs_2d_loess
+      - rs_adt_clr
+      - rs_atac_amulet
+      - rs_atac_barcode_fragment_counts
+      - rs_atac_call_peaks
+      - rs_atac_closest_genes
+      - rs_atac_fragment_profiles
+      - rs_atac_fragment_qc
+      - rs_atac_gene_activity_regions
+      - rs_atac_genome_tiles
+      - rs_atac_merge_fragments
+      - rs_atac_overlaps_any
+      - rs_atac_peak_to_gene
+      - rs_atac_read_bed
+      - rs_atac_reduce_regions
+      - rs_atac_tss_positions
       - rs_batch_silhouette_width
+      - rs_bbknn
+      - rs_bbknn_filtering
       - rs_blitzgsea_calibrate
       - rs_blitzgsea_score
+      - rs_bonsai_layout
       - rs_bpca
+      - rs_calc_es
+      - rs_calc_gsea_stat_cumulative_batch
+      - rs_calc_gsea_stat_traditional_batch
+      - rs_calc_gsea_stats
+      - rs_calc_multi_level
       - rs_calc_norm_factors
       - rs_cell_type_asw
       - rs_cistarget
@@ -902,48 +925,75 @@ reference:
       - rs_cov2cor
       - rs_covariance
       - rs_cpm
+      - rs_create_random_aucs
+      - rs_critval
+      - rs_critval_mat
       - rs_dense_to_upper_triangle
       - rs_differential_cor
       - rs_dist
+      - rs_dsb
+      - rs_edger_ql
       - rs_fast_auc
+      - rs_fast_cluster_sc
       - rs_fast_ica
       - rs_fdr_adjustment
       - rs_filter_by_expr
+      - rs_filter_onto_sim
       - rs_gene_trends
+      - rs_generate_bulk_rnaseq
+      - rs_generate_ligand_target_influence
       - rs_geom_elim_fgsea_simple
+      - rs_get_gs_indices
       - rs_gower_dist
       - rs_graph_connectivity
+      - rs_graph_from_bytes
+      - rs_graph_from_edges
+      - rs_graph_info
+      - rs_graph_leiden
+      - rs_graph_to_bytes
+      - rs_graph_to_csr
+      - rs_graph_to_edges
       - rs_gse_geom_elim
       - rs_gse_geom_elim_list
       - rs_gsva
+      - rs_h5_attrs
+      - rs_h5_ls
+      - rs_h5_read
       - rs_h5ad_data
       - rs_h5ad_dimensions
+      - rs_h5ad_frame
+      - rs_h5ad_frame_to_parquet
       - rs_h5ad_raw_slot
       - rs_hamming_dist
       - rs_harmony
       - rs_harmony_v2
       - rs_hedges_g
+      - rs_hotspot_cluster_genes
       - rs_hypergeom_test
       - rs_hypergeom_test_list
       - rs_ica_iters
       - rs_ica_iters_cv
+      - rs_importance_threshold
       - rs_jaccard_row_integers
       - rs_kbet
       - rs_knn_label_propagation
       - rs_knn_mat_to_edge_list
+      - rs_knn_mat_to_edge_pairs
+      - rs_lda
+      - rs_lda_k_sweep
       - rs_leiden_clustering
-      - rs_lm_activity
-      - rs_generate_ligand_target_influence
       - rs_ligand_activity_scores
       - rs_limma_voom
       - rs_lisi
+      - rs_lm_activity
       - rs_mad_outlier
-      - rs_edger_ql
+      - rs_make_milor_nhoods
       - rs_mc_aucell
+      - rs_mc_bonsai
       - rs_mc_dialogue
+      - rs_mc_fit_residuals
       - rs_mc_hotspot_autocor
       - rs_mc_hotspot_gene_cor
-      - rs_mc_fit_residuals
       - rs_mc_hvg
       - rs_mc_lm_activity
       - rs_mc_pca
@@ -952,21 +1002,37 @@ reference:
       - rs_mc_scenic
       - rs_mc_vision
       - rs_mc_vision_with_autocorrelation
+      - rs_meld_sc
+      - rs_metacell_compactness
+      - rs_metacell_density
+      - rs_metacell_separation
       - rs_mitch_calc
-      - rs_nebula_mc
       - rs_mutual_info
+      - rs_nebula_mc
+      - rs_nmf_consensus_bulk
+      - rs_nmf_consensus_mc
+      - rs_nmf_k_sweep_bulk
+      - rs_nmf_k_sweep_mc
+      - rs_nmf_multi_bulk
+      - rs_nmf_multi_mc
+      - rs_nmf_single_bulk
+      - rs_nmf_single_mc
       - rs_onto_semantic_sim
       - rs_onto_semantic_sim_mat
       - rs_onto_sim_wang
       - rs_onto_sim_wang_mat
       - rs_ot_harmonic_sum
+      - rs_paga
       - rs_page_rank
       - rs_page_rank_parallel
+      - rs_pairwise_gene_cors_mc
+      - rs_palantir
       - rs_pcr
       - rs_phyper
       - rs_pointwise_mutual_info
       - rs_ppca
       - rs_prcomp
+      - rs_prepare_gsva_gs
       - rs_prepare_whitening
       - rs_random_svd
       - rs_range_norm
@@ -974,29 +1040,53 @@ reference:
       - rs_rank_matrix_col_stable
       - rs_rbf_function
       - rs_rbf_function_mat
+      - rs_rbf_iterate_epsilons
       - rs_rbh_cor
       - rs_rbh_sets
+      - rs_read_tenx_h5_modality
+      - rs_regulon_thresholds
       - rs_remove_batch_effect
+      - rs_sample_ids_for_cell_types
+      - rs_sc_infer_empty_droplets
       - rs_sc_knn
-      - rs_sc_knn_w_dist
       - rs_sc_knn_graph
+      - rs_sc_knn_w_dist
+      - rs_sc_otsu_method
+      - rs_sc_type_assign_cells
+      - rs_sc_type_assign_cells_graph
+      - rs_sc_type_cluster_assignment
       - rs_set_similarity
       - rs_set_similarity_list
       - rs_set_similarity_list2
+      - rs_simple_and_multi_err
+      - rs_simulate_dropouts
       - rs_singscore_multi
       - rs_singscore_permutation_test
       - rs_singscore_single
       - rs_snf
-      - rs_spatial_fdr
+      - rs_snf_affinity_cat
+      - rs_snf_affinity_continuous
+      - rs_snf_affinity_mixed
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search
+      - rs_spatial_fdr
       - rs_spectral_clustering
       - rs_spectral_clustering_sim
+      - rs_split_cor_signs
       - rs_ssgsea
+      - rs_synthetic_sc_adt_with_cell_types
+      - rs_synthetic_sc_cellsweep_data
+      - rs_synthetic_sc_data_with_cell_types
+      - rs_synthetic_sc_dialogue_data
+      - rs_tenx_frame_to_parquet
+      - rs_tenx_h5_metadata
       - rs_tied_diffusion_parallel
       - rs_tom
+      - rs_top_k_targets
+      - rs_transfer_labels_symphony
       - rs_upper_triangle_to_dense
       - rs_upper_triangle_to_sparse
       - rs_voom_normalise
       - rs_wnn
+      - rs_write_h5ad_plain
       - rs_write_tenx_h5

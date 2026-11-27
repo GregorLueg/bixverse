@@ -113,6 +113,11 @@ document`, see `src/rust/document.rs`). Never edit it by hand. Exposed Rust
 functions are prefixed `rs_*`; each should have an R wrapper that does the
 input validation.
 
+Every exported `rs_*` goes into the "Rust wrappers" section of `_pkgdown.yml`
+(sorted), except those that read or write the internal single cell store
+(`f_path_cell(s)` / `f_path_gene(s)`, a `counts_*.bin` path or a store path).
+External formats (h5ad, 10x h5, fragments, BED, GTF) are fine.
+
 ### R layer conventions
 
 Files are grouped by prefix:

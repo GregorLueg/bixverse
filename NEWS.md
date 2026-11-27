@@ -8,7 +8,7 @@
   output (`load_atac_fragments()`, `load_atac_tenx()` and their `add_*_sc()`
   twins), then fragment QC and profiles, AMULET multiplets, peak calling per
   group, TF-IDF, LSI and RLSI, peak annotation, gene activity and peak to gene
-  links. Two new vignettes.
+  links. Two new vignettes. The ATAC plots come with bixverse.plots 0.4.0.
 * kNN, clustering, UMAP, WNN and Harmony take `modality = "atac"`.
   `harmony_sc()` corrects any cached embedding via `embd_to_use`.
 * The marker functions gain `method = "lr"` (Seurat's logistic regression,
@@ -41,12 +41,20 @@
   seed:
   * k-means is e-means: `km_type` in `params_sc_fast_cluster()` and
     `params_fast_cluster_default()` (boost, scDblFinder), `k_means_algorithm`
-    in `params_kmeans_defaults()` (Harmony v1 and v2).
+    in `params_kmeans_defaults()` (Harmony v1 and v2). SCENIC, DSB and NMF
+    consensus switch to e-means inside Rust.
   * Leiden runs 2 iterations instead of 5. `local_moving` and the new
     `node_order` default to `NULL`: `"queue"` / `"bfs"` for Leiden,
     `"coloured"` / `"shuffle"` for Louvain, so Louvain moves too.
   * Harmony v2 `block_size` is 0.05 instead of 0.2.
   * manifoldsR 0.7.0 moves UMAP, densMAP and ForceAtlas2 coordinates.
+* Other result changes from `bixverse-r` 0.11.0, all at the same seed:
+  * Harmony v1 and v2 draw their random block order once per run.
+  * `seurat_rpca_sc()` and `seurat_cca_sc()` search within-batch neighbours
+    at `k + 1` and cap each cell at `k_weight` anchor pairs, as Seurat does.
+  * The normalised layer is recomputed in f32, also for v4 stores, which read
+    it at f16 before. Values differ slightly.
+  * `edge-rs` 0.4.0 moves the edge-rs based DGE results slightly.
 
 ## Fixes
 
