@@ -199,6 +199,19 @@ fn r_list_to_csr(name: &str, x: Robj, n: usize) -> Result<CsMatI<f32, u32>> {
 // h5ad //
 //////////
 
+// No `export-zarr` on Windows, see Cargo.toml.
+#[cfg(not(windows))]
+fn zarr_format() -> Result<AdFormat> {
+    Ok(AdFormat::Zarr)
+}
+
+#[cfg(windows)]
+fn zarr_format() -> Result<AdFormat> {
+    Err(extendr_api::Error::Other(
+        "Zarr export is not available on Windows. Use save_h5ad().".into(),
+    ))
+}
+
 /// Write a single cell experiment to h5ad or AnnData Zarr
 ///
 /// @description
@@ -282,7 +295,7 @@ fn rs_save_h5ad(
         },
     };
     let format = if zarr {
-        AdFormat::Zarr
+        zarr_format()?
     } else {
         AdFormat::H5ad {
             compression: Some(H5AD_COMPRESSION),

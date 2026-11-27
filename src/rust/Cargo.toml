@@ -41,7 +41,6 @@ bixverse-r = { version = "0.11.0", default-features = false, features = [
     "h5",
     "parquet",
     "zarr",
-    "export-zarr",
 ] }
 edge-rs = "0.4.0"
 extendr-api = "0.9.0"
@@ -54,10 +53,13 @@ thousands = "*"
 
 # c-blosc compiles its own win32 pthread shim into blosc.o, which clashes with
 # the winpthread that Rust std links on windows-gnu. No Blosc/LZF on Windows.
+# `export-zarr` goes too: scx-core switches on zarrs' blosc with it, so there is
+# no Zarr export on Windows (Zarr reading without Blosc stays).
 [target.'cfg(not(windows))'.dependencies]
 bixverse-r = { version = "0.11.0", default-features = false, features = [
     "hdf5-filters",
     "zarr-blosc",
+    "export-zarr",
 ] }
 
 [[bin]]

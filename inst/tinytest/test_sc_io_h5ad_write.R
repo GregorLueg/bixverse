@@ -411,55 +411,58 @@ qc_none <- params_sc_min_quality(
   min_cells = 0L
 )
 
-save_zarr(sc_object, zarr_path = zarr_out, .verbose = FALSE)
+# no Zarr export on Windows, see src/rust/Cargo.toml
+if (.Platform$OS.type != "windows") {
+  save_zarr(sc_object, zarr_path = zarr_out, .verbose = FALSE)
 
-expect_true(
-  current = dir.exists(zarr_out),
-  info = "zarr export - the store is a directory"
-)
+  expect_true(
+    current = dir.exists(zarr_out),
+    info = "zarr export - the store is a directory"
+  )
 
-sc_zarr <- stream_h5ad(
-  object = SingleCells(dir_data = zarr_dir),
-  h5_path = zarr_out,
-  sc_qc_param = qc_none,
-  .verbose = FALSE
-)
+  sc_zarr <- stream_h5ad(
+    object = SingleCells(dir_data = zarr_dir),
+    h5_path = zarr_out,
+    sc_qc_param = qc_none,
+    .verbose = FALSE
+  )
 
-expect_equal(
-  current = as.vector(sc_zarr[,, return_format = "cell"]),
-  target = as.vector(counts_expected),
-  info = "zarr round trip - the counts survive"
-)
+  expect_equal(
+    current = as.vector(sc_zarr[,, return_format = "cell"]),
+    target = as.vector(counts_expected),
+    info = "zarr round trip - the counts survive"
+  )
 
-expect_equal(
-  current = get_cell_names(sc_zarr),
-  target = obs_expected$cell_id,
-  info = "zarr round trip - the cell identifiers survive"
-)
+  expect_equal(
+    current = get_cell_names(sc_zarr),
+    target = obs_expected$cell_id,
+    info = "zarr round trip - the cell identifiers survive"
+  )
 
-expect_equal(
-  current = get_gene_names(sc_zarr),
-  target = var_expected$gene_id,
-  info = "zarr round trip - the gene identifiers survive"
-)
+  expect_equal(
+    current = get_gene_names(sc_zarr),
+    target = var_expected$gene_id,
+    info = "zarr round trip - the gene identifiers survive"
+  )
 
-prescan_zarr <- prescan_h5ad_files(
-  h5_paths = c(a = zarr_out, b = h5_out),
-  .verbose = FALSE
-)
+  prescan_zarr <- prescan_h5ad_files(
+    h5_paths = c(a = zarr_out, b = h5_out),
+    .verbose = FALSE
+  )
 
-sc_zarr_multi <- load_multi_h5ad(
-  object = SingleCells(dir_data = zarr_multi_dir),
-  prescan_result = prescan_zarr,
-  sc_qc_param = qc_none,
-  .verbose = FALSE
-)
+  sc_zarr_multi <- load_multi_h5ad(
+    object = SingleCells(dir_data = zarr_multi_dir),
+    prescan_result = prescan_zarr,
+    sc_qc_param = qc_none,
+    .verbose = FALSE
+  )
 
-expect_equal(
-  current = nrow(sc_zarr_multi[[]]),
-  target = 2L * nrow(obs_expected),
-  info = "zarr multi load - a zarr store and an h5ad file load together"
-)
+  expect_equal(
+    current = nrow(sc_zarr_multi[[]]),
+    target = 2L * nrow(obs_expected),
+    info = "zarr multi load - a zarr store and an h5ad file load together"
+  )
+}
 
 ## cell filtering --------------------------------------------------------------
 
