@@ -1452,6 +1452,68 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
   file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
 }
 
+### pbmc multiome --------------------------------------------------------------
+
+#' Download the 10x PBMC unsorted 3k multiome data
+#'
+#' @description
+#' The 10x PBMC unsorted 3k multiome (Cell Ranger ARC 2.0): the filtered
+#' feature barcode matrix (RNA and Cell Ranger's peak counts in one h5), the
+#' fragment file with its tabix index, Cell Ranger's peaks, the GENCODE v32
+#' annotation its GRCh38 reference was built from, and the ENCODE hg38
+#' blacklist (v2, Amemiya et al. 2019). 10x Genomics data, CC BY 4.0. Files
+#' already in `dir_out` are not downloaded again.
+#'
+#' @param dir_out Optional string. Where to put the files. `NULL` uses
+#' `pbmc_multiome` in the session `tempdir()`.
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The directory with the files under their 10x names.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the files into the session tempdir()
+#' path <- download_pbmc_multiome()
+#' list.files(path)
+#' }
+download_pbmc_multiome <- function(dir_out = NULL, quiet = FALSE) {
+  checkmate::qassert(dir_out, c("0", "S1"))
+  checkmate::qassert(quiet, "B1")
+
+  root <- dir_out %||% file.path(tempdir(), "pbmc_multiome")
+  dir.create(root, showWarnings = FALSE, recursive = TRUE)
+  files <- c(
+    "pbmc_unsorted_3k_filtered_feature_bc_matrix.h5",
+    "pbmc_unsorted_3k_atac_fragments.tsv.gz",
+    "pbmc_unsorted_3k_atac_fragments.tsv.gz.tbi",
+    "pbmc_unsorted_3k_atac_peaks.bed",
+    "gencode.v32.primary_assembly.annotation.gtf.gz",
+    "hg38-blacklist.v2.bed.gz"
+  )
+  for (file in files) {
+    dest <- file.path(root, file)
+    if (file.exists(dest) && file.size(dest) > 0) {
+      next
+    }
+    urls <- .data_urls(file)
+    if (file == "hg38-blacklist.v2.bed.gz") {
+      # upstream copy while the release one is missing
+      urls <- c(
+        urls,
+        paste0(
+          "https://github.com/Boyle-Lab/Blacklist/raw/master/lists/",
+          "hg38-blacklist.v2.bed.gz"
+        )
+      )
+    }
+    .download_with_retry(urls, dest, quiet = quiet)
+  }
+
+  root
+}
+
 ### kang pbmc ------------------------------------------------------------------
 
 #' Download the Kang, et al. IFN-beta stimulated PBMC data

@@ -9,6 +9,12 @@ params_kmeans_defaults()
 \value{
 A named list with the following elements:
 \itemize{
+\item k_means_algorithm - String. The k-means algorithm. \code{"emeans"} (Bessa
+et al., 2026) runs mini-batch EMA updates and ignores \code{k_means_iter},
+\code{k_means_init}, \code{gemm} and \code{hamerly}. \code{"lloyd"} is Lloyd's algorithm. One of
+\code{c("emeans", "lloyd")}. Defaults to \code{"emeans"}.
+\item e_means_epochs - Numeric or \code{NULL}. e-means only. Passes over the
+data. \code{NULL} takes the Rust default of 5. Defaults to \code{NULL}.
 \item k_means_iter - Integer. The number of iterations to use for the
 clustering. Defaults to \code{30L}.
 \item k_means_init - String. The initialisation. One of \code{c("parallel", "random")}. Defaults to \code{"parallel"}.

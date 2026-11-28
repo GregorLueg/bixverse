@@ -599,8 +599,7 @@ spec_nmf_consensus <- param_spec(
   hint = paste(
     "n_neighbours must be a non-negative integer (0 = auto);",
     "density_threshold must be a numeric in [0, 2] (>= 2 disables",
-    "the filter); kmeans_iters and kmeans_n_init must be positive",
-    "integers."
+    "the filter); kmeans_n_init must be a positive integer."
   ),
   fields = list(
     consensus_target = p_choice(
@@ -631,11 +630,6 @@ spec_nmf_consensus <- param_spec(
         "exceeds this are dropped as unstable. Cosine distance cannot",
         "exceed 2, so any value `>= 2` disables the filter entirely."
       )
-    ),
-    kmeans_iters = p_int(
-      100L,
-      range = "[1,)",
-      doc = "Maximum k-means iterations."
     ),
     kmeans_n_init = p_int(
       3L,

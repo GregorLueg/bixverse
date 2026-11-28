@@ -10,7 +10,7 @@ extract_gene_violin_data(
   grouping_variable,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 )
 }
@@ -25,7 +25,7 @@ extract_gene_violin_data(
 
 \item{clip}{Optional numeric. Clip z-scores if \code{scale = TRUE}.}
 
-\item{modality}{String. One of \code{c("rna", "adt")}.}
+\item{modality}{String. One of \code{c("rna", "adt", "atac")}.}
 
 \item{layer}{String. One of \code{c("norm", "magic")}, forwarded to
 \code{\link[=extract_gene_expression]{extract_gene_expression()}}.}

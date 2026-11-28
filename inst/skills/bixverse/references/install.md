@@ -87,7 +87,7 @@ door.
 |---|---|---|
 | [bixverse.plots](https://github.com/GregorLueg/bixverse.plots) | plotting, heavily single cell | any `*_plot_sc()` function: `embedding_plot_sc`, `feature_plot_sc`, `dot_plot_sc`, `stacked_violin_plot_sc`, `violin_plot_sc`, `joint_plot_sc` |
 | [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) | GPU methods via cubecl/Burn on wgpu, so any GPU | large data. GPU Harmony, PCA and kNN searches. Worth it above a few hundred thousand cells |
-| [manifoldsR](https://github.com/GregorLueg/manifoldsR) | UMAP, densMAP, tSNE, PHATE, ForceAtlas2, diffusion maps, EVoC clustering | it's already an `Imports` (0.6.0 or later), and all 2D embeddings route through it. `umap_sc()` takes `manifoldsR::params_umap()` |
+| [manifoldsR](https://github.com/GregorLueg/manifoldsR) | UMAP, densMAP, tSNE, PHATE, ForceAtlas2, diffusion maps, EVoC clustering | it's already an `Imports` (0.7.0 or later), and all 2D embeddings route through it. `umap_sc()` takes `manifoldsR::params_umap()` |
 | [genewalkR](https://github.com/GregorLueg/genewalkR) | gene-gene interaction and regulatory network database | you need a network to diffuse over or to seed a GRN analysis |
 
 `manifoldsR` (an `Imports`) and `bixverse.plots` (a `Suggests`) live on
@@ -103,14 +103,22 @@ compiled and linked correctly.
 
 ## Keeping this skill current
 
-The skill is versioned with the package. After upgrading bixverse:
+The skill is versioned with the package and stamped with the version it came
+from. `library(bixverse)` warns when an installed copy is older. After
+upgrading bixverse:
 
 ```r
 bixverse::install_agent_skill(overwrite = TRUE)
 ```
 
-Other agents work too. `agent = "codex"` (or `"generic"` with an explicit
-`dest`) writes the entry file as `AGENTS.md` with the Claude-specific
-frontmatter stripped. The `references/` files are plain markdown and portable as
-they are. Only Claude Code auto-discovers the skill, so elsewhere you have to
-point the agent at the directory yourself.
+or from a shell, with the library the project uses:
+
+```sh
+Rscript -e 'bixverse::skill_cli()' skill install --force
+Rscript -e 'bixverse::skill_cli()' skill status
+```
+
+`agent = "codex"` installs to `.agents/skills`, the open standard's location
+that Codex and other agents scan. `scope = "project"` (`--project`) installs
+under the working directory instead of the home directory, so each project sees
+the API of its own bixverse version.

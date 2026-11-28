@@ -40,7 +40,8 @@
     "GeneTrendsRes",
     "ScSpecificMarkers",
     "ScNebula",
-    "ScResidualFit"
+    "ScResidualFit",
+    "AtacInfo"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))
@@ -49,4 +50,8 @@
   registerS3method("format", "BulkModuleResult", format.BulkModuleResult)
   registerS3method("dim", "BulkModuleResult", dim.BulkModuleResult)
   registerS3method("dim", "LdaResult", dim.LdaResult)
+}
+
+.onAttach <- function(...) {
+  .warn_stale_agent_skills()
 }

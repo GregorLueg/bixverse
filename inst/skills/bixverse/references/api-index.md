@@ -328,10 +328,11 @@ I/O functions for single cell. Load in h5ad, mtx, Seurat or R data into Rust and
 - `load_multi_tenx_h5`: Load multiple 10x CellRanger h5 files into a single SingleCells
 - `read_h5ad_metadata`: Read obs and var tables and metadata from an h5ad file
 - `read_h5ad_x_summary`: Read summary statistics from the X slot of an h5ad file
-- `save_h5ad`: Save a SingleCells object to h5ad
+- `save_h5ad`: Write a SingleCells object to h5ad
+- `save_zarr`: Write a SingleCells object to an AnnData Zarr store
 - `save_sc_exp_to_disk`: Save memory-bound data to disk
 - `archive_sc_exp`: Archive the on-disk counts for cold storage
-- `upgrade_sc_store`: Upgrade the on-disk counts to the v4 file format
+- `upgrade_sc_store`: Upgrade the on-disk counts to the v5 file format
 - `merge_sc_experiments`: Merge multiple SingleCells experiments into one
 - `params_sc_min_quality`: Wrapper function to generate QC metric params for single cell
 - `params_sc_mtx_io`: Wrapper function to provide data for mtx-based loading
@@ -491,6 +492,39 @@ A large number of different methods to extract insights from your single cell ex
 - `params_dialogue_hlm`: Wrapper function for the DIALOGUE mixed model parameters
 - `params_dialogue_refine`: Wrapper function for the DIALOGUE refinement parameters
 
+## Single cell ATAC
+
+ATAC-only experiments and ATAC next to the RNA. Loading from fragment files or 10x peak matrices, fragment QC, multiplets, peak calling, TF-IDF and LSI, integration, gene activity and peak to gene links.
+
+- `SingleCellsAtac`: bixverse single cell ATAC class
+- `load_atac_fragments`: Load an ATAC-only experiment from a fragment file
+- `load_atac_tenx`: Load an ATAC-only experiment from a 10x peak matrix h5
+- `add_atac_tenx_sc`: Add the peaks of a 10x multiome h5 as the ATAC store
+- `add_atac_fragments_sc`: Count a fragment file into peaks or genome tiles as the ATAC store
+- `barcode_fragment_counts`: Fragments per barcode, every barcode in the file
+- `read_cellranger_barcodes`: Read the cell barcodes Cell Ranger ATAC called
+- `merge_fragments`: Merge per-sample fragment files into one
+- `fragment_qc_sc`: Per-cell QC from the fragment file
+- `fragment_profiles_sc`: TSS insertion profile and fragment length histogram of the kept cells
+- `amulet_sc`: Flag multiplets from fragment overlaps (AMULET)
+- `params_atac_amulet`: Wrapper function for the AMULET parameters
+- `call_peaks_sc`: Call peaks on the kept cells, pooled or per group
+- `params_atac_call_peaks`: Wrapper function for the ATAC peak calling parameters
+- `remove_blacklisted`: Drop the peaks that overlap a blacklist region
+- `annotate_peaks_sc`: The closest gene of every ATAC feature
+- `run_tfidf_sc`: Switch the ATAC store to TF-IDF over the kept cells
+- `find_top_features_sc`: Find the most accessible features
+- `calculate_lsi_sc`: LSI over the TF-IDF of the kept cells
+- `params_atac_lsi`: Wrapper function for the ATAC LSI parameters
+- `get_lsi_depth_cor`: Correlation of each LSI component with the library size
+- `project_lsi_sc`: Project the query's kept cells onto the reference LSI
+- `run_rlsi_sc`: rLSI integration
+- `params_atac_rlsi`: Wrapper function for the rLSI integration parameters
+- `gene_activity_sc`: Count fragments over gene body plus promoter into a gene activity store
+- `get_gene_activity`: Open an experiment's gene activity store
+- `params_atac_gene_activity`: Wrapper function for the gene activity parameters
+- `peak_to_gene_sc`: Link peaks to nearby genes by correlation over groups of cells
+
 ## Single cell multi-modal analysis methods
 
 Methods to analyse multi-modal single cell data
@@ -522,6 +556,8 @@ Helpers to do reference mapping and cell type identification in single cell
 - `add_symphony_labels`: Add labels to a Symphony reference post-hoc
 - `build_symphony_ref`: Build a Symphony reference from a SingleCells object
 - `transfer_labels_symphony`: Transfer labels from a Symphony reference to a query via kNN majority vote
+- `transfer_labels_seurat_sc`: Seurat label transfer
+- `params_sc_seurat_transfer`: Wrapper function for the Seurat label transfer parameters
 - `get_symphony_hvg_names`: Getter for the HVG gene names of a Symphony reference
 - `get_symphony_labels`: Getter for the stored labels of a Symphony reference
 - `get_symphony_loadings`: Getter for the PCA loadings of a Symphony reference
@@ -618,6 +654,7 @@ Functions and helpers to download or generate synthetic data.
 - `download_demuxlet_pbmc`: Download PBMCs with demuxlet doublet information
 - `download_pbmc_batches`: Download two different PBMC data sets for batch correction testing
 - `download_pbmc_totalseq_data`: Download the PBMC TotalSeq data with ADT counts
+- `download_pbmc_multiome`: Download the 10x PBMC unsorted 3k multiome data
 - `download_pbmc8k`: Download PBMC8K data from Zenodo
 - `download_pbmc_1k_5p`: Download the raw PBMC 1k 5' matrix from 10x Genomics
 - `calculate_sparsity_stats`: Helper function to calculate the induced sparsity
@@ -716,6 +753,27 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `remove_knn`: Remove the KNN data
 - `remove_snn_graph`: sNN graph accessors (deprecated)
 - `rs_adt_clr`: Applies CLR normalisation on ADT counts
+- `rs_atac_amulet`: AMULET multiplet detection from fragment overlaps
+- `rs_atac_barcode_fragment_counts`: Fragments per barcode
+- `rs_atac_call_peaks`: Call peaks per group of cells
+- `rs_atac_closest_genes`: The closest gene body to every region
+- `rs_atac_feature_totals`: Total counts per feature and the top features
+- `rs_atac_fragment_profiles`: TSS profiles and fragment length histograms per group of cells
+- `rs_atac_fragment_qc`: Per-cell QC from a fragment file
+- `rs_atac_fragments_to_store`: Count fragments into features and write the store
+- `rs_atac_gene_activity_regions`: Gene body plus promoter regions from a GTF
+- `rs_atac_genome_tiles`: Fixed-width tiles over chromosomes
+- `rs_atac_lsi`: LSI of a TF-IDF store
+- `rs_atac_merge_fragments`: Merge fragment files into one indexed file
+- `rs_atac_overlaps_any`: Flag regions that overlap any of another set
+- `rs_atac_peak_to_gene`: Peak to gene links over groups of cells
+- `rs_atac_project_lsi`: Project cells of a TF-IDF store onto a fitted LSI
+- `rs_atac_read_bed`: Read a BED file
+- `rs_atac_reduce_regions`: Merge overlapping and abutting regions
+- `rs_atac_rlsi`: rLSI integration of an embedding over a peak or tile store
+- `rs_atac_set_tf_idf`: Switch a store to TF-IDF over a set of cells
+- `rs_atac_tenx_peaks_to_store`: The Peaks modality of a 10x multiome h5 into a peak store
+- `rs_atac_tss_positions`: TSS positions from a GTF
 - `rs_aucell`: Calculate AUCell in Rust
 - `rs_bbknn`: BBKNN implementation in Rust
 - `rs_bbknn_filtering`: Reduce BBKNN results to the k nearest neighbours
@@ -726,9 +784,14 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_calc_gsea_stat_traditional_batch`: Helper function to generate traditional GSEA-based permutations
 - `rs_calc_gsea_stats`: Rust implementation of the fgsea::calcGseaStat() function
 - `rs_calc_multi_level`: Calculates p-values for pre-processed data
+- `rs_calculate_dge_lr`: Calculate DGEs between cells with a logistic regression test
 - `rs_calculate_dge_mann_whitney`: Calculate DGEs between cells based on Mann Whitney stats
 - `rs_calculate_dge_one_vs_many`: Calculate one-vs-many AUROC DGEs for specific markers
+- `rs_calculate_dge_one_vs_many_lr`: Calculate one-vs-many specific markers with logistic regression p-values
 - `rs_calculate_dge_one_vs_rest`: Calculate one-vs-rest Mann Whitney DGEs for every cell group
+- `rs_calculate_dge_one_vs_rest_lr`: Calculate one-vs-rest logistic regression DGEs for every cell group
+- `rs_cell_id_hash`: The cell-ID hash in a binary's header
+- `rs_check_store_pair`: Error unless a cell file and a gene file belong to the same store
 - `rs_compute_cluster_expr_stats`: Compute cluster statistics for NicheNet prioritisation
 - `rs_create_random_aucs`: Create random AUCs
 - `rs_critval`: Calculate the critical value
@@ -751,6 +814,10 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_graph_to_bytes`: Serialise a Rust neighbour graph to bytes
 - `rs_graph_to_csr`: Extract the CSR adjacency of a Rust neighbour graph
 - `rs_graph_to_edges`: Flatten a Rust neighbour graph into an edge list
+- `rs_h5_attrs`: Read the attributes of an HDF5 group or dataset into R
+- `rs_h5_ls`: List the members of an HDF5 group
+- `rs_h5_read`: Read one HDF5 dataset into R
+- `rs_h5ad_frame`: Read an h5ad dataframe group into R
 - `rs_h5ad_frame_to_parquet`: Write the obs or var dataframe of an h5ad file to Parquet
 - `rs_hotspot_autocor`: Calculate gene spatial auto-correlations
 - `rs_hotspot_cluster_genes`: Cluster the genes by Z-score together
@@ -794,7 +861,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_read_tenx_h5_modality`: Loads in a modality from a 10x h5 file
 - `rs_regulon_thresholds`: Derive the on/off threshold per regulon in Rust
 - `rs_sample_ids_for_cell_types`: Helper function to generate sample identifiers based on cells
-- `rs_save_h5ad`: Write a single cell experiment to h5ad
+- `rs_save_h5ad`: Write a single cell experiment to h5ad or AnnData Zarr
 - `rs_sc_bonsai`: Build a Bonsai tree from single cell counts
 - `rs_sc_cellphonedb`: CellPhoneDB ligand/receptor analysis
 - `rs_sc_doublet_detection`: Detect Doublets via BoostClassifier (in Rust)
@@ -820,6 +887,8 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_scenic_grn`: SCENIC: Generating gene-regulatory networks
 - `rs_scenic_grn_streaming`: SCENIC: Generating gene-regulatory networks (streaming version)
 - `rs_sct_corrected_counts`: Writes scTransform-corrected counts to a new store
+- `rs_set_cell_ids`: Record the cell IDs of a v5 store in both headers
+- `rs_set_store_metadata`: Set caller metadata on both files of a v5 store
 - `rs_seurat_cca`: Seurat CCA batch correction in Rust
 - `rs_seurat_rpca`: Seurat rPCA batch correction in Rust
 - `rs_simple_and_multi_err`: Calculates the simple and multi error for fgsea multi level
@@ -828,6 +897,9 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_snf_affinity_continuous`: Calculate the SNF affinity matrix for continuous values
 - `rs_snf_affinity_mixed`: Calculate the SNF affinity matrix for mixed values
 - `rs_split_cor_signs`: Helper function to split correlation matrices by sign
+- `rs_store_feature_kind`: Read what the features of a store are
+- `rs_store_metadata`: Caller metadata of a store
+- `rs_store_norm_kind`: Read how the norm of a store derives
 - `rs_supercell`: Generate SuperCells.
 - `rs_symphony_map_query`: Map a query onto a Symphony reference (Rust)
 - `rs_synthetic_sc_adt_with_cell_types`: Generates synthetic ADT counts with defined cell types
@@ -835,10 +907,14 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_synthetic_sc_data_with_cell_types`: Generates synthetic data for single cell
 - `rs_synthetic_sc_dialogue_data`: Generates synthetic data with a planted multicellular programme
 - `rs_tenx_frame_to_parquet`: Write the barcodes or features of a 10x h5 file to Parquet
+- `rs_tenx_h5_metadata`: Version and dimensions of a 10x CellRanger h5 file
 - `rs_top_k_targets`: SCENIC: Select the Top TF <> Gene pairs
+- `rs_transfer_labels_seurat`: Seurat label transfer
 - `rs_transfer_labels_symphony`: Transfer labels from a Symphony reference to a query via kNN vote
+- `rs_verify_store`: Check every chunk of a store file against its checksums
 - `rs_vision`: Calculate VISION pathway scores in Rust
 - `rs_vision_with_autocorrelation`: Calculate VISION pathway scores in Rust with auto-correlation
+- `rs_write_h5ad_plain`: Write a minimal h5ad file
 - `set_cell_mapping`: Set cell mapping
 - `set_cells_to_keep`: Set cells to keep
 - `set_connectivities`: Set/add the neighbour graph

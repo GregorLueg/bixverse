@@ -21,8 +21,9 @@ data set (10x's 10k Human PBMC TotalSeq-B). The general `bixverse` philosophy
 — do not keep things in memory if you do not have to, keep heavy lifting in
 Rust, only round-trip to R when the user actually needs to look at something —
 still applies. The bit that changes is that there is now a second modality
-hanging off the main class: Antibody-Derived Tags (ADT). ATAC is on the roadmap
-but not yet wired up.
+hanging off the main class: Antibody-Derived Tags (ADT). ATAC hangs off the
+same class; it has
+[its own vignette](https://gregorlueg.github.io/bixverse/articles/atac_multiome.html).
 
 Before going further, please read the
 [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
@@ -68,8 +69,8 @@ modalities to play with.
 ### Loading in the RNA
 
 The RNA goes through `SingleCellsMultiModal`, which is essentially the same
-class as `SingleCells` with extra slots for `adt_counts` (and, later, an
-`atac` connection). RNA loading and storage are identical to the single-modal
+class as `SingleCells` with extra slots for `adt_counts` and the ATAC
+store. RNA loading and storage are identical to the single-modal
 case: counts get pre-filtered, normalised, transposed, and written to the two
 binary files on disk.
 

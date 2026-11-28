@@ -9,7 +9,7 @@ extract_dot_plot_data(
   features,
   grouping_variable,
   scale_exp = TRUE,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ extract_dot_plot_data(
 
 \item{scale_exp}{Boolean. Whether to min-max scale mean expression per gene.}
 
-\item{modality}{String. One of \code{c("rna", "adt")}. ADT is only available for
+\item{modality}{String. One of \code{c("rna", "adt", "atac")}. ADT is only available for
 \code{SingleCellsMultiModal}.}
 }
 \value{

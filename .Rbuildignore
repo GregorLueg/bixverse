@@ -26,3 +26,7 @@
 ^\.vscode$
 ^\.claude$
 ^renovate\.json$
+^vignettes/\.quarto$
+^vignettes/.*_files$
+^vignettes/_freeze$
+^vignettes/_quarto\.yaml$

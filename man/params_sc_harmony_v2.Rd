@@ -9,7 +9,7 @@ params_sc_harmony_v2(
   sigma = 0.1,
   theta = 2,
   lambda = 1,
-  block_size = 0.2,
+  block_size = 0.05,
   max_iter_kmeans = 4L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 0.001,
@@ -41,7 +41,7 @@ design matrix; the intercept is not penalised. Ignored when
 
 \item{block_size}{Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
-computation time. Defaults to \code{0.2}.}
+computation time. Defaults to \code{0.05}.}
 
 \item{max_iter_kmeans}{Integer. Maximum number of k-means iterations per
 Harmony round. Defaults to \code{4L}.}
@@ -74,10 +74,10 @@ as \code{alpha} times the expected counts, as in R harmony v2, instead of using
 the fixed \code{lambda} value. Defaults to \code{TRUE}.}
 
 \item{kmeans}{List. Optional overrides for the k-means clustering algorithm
-Possible parameters are \code{"k_means_iter"} (10 here, as in R harmony),
-\code{"k_means_init"}, \code{"gemm"} and \code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}.
-See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}} for the available elements. Defaults to
-\code{list()}.}
+Possible parameters are \code{"k_means_algorithm"}, \code{"e_means_epochs"},
+\code{"k_means_iter"} (10 here, as in R harmony), \code{"k_means_init"}, \code{"gemm"} and
+\code{"hamerly"}, see \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}. See \code{\link[=params_kmeans_defaults]{params_kmeans_defaults()}}
+for the available elements. Defaults to \code{list()}.}
 }
 \value{
 A named list with the following elements:
@@ -96,7 +96,7 @@ the design matrix; the intercept is not penalised. Ignored when
 \code{use_dynamic_lambda = TRUE}. Defaults to \code{1.0}.
 \item block_size - Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
-computation time. Defaults to \code{0.2}.
+computation time. Defaults to \code{0.05}.
 \item max_iter_kmeans - Integer. Maximum number of k-means iterations per
 Harmony round. Defaults to \code{4L}.
 \item max_iter_harmony - Integer. Maximum number of Harmony outer

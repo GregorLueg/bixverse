@@ -11,7 +11,7 @@ extract_feature_pair(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 )
 }
@@ -30,7 +30,7 @@ colour the scatter).}
 \item{clip}{Optional numeric. Clip z-scores if \code{scale = TRUE}.}
 
 \item{modality}{String. Fallback modality for unsuffixed features. One of
-\code{c("rna", "adt")}.}
+\code{c("rna", "adt", "atac")}.}
 
 \item{layer}{String. One of \code{c("norm", "magic")}, forwarded to
 \code{\link[=extract_gene_expression]{extract_gene_expression()}}. Applies to both features, and an \verb{_adt}

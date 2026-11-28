@@ -6,18 +6,19 @@
 \usage{
 install_agent_skill(
   dest = NULL,
-  agent = c("claude", "codex", "generic"),
+  agent = c("claude", "codex"),
+  scope = c("user", "project"),
   overwrite = FALSE
 )
 }
 \arguments{
-\item{dest}{String or \code{NULL}. Directory to install into. \code{NULL} picks the
-default for \code{agent}: \code{"~/.claude/skills"} for \code{"claude"} and
-\code{"~/.codex/skills"} for \code{"codex"}. Required for \code{"generic"}. The skill lands
-in a \code{bixverse} subdirectory of this.}
+\item{dest}{String or \code{NULL}. Skills directory to install into; the skill
+lands in a \code{bixverse} subdirectory. Overrides \code{agent} and \code{scope}.}
 
-\item{agent}{String. One of \code{c("claude", "codex", "generic")}. Controls the
-name of the entry file and whether the frontmatter is kept.}
+\item{agent}{String. One of \code{c("claude", "codex")}.}
+
+\item{scope}{String. One of \code{c("user", "project")}: under the home
+directory, or under the working directory.}
 
 \item{overwrite}{Boolean. Replace an existing installation. Defaults to
 \code{FALSE}, in which case an existing \code{bixverse} directory causes an error
@@ -32,30 +33,26 @@ the workflows, the \verb{params_*()} convention, the ordering constraints and th
 traps. This copies it out of the installed package to where your agent looks
 for it.
 
-The skill is versioned with the package, so re-run this after upgrading
-bixverse to keep the agent in sync with the code.
+The skill is versioned with the package. The install is stamped with the
+package version, and \code{library(bixverse)} warns when an installed skill is
+older than the package; re-run this with \code{overwrite = TRUE} after upgrading.
+From a shell, see \code{\link[=skill_cli]{skill_cli()}}.
 }
 \details{
-The reference files are plain markdown and work anywhere. Only the entry file
-differs between agents:
-\itemize{
-\item \code{"claude"} writes \code{SKILL.md} with the YAML frontmatter Claude Code
-uses to decide when to load the skill. Discovery is automatic.
-\item \code{"codex"} and \code{"generic"} write \code{AGENTS.md} with the frontmatter
-stripped, since no other agent reads it. There is no auto-discovery, so
-point the agent at the directory yourself.
-}
+\code{SKILL.md} follows the Agent Skills open standard, so the same files serve
+every agent; only the directory differs. \code{"claude"} installs to
+\code{.claude/skills}, \code{"codex"} to \code{.agents/skills}, which Codex and other agents
+scan. A project install ties the skill to the project, so two projects on
+different bixverse versions each see their own API. Run it from the project
+root.
 }
 \examples{
 \dontrun{
-# Claude Code, into ~/.claude/skills, auto-discovered
+# Claude Code, into ~/.claude/skills
 install_agent_skill()
 
-# Codex, into ~/.codex/skills as AGENTS.md
-install_agent_skill(agent = "codex")
-
-# anywhere else
-install_agent_skill(dest = "~/my-agent/context", agent = "generic")
+# Codex and other open standard agents, into ./.agents/skills
+install_agent_skill(agent = "codex", scope = "project")
 
 # refresh after a package upgrade
 install_agent_skill(overwrite = TRUE)

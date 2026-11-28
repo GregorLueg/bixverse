@@ -7,7 +7,7 @@
 run_paga_sc(
   object,
   cluster_col,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   .verbose = TRUE
 )
 }
@@ -18,7 +18,7 @@ run_paga_sc(
 \item{cluster_col}{String. The obs column holding the cluster assignments.
 Empty factor levels are retained.}
 
-\item{modality}{String. One of \code{c("rna", "adt", "wnn")}. Which kNN graph to
+\item{modality}{String. One of \code{c("rna", "adt", "atac", "wnn")}. Which kNN graph to
 run over. Anything but \code{"rna"} requires a \code{SingleCellsMultiModal} object.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.

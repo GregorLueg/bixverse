@@ -7,7 +7,7 @@
 get_h5ad_dimensions(f_path)
 }
 \arguments{
-\item{f_path}{File path to the \code{.h5ad} file.}
+\item{f_path}{Path to the \code{.h5ad} file or AnnData Zarr store.}
 }
 \value{
 A list with \code{dims} (named integer \code{c(obs, var)}) and \code{type} (one of

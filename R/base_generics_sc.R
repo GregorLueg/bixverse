@@ -47,7 +47,7 @@ get_sc_obs <- S7::new_generic(
 #' @param indices Optional integer vector. The integer positions of the genes
 #' to return.
 #' @param cols Optional string vector. The columns from the var table to return.
-#' @param modality String. The modality to return. One of `c("rna", "adt")`.
+#' @param modality String. The modality to return. One of `c("rna", "adt", "atac")`.
 #'
 #' @returns The vars table
 #'
@@ -66,7 +66,7 @@ get_sc_var <- S7::new_generic(
     object,
     indices = NULL,
     cols = NULL,
-    modality = c("rna", "adt")
+    modality = c("rna", "adt", "atac")
   ) {
     S7::S7_dispatch()
   }
@@ -84,7 +84,7 @@ get_sc_var <- S7::new_generic(
 #' Defaults to `"cell"`. Not relevant for `MetaCells`.
 #' @param cell_indices Optional cell indices.
 #' @param gene_indices Optional gene indices.
-#' @param modality String. The modality to return. One of `c("rna", "adt")`.
+#' @param modality String. The modality to return. One of `c("rna", "adt", "atac")`.
 #' @param use_cells_to_keep Boolean. Shall cells to keep be found in the class,
 #' shall the counts be reduced to these. Not relevant for `MetaCells`.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -110,7 +110,7 @@ get_sc_counts <- S7::new_generic(
     cell_indices = NULL,
     gene_indices = NULL,
     use_cells_to_keep = TRUE,
-    modality = c("rna", "adt"),
+    modality = c("rna", "adt", "atac"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1460,7 +1460,7 @@ calculate_pca_sc <- S7::new_generic(
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
-#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' @param modality String. One of `c("rna", "adt", "atac")`. You can only use `"adt"`
 #' on `SingleCellsMultiModal` class.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
 #' Carries the graph parameters (see
@@ -1495,7 +1495,7 @@ find_neighbours_sc <- S7::new_generic(
     object,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
-    modality = c("rna", "adt"),
+    modality = c("rna", "adt", "atac"),
     neighbours_params = params_sc_neighbours(),
     seed = 42L,
     .verbose = TRUE
@@ -1522,12 +1522,12 @@ find_neighbours_sc <- S7::new_generic(
 #' gives `"leiden_clustering"` or `"louvain_clustering"`, following
 #' `cluster_algorithm`.
 #' @param modality String. On which modality to cluster. One of
-#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' `c("rna", "adt", "atac", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity.
 #' @param ... Further parameters for [leiden_clustering()]: `n_iterations`,
-#' `beta`, `min_gain` and `local_moving`.
+#' `beta`, `min_gain`, `local_moving` and `node_order`.
 #'
 #' @returns The object with added clustering in the obs table.
 #'
@@ -1548,7 +1548,7 @@ find_clusters_sc <- S7::new_generic(
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
     name = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     seed = 42L,
     .verbose = TRUE,
     ...
@@ -2103,20 +2103,21 @@ archive_sc_exp <- S7::new_generic(
   }
 )
 
-#' Upgrade the on-disk counts to the v4 file format
+#' Upgrade the on-disk counts to the v5 file format
 #'
 #' @description
-#' Stores written by older versions use the v3 binary format. They still load
-#' and work, but the v4 format is several times smaller on disk and faster to
-#' scan. This converts `counts_cells.bin` and `counts_genes.bin` in place. The
-#' result is checked before it replaces the originals, so a failure leaves the
-#' store untouched. Stores already in v4 are left alone. Do not run this while
+#' Stores written by older versions use the v3 or v4 binary format. v3 stores
+#' no longer open at all; v4 stores still load, with a warning. This converts
+#' `counts_cells.bin` and `counts_genes.bin` in place. The result is checked
+#' before it replaces the originals, so a failure leaves the store untouched.
+#' Stores already in v5 are left alone. Do not run this while
 #' anything else (another R session, a background job) uses the files.
 #'
 #' @param object `SingleCells` class.
 #' @param codec String. Chunk compression, one of `c("lz4", "zstd", "none")`.
 #' `"lz4"` decodes fastest, `"zstd"` gives smaller files but decodes slower.
-#' @param keep_backup Boolean. Keep the original files as `<file>.v3.bak`.
+#' @param keep_backup Boolean. Keep the original files as `<file>.v<n>.bak`,
+#' `n` being their version.
 #' They are as large as the original store, delete them yourself once you are
 #' happy with the result.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -2126,7 +2127,7 @@ archive_sc_exp <- S7::new_generic(
 #' @export
 #'
 #' @examples
-#' # demo stores are written in v4 already, so this is a no-op
+#' # demo stores are written in v5 already, so this is a no-op
 #' sc <- demo_single_cells()
 #' sc <- upgrade_sc_store(sc, .verbose = FALSE)
 #'
@@ -2156,7 +2157,7 @@ upgrade_sc_store <- S7::new_generic(
 #' @param features Character vector. Gene IDs to extract.
 #' @param grouping_variable String. Column name in the obs table to group by.
 #' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
-#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' @param modality String. One of `c("rna", "adt", "atac")`. ADT is only available for
 #' `SingleCellsMultiModal`.
 #'
 #' @returns A data.table with columns: gene, group, mean_exp, scaled_exp and
@@ -2183,7 +2184,7 @@ extract_dot_plot_data <- S7::new_generic(
     features,
     grouping_variable,
     scale_exp = TRUE,
-    modality = c("rna", "adt")
+    modality = c("rna", "adt", "atac")
   ) {
     S7::S7_dispatch()
   }
@@ -2202,7 +2203,7 @@ extract_dot_plot_data <- S7::new_generic(
 #' @param scale Boolean. Whether to z-score the expression values.
 #' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
 #' `[-clip, clip]`.
-#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' @param modality String. One of `c("rna", "adt", "atac")`. ADT is only available for
 #' `SingleCellsMultiModal`.
 #' @param layer String. One of `c("norm", "magic")`. With `"magic"` the values
 #' come from the imputed layer [bixverse::run_magic_sc()] wrote, which only
@@ -2236,7 +2237,7 @@ extract_gene_expression <- S7::new_generic(
     obs_cols = NULL,
     scale = FALSE,
     clip = NULL,
-    modality = c("rna", "adt"),
+    modality = c("rna", "adt", "atac"),
     layer = c("norm", "magic")
   ) {
     S7::S7_dispatch()

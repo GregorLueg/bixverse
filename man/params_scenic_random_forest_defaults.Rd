@@ -9,13 +9,18 @@ params_scenic_random_forest_defaults()
 \value{
 A named list with the following elements:
 \itemize{
-\item n_trees - Any. TODO Defaults to \code{250L}.
-\item min_samples_leaf - Any. TODO Defaults to \code{50L}.
-\item n_features_split - Any. TODO Defaults to \code{0L}.
-\item subsample_rate - Any. TODO Defaults to \code{0.632}.
-\item bootstrap - Any. TODO Defaults to \code{FALSE}.
-\item max_depth - Any. TODO Defaults to \code{8L}.
-\item subsample_frac - Any. TODO Defaults to \code{NULL}.
+\item n_trees - Any. Number of trees to build. Defaults to \code{250L}.
+\item min_samples_leaf - Any. Minimum number of samples per leaf node.
+Defaults to \code{50L}.
+\item n_features_split - Any. Number of features considered per split. \code{0L}
+means \code{sqrt(n_features)}. Defaults to \code{0L}.
+\item subsample_rate - Any. Fraction of samples drawn per tree, without
+replacement unless \code{bootstrap = TRUE}. Defaults to \code{0.632}.
+\item bootstrap - Any. Whether to sample with replacement. Defaults to
+\code{FALSE}.
+\item max_depth - Any. Maximum tree depth. Defaults to \code{8L}.
+\item subsample_frac - Any. Optional. Fraction of cells to subsample per
+tree. If set, overrides \code{subsample_rate}. Defaults to \code{NULL}.
 }
 }
 \description{

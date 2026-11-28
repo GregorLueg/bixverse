@@ -13,11 +13,11 @@ Plus two lightweight side-cars living on the S7 object itself: `ScMap` (name to
 index maps, cells-to-keep, HVG indices) and `ScCache` (PCA factors, embeddings,
 kNN, neighbour graph, MAGIC, residual fit).
 
-The binaries come in two on-disk versions. New stores are v4 (delta bit-packed,
-several times smaller and faster to scan). v3 stores still load and work, but
-`load_existing()` warns; convert them in place with `upgrade_sc_store()`
-(`codec = "lz4"` by default, `keep_backup = TRUE` leaves `<file>.v3.bak` copies
-you delete yourself). Do not run it while another session uses the files.
+New stores are written in the v5 format (delta bit-packed chunks, plus header
+fields for the feature and norm kind, a cell-id hash and checksums). v4 stores
+still load, `load_existing()` warns; v3 stores no longer open. Convert either
+in place with `upgrade_sc_store()` (`codec = "lz4"` by default,
+`keep_backup = TRUE` leaves `<file>.v<n>.bak` copies you delete yourself). Do not run it while another session uses the files.
 
 Consequences you have to work with:
 
@@ -78,7 +78,7 @@ save_sc_exp_to_disk(obj, type = "qs2")
 | Input | Function |
 |---|---|
 | Cell Ranger MTX directory | `load_mtx()`, with `get_cell_ranger_params(path)` |
-| h5ad | `load_h5ad()`, or `load_h5ad_norm()` for pre-normalised, or `stream_h5ad()` for big files |
+| h5ad or AnnData Zarr | `load_h5ad()`, or `load_h5ad_norm()` for pre-normalised, or `stream_h5ad()` for big files; all take a `.zarr` directory too |
 | 10x HDF5 | `load_tenx_h5()` |
 | Seurat object | `load_seurat()` |
 | `SingleCellExperiment` | `load_sce()`, with `assay_name` naming the raw counts |
@@ -286,12 +286,13 @@ functions. `set_connectivities()` still takes an igraph. `to_bytes()` /
 
 ### 2D embeddings
 
-All go through manifoldsR (0.6.0 or later). `umap_sc()`, `densmap_sc()` and
+All go through manifoldsR (0.7.0 or later). `umap_sc()`, `densmap_sc()` and
 `forceatlas2_sc()` reuse the cached kNN by default, and its width wins over `k`
 (they warn if the two disagree). `umap_sc()` takes
 `umap_params = manifoldsR::params_umap(optimiser = ...)`: `"adam_parallel"`,
-`"sgd"`, `"sgd_parallel"` or `"adam"`. `"sgd_parallel"` (Hogwild!) isn't
-reproducible with more than one thread. `phate_sc()` defaults to
+`"sgd"`, `"sgd_parallel"`, `"adam"` or `"adam_v06"` (umap-learn 0.6, pair it
+with `init = "recursive"`). `"sgd_parallel"` (Hogwild!) isn't reproducible
+with more than one thread. `phate_sc()` defaults to
 `use_knn = FALSE`: PHATE wants a `6 * k + 5` wide graph, far wider than the
 cached one, so it runs its own search. `modality = "wnn"` always uses the WNN
 graph.
@@ -561,7 +562,9 @@ and needs the `qs2` package). `merge_sc_experiments()` combines objects.
 spec-compliant h5ad for ScanPy: kept cells only, counts streamed, obs/var plus
 the cached PCA, embeddings and neighbour graph (`assay = "norm"` puts the
 normalised counts in `X`). `varm/PCs` sits on the genes the PCA ran on, even if
-the HVGs changed since, and is only written alongside `X_pca`. `write_h5ad_sc()`, `write_h5ad_sc_dense()`,
+the HVGs changed since, and is only written alongside `X_pca`. `save_zarr()`
+writes the same as an AnnData Zarr store; both take `genes` for a subset.
+`write_h5ad_sc()`, `write_h5ad_sc_dense()`,
 `write_tenx_h5_sc()` and `write_cellranger_output()` export raw matrices to the
 usual interchange formats.
 

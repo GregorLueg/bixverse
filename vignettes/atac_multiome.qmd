@@ -1,0 +1,542 @@
+---
+title: "Joint RNA and ATAC analysis with bixverse"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Joint RNA and ATAC analysis with bixverse}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+10x multiome measures gene expression and chromatin accessibility in the same
+nuclei. This vignette takes the unsorted 3k PBMC data set (Cell Ranger ARC
+2.0.0) from the raw files to linked peaks and genes: fragment QC and multiplet
+calls, peaks called per cluster, TF-IDF and LSI, the weighted nearest
+neighbour graph over both modalities, gene activity and label transfer,
+differential accessibility and peak to gene links.
+
+ATAC lives next to the RNA in a `SingleCellsMultiModal`: a second store under
+`atac/` with peaks as features, log-CPM as the norm until `run_tfidf_sc()`
+switches it to TF-IDF. Its cells are the RNA cells, in the same order, so the
+RNA cell filter applies to both. Read the
+[multi-modal vignette](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html)
+first if you have not. ATAC without RNA has
+[its own vignette](https://gregorlueg.github.io/bixverse/articles/atac_only.html).
+
+The numerics are ports, checked against the originals on test data: Signac
+for the counting, QC, TF-IDF, LSI and gene activity, MACS3 for the peak
+calling, AMULET for the multiplets and Seurat for the label transfer. Motif
+analysis (chromVAR) and coverage tracks are not in bixverse yet.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(bixverse.plots)
+library(patchwork)
+library(ggplot2)
+library(data.table)
+```
+
+## The data
+
+`download_pbmc_multiome()` fetches the filtered feature barcode matrix (RNA and
+Cell Ranger's peak counts in one h5), the fragment file with its tabix index,
+Cell Ranger's peaks, the GENCODE v32 annotation Cell Ranger ARC's GRCh38
+reference was built from, and the ENCODE hg38 blacklist.
+
+```{r}
+#| label: paths
+data_dir <- download_pbmc_multiome()
+h5_path <- file.path(data_dir, "pbmc_unsorted_3k_filtered_feature_bc_matrix.h5")
+fragments <- file.path(data_dir, "pbmc_unsorted_3k_atac_fragments.tsv.gz")
+gtf <- file.path(data_dir, "gencode.v32.primary_assembly.annotation.gtf.gz")
+blacklist <- file.path(data_dir, "hg38-blacklist.v2.bed.gz")
+
+exp_dir <- file.path(tempdir(), "pbmc_multiome")
+dir.create(exp_dir, showWarnings = FALSE)
+```
+
+## Loading
+
+The RNA comes from the `Gene Expression` rows of the h5, the ATAC from its
+`Peaks` rows. `add_atac_tenx_sc()` writes the peak store for every cell of the
+RNA store, in its order; it counts Tn5 insertions, as Cell Ranger does.
+
+```{r}
+#| label: load
+sc_object <- SingleCellsMultiModal(dir_data = exp_dir)
+sc_object <- load_tenx_h5(sc_object, h5_path = h5_path, .verbose = FALSE)
+sc_object <- add_atac_tenx_sc(sc_object, h5_path = h5_path, .verbose = FALSE)
+
+sc_object
+```
+
+```{r}
+#| label: var atac
+head(get_sc_var(sc_object, modality = "atac"))
+```
+
+## Quality control
+
+Per cell from the fragment file: fragments, nucleosome signal (mono- over
+nucleosome-free fragments), TSS enrichment, the fraction on chrM and the
+fraction of insertions in peaks. Cell Ranger ARC leaves chrM out of the
+fragment file, so the ATAC mito fraction is zero throughout here; the RNA side
+has its own.
+
+```{r}
+#| label: fragment qc
+sc_object <- fragment_qc_sc(sc_object, fragments = fragments, gtf = gtf)
+
+var <- get_sc_var(sc_object)
+mito <- var[grepl("^MT-", gene_name), gene_id]
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gene_set_list = list(MT = mito),
+  .verbose = FALSE
+)
+```
+
+The two library-level checks first: insertions pile up at TSSs, and fragment
+lengths come in nucleosome steps. A flat TSS profile or a smooth length
+distribution means a failed library, whatever the per-cell numbers say.
+
+```{r}
+#| label: fragment profiles
+#| fig-width: 10
+#| fig-height: 3.6
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+profiles <- fragment_profiles_sc(sc_object, fragments = fragments, gtf = gtf)
+
+tss_profile_plot_sc(profiles$tss) + fragment_length_plot_sc(profiles$lengths)
+```
+
+```{r}
+#| label: tss against fragments
+obs <- sc_object[[c(
+  "cell_id",
+  "lib_size",
+  "nnz",
+  "MT",
+  "atac_n_fragments",
+  "atac_lib_size",
+  "atac_nucleosome_signal",
+  "atac_tss_enrichment",
+  "atac_frip"
+)]]
+
+ggplot(obs, aes(x = atac_n_fragments, y = atac_tss_enrichment)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  scale_x_log10() +
+  labs(x = "Fragments per cell", y = "TSS enrichment") +
+  theme_bx()
+```
+
+### Multiplets
+
+Nuclei carry two copies of each chromosome, so a locus covered by more than
+two of a cell's fragments points at a second nucleus. AMULET counts those loci
+per cell and tests them against a Poisson background, without clustering or
+RNA. Regions that pile up fragments in every cell, the blacklist, are left
+out; a repeat list would clean the calls further.
+
+```{r}
+#| label: amulet
+sc_object <- amulet_sc(sc_object, fragments = fragments, restrict_beds = blacklist)
+
+multiplet <- sc_object[["amulet_multiplet"]][[1]]
+sprintf("%i of %i cells called multiplets", sum(multiplet), length(multiplet))
+```
+
+### Thresholds
+
+On the ATAC side we keep cells with 1,000 to 100,000 insertions in peaks, a
+nucleosome signal under 2 and a TSS enrichment over 2, cut-offs that sit in
+the tails of the distributions above. On the RNA side we flag MAD outliers on
+library size and genes, and cells above 3 MADs of mitochondrial share.
+
+```{r}
+#| label: atac thresholds
+atac_qc <- run_cell_qc_fixed(
+  metrics = list(
+    atac_lib_size = obs$atac_lib_size,
+    atac_nucleosome_signal = obs$atac_nucleosome_signal,
+    atac_tss_enrichment = obs$atac_tss_enrichment
+  ),
+  cells_to_keep = get_cells_to_keep(sc_object),
+  hard_thresholds = list(
+    atac_lib_size = c(lower = 1000, upper = 100000),
+    atac_nucleosome_signal = c(upper = 2),
+    atac_tss_enrichment = c(lower = 2)
+  )
+)
+
+plots <- violin_plot_sc(atac_qc)
+plots$atac_lib_size + plots$atac_nucleosome_signal + plots$atac_tss_enrichment
+```
+
+```{r}
+#| label: rna thresholds
+rna_qc <- run_cell_qc(
+  metrics = list(
+    log10_lib_size = log10(obs$lib_size),
+    log10_nnz = log10(obs$nnz),
+    MT = obs$MT
+  ),
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = c(
+    log10_lib_size = "twosided",
+    log10_nnz = "twosided",
+    MT = "above"
+  ),
+  threshold = 3
+)
+
+plots <- violin_plot_sc(rna_qc)
+plots$log10_lib_size + plots$log10_nnz + plots$MT
+```
+
+```{r}
+#| label: set cells to keep
+drop <- atac_qc$combined | rna_qc$combined | multiplet
+sprintf(
+  "ATAC fails %i, RNA fails %i, multiplets %i, dropped %i of %i",
+  sum(atac_qc$combined),
+  sum(rna_qc$combined),
+  sum(multiplet),
+  sum(drop),
+  length(drop)
+)
+
+sc_object <- set_cells_to_keep(sc_object, obs$cell_id[!drop])
+```
+
+## RNA
+
+Highly variable genes, PCA, kNN, Leiden. These clusters are what the peaks get
+called on below.
+
+```{r}
+#| label: rna workflow
+sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
+sc_object <- calculate_pca_sc(sc_object, no_pcs = 50L, .verbose = FALSE)
+sc_object <- find_neighbours_sc(
+  sc_object,
+  no_embd_to_use = 30L,
+  .verbose = FALSE
+)
+sc_object <- find_clusters_sc(sc_object, res = 0.8, .verbose = FALSE)
+sc_object <- umap_sc(sc_object, no_embd_to_use = 30L, .verbose = FALSE)
+
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "leiden_clustering",
+  discrete = TRUE,
+  point_size = 0.5
+)
+```
+
+## Peaks
+
+Cell Ranger calls peaks on all cells pooled, which under-calls rare
+populations. We call them per RNA cluster with bixverse's port of MACS3
+`callpeak` (`--nomodel --extsize 200 --shift -100` on the Tn5 insertions),
+merge the clusters' peaks, drop those on blacklist regions and on contigs, and
+recount the fragments against the merged set. The new store replaces the Cell
+Ranger one.
+
+```{r}
+#| label: call peaks
+cr_peaks <- nrow(get_sc_var(sc_object, modality = "atac"))
+
+peaks <- call_peaks_sc(
+  sc_object,
+  fragments = fragments,
+  group_by = "leiden_clustering"
+)
+peaks <- peaks[grepl("^chr[0-9XY]+$", chrom)]
+peaks <- remove_blacklisted(peaks, blacklist)
+sprintf(
+  "Cell Ranger peaks: %i, merged per-cluster peaks: %i",
+  cr_peaks,
+  nrow(peaks)
+)
+
+sc_object <- add_atac_fragments_sc(
+  sc_object,
+  fragments = fragments,
+  peaks = peaks,
+  overwrite = TRUE,
+  .verbose = FALSE
+)
+sc_object <- annotate_peaks_sc(sc_object, gtf = gtf)
+
+head(get_sc_var(sc_object, modality = "atac"))
+```
+
+## TF-IDF and LSI
+
+TF-IDF over the kept cells, then a truncated SVD of the TF-IDF. We keep peaks
+above the 25th percentile of total counts: the bottom quarter is mostly noise
+at this depth. The first LSI component of ATAC data usually tracks
+sequencing depth rather than cell identity; `calculate_lsi_sc()` leaves it out
+of the embedding by default, and the depth plot shows whether that is right
+here (hollow points are the components left out).
+
+```{r}
+#| label: tf-idf and lsi
+sc_object <- run_tfidf_sc(sc_object)
+sc_object <- find_top_features_sc(sc_object, min_cutoff = "q25")
+var_atac <- get_sc_var(sc_object, modality = "atac")
+sprintf(
+  "%i of %i peaks kept for the LSI",
+  sum(var_atac$top_feature),
+  nrow(var_atac)
+)
+
+sc_object <- calculate_lsi_sc(sc_object, .verbose = FALSE)
+```
+
+```{r}
+#| label: lsi depth correlation
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+lsi_depth_plot_sc(get_lsi_depth_cor(sc_object))
+```
+
+```{r}
+#| label: atac umap
+sc_object <- find_neighbours_sc(
+  sc_object,
+  embd_to_use = "lsi",
+  no_embd_to_use = 30L,
+  modality = "atac",
+  .verbose = FALSE
+)
+sc_object <- umap_sc(
+  sc_object,
+  embd_to_use = "lsi",
+  modality = "atac",
+  .verbose = FALSE
+)
+```
+
+```{r}
+#| label: atac umap plot
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  embd_modality = "atac",
+  colour_by = "leiden_clustering",
+  discrete = TRUE,
+  point_size = 0.5
+)
+```
+
+The RNA clusters stay together on the ATAC UMAP: the two modalities come from
+the same nuclei.
+
+## Weighted nearest neighbours
+
+WNN fuses the RNA PCA and the ATAC LSI per cell, weighting each by how well it
+predicts the cell's neighbourhood.
+
+```{r}
+#| label: wnn
+sc_object <- generate_wnn_graph_sc(
+  sc_object,
+  modality_2 = "atac",
+  embd_to_use_2 = "lsi",
+  no_embd_to_use_1 = 30L,
+  no_embd_to_use_2 = 30L,
+  .verbose = FALSE
+)
+sc_object <- find_clusters_sc(
+  sc_object,
+  modality = "wnn",
+  name = "wnn_clusters",
+  res = 0.8,
+  .verbose = FALSE
+)
+sc_object <- umap_sc(sc_object, modality = "wnn", .verbose = FALSE)
+
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  embd_modality = "wnn",
+  colour_by = "wnn_clusters",
+  discrete = TRUE,
+  point_size = 0.5
+)
+```
+
+```{r}
+#| label: markers on wnn
+#| fig-width: 10
+#| fig-height: 8
+markers <- c("CD3D", "CD8A", "MS4A1", "CD14", "FCGR3A", "NKG7", "LYZ", "IL7R")
+marker_ids <- var[match(markers, gene_name), gene_id]
+
+feature_plot_sc(
+  sc_object,
+  features = marker_ids,
+  feature_labels = setNames(markers, marker_ids),
+  embedding = "umap",
+  embd_modality = "wnn",
+  point_size = 0.5
+)
+```
+
+## Gene activity and label transfer
+
+Gene activity counts fragments over gene body plus 2 kb upstream into a gene
+by cell store of its own, the shared feature space for moving labels from an
+RNA reference onto ATAC cells. With paired data we know the answer: the RNA
+clusters of the same nuclei. Transfer them through gene activity and the ATAC
+LSI and count how many come back.
+
+```{r}
+#| label: gene activity and transfer
+ga <- gene_activity_sc(
+  sc_object,
+  fragments = fragments,
+  gtf = gtf,
+  .verbose = FALSE
+)
+
+transfer <- transfer_labels_seurat_sc(
+  reference = sc_object,
+  query = ga,
+  label_column = "leiden_clustering",
+  weight_embedding = get_embedding(sc_object, "lsi", modality = "atac"),
+  .verbose = FALSE
+)
+
+truth <- sc_object[["leiden_clustering", filtered = TRUE]][[1]]
+sprintf(
+  "transferred label equals the RNA cluster for %.1f%% of cells",
+  100 * mean(transfer$predicted_leiden_clustering == as.character(truth))
+)
+```
+
+Gene activity is a separate `SingleCells`, so the RNA tools run on it.
+Methods built on an mRNA count model (residuals, doublet scores) refuse it,
+and those that gene length biases (AUCell, ScType, NMF) warn.
+
+The same markers as above, as gene activity instead of expression:
+
+```{r}
+#| label: gene activity of markers
+#| fig-width: 10
+#| fig-height: 8
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+feature_plot_sc(
+  sc_object,
+  features = marker_ids,
+  feature_labels = setNames(markers, marker_ids),
+  embedding = "umap",
+  embd_modality = "wnn",
+  expr_sc = ga,
+  point_size = 0.5
+)
+```
+
+## Differential accessibility
+
+The marker functions take `modality = "atac"` and test peaks instead of genes,
+here every WNN cluster against the rest. On ATAC the default test is a
+logistic regression per peak with the library size as covariate
+(`group ~ peak + depth` against `group ~ depth`), so a cluster with deeper
+cells does not light up every peak. `method = "wilcox"` runs the Wilcoxon on
+the TF-IDF instead.
+
+Don't read these p-values as inference. Every cell counts as a replicate, so
+with a few hundred cells per cluster they go astronomically small with either
+test; use them to rank peaks. The closest gene from `annotate_peaks_sc()`
+names them.
+
+```{r}
+#| label: differential accessibility
+da <- find_all_markers_sc(
+  sc_object,
+  column_of_interest = "wnn_clusters",
+  modality = "atac",
+  .verbose = FALSE
+)
+annotation <- get_sc_var(
+  sc_object,
+  modality = "atac",
+  cols = c("feature_id", "closest_gene", "distance_to_tss")
+)
+da <- merge(da, annotation, by = "feature_id", all.x = TRUE)
+
+da[fdr < 0.05, .N, by = grp][order(grp)]
+```
+
+```{r}
+#| label: top peaks
+head(da[fdr < 0.05][order(-lfc)], 10)
+```
+
+A top peak's accessibility on the WNN UMAP:
+
+```{r}
+#| label: top peak plot
+#| eval: !expr utils::packageVersion("bixverse.plots") >= "0.4.0"
+top_peak <- da[fdr < 0.05][order(-lfc)]$feature_id[1]
+
+feature_plot_sc(
+  sc_object,
+  features = top_peak,
+  embedding = "umap",
+  expr_modality = "atac",
+  embd_modality = "wnn",
+  point_size = 0.5
+)
+```
+
+## Peak to gene links
+
+A peak whose accessibility rises and falls with a nearby gene's expression
+across cell states is a candidate regulatory element for that gene.
+`peak_to_gene_sc()` sums both modalities over groups of cells, here fine WNN
+clusters, correlates every peak within 250 kb of a TSS with the gene, and
+tests the correlation. Fine clusters rather than the cells themselves: single
+cells are too sparse for a correlation to mean anything.
+
+```{r}
+#| label: peak to gene
+sc_object <- find_clusters_sc(
+  sc_object,
+  modality = "wnn",
+  name = "wnn_fine",
+  res = 5,
+  .verbose = FALSE
+)
+links <- peak_to_gene_sc(
+  sc_object,
+  gtf = gtf,
+  group_by = "wnn_fine",
+  min_cells = 10L,
+  .verbose = FALSE
+)
+
+sprintf(
+  "%i links at FDR < 0.05 over %i genes",
+  nrow(links),
+  uniqueN(links$gene_id)
+)
+head(links[order(-r)], 10)
+```
+
+Next on the list: motif enrichment (chromVAR) and coverage tracks. Watch this
+space.

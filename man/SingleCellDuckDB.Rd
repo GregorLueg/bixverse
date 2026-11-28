@@ -23,6 +23,7 @@ observation/cell metadata and the feature/gene metadata.
     \item \href{#method-SingleCellDuckDB-populate_obs_from_data.table}{\code{SingleCellDuckDB$populate_obs_from_data.table()}}
     \item \href{#method-SingleCellDuckDB-populate_var_from_data.table}{\code{SingleCellDuckDB$populate_var_from_data.table()}}
     \item \href{#method-SingleCellDuckDB-populate_var_adt_from_data.table}{\code{SingleCellDuckDB$populate_var_adt_from_data.table()}}
+    \item \href{#method-SingleCellDuckDB-populate_var_atac_from_data.table}{\code{SingleCellDuckDB$populate_var_atac_from_data.table()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_tenx_h5}{\code{SingleCellDuckDB$populate_obs_from_tenx_h5()}}
     \item \href{#method-SingleCellDuckDB-populate_vars_from_tenx_h5}{\code{SingleCellDuckDB$populate_vars_from_tenx_h5()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5}{\code{SingleCellDuckDB$populate_obs_from_multi_tenx_h5()}}
@@ -45,7 +46,9 @@ observation/cell metadata and the feature/gene metadata.
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_table'><code>SingleCellDuckDBBase$get_obs_table()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_var_index_map"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_var_index_map'><code>SingleCellDuckDBBase$get_var_index_map()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_adt_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_adt_table'><code>SingleCellDuckDBBase$get_vars_adt_table()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_atac_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_atac_table'><code>SingleCellDuckDBBase$get_vars_atac_table()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_table'><code>SingleCellDuckDBBase$get_vars_table()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="has_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-has_table'><code>SingleCellDuckDBBase$has_table()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="initialize"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-initialize'><code>SingleCellDuckDBBase$initialize()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="join_data_obs"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-join_data_obs'><code>SingleCellDuckDBBase$join_data_obs()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="rename_column"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-rename_column'><code>SingleCellDuckDBBase$rename_column()</code></a></span></li>
@@ -282,6 +285,29 @@ Function to populate the var_adt table from R
   }
   \subsection{Returns}{
     Invisible self and populates the internal var_adt table.
+Function to populate the var_atac table from R
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_var_atac_from_data.table"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_var_atac_from_data.table}{}}}
+\subsection{\code{SingleCellDuckDB$populate_var_atac_from_data.table()}}{
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_var_atac_from_data.table(var_dt)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{var_dt}}{data.table with a \code{feature_id} column, one row per ATAC
+feature in store order. \code{feature_idx} is set to \verb{1..n}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self and populates the internal var_atac table.
   }
 }
 

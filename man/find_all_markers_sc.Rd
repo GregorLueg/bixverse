@@ -7,9 +7,10 @@
 find_all_markers_sc(
   object,
   column_of_interest,
-  method = "wilcox",
+  method = NULL,
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
+  modality = c("rna", "atac"),
   .verbose = TRUE
 )
 }
@@ -19,9 +20,10 @@ find_all_markers_sc(
 \item{column_of_interest}{String. The column you wish to use to identify
 the markers between all combination. Needs to be in the obs table}
 
-\item{method}{String. Which method to use for the calculations of the DGE.
-At the moment the only option is \code{"wilcox"}, but the parameter is reserved
-for future features.}
+\item{method}{Optional string. One of \code{c("wilcox", "lr")}: the Wilcoxon
+rank sum test, or Seurat's logistic regression test (\code{LRDETest()}) with the
+library size as the latent variable. \code{NULL} picks \code{"lr"} on ATAC data and
+\code{"wilcox"} otherwise.}
 
 \item{alternative}{String. Test alternative. One of
 \code{c("twosided", "greater", "less")}. This function will default to
@@ -29,6 +31,11 @@ for future features.}
 
 \item{min_prop}{Numeric. The minimum proportion of cells that need to express
 the gene to be tested in the group or in the rest.}
+
+\item{modality}{String. One of \code{c("rna", "atac")}. \code{"atac"} tests the
+features of the ATAC store of a \code{SingleCellsMultiModal}; on a
+\code{SingleCellsAtac} both name its own store. Results are then keyed by
+\code{feature_id}.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed

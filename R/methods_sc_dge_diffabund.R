@@ -2,6 +2,73 @@
 
 ## dges ------------------------------------------------------------------------
 
+### helpers --------------------------------------------------------------------
+
+#' The store a marker test reads
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param modality String. One of `c("rna", "atac")`.
+#'
+#' @returns A list with `cells` and `genes` (the store's two files), `names`
+#' (the feature names in store order), `id_col` (`"gene_id"` or
+#' `"feature_id"`) and `atac` (whether the store holds ATAC features).
+#'
+#' @keywords internal
+.de_store <- function(object, modality) {
+  checkmate::assertChoice(modality, c("rna", "atac"))
+
+  if (S7::S7_inherits(object, SingleCellsMultiModal) && modality == "atac") {
+    paths <- .atac_paths(.check_atac_host(object))
+    return(list(
+      cells = paths$cells,
+      genes = paths$genes,
+      names = .atac_var(object, cols = "feature_id")$feature_id,
+      id_col = "feature_id",
+      atac = TRUE
+    ))
+  }
+  .resolve_modality(object, modality)
+  atac <- S7::S7_inherits(object, SingleCellsAtac)
+
+  list(
+    cells = get_rust_count_cell_f_path(object),
+    genes = get_rust_count_gene_f_path(object),
+    names = get_gene_names(object),
+    id_col = if (atac) "feature_id" else "gene_id",
+    atac = atac
+  )
+}
+
+#' The marker test, `NULL` resolving to `"lr"` on ATAC and `"wilcox"`
+#' otherwise
+#'
+#' @param store List. Output of `.de_store()`.
+#' @param method Optional string.
+#'
+#' @returns String.
+#'
+#' @keywords internal
+.marker_method <- function(store, method) {
+  checkmate::qassert(method, c("0", "S1"))
+  if (!is.null(method)) {
+    return(method)
+  }
+
+  if (store$atac) "lr" else "wilcox"
+}
+
+#' Error unless an object carries an ATAC store
+#'
+#' @param object `SingleCellsAtac` or `SingleCellsMultiModal` class.
+#'
+#' @returns The object, invisibly.
+#'
+#' @keywords internal
+.check_atac_host <- function(object) {
+  .require_atac(object)
+  invisible(object)
+}
+
 ### find markers ---------------------------------------------------------------
 
 #' Calculate DGE between two cell groups
@@ -16,13 +83,18 @@
 #' of the cell names in the object, see [bixverse::get_cell_names()].
 #' @param cells_2 String. The names of the cells in group 2. Need to be part
 #' of the cell names in the object, see [bixverse::get_cell_names()].
-#' @param method String. Which method to use for the calculations of the DGE.
-#' At the moment the only option is `"wilcox"`, but the parameter is reserved
-#' for future features.
+#' @param method Optional string. One of `c("wilcox", "lr")`: the Wilcoxon
+#' rank sum test, or Seurat's logistic regression test (`LRDETest()`) with the
+#' library size as the latent variable. `NULL` picks `"lr"` on ATAC data and
+#' `"wilcox"` otherwise.
 #' @param alternative String. Test alternative. One of
 #' `c("twosided", "greater", "less")`. Function will default to `"twosided"`.
 #' @param min_prop Numeric. The minimum proportion of cells that need to express
 #' the gene to be tested in any of the two groups.
+#' @param modality String. One of `c("rna", "atac")`. `"atac"` tests the
+#' features of the ATAC store of a `SingleCellsMultiModal`; on a
+#' `SingleCellsAtac` both name its own store. Results are then keyed by
+#' `feature_id`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -51,9 +123,10 @@ find_markers_sc <- S7::new_generic(
     object,
     cells_1,
     cells_2,
-    method = c("wilcox"),
+    method = NULL,
     alternative = c("twosided", "greater", "less"),
     min_prop = 0.05,
+    modality = c("rna", "atac"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -68,12 +141,16 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
   object,
   cells_1,
   cells_2,
-  method = c("wilcox"),
+  method = NULL,
   alternative = c("twosided", "greater", "less"),
   min_prop = 0.05,
+  modality = c("rna", "atac"),
   .verbose = TRUE
 ) {
   alternative <- match.arg(alternative)
+  modality <- match.arg(modality)
+  store <- .de_store(object, modality)
+  method <- .marker_method(store, method)
 
   # checks
   checkmate::assertTRUE(
@@ -82,25 +159,36 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
   )
   assertCellsExist(object, cells_1)
   assertCellsExist(object, cells_2)
-  checkmate::assertChoice(method, c("wilcox"))
+  checkmate::assertChoice(method, c("wilcox", "lr"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
   checkmate::qassert(min_prop, "N1[0, 1]")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  cell_indices_1 <- get_cell_indices(
+    x = object,
+    cell_ids = cells_1,
+    rust_index = TRUE
+  )
+  cell_indices_2 <- get_cell_indices(
+    x = object,
+    cell_ids = cells_2,
+    rust_index = TRUE
+  )
   dge_results <- switch(
     method,
     "wilcox" = rs_calculate_dge_mann_whitney(
-      f_path = get_rust_count_cell_f_path(object),
-      cell_indices_1 = get_cell_indices(
-        x = object,
-        cell_ids = cells_1,
-        rust_index = TRUE
-      ),
-      cell_indices_2 = get_cell_indices(
-        x = object,
-        cell_ids = cells_2,
-        rust_index = TRUE
-      ),
+      f_path = store$cells,
+      cell_indices_1 = cell_indices_1,
+      cell_indices_2 = cell_indices_2,
+      min_prop = min_prop,
+      alternative = alternative,
+      verbose = parse_verbosity(.verbose)
+    ),
+    "lr" = rs_calculate_dge_lr(
+      f_path_cell = store$cells,
+      f_path_gene = store$genes,
+      cell_indices_1 = cell_indices_1,
+      cell_indices_2 = cell_indices_2,
       min_prop = min_prop,
       alternative = alternative,
       verbose = parse_verbosity(.verbose)
@@ -115,7 +203,7 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
     "p_values",
     "fdr"
   )])[,
-    gene_id := get_gene_names(object)[dge_results$genes_to_keep]
+    gene_id := store$names[dge_results$genes_to_keep]
   ]
 
   data.table::setcolorder(
@@ -130,6 +218,7 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
       "fdr"
     )
   )
+  data.table::setnames(dge_dt, "gene_id", store$id_col)
 
   return(dge_dt)
 }
@@ -149,14 +238,19 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
 #' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param column_of_interest String. The column you wish to use to identify
 #' the markers between all combination. Needs to be in the obs table
-#' @param method String. Which method to use for the calculations of the DGE.
-#' At the moment the only option is `"wilcox"`, but the parameter is reserved
-#' for future features.
+#' @param method Optional string. One of `c("wilcox", "lr")`: the Wilcoxon
+#' rank sum test, or Seurat's logistic regression test (`LRDETest()`) with the
+#' library size as the latent variable. `NULL` picks `"lr"` on ATAC data and
+#' `"wilcox"` otherwise.
 #' @param alternative String. Test alternative. One of
 #' `c("twosided", "greater", "less")`. This function will default to
 #' `"greater"`, i.e., genes upregulated in the group.
 #' @param min_prop Numeric. The minimum proportion of cells that need to express
 #' the gene to be tested in the group or in the rest.
+#' @param modality String. One of `c("rna", "atac")`. `"atac"` tests the
+#' features of the ATAC store of a `SingleCellsMultiModal`; on a
+#' `SingleCellsAtac` both name its own store. Results are then keyed by
+#' `feature_id`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -183,9 +277,10 @@ find_all_markers_sc <- S7::new_generic(
   fun = function(
     object,
     column_of_interest,
-    method = "wilcox",
+    method = NULL,
     alternative = c("greater", "less", "twosided"),
     min_prop = 0.05,
+    modality = c("rna", "atac"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -198,12 +293,16 @@ find_all_markers_sc <- S7::new_generic(
 S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   object,
   column_of_interest,
-  method = "wilcox",
+  method = NULL,
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
+  modality = c("rna", "atac"),
   .verbose = TRUE
 ) {
   alternative <- match.arg(alternative)
+  modality <- match.arg(modality)
+  store <- .de_store(object, modality)
+  method <- .marker_method(store, method)
 
   # checks
   checkmate::assertTRUE(
@@ -211,7 +310,7 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
       S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(column_of_interest, "S1")
-  checkmate::assertChoice(method, c("wilcox"))
+  checkmate::assertChoice(method, c("wilcox", "lr"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
   checkmate::qassert(min_prop, "N1[0, 1]")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -233,7 +332,15 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   dge_results <- switch(
     method,
     "wilcox" = rs_calculate_dge_one_vs_rest(
-      f_path = get_rust_count_gene_f_path(object),
+      f_path = store$genes,
+      cell_groups = cell_groups,
+      min_prop = min_prop,
+      alternative = alternative,
+      verbose = parse_verbosity(.verbose)
+    ),
+    "lr" = rs_calculate_dge_one_vs_rest_lr(
+      f_path_cell = store$cells,
+      f_path_gene = store$genes,
       cell_groups = cell_groups,
       min_prop = min_prop,
       alternative = alternative,
@@ -251,7 +358,7 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
     "fdr"
   )])[,
     `:=`(
-      gene_id = get_gene_names(object)[dge_results$gene_idx + 1L],
+      gene_id = store$names[dge_results$gene_idx + 1L],
       grp = unique_groups[dge_results$group + 1L]
     )
   ]
@@ -269,6 +376,7 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
       "fdr"
     )
   )
+  data.table::setnames(dge_dt, "gene_id", store$id_col)
 
   return(dge_dt)
 }
@@ -299,15 +407,20 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
 #' groups, e.g. a cell type annotation or a clustering.
 #' @param reference_group Optional string. The group to use as the reference. If
 #' `NULL`, every group of `column_of_interest` is used as the reference in turn.
-#' @param method String. Which method to use for the calculations of the DGE.
-#' At the moment the only option is `"wilcox"`, but the parameter is reserved
-#' for future features.
+#' @param method Optional string. One of `c("wilcox", "lr")`: the Wilcoxon
+#' rank sum test, or Seurat's logistic regression test (`LRDETest()`) with the
+#' library size as the latent variable. `NULL` picks `"lr"` on ATAC data and
+#' `"wilcox"` otherwise.
 #' @param alternative String. Test alternative. One of
 #' `c("twosided", "greater", "less")`. This function will default to
 #' `"greater"`, i.e., genes upregulated in the reference group.
 #' @param min_prop Numeric. The minimum proportion of cells that need to express
 #' the gene in at least one of the groups. Applied once, globally, so every
 #' comparison's FDR is calculated over the same gene set.
+#' @param modality String. One of `c("rna", "atac")`. `"atac"` tests the
+#' features of the ATAC store of a `SingleCellsMultiModal`; on a
+#' `SingleCellsAtac` both name its own store. Results are then keyed by
+#' `feature_id`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -348,9 +461,10 @@ find_specific_markers_sc <- S7::new_generic(
     object,
     column_of_interest,
     reference_group = NULL,
-    method = "wilcox",
+    method = NULL,
     alternative = c("greater", "less", "twosided"),
     min_prop = 0.05,
+    modality = c("rna", "atac"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -362,12 +476,16 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
   object,
   column_of_interest,
   reference_group = NULL,
-  method = "wilcox",
+  method = NULL,
   alternative = c("greater", "less", "twosided"),
   min_prop = 0.05,
+  modality = c("rna", "atac"),
   .verbose = TRUE
 ) {
   alternative <- match.arg(alternative)
+  modality <- match.arg(modality)
+  store <- .de_store(object, modality)
+  method <- .marker_method(store, method)
 
   # checks
   checkmate::assertTRUE(
@@ -376,7 +494,7 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
   )
   checkmate::qassert(column_of_interest, "S1")
   checkmate::qassert(reference_group, c("S1", "0"))
-  checkmate::assertChoice(method, c("wilcox"))
+  checkmate::assertChoice(method, c("wilcox", "lr"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
   checkmate::qassert(min_prop, "N1[0, 1]")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -437,7 +555,16 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
   rs_res <- switch(
     method,
     "wilcox" = rs_calculate_dge_one_vs_many(
-      f_path = get_rust_count_gene_f_path(object),
+      f_path = store$genes,
+      cell_groups = unname(cell_groups),
+      references = match(ref_groups, grp_names) - 1L,
+      min_prop = min_prop,
+      alternative = alternative,
+      verbose = parse_verbosity(.verbose)
+    ),
+    "lr" = rs_calculate_dge_one_vs_many_lr(
+      f_path_cell = store$cells,
+      f_path_gene = store$genes,
       cell_groups = unname(cell_groups),
       references = match(ref_groups, grp_names) - 1L,
       min_prop = min_prop,
@@ -459,7 +586,7 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
 
   melted <- .melt_one_vs_many_res(
     rs_res = rs_res,
-    gene_names = get_gene_names(object),
+    gene_names = store$names,
     grp_names = grp_names
   )
 

@@ -9,6 +9,7 @@ get_pseudobulked_sc(
   cell_list,
   return_format = c("dense", "sparse"),
   assay = c("raw", "norm"),
+  modality = c("rna", "atac"),
   .verbose = TRUE
 )
 }
@@ -20,6 +21,9 @@ get_pseudobulked_sc(
 \item{return_format}{String. One of \code{c("dense", "sparse")}.}
 
 \item{assay}{String. One of \code{c("raw", "norm")}.}
+
+\item{modality}{String. One of \code{c("rna", "atac")}. \code{"atac"} aggregates the
+ATAC store of a \code{SingleCellsMultiModal}, with the features as columns.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed

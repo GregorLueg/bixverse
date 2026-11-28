@@ -60,6 +60,7 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
   weight_floor = NULL,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "calc_sc_type_scores()", refuse = FALSE)
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertCellMarkerList(cell_marker_list)
@@ -828,4 +829,170 @@ S7::method(transfer_labels_symphony, SymphonyReference) <- function(
     c(paste0("predicted_", label_column), paste0("confidence_", label_column))
   )
   out
+}
+
+## seurat label transfer -------------------------------------------------------
+
+#' Seurat label transfer
+#'
+#' @description
+#' Seurat's `FindTransferAnchors(reduction = "cca")` between the kept cells of
+#' both experiments on shared genes, then `TransferData()`: the anchor labels
+#' weighted per query cell in `weight_embedding`. For RNA to ATAC the query is
+#' the gene activity from [bixverse::gene_activity_sc()] and the weights come
+#' from the ATAC LSI, as in the Signac vignette; RNA to RNA works the same with
+#' the query PCA.
+#'
+#' The predictions and their confidence are written to the query's obs as
+#' `predicted_<label_column>` and `confidence_<label_column>`.
+#'
+#' @param reference `SingleCells` class. The annotated experiment (RNA).
+#' @param query `SingleCells` class. The experiment to label (RNA or gene
+#' activity), matched to the reference on `gene_id`.
+#' @param label_column String. Reference obs column with the labels. Missing
+#' labels form a level of their own.
+#' @param weight_embedding Numeric matrix. Kept query cells x dimensions for
+#' the weights, e.g. the `"lsi"` embedding of the ATAC side. Rows are matched
+#' to the query by position; with row names, those are checked against the
+#' kept query cells.
+#' @param features Optional character vector. Gene ids to anchor on. `NULL`
+#' uses the reference HVGs. Only those in both experiments are used.
+#' @param transfer_params List. Output of
+#' [bixverse::params_sc_seurat_transfer()].
+#' @param seed Integer. Seed of the kNN backend.
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @returns A data.table, one row per kept query cell, with `cell_id`,
+#' `predicted_<label_column>`, `confidence_<label_column>` (the top score) and
+#' one `score_<label>` column per label.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+transfer_labels_seurat_sc <- S7::new_generic(
+  name = "transfer_labels_seurat_sc",
+  dispatch_args = "reference",
+  fun = function(
+    reference,
+    query,
+    label_column,
+    weight_embedding,
+    features = NULL,
+    transfer_params = params_sc_seurat_transfer(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method transfer_labels_seurat_sc SingleCells
+#'
+#' @export
+S7::method(transfer_labels_seurat_sc, SingleCells) <- function(
+  reference,
+  query,
+  label_column,
+  weight_embedding,
+  features = NULL,
+  transfer_params = params_sc_seurat_transfer(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(reference, SingleCells))
+  checkmate::assertTRUE(S7::S7_inherits(query, SingleCells))
+  checkmate::qassert(label_column, "S1")
+  checkmate::assertMatrix(weight_embedding, mode = "numeric")
+  checkmate::qassert(features, c("0", "S+"))
+  assertScSeuratTransferParams(transfer_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  # function body
+  query_cells <- get_cells_to_keep(query)
+  if (nrow(weight_embedding) != length(query_cells)) {
+    stop(sprintf(
+      "weight_embedding needs %i rows, one per kept query cell, got %i.",
+      length(query_cells),
+      nrow(weight_embedding)
+    ))
+  }
+  if (
+    !is.null(rownames(weight_embedding)) &&
+      !identical(rownames(weight_embedding), get_cell_names(query, TRUE))
+  ) {
+    stop(paste(
+      "The rows of weight_embedding are not the kept query cells. Set the",
+      "same filter on both (get_gene_activity() syncs it)."
+    ))
+  }
+
+  ref_ids <- get_gene_names(reference)
+  if (is.null(features)) {
+    hvg <- get_hvg(reference)
+    if (length(hvg) == 0L) {
+      stop("Pass features or run find_hvg_sc() on the reference.")
+    }
+    features <- ref_ids[hvg + 1L]
+  }
+  query_ids <- get_gene_names(query)
+  shared <- features[features %in% ref_ids & features %in% query_ids]
+  if (length(shared) == 0L) {
+    stop("No feature is in both the reference and the query.")
+  }
+
+  obs <- get_sc_obs(reference, cols = label_column, filtered = TRUE)
+  if (!label_column %in% names(obs)) {
+    stop(sprintf("Reference obs has no column '%s'.", label_column))
+  }
+  labels <- factor(obs[[label_column]], exclude = NULL)
+  label_levels <- levels(labels)
+
+  knn_params <- transfer_params[
+    setdiff(
+      names(transfer_params),
+      c("n_cc", "k_anchor", "k_score", "scale_max", "l2_norm", "k_weight", "sd")
+    )
+  ]
+  scores <- rs_transfer_labels_seurat(
+    ref_genes = get_rust_count_gene_f_path(reference),
+    ref_cells = get_cells_to_keep(reference),
+    ref_features = match(shared, ref_ids) - 1L,
+    query_genes = get_rust_count_gene_f_path(query),
+    query_cells = query_cells,
+    query_features = match(shared, query_ids) - 1L,
+    ref_labels = as.integer(labels) - 1L,
+    n_labels = length(label_levels),
+    weight_embedding = unname(weight_embedding),
+    n_cc = transfer_params$n_cc,
+    k_anchor = transfer_params$k_anchor,
+    k_score = transfer_params$k_score,
+    scale_max = transfer_params$scale_max,
+    l2_norm = transfer_params$l2_norm,
+    k_weight = transfer_params$k_weight,
+    sd = transfer_params$sd,
+    knn_params = knn_params,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  pred_col <- sprintf("predicted_%s", label_column)
+  conf_col <- sprintf("confidence_%s", label_column)
+  top <- max.col(scores, ties.method = "first")
+  out <- data.table::data.table(
+    cell_id = get_cell_names(query, filtered = TRUE),
+    predicted = label_levels[top],
+    confidence = scores[cbind(seq_len(nrow(scores)), top)]
+  )
+  data.table::setnames(out, c("predicted", "confidence"), c(pred_col, conf_col))
+
+  new_obs <- data.table::data.table(cell_idx = query_cells + 1L)
+  new_obs[[pred_col]] <- out[[pred_col]]
+  new_obs[[conf_col]] <- out[[conf_col]]
+  get_sc_duckdb(query)$join_data_obs(new_obs)
+
+  colnames(scores) <- sprintf("score_%s", label_levels)
+
+  cbind(out, data.table::as.data.table(scores))
 }

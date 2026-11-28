@@ -17,12 +17,7 @@
 #'
 #' @keywords internal
 .assert_modality_available <- function(object, modality) {
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   invisible(NULL)
 }
@@ -89,7 +84,7 @@
 #' vector (e.g. `c(Ery = "Run4_2005...")`) and those labels become the column
 #' names of `branch_probs`, which saves relabelling the fate columns by hand
 #' downstream.
-#' @param modality String. One of `c("rna", "adt", "wnn")`. Which kNN graph to
+#' @param modality String. One of `c("rna", "adt", "atac", "wnn")`. Which kNN graph to
 #' run over. Anything but `"rna"` requires a `SingleCellsMultiModal` object.
 #' @param palantir_params List. See [bixverse::params_sc_palantir()].
 #' @param seed Integer. For reproducibility.
@@ -148,7 +143,7 @@ run_palantir_sc <- S7::new_generic(
     object,
     early_cell,
     terminal_states = NULL,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     palantir_params = params_sc_palantir(),
     seed = 42L,
     .verbose = TRUE
@@ -163,7 +158,7 @@ S7::method(run_palantir_sc, ScOrMc) <- function(
   object,
   early_cell,
   terminal_states = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   palantir_params = params_sc_palantir(),
   seed = 42L,
   .verbose = TRUE
@@ -266,7 +261,7 @@ S7::method(run_palantir_sc, ScOrMc) <- function(
 #' `SingleCellsMultiModal`.
 #' @param cluster_col String. The obs column holding the cluster assignments.
 #' Empty factor levels are retained.
-#' @param modality String. One of `c("rna", "adt", "wnn")`. Which kNN graph to
+#' @param modality String. One of `c("rna", "adt", "atac", "wnn")`. Which kNN graph to
 #' run over. Anything but `"rna"` requires a `SingleCellsMultiModal` object.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -300,7 +295,7 @@ run_paga_sc <- S7::new_generic(
   fun = function(
     object,
     cluster_col,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -312,7 +307,7 @@ run_paga_sc <- S7::new_generic(
 S7::method(run_paga_sc, ScOrMc) <- function(
   object,
   cluster_col,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   .verbose = TRUE
 ) {
   modality <- match.arg(modality)

@@ -296,14 +296,23 @@ if (is_windows && is_cross_abi) {
 # `__p___initenv`. Two mingw runtimes in one link.
 #
 # Pinning the linker to the gcc R itself uses puts the CRT and the HDF5
-# library back in the same toolchain, and matches what a gnu-host build gets
-# by default. The `gnullvm` targets (the Windows arm64 jobs) link through
-# rust-lld with no external gcc, so they are left alone.
+# library back in the same toolchain. The `gnullvm` targets (the Windows arm64
+# jobs) link through rust-lld with no external gcc, so they are left alone.
+#
+# A gnu host hits the same clash, in the build scripts: `zarrs` has `libz-sys`
+# as a build dependency, which finds zlib in Rtools and puts its `-L` on the
+# build script link, and the runner's `C:/mingw64` gcc links it. `-Clinker` in
+# RUSTFLAGS never reaches build scripts once `--target` is passed, so there the
+# pin goes through `CARGO_TARGET_<triple>_LINKER`, which cargo applies to host
+# and target alike when the two triples match.
 .linker_rustflags <- ""
+.linker_exports <- ""
+
+is_gnu_host <- grepl("-pc-windows-gnu$", rustc_host)
 
 if (
   is_windows &&
-    is_cross_abi &&
+    (is_cross_abi || is_gnu_host) &&
     !grepl("gnullvm", Sys.getenv("CARGO_BUILD_TARGET"), fixed = TRUE)
 ) {
   gcc <- Sys.which("gcc")
@@ -330,7 +339,17 @@ if (
         mustWork = FALSE
       )
     }
-    .linker_rustflags <- paste0(" -Clinker=", gcc)
+    if (is_cross_abi) {
+      .linker_rustflags <- paste0(" -Clinker=", gcc)
+    } else {
+      .linker_exports <- paste0(
+        "CARGO_TARGET_",
+        toupper(gsub("-", "_", rustc_host, fixed = TRUE)),
+        "_LINKER=",
+        gcc,
+        " "
+      )
+    }
     message("Pinning the Rust linker to `", gcc, "`.")
   } else {
     message("No Rtools `gcc` found. Leaving the Rust linker to rustc.")
@@ -377,7 +396,8 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@HDF5_LIBS@", .hdf5_libs, x = _, fixed = TRUE) |>
   gsub("@MACOS_LIBS@", .macos_libs, x = _, fixed = TRUE) |>
   gsub("@HDF5_RUSTFLAGS@", .hdf5_rustflags, x = _, fixed = TRUE) |>
-  gsub("@LINKER_RUSTFLAGS@", .linker_rustflags, x = _, fixed = TRUE)
+  gsub("@LINKER_RUSTFLAGS@", .linker_rustflags, x = _, fixed = TRUE) |>
+  gsub("@LINKER_EXPORTS@", .linker_exports, x = _, fixed = TRUE)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")

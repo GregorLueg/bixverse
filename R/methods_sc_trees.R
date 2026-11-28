@@ -112,6 +112,7 @@ S7::method(bonsai_sc, SingleCells) <- function(
   bonsai_params = params_sc_bonsai(),
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "bonsai_sc()", refuse = TRUE)
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 

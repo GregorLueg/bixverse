@@ -13,8 +13,9 @@ prescan_h5ad_files(
 )
 }
 \arguments{
-\item{h5_paths}{Character vector of file paths to h5ad files. If names are
-provided, these will be used as experimental identifiers.}
+\item{h5_paths}{Character vector of paths to h5ad files or AnnData Zarr
+stores. If names are provided, these will be used as experimental
+identifiers.}
 
 \item{gene_universe}{One of "intersection" or "union".}
 

@@ -6,7 +6,7 @@
 #' that is integer-valued. Slots are checked in the given order, so dedicated
 #' count slots take precedence over `X`.
 #'
-#' @param f_path File path to the `.h5ad` file.
+#' @param f_path Path to the `.h5ad` file or AnnData Zarr store.
 #' @param candidates Character vector of slots to test, any of "layers.counts",
 #' "raw.X", "X". Order defines priority.
 #' @param n_sample Number of values to sample per slot.
@@ -35,7 +35,10 @@ detect_raw_count_slot <- function(
   n_sample = 10000L,
   threshold = 0.99
 ) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
   candidates <- match.arg(
     candidates,
     c("layers.counts", "raw.X", "X"),
@@ -56,8 +59,9 @@ detect_raw_count_slot <- function(
 
 #' Pre-scan multiple h5ad files for multi-sample loading
 #'
-#' @param h5_paths Character vector of file paths to h5ad files. If names are
-#' provided, these will be used as experimental identifiers.
+#' @param h5_paths Character vector of paths to h5ad files or AnnData Zarr
+#' stores. If names are provided, these will be used as experimental
+#' identifiers.
 #' @param gene_universe One of "intersection" or "union".
 #' @param var_index String. The name within the h5ad var part in which the
 #' variable names are stored. Defaults to `"_index"`.
@@ -99,7 +103,12 @@ prescan_h5ad_files <- function(
   gene_universe <- match.arg(gene_universe)
   raw_count_slot <- match.arg(raw_count_slot)
   checkmate::assertCharacter(h5_paths, min.len = 2L)
-  invisible(lapply(h5_paths, checkmate::assertFileExists))
+  for (h5_path in h5_paths) {
+    checkmate::assert(
+      checkmate::checkFileExists(h5_path),
+      checkmate::checkDirectoryExists(h5_path)
+    )
+  }
   checkmate::qassert(var_index, "S1")
   checkmate::qassert(.verbose, "B1")
   checkmate::assertChoice(
@@ -207,7 +216,7 @@ prescan_h5ad_files <- function(
 #' var lengths (`DENSE_ROW` = cells x genes, `DENSE_COL` = genes x cells).
 #' Ties (`no_obs == no_var`) fall back to the AnnData convention (`DENSE_ROW`).
 #'
-#' @param f_path File path to the `.h5ad` file.
+#' @param f_path Path to the `.h5ad` file or AnnData Zarr store.
 #'
 #' @returns A list with `dims` (named integer `c(obs, var)`) and `type` (one of
 #'   `"CSR"`, `"CSC"`, `"DENSE_ROW"`, `"DENSE_COL"`).
@@ -225,7 +234,10 @@ prescan_h5ad_files <- function(
 #'
 #' unlink(f_path)
 get_h5ad_dimensions <- function(f_path) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
 
   res <- rs_h5ad_dimensions(f_path = f_path)
 
@@ -242,7 +254,7 @@ get_h5ad_dimensions <- function(f_path) {
 #' @description
 #' Useful for exploring the data stored in an h5ad file.
 #'
-#' @param f_path File path to the `.h5ad` file.
+#' @param f_path Path to the `.h5ad` file or AnnData Zarr store.
 #'
 #' @returns A list with:
 #' \itemize{
@@ -266,7 +278,10 @@ get_h5ad_dimensions <- function(f_path) {
 #'
 #' unlink(f_path)
 read_h5ad_metadata <- function(f_path) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
 
   meta <- get_h5ad_dimensions(f_path)
 
@@ -295,7 +310,7 @@ read_h5ad_metadata <- function(f_path) {
 
 #' Read summary statistics from the X slot of an h5ad file
 #'
-#' @param f_path File path to the `.h5ad` file.
+#' @param f_path Path to the `.h5ad` file or AnnData Zarr store.
 #' @param n_sample Number of non-zero values to sample for the preview. NULL
 #' reads all.
 #'
@@ -325,7 +340,10 @@ read_h5ad_metadata <- function(f_path) {
 #'
 #' unlink(f_path)
 read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
-  checkmate::assertFileExists(f_path)
+  checkmate::assert(
+    checkmate::checkFileExists(f_path),
+    checkmate::checkDirectoryExists(f_path)
+  )
 
   meta <- get_h5ad_dimensions(f_path)
 

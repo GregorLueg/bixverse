@@ -16,6 +16,8 @@ etc.
     \item \href{#method-SingleCellDuckDBBase-get_obs_table}{\code{SingleCellDuckDBBase$get_obs_table()}}
     \item \href{#method-SingleCellDuckDBBase-get_vars_table}{\code{SingleCellDuckDBBase$get_vars_table()}}
     \item \href{#method-SingleCellDuckDBBase-get_vars_adt_table}{\code{SingleCellDuckDBBase$get_vars_adt_table()}}
+    \item \href{#method-SingleCellDuckDBBase-get_vars_atac_table}{\code{SingleCellDuckDBBase$get_vars_atac_table()}}
+    \item \href{#method-SingleCellDuckDBBase-has_table}{\code{SingleCellDuckDBBase$has_table()}}
     \item \href{#method-SingleCellDuckDBBase-get_obs_index_map}{\code{SingleCellDuckDBBase$get_obs_index_map()}}
     \item \href{#method-SingleCellDuckDBBase-get_var_index_map}{\code{SingleCellDuckDBBase$get_var_index_map()}}
     \item \href{#method-SingleCellDuckDBBase-get_cells_to_keep}{\code{SingleCellDuckDBBase$get_cells_to_keep()}}
@@ -134,6 +136,52 @@ selected indices and/or columns.
   \subsection{Returns}{
     The var adt table (if found) as a data.table with optionally
 selected indices and/or columns.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-get_vars_atac_table"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_vars_atac_table}{}}}
+\subsection{\code{SingleCellDuckDBBase$get_vars_atac_table()}}{
+  Returns the var table of the ATAC features from the DuckDB.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDBBase$get_vars_atac_table(indices = NULL, cols = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{indices}}{Optional feature indices (1-based).}
+      \item{\code{cols}}{Optional column names to return.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The var atac table as a data.table, keyed \code{feature_idx} /
+\code{feature_id}, with optionally selected indices and/or columns.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-has_table"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-has_table}{}}}
+\subsection{\code{SingleCellDuckDBBase$has_table()}}{
+  Checks whether a table exists in the DuckDB.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDBBase$has_table(name)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{String. The table name.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Boolean.
   }
 }
 

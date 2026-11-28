@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_save_h5ad}
 \alias{rs_save_h5ad}
-\title{Write a single cell experiment to h5ad}
+\title{Write a single cell experiment to h5ad or AnnData Zarr}
 \usage{
 rs_save_h5ad(
   f_path_cells,
@@ -17,13 +17,15 @@ rs_save_h5ad(
   varm,
   obsp,
   uns_json,
-  chunk_size
+  chunk_size,
+  zarr,
+  gene_indices
 )
 }
 \arguments{
 \item{f_path_cells}{String. Path to the \code{counts_cells.bin} file.}
 
-\item{h5_path}{String. Path of the h5ad file to create.}
+\item{h5_path}{String. Path of the h5ad file or Zarr directory to create.}
 
 \item{cell_indices}{Integer vector. The cells to write (0-indexed!), in
 the order they shall appear in the file.}
@@ -34,13 +36,13 @@ the order they shall appear in the file.}
 
 \item{obs}{Named list. The obs columns, see the R wrapper for the types.}
 
-\item{var_index}{Character vector. One name per gene.}
+\item{var_index}{Character vector. One name per written gene.}
 
 \item{var}{Named list. The var columns.}
 
 \item{obsm}{Named list of numeric matrices with one row per cell.}
 
-\item{varm}{Named list of numeric matrices with one row per gene.}
+\item{varm}{Named list of numeric matrices with one row per written gene.}
 
 \item{obsp}{Named list of CSR matrices, each a list with \code{indptr},
 \code{indices} (0-indexed) and \code{data}.}
@@ -48,16 +50,20 @@ the order they shall appear in the file.}
 \item{uns_json}{String. JSON object written to \code{uns}.}
 
 \item{chunk_size}{Integer. Number of cells per streaming batch.}
+
+\item{zarr}{Boolean. Write an AnnData Zarr store instead of an h5ad file.}
+
+\item{gene_indices}{Optional integer vector. The genes to write
+(0-indexed!), in output order. \code{NULL} writes every gene.}
 }
 \value{
 Invisible \code{NULL}.
 }
 \description{
 Streams the counts out of the cell-based binary file, cell batch by cell
-batch, into a spec-compliant h5ad file via
-\href{https://github.com/btraven00/scx}{scx-core}, together with the obs and
-var tables, dense embeddings and sparse cell x cell graphs supplied from
-R. Counts are stored as \code{float32}. All inputs are checked before the file
-is created.
+batch, into a spec-compliant h5ad file (or an AnnData Zarr v3 store) via
+\code{bixverse-sc-export}, together with the obs and var tables, dense
+embeddings and sparse cell x cell graphs supplied from R. Counts are stored
+as \code{float32}. All inputs are checked before the output is created.
 }
 \keyword{internal}

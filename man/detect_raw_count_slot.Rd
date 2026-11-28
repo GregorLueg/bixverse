@@ -12,7 +12,7 @@ detect_raw_count_slot(
 )
 }
 \arguments{
-\item{f_path}{File path to the \code{.h5ad} file.}
+\item{f_path}{Path to the \code{.h5ad} file or AnnData Zarr store.}
 
 \item{candidates}{Character vector of slots to test, any of "layers.counts",
 "raw.X", "X". Order defines priority.}

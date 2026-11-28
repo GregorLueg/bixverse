@@ -1099,6 +1099,7 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
   streaming = NULL,
   .verbose = TRUE
 ) {
+  .refuse_atac_features(object, "find_hvg_batch_aware_sc()")
   gene_comb_method <- match.arg(gene_comb_method)
 
   checkmate::qassert(batch_column, "S1")
@@ -1552,8 +1553,12 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
 #' batch labels.
 #' @param additional_batch_columns Optional character vector. Additional batch
 #' columns to regress out. If `NULL`, only the primary batch column is used.
-#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
-#' on `SingleCellsMultiModal` class.
+#' @param embd_to_use String. The embedding to correct. `"pca"` (default) or
+#' another cached embedding of the modality, e.g. `"lsi"` with
+#' `modality = "atac"`.
+#' @param modality String. One of `c("rna", "adt", "atac")`. `"adt"` needs a
+#' `SingleCellsMultiModal`, `"atac"` a `SingleCellsMultiModal` or a
+#' `SingleCellsAtac`.
 #' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()].
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
@@ -1583,7 +1588,8 @@ harmony_sc <- S7::new_generic(
     object,
     batch_column,
     additional_batch_columns = NULL,
-    modality = c("rna", "adt"),
+    embd_to_use = "pca",
+    modality = c("rna", "adt", "atac"),
     harmony_params = params_sc_harmony_v2(),
     seed = 42L,
     .verbose = TRUE
@@ -1597,7 +1603,8 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
+  embd_to_use = "pca",
+  modality = c("rna", "adt", "atac"),
   harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
@@ -1610,22 +1617,13 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
-  # hard tier: the corrected embedding is written back onto the object, so a
-  # stale PCA would silently produce a mis-aligned one
-  assert_sc_state(object, artefacts = "pca", modality = modality)
-
-  if (is.null(get_pca_factors(object, modality = modality))) {
-    warning("No PCA embeddings found in the object. Returning class as is")
+  checkmate::qassert(embd_to_use, "S1")
+  pca_data <- .harmony_input(object, embd_to_use, modality)
+  if (is.null(pca_data)) {
     return(object)
   }
-  pca_data <- get_pca_factors(object, modality = modality)
 
   batch_index_ls <- list()
 
@@ -1680,8 +1678,42 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
     embd = harmony_embd,
     name = "harmony",
     modality = modality,
-    from = "pca"
+    from = embd_to_use
   )
+}
+
+#' The embedding Harmony corrects
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param embd_to_use String. `"pca"` or another cached embedding.
+#' @param modality String. The resolved modality.
+#'
+#' @returns The cells x dimensions matrix, or `NULL` with a warning when the
+#' embedding is absent.
+#'
+#' @keywords internal
+.harmony_input <- function(object, embd_to_use, modality) {
+  # hard tier: the corrected embedding is written back onto the object, so a
+  # stale input would silently produce a mis-aligned one
+  if (embd_to_use == "pca") {
+    assert_sc_state(object, artefacts = "pca", modality = modality)
+    res <- get_pca_factors(object, modality = modality)
+  } else {
+    available <- get_available_embeddings(object, modality = modality)
+    res <- if (embd_to_use %in% available) {
+      get_embedding(object, embd_name = embd_to_use, modality = modality)
+    } else {
+      NULL
+    }
+  }
+  if (is.null(res)) {
+    warning(sprintf(
+      "No '%s' embedding found in the object. Returning class as is",
+      embd_to_use
+    ))
+  }
+
+  res
 }
 
 ## harmony v1 ------------------------------------------------------------------
@@ -1699,8 +1731,12 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
 #' batch labels.
 #' @param additional_batch_columns Optional character vector. Additional batch
 #' columns to regress out. If `NULL`, only the primary batch column is used.
-#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
-#' on `SingleCellsMultiModal` class.
+#' @param embd_to_use String. The embedding to correct. `"pca"` (default) or
+#' another cached embedding of the modality, e.g. `"lsi"` with
+#' `modality = "atac"`.
+#' @param modality String. One of `c("rna", "adt", "atac")`. `"adt"` needs a
+#' `SingleCellsMultiModal`, `"atac"` a `SingleCellsMultiModal` or a
+#' `SingleCellsAtac`.
 #' @param harmony_params List. Output of [bixverse::params_sc_harmony()].
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
@@ -1730,7 +1766,8 @@ harmony_v1_sc <- S7::new_generic(
     object,
     batch_column,
     additional_batch_columns = NULL,
-    modality = c("rna", "adt"),
+    embd_to_use = "pca",
+    modality = c("rna", "adt", "atac"),
     harmony_params = params_sc_harmony(),
     seed = 42L,
     .verbose = TRUE
@@ -1744,7 +1781,8 @@ S7::method(harmony_v1_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
+  embd_to_use = "pca",
+  modality = c("rna", "adt", "atac"),
   harmony_params = params_sc_harmony(),
   seed = 42L,
   .verbose = TRUE
@@ -1757,22 +1795,13 @@ S7::method(harmony_v1_sc, ScOrScSubset) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
-  # hard tier: the corrected embedding is written back onto the object, so a
-  # stale PCA would silently produce a mis-aligned one
-  assert_sc_state(object, artefacts = "pca", modality = modality)
-
-  if (is.null(get_pca_factors(object, modality = modality))) {
-    warning("No PCA embeddings found in the object. Returning class as is")
+  checkmate::qassert(embd_to_use, "S1")
+  pca_data <- .harmony_input(object, embd_to_use, modality)
+  if (is.null(pca_data)) {
     return(object)
   }
-  pca_data <- get_pca_factors(object, modality = modality)
 
   batch_index_ls <- list()
 
@@ -1827,7 +1856,7 @@ S7::method(harmony_v1_sc, ScOrScSubset) <- function(
     embd = harmony_embd,
     name = "harmony_v1",
     modality = modality,
-    from = "pca"
+    from = embd_to_use
   )
 }
 

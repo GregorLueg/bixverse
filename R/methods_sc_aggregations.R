@@ -751,6 +751,8 @@ S7::method(generate_metacells2_sc, ScOrScSubset) <- function(
 #' @param cell_list Named list.
 #' @param return_format String. One of `c("dense", "sparse")`.
 #' @param assay String. One of `c("raw", "norm")`.
+#' @param modality String. One of `c("rna", "atac")`. `"atac"` aggregates the
+#' ATAC store of a `SingleCellsMultiModal`, with the features as columns.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -782,6 +784,7 @@ get_pseudobulked_sc <- S7::new_generic(
     cell_list,
     return_format = c("dense", "sparse"),
     assay = c("raw", "norm"),
+    modality = c("rna", "atac"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -794,11 +797,14 @@ S7::method(get_pseudobulked_sc, ScOrScSubset) <- function(
   cell_list,
   return_format = c("dense", "sparse"),
   assay = c("raw", "norm"),
+  modality = c("rna", "atac"),
   .verbose = TRUE
 ) {
   # params
   return_format <- match.arg(return_format)
   assay <- match.arg(assay)
+  modality <- match.arg(modality)
+  store <- .de_store(object, modality)
 
   # checks
   checkmate::assertTRUE(
@@ -832,19 +838,19 @@ S7::method(get_pseudobulked_sc, ScOrScSubset) <- function(
     return_format,
     "dense" = {
       data <- rs_pseudobulk_cells_dense(
-        f_path = get_rust_count_cell_f_path(object),
+        f_path = store$cells,
         cell_indices_ls = cell_list,
         assay = assay,
         verbose = parse_verbosity(.verbose)
       )
       rownames(data) <- names(cell_list)
-      colnames(data) <- get_gene_names(object)
+      colnames(data) <- store$names
 
       data
     },
     "sparse" = {
       data <- rs_pseudobulk_cells_sparse(
-        f_path = get_rust_count_cell_f_path(object),
+        f_path = store$cells,
         cell_indices_ls = cell_list,
         assay = assay,
         verbose = parse_verbosity(.verbose)
@@ -857,7 +863,7 @@ S7::method(get_pseudobulked_sc, ScOrScSubset) <- function(
         Dim = as.integer(c(data$nrow, data$ncol))
       )
       rownames(data) <- names(cell_list)
-      colnames(data) <- get_gene_names(object)
+      colnames(data) <- store$names
 
       data
     }

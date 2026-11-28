@@ -408,8 +408,7 @@ knn_graph_label_propagation <- function(
 #' Default number of community detection iterations
 #'
 #' @description
-#' `5L` for Leiden and `2L` for Louvain, which gave the best modularity across
-#' synthetic graphs.
+#' `2L` for both, as igraph.
 #'
 #' @param algorithm String. One of `c("leiden", "louvain")`.
 #'
@@ -419,7 +418,7 @@ knn_graph_label_propagation <- function(
 .default_community_iters <- function(algorithm) {
   checkmate::assertChoice(algorithm, c("leiden", "louvain"))
 
-  switch(algorithm, leiden = 5L, louvain = 2L)
+  switch(algorithm, leiden = 2L, louvain = 2L)
 }
 
 ## main ------------------------------------------------------------------------
@@ -445,13 +444,16 @@ knn_graph_label_propagation <- function(
 #' Louvain.
 #' @param n_iterations Optional integer. Number of full iterations, each
 #' starting from the previous partition. A negative value iterates until the
-#' partition is stable. If `NULL`, `5L` for Leiden and `2L` for Louvain, which
-#' gave the best modularity across synthetic graphs.
+#' partition is stable. If `NULL`, `2L`.
 #' @param min_gain Numeric. With a negative `n_iterations`, also stop once an
 #' iteration gains no more than this in modularity.
-#' @param local_moving String. One of `c("queue", "coloured")`. `"queue"` is
-#' Traag's sequential queue. `"coloured"` moves the nodes of one colour class
-#' in parallel, which only kicks in on larger levels of the graph.
+#' @param local_moving Optional string. One of `c("queue", "coloured")`.
+#' `"queue"` is Traag's sequential queue. `"coloured"` moves the nodes of one
+#' colour class in parallel, which only kicks in on larger levels of the graph.
+#' `NULL` is `"queue"` for Leiden and `"coloured"` for Louvain.
+#' @param node_order Optional string. Visit order of the queue, `"bfs"` (sweep
+#' in BFS order from a random start) or `"shuffle"` (as igraph). `NULL` is
+#' `"bfs"` for Leiden and `"shuffle"` for Louvain.
 #' @param seed Integer. Random seed.
 #'
 #' @returns Integer vector with the community of each node (1-based, `1` is
@@ -472,11 +474,11 @@ leiden_clustering <- function(
   beta = 0.01,
   n_iterations = NULL,
   min_gain = 0,
-  local_moving = c("queue", "coloured"),
+  local_moving = NULL,
+  node_order = NULL,
   seed = 42L
 ) {
   algorithm <- match.arg(algorithm)
-  local_moving <- match.arg(local_moving)
   checkmate::assertMultiClass(graph, c("SingleCellConnectivity", "igraph"))
   checkmate::qassert(resolution, "N1(0,)")
   checkmate::assertChoice(algorithm, c("leiden", "louvain"))
@@ -484,7 +486,8 @@ leiden_clustering <- function(
   checkmate::qassert(n_iterations, c("X1", "0"))
   checkmate::assertTRUE(is.null(n_iterations) || n_iterations != 0)
   checkmate::qassert(min_gain, "N1[0,)")
-  checkmate::assertChoice(local_moving, c("queue", "coloured"))
+  checkmate::assertChoice(local_moving, c("queue", "coloured"), null.ok = TRUE)
+  checkmate::assertChoice(node_order, c("bfs", "shuffle"), null.ok = TRUE)
   checkmate::qassert(seed, "X1[0,)")
 
   if (is.null(n_iterations)) {
@@ -498,6 +501,7 @@ leiden_clustering <- function(
     min_gain = min_gain,
     refine = algorithm == "leiden",
     local_moving = local_moving,
+    node_order = node_order,
     seed = as.integer(seed)
   )
 

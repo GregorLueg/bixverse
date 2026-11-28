@@ -22,7 +22,7 @@ load_h5ad_norm(
 \arguments{
 \item{object}{\code{SingleCells} class.}
 
-\item{h5_path}{File path to the h5ad object you wish to load in.}
+\item{h5_path}{Path to the h5ad file or AnnData Zarr store to load.}
 
 \item{obs_lib_size_col}{String. Name of the obs column containing the total
 counts per cell or spot (e.g. \code{"nCount_RNA"}).}

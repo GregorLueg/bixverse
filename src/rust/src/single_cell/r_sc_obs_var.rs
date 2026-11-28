@@ -1,8 +1,8 @@
 //! Parquet export of the obs / var metadata for DuckDB to ingest.
 
 use bixverse_r::prelude::*;
-use bixverse_r::single_cell::sc_data::h5_10x_io::parse_tenx_version;
-use bixverse_r::single_cell::sc_data::obs_var_io::{
+use bixverse_r::single_cell::sc_data::h5::tenx::parse_tenx_version;
+use bixverse_r::single_cell::sc_data::obs_var::{
     h5ad_frame_to_parquet, parse_frame_kind, tenx_frame_to_parquet, FrameKind, ParquetColumnType,
     ParquetFrameInfo,
 };

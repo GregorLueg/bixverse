@@ -670,6 +670,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   return_pairs = FALSE,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "scrublet_sc()", refuse = TRUE)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScScrubletParams(scrublet_params)
   checkmate::qassert(seed, "I1")
@@ -800,6 +801,7 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   streaming = NULL,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "doublet_detection_boost_sc()", refuse = TRUE)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScBoostParams(boost_params)
   checkmate::qassert(seed, "I1")
@@ -932,6 +934,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "scdblfinder_sc()", refuse = TRUE)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScDblFinderParams(scdblfinder_params)
   checkmate::qassert(return_features, "B1")
@@ -1135,6 +1138,7 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
   streaming = NULL,
   .verbose = TRUE
 ) {
+  .check_rna_counts(object, "gene_set_proportions_sc()", refuse = TRUE)
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
   checkmate::qassert(streaming, c("B1", "0"))
@@ -1185,6 +1189,7 @@ S7::method(find_hvg_sc, SingleCells) <- function(
   streaming = NULL,
   .verbose = TRUE
 ) {
+  .refuse_atac_features(object, "find_hvg_sc()")
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(hvg_no, "I1")
   assertScHvgParams(hvg_params)
@@ -1326,6 +1331,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   residuals = FALSE,
   .verbose = TRUE
 ) {
+  .refuse_atac_features(object, "calculate_pca_sc()")
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(no_pcs, "I1")
   assertScPcaParams(pca_params)
@@ -1467,7 +1473,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
@@ -1485,12 +1491,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   if (!embd_to_use %in% get_available_embeddings(object, modality = modality)) {
     warning("The desired embedding was not found. Returning class as is.")
@@ -1582,7 +1583,7 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
   name = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   seed = 42L,
   .verbose = TRUE,
   ...
@@ -1604,12 +1605,7 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
-    stop(sprintf(
-      "modality = '%s' is only supported for SingleCellsMultiModal.",
-      modality
-    ))
-  }
+  modality <- .resolve_modality(object, modality)
 
   # hard tier: the cluster labels are written back aligned to the kept cells,
   # so a graph over a different cell set silently mislabels
@@ -2025,7 +2021,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
 #' supported.
 #' @param features Character vector. The genes to impute. Anything not found in
 #' the object is dropped with a warning.
-#' @param modality String. One of `c("rna", "adt", "wnn")`. Which kNN graph does
+#' @param modality String. One of `c("rna", "adt", "atac", "wnn")`. Which kNN graph does
 #' the smoothing. Anything but `"rna"` requires a `SingleCellsMultiModal`
 #' object. The counts themselves always come from the RNA store, and the layer
 #' is always written to the RNA cache.
@@ -2057,7 +2053,7 @@ run_magic_sc <- S7::new_generic(
   fun = function(
     object,
     features,
-    modality = c("rna", "adt", "wnn"),
+    modality = c("rna", "adt", "atac", "wnn"),
     magic_params = params_sc_magic(),
     .verbose = TRUE
   ) {
@@ -2070,10 +2066,11 @@ run_magic_sc <- S7::new_generic(
 S7::method(run_magic_sc, ScOrScSubset) <- function(
   object,
   features,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   magic_params = params_sc_magic(),
   .verbose = TRUE
 ) {
+  .refuse_atac_features(object, "run_magic_sc()")
   modality <- match.arg(modality)
 
   # checks

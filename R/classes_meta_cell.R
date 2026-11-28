@@ -279,7 +279,7 @@ S7::method(get_sc_var, MetaCells) <- function(
   object,
   indices = NULL,
   cols = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 ) {
   modality <- match.arg(modality)
 
@@ -320,7 +320,7 @@ S7::method(get_sc_counts, MetaCells) <- function(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))

@@ -122,13 +122,18 @@ fn rs_sc_scrublet(
 ) -> Result<List, extendr_api::Error> {
     let scrublet_params = ScrubletParams::from_r_list(scrublet_params)?;
     let cells_to_keep = cells_to_keep.r_int_convert();
-    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
-    let cell_reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-    let mut scrublet = Scrublet::new(&gene_reader, &cell_reader, scrublet_params, &cells_to_keep);
-    let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes = scrublet
-        .run_scrublet(streaming, seed, verbose, return_combined_pca, return_pairs)
-        .to_extendr()?;
+    let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes = run_scrublet_on_store(
+        f_path_gene,
+        f_path_cell,
+        &cells_to_keep,
+        scrublet_params,
+        streaming,
+        seed,
+        verbose,
+        return_combined_pca,
+        return_pairs,
+    )
+    .to_extendr()?;
 
     let pca_out = pca.map(|m| faer_to_r_matrix(m.as_ref()));
     let pair_1_out: Robj = match pair_1 {
@@ -199,15 +204,16 @@ fn rs_sc_doublet_detection(
     let boost_params = BoostParams::from_r_list(boost_params)?;
     let cells_to_keep = cells_to_keep.r_int_convert();
 
-    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
-    let cell_reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-    let mut boost_classifier =
-        BoostClassifier::new(&gene_reader, &cell_reader, boost_params, &cells_to_keep);
-
-    let boost_res: BoostResult = boost_classifier
-        .run_boost(streaming, seed, verbose)
-        .to_extendr()?;
+    let boost_res: BoostResult = run_boost_on_store(
+        f_path_gene,
+        f_path_cell,
+        &cells_to_keep,
+        boost_params,
+        streaming,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
 
     Ok(list!(
         doublet = boost_res.predicted_doublets,
@@ -273,11 +279,16 @@ fn rs_sc_scdblfinder(
     // doing this outside to be more explit
     params.return_features = return_features;
 
-    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
-    let cell_reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-
-    let mut finder = ScDblFinder::new(&gene_reader, &cell_reader, params, &cell_indices);
-    let res: ScDblFinderResult = finder.run(seed as usize, streaming, verbose).to_extendr()?;
+    let res: ScDblFinderResult = run_scdblfinder_on_store(
+        f_path_gene,
+        f_path_cell,
+        &cell_indices,
+        params,
+        seed as usize,
+        streaming,
+        verbose,
+    )
+    .to_extendr()?;
 
     let features = if return_features {
         let features: FeatureTable = res.features.unwrap();
@@ -1195,9 +1206,8 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
     let (indices_b, dist_b, _, _) = knn_data_to_rust(knn_data_b)?;
 
     let k = indices_a.first().map_or(0, |row| row.len());
-    let flat_idx = |rows: &[Vec<usize>]| -> Vec<u32> {
-        rows.iter().flatten().map(|&i| i as u32).collect()
-    };
+    let flat_idx =
+        |rows: &[Vec<usize>]| -> Vec<u32> { rows.iter().flatten().map(|&i| i as u32).collect() };
     let flat_dist = |rows: &[Vec<f32>]| -> Vec<f32> { rows.iter().flatten().copied().collect() };
 
     let metrics = compare_knn(
@@ -1236,7 +1246,7 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 /// @param resolutions Numeric vector. The resolutions to iterate through.
 /// @param fc_params Named list. The fast clustering parameters, see
 /// [params_sc_fast_cluster()]. Also carries the k-means keys (`km_type`,
-/// `kmeans_iters`, `batch_size`, `drift_threshold`, `lr_alpha`).
+/// `k_means_iter`, `batch_size`, `drift_threshold`, `lr_alpha`).
 /// @param n_seeds Integer. Number of seeds per resolution. `1L` runs a single
 /// pass without stability metrics.
 /// @param seed Integer. For reproducibility.

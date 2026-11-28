@@ -13,7 +13,6 @@
 Integer.
 }
 \description{
-\code{5L} for Leiden and \code{2L} for Louvain, which gave the best modularity across
-synthetic graphs.
+\code{2L} for both, as igraph.
 }
 \keyword{internal}

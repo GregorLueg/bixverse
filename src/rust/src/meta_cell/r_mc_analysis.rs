@@ -29,8 +29,8 @@ use faer::{Mat, MatRef};
 use crate::meta_cell::utils::*;
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
-    dialogue_inputs_to_rust, dialogue_res_to_r_list, nebula_res_to_r_list,
-    optional_knn, random_sig_genes, vision_autocor_to_r_list,
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, nebula_res_to_r_list, optional_knn,
+    random_sig_genes, vision_autocor_to_r_list,
 };
 
 /////////////

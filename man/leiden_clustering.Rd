@@ -11,7 +11,8 @@ leiden_clustering(
   beta = 0.01,
   n_iterations = NULL,
   min_gain = 0,
-  local_moving = c("queue", "coloured"),
+  local_moving = NULL,
+  node_order = NULL,
   seed = 42L
 )
 }
@@ -32,15 +33,19 @@ Louvain.}
 
 \item{n_iterations}{Optional integer. Number of full iterations, each
 starting from the previous partition. A negative value iterates until the
-partition is stable. If \code{NULL}, \code{5L} for Leiden and \code{2L} for Louvain, which
-gave the best modularity across synthetic graphs.}
+partition is stable. If \code{NULL}, \code{2L}.}
 
 \item{min_gain}{Numeric. With a negative \code{n_iterations}, also stop once an
 iteration gains no more than this in modularity.}
 
-\item{local_moving}{String. One of \code{c("queue", "coloured")}. \code{"queue"} is
-Traag's sequential queue. \code{"coloured"} moves the nodes of one colour class
-in parallel, which only kicks in on larger levels of the graph.}
+\item{local_moving}{Optional string. One of \code{c("queue", "coloured")}.
+\code{"queue"} is Traag's sequential queue. \code{"coloured"} moves the nodes of one
+colour class in parallel, which only kicks in on larger levels of the graph.
+\code{NULL} is \code{"queue"} for Leiden and \code{"coloured"} for Louvain.}
+
+\item{node_order}{Optional string. Visit order of the queue, \code{"bfs"} (sweep
+in BFS order from a random start) or \code{"shuffle"} (as igraph). \code{NULL} is
+\code{"bfs"} for Leiden and \code{"shuffle"} for Louvain.}
 
 \item{seed}{Integer. Random seed.}
 }

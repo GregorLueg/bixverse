@@ -365,14 +365,27 @@ spec_fast_cluster_default <- param_defaults(
   label = "FastCluster params",
   hint = paste(
     "batch_size and k_means_iter must be integers; n_centroids must be an",
-    "integer or NULL."
+    "integer or NULL; e_means_epochs must be NULL or a positive number."
   ),
   fields = list(
     km_type = p_choice(
-      "minibatch",
-      c("minibatch", "standard"),
-      doc = "The type of k-means clustering."
+      "emeans",
+      c("emeans", "standard", "minibatch"),
+      doc = paste(
+        "The type of k-means clustering: `\"emeans\"`, `\"standard\"`",
+        "(Lloyd's) or `\"minibatch\"`."
+      )
     ),
+    e_means_epochs = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = paste(
+        "`km_type = \"emeans\"` only. Passes over the data. `NULL` takes the Rust default",
+        "of 5."
+      )
+    ),
+
     n_centroids = p_int(
       NULL,
       null_ok = TRUE,
@@ -383,7 +396,7 @@ spec_fast_cluster_default <- param_defaults(
     ),
     k_means_iter = p_int(
       100L,
-      doc = "Number of maximum k-means iterations."
+      doc = "Number of maximum k-means iterations. Ignored by e-means."
     ),
     batch_size = p_int(
       4098L,
@@ -406,9 +419,27 @@ spec_kmeans_defaults <- param_defaults(
   label = "k-means params",
   hint = paste(
     "k_means_iter must be an integer; gemm and hamerly must be booleans",
-    "or NULL."
+    "or NULL; e_means_epochs must be NULL or a positive number."
   ),
   fields = list(
+    k_means_algorithm = p_choice(
+      "emeans",
+      c("emeans", "lloyd"),
+      doc = paste(
+        "The k-means algorithm. `\"emeans\"` (Bessa et al., 2026) runs",
+        "mini-batch EMA updates and ignores `k_means_iter`, `k_means_init`,",
+        "`gemm` and `hamerly`. `\"lloyd\"` is Lloyd's algorithm."
+      )
+    ),
+    e_means_epochs = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = paste(
+        "e-means only. Passes over the data. `NULL` takes the Rust default",
+        "of 5."
+      )
+    ),
     k_means_iter = p_int(
       30L,
       doc = "The number of iterations to use for the clustering."

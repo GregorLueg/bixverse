@@ -3,6 +3,9 @@
 use bixverse_r::graph::graph_label_propagations::{KnnLabPropGraph, SymmetryWeightStrategy};
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::sc_annotation::sc_type::*;
+use bixverse_r::single_cell::sc_annotation::seurat_transfer::{
+    find_transfer_anchors, transfer_labels, TransferAnchorParams, TransferDataParams,
+};
 use bixverse_r::single_cell::sc_annotation::symphony::*;
 use bixverse_r::single_cell::sc_batch_correction::harmony::HarmonyParams;
 use bixverse_r::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
@@ -28,6 +31,8 @@ extendr_module! {
     fn rs_build_symphony_ref;
     fn rs_symphony_map_query;
     fn rs_transfer_labels_symphony;
+    // seurat
+    fn rs_transfer_labels_seurat;
 }
 
 ////////////
@@ -711,4 +716,131 @@ fn rs_transfer_labels_symphony(
     let conf_f64: Vec<f64> = conf.iter().map(|&x| x as f64).collect();
 
     Ok(list!(predicted = preds_i32, confidence = conf_f64))
+}
+
+////////////
+// Seurat //
+////////////
+
+/// Seurat label transfer
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Seurat's `FindTransferAnchors(reduction = "cca")` followed by
+/// `TransferData()`. The anchors come from a CCA between the reference and the
+/// query on the given features; the label scores are weighted by the anchors'
+/// neighbourhoods in `weight_embedding`. Works for an RNA or a gene activity
+/// query.
+///
+/// @param ref_genes String. Path to the gene-based file of the reference.
+/// @param ref_cells Integer vector. Reference cells (0-indexed).
+/// @param ref_features Integer vector. Reference features (0-indexed).
+/// @param query_genes String. Path to the gene-based file of the query.
+/// @param query_cells Integer vector. Query cells (0-indexed), rows of
+/// `weight_embedding`.
+/// @param query_features Integer vector. Query features (0-indexed), matching
+/// `ref_features` in order.
+/// @param ref_labels Integer vector. 0-indexed label code per reference cell.
+/// @param n_labels Integer. Number of label codes.
+/// @param weight_embedding Numeric matrix. Query cells x dimensions, the
+/// embedding of the weights.
+/// @param n_cc Integer. Number of canonical correlation vectors.
+/// @param k_anchor Integer. Neighbours for the anchors.
+/// @param k_score Integer. Neighbours for the anchor scores.
+/// @param scale_max Numeric. Clip of the scaled features.
+/// @param l2_norm Boolean. L2 normalise the CCA space.
+/// @param k_weight Integer. Anchors per query cell in the weights.
+/// @param sd Numeric. Bandwidth divisor of the weights.
+/// @param knn_params List. The kNN parameters, see
+/// [bixverse::params_knn_defaults()].
+/// @param seed Integer. Seed.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns Numeric matrix of query cells x labels with the label scores.
+///
+/// @export
+///
+/// @references Stuart, et al., Cell, 2019
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_transfer_labels_seurat(
+    ref_genes: &str,
+    ref_cells: &[i32],
+    ref_features: &[i32],
+    query_genes: &str,
+    query_cells: &[i32],
+    query_features: &[i32],
+    ref_labels: &[i32],
+    n_labels: usize,
+    weight_embedding: RMatrix<f64>,
+    n_cc: usize,
+    k_anchor: usize,
+    k_score: usize,
+    scale_max: f64,
+    l2_norm: bool,
+    k_weight: usize,
+    sd: f64,
+    knn_params: List,
+    seed: usize,
+    verbose: usize,
+) -> extendr_api::Result<RArray<f64, 2>> {
+    let knn_params = KnnParams::from_r_list(knn_params)?;
+    let ref_cells = ref_cells.r_int_convert();
+    let query_cells = query_cells.r_int_convert();
+    let ref_features = ref_features.r_int_convert();
+    let query_features = query_features.r_int_convert();
+    let labels = ref_labels.r_int_convert();
+    if labels.len() != ref_cells.len() {
+        return Err(extendr_api::Error::Other(
+            "ref_labels needs one code per reference cell.".into(),
+        ));
+    }
+    let weight_embedding = r_matrix_to_faer_fp32(&weight_embedding);
+    if weight_embedding.nrows() != query_cells.len() {
+        return Err(extendr_api::Error::Other(format!(
+            "weight_embedding has {} rows for {} query cells.",
+            weight_embedding.nrows(),
+            query_cells.len()
+        )));
+    }
+    let anchor_params = TransferAnchorParams {
+        n_cc,
+        k_anchor,
+        k_score,
+        scale_max: scale_max as f32,
+        l2_norm,
+        knn_params: knn_params.clone(),
+    };
+    let data_params = TransferDataParams {
+        k_weight,
+        sd: sd as f32,
+        knn_params,
+    };
+    let ref_reader = ParallelSparseReader::new(ref_genes).to_extendr()?;
+    let query_reader = ParallelSparseReader::new(query_genes).to_extendr()?;
+    let anchors = find_transfer_anchors(
+        &ref_reader,
+        &ref_cells,
+        &ref_features,
+        &query_reader,
+        &query_cells,
+        &query_features,
+        &anchor_params,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
+    let scores = transfer_labels(
+        &anchors,
+        &labels,
+        n_labels,
+        weight_embedding.as_ref(),
+        &data_params,
+        seed,
+    )
+    .to_extendr()?;
+    Ok(faer_to_r_matrix(scores.as_ref()))
 }

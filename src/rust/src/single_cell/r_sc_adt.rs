@@ -2,11 +2,10 @@ use bixverse_r::mm_r_wrappers::dsb_params_from_r_list;
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::multi_modal::adt::clr::adt_clr;
 use bixverse_r::single_cell::multi_modal::adt::dsb::*;
-use bixverse_r::single_cell::sc_data::h5_10x_adt_io::{read_tenx_h5_modality, TenxDenseModality};
-use bixverse_r::single_cell::sc_data::h5_10x_io::parse_tenx_version;
+use bixverse_r::single_cell::sc_data::h5::tenx::parse_tenx_version;
+use bixverse_r::single_cell::sc_data::h5::tenx_adt::{read_tenx_h5_modality, TenxDenseModality};
 use extendr_api::Nullable::Null;
 use extendr_api::*;
-
 
 ////////////////////
 // extendr Module //

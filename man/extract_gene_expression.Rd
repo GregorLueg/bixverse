@@ -10,7 +10,7 @@ extract_gene_expression(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 )
 }
@@ -27,7 +27,7 @@ to include.}
 \item{clip}{Optional numeric. If \code{scale = TRUE}, clip z-scores to
 \verb{[-clip, clip]}.}
 
-\item{modality}{String. One of \code{c("rna", "adt")}. ADT is only available for
+\item{modality}{String. One of \code{c("rna", "adt", "atac")}. ADT is only available for
 \code{SingleCellsMultiModal}.}
 
 \item{layer}{String. One of \code{c("norm", "magic")}. With \code{"magic"} the values

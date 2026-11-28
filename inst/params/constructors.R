@@ -229,7 +229,8 @@ spec_boost <- param_spec(
         "Optional overrides for the fast clustering parameters. Only",
         "relevant if `fast_cluster = TRUE`. See",
         "[params_fast_cluster_default()] for available parameters:",
-        "`km_type`, `n_centroids`, `k_means_iter` and `batch_size`."
+        "`km_type`, `e_means_epochs`, `n_centroids`, `k_means_iter` and",
+        "`batch_size`."
       )
     )
   )
@@ -425,7 +426,8 @@ spec_scdblfinder <- param_spec(
         "Optional overrides for the fast clustering parameters. Only",
         "relevant if `fast_cluster = TRUE`. See",
         "[params_fast_cluster_default()] for available parameters:",
-        "`km_type`, `n_centroids`, `k_means_iter` and `batch_size`."
+        "`km_type`, `e_means_epochs`, `n_centroids`, `k_means_iter` and",
+        "`batch_size`."
       )
     )
   )
@@ -475,6 +477,7 @@ spec_sc_fast_cluster <- param_spec(
   return_order = c(
     "n_centroids",
     "km_type",
+    "e_means_epochs",
     "k_means_iter",
     "batch_size",
     "drift_threshold",
@@ -489,6 +492,7 @@ spec_sc_fast_cluster <- param_spec(
     "beta",
     "min_gain",
     "local_moving",
+    "node_order",
     "multi_level",
     "max_evals"
   ),
@@ -498,8 +502,25 @@ spec_sc_fast_cluster <- param_spec(
     "n_centroids must be NULL or an integer >= 2; k_means_iter, batch_size,",
     "n_anchors, centroid_k and max_evals must be integers >= 1;",
     "n_iterations must be NULL or a non-zero integer; cell_mediated and",
-    "multi_level must be booleans."
+    "multi_level must be booleans; local_moving and node_order must be NULL",
+    "or one of their choices."
   ),
+  extra_check = quote({
+    if (!checkmate::qtest(x$local_moving, c("0", "S1"))) {
+      return("The element `local_moving` must be NULL or a string.")
+    }
+    if (
+      !is.null(x$local_moving) && !x$local_moving %in% c("queue", "coloured")
+    ) {
+      return("The element `local_moving` must be one of `queue` or `coloured`.")
+    }
+    if (!checkmate::qtest(x$node_order, c("0", "S1"))) {
+      return("The element `node_order` must be NULL or a string.")
+    }
+    if (!is.null(x$node_order) && !x$node_order %in% c("bfs", "shuffle")) {
+      return("The element `node_order` must be one of `bfs` or `shuffle`.")
+    }
+  }),
   fields = list(
     n_centroids = p_int(
       NULL,
@@ -511,14 +532,26 @@ spec_sc_fast_cluster <- param_spec(
       )
     ),
     km_type = p_choice(
-      "standard",
-      c("standard", "minibatch"),
-      doc = "Which k-means to run for the coarsening."
+      "emeans",
+      c("emeans", "standard", "minibatch"),
+      doc = paste(
+        "Which k-means to run for the coarsening: `\"emeans\"`,",
+        "`\"standard\"` (Lloyd's) or `\"minibatch\"`."
+      )
+    ),
+    e_means_epochs = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = paste(
+        "`km_type = \"emeans\"` only. Passes over the data. `NULL` takes the Rust default",
+        "of 5."
+      )
     ),
     k_means_iter = p_int(
       100L,
       range = "[1,)",
-      doc = "Number of k-means iterations."
+      doc = "Number of k-means iterations. Ignored by e-means."
     ),
     batch_size = p_int(
       4096L,
@@ -585,8 +618,7 @@ spec_sc_fast_cluster <- param_spec(
       null_ok = TRUE,
       doc = paste(
         "Number of iterations of the community detection. A negative value",
-        "iterates until stable. If `NULL`, `2L` for Louvain and `5L` for",
-        "Leiden, which gave the best modularity across synthetic graphs."
+        "iterates until stable. If `NULL`, `2L`."
       )
     ),
     beta = p_dbl(
@@ -602,13 +634,23 @@ spec_sc_fast_cluster <- param_spec(
         "no more than this in modularity."
       )
     ),
-    local_moving = p_choice(
-      "queue",
-      c("queue", "coloured"),
+    local_moving = p_chr(
+      NULL,
+      null_ok = TRUE,
       doc = paste(
         "`\"queue\"` is Traag's sequential queue. `\"coloured\"` moves the",
         "nodes of one colour class in parallel, which only kicks in on",
-        "larger levels of the graph."
+        "larger levels of the graph. `NULL` is `\"queue\"` for Leiden and",
+        "`\"coloured\"` for Louvain."
+      )
+    ),
+    node_order = p_chr(
+      NULL,
+      null_ok = TRUE,
+      doc = paste(
+        "Visit order of the queue, `\"bfs\"` (sweep in BFS order from a",
+        "random start) or `\"shuffle\"` (as igraph). `NULL` is `\"bfs\"`",
+        "for Leiden and `\"shuffle\"` for Louvain."
       )
     ),
     multi_level = p_lgl(
@@ -1761,7 +1803,8 @@ spec_sc_harmony <- param_spec(
       overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "Possible parameters are `\"k_means_algorithm\"`,",
+        "`\"e_means_epochs\"`, `\"k_means_iter\"` (10 here, as in",
         "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
         "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )
@@ -1826,7 +1869,7 @@ spec_sc_harmony_v2 <- param_spec(
       )
     ),
     block_size = p_dbl(
-      0.2,
+      0.05,
       range = "(0,1]",
       doc = paste(
         "Fraction of cells to update per block during optimisation",
@@ -1906,7 +1949,8 @@ spec_sc_harmony_v2 <- param_spec(
       overrides = list(k_means_iter = 10L),
       doc = paste(
         "Optional overrides for the k-means clustering algorithm",
-        "Possible parameters are `\"k_means_iter\"` (10 here, as in",
+        "Possible parameters are `\"k_means_algorithm\"`,",
+        "`\"e_means_epochs\"`, `\"k_means_iter\"` (10 here, as in",
         "R harmony), `\"k_means_init\"`, `\"gemm\"` and",
         "`\"hamerly\"`, see [params_kmeans_defaults()]."
       )
@@ -2092,13 +2136,37 @@ spec_scenic_random_forest_defaults <- param_defaults(
   ),
   checker = NULL,
   fields = list(
-    n_trees = p_free(250L, doc = "TODO"),
-    min_samples_leaf = p_free(50L, doc = "TODO"),
-    n_features_split = p_free(0L, doc = "TODO"),
-    subsample_rate = p_free(0.632, doc = "TODO"),
-    bootstrap = p_free(FALSE, doc = "TODO"),
-    max_depth = p_free(8L, doc = "TODO"),
-    subsample_frac = p_free(NULL, doc = "TODO")
+    n_trees = p_free(250L, doc = "Number of trees to build."),
+    min_samples_leaf = p_free(
+      50L,
+      doc = "Minimum number of samples per leaf node."
+    ),
+    n_features_split = p_free(
+      0L,
+      doc = paste(
+        "Number of features considered per split. `0L` means",
+        "`sqrt(n_features)`."
+      )
+    ),
+    subsample_rate = p_free(
+      0.632,
+      doc = paste(
+        "Fraction of samples drawn per tree, without replacement",
+        "unless `bootstrap = TRUE`."
+      )
+    ),
+    bootstrap = p_free(
+      FALSE,
+      doc = "Whether to sample with replacement."
+    ),
+    max_depth = p_free(8L, doc = "Maximum tree depth."),
+    subsample_frac = p_free(
+      NULL,
+      doc = paste(
+        "Optional. Fraction of cells to subsample per tree. If set,",
+        "overrides `subsample_rate`."
+      )
+    )
   )
 )
 
@@ -2110,12 +2178,30 @@ spec_scenic_extra_trees_defaults <- param_defaults(
   ),
   checker = NULL,
   fields = list(
-    n_trees = p_free(500L, doc = "TODO"),
-    min_samples_leaf = p_free(50L, doc = "TODO"),
-    n_features_split = p_free(0L, doc = "TODO"),
-    n_thresholds = p_free(1L, doc = "TODO"),
-    max_depth = p_free(8L, doc = "TODO"),
-    subsample_frac = p_free(NULL, doc = "TODO")
+    n_trees = p_free(500L, doc = "Number of trees to build."),
+    min_samples_leaf = p_free(
+      50L,
+      doc = "Minimum number of samples per leaf node."
+    ),
+    n_features_split = p_free(
+      0L,
+      doc = paste(
+        "Number of features considered per split. `0L` means",
+        "`sqrt(n_features)`."
+      )
+    ),
+    n_thresholds = p_free(
+      1L,
+      doc = "Number of random thresholds tested per feature per node."
+    ),
+    max_depth = p_free(8L, doc = "Maximum tree depth."),
+    subsample_frac = p_free(
+      NULL,
+      doc = paste(
+        "Optional. Fraction of cells to subsample per tree. `NULL`",
+        "uses all cells."
+      )
+    )
   )
 )
 
@@ -2127,13 +2213,48 @@ spec_scenic_gradient_boosting_defaults <- param_defaults(
   ),
   checker = NULL,
   fields = list(
-    n_trees_max = p_free(1000L, doc = "TODO"),
-    learning_rate = p_free(0.01, doc = "TODO"),
-    max_depth = p_free(3L, doc = "TODO"),
-    min_samples_leaf = p_free(50L, doc = "TODO"),
-    early_stop_window = p_free(25L, doc = "TODO"),
-    subsample_rate = p_free(0.9, doc = "TODO"),
-    n_features_split = p_free(0L, doc = "TODO")
+    n_trees_max = p_free(
+      1000L,
+      doc = paste(
+        "Maximum number of boosting rounds. Early stopping usually",
+        "triggers well before this."
+      )
+    ),
+    learning_rate = p_free(
+      0.01,
+      doc = "Shrinkage applied to each tree's predictions."
+    ),
+    max_depth = p_free(
+      3L,
+      doc = "Maximum tree depth. Shallow trees (3 to 5) work best."
+    ),
+    min_samples_leaf = p_free(
+      50L,
+      doc = "Minimum number of training samples per leaf node."
+    ),
+    early_stop_window = p_free(
+      25L,
+      doc = paste(
+        "Number of recent out-of-bag improvements averaged for early",
+        "stopping. Boosting stops once that rolling average drops to zero or",
+        "below."
+      )
+    ),
+    subsample_rate = p_free(
+      0.9,
+      doc = paste(
+        "Fraction of samples used to train each tree. The rest form",
+        "the out-of-bag set for early stopping."
+      )
+    ),
+    n_features_split = p_free(
+      0L,
+      doc = paste(
+        "Number of features evaluated per split. `0L` means all",
+        "features (unlike the forest learners, where it means",
+        "`sqrt(n_features)`)."
+      )
+    )
   )
 )
 
@@ -3486,6 +3607,324 @@ spec_sc_empty_droplets <- param_spec(
       doc = paste(
         "Number of real cells expected in the run. Required for",
         "`method = \"expected_cells\"`, ignored otherwise."
+      )
+    )
+  )
+)
+
+# atac -------------------------------------------------------------------------
+
+spec_atac_call_peaks <- param_spec(
+  name = "atac_call_peaks",
+  title = "Wrapper function for the ATAC peak calling parameters",
+  description = paste(
+    "Parameters of [bixverse::call_peaks_sc()], a native port of MACS3",
+    "`callpeak --nomodel` without a control track."
+  ),
+  references = "Zhang, et al., Genome Biol, 2008.",
+  checker = "AtacCallPeaks",
+  label = "peak calling params",
+  hint = paste(
+    "keep_dup, min_length and max_gap must be NULL or integers >= 1;",
+    "extsize and llocal must be integers >= 1; genome_size must be > 0;",
+    "q_value must be in (0, 1)."
+  ),
+  fields = list(
+    tag_source = p_choice(
+      "insertion",
+      c("insertion", "fragment_start"),
+      doc = paste(
+        "`\"insertion\"` takes both Tn5 insertions of a fragment,",
+        "`\"fragment_start\"` the fragment start only, which is what MACS",
+        "reads from the fragment file Signac hands it."
+      )
+    ),
+    keep_dup = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Tags kept per position. `NULL` keeps all. MACS's default, and so",
+        "Signac's, is 1."
+      )
+    ),
+    shift = p_int(-100L, doc = "Tag shift before extension (`--shift`)."),
+    extsize = p_int(
+      200L,
+      range = "[1,)",
+      doc = "Tag extension, the fragment size (`--extsize`)."
+    ),
+    genome_size = p_dbl(
+      2.7e9,
+      range = "(0,)",
+      doc = paste(
+        "Effective genome size (`-g`). The default is Signac's, MACS3's own",
+        "`hs` is 2.913e9."
+      )
+    ),
+    llocal = p_int(
+      10000L,
+      range = "[1,)",
+      doc = "Window of the local lambda (`--llocal`)."
+    ),
+    q_value = p_dbl(0.05, range = "(0,1)", doc = "q-value cutoff (`-q`)."),
+    min_length = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = "Minimum peak length. `NULL` uses `extsize`."
+    ),
+    max_gap = p_int(
+      NULL,
+      range = "[1,)",
+      null_ok = TRUE,
+      doc = paste(
+        "Largest gap merged into a peak. `NULL` uses MACS's tag size: 1 for",
+        "insertions, the mean length of the group's first fragments for",
+        "fragment starts."
+      )
+    )
+  )
+)
+
+spec_atac_amulet <- param_spec(
+  name = "atac_amulet",
+  title = "Wrapper function for the AMULET parameters",
+  description = paste(
+    "Parameters of [bixverse::amulet_sc()], multiplet detection from",
+    "fragment overlaps."
+  ),
+  references = "Thibodeau, et al., Genome Biol, 2021.",
+  checker = "AtacAmulet",
+  label = "AMULET params",
+  hint = paste(
+    "max_overlap and max_fragment_len must be integers >= 1; repeat_q and",
+    "multiplet_q must be in (0, 1); chroms must be NULL or a character",
+    "vector; count_trailing_loci must be a boolean."
+  ),
+  fields = list(
+    max_overlap = p_int(
+      2L,
+      range = "[1,)",
+      doc = "Overlapping fragments a cell can explain; 2 for diploid."
+    ),
+    max_fragment_len = p_int(
+      900L,
+      range = "[1,)",
+      doc = "Longest valid fragment."
+    ),
+    repeat_q = p_dbl(
+      0.01,
+      range = "(0,1)",
+      doc = "q-value under which a site is a repeat."
+    ),
+    multiplet_q = p_dbl(
+      0.01,
+      range = "(0,1)",
+      doc = "q-value under which a cell is a multiplet."
+    ),
+    chroms = p_chr(
+      NULL,
+      null_ok = TRUE,
+      len = "+",
+      doc = "Chromosomes to use. `NULL` uses the autosomes."
+    ),
+    count_trailing_loci = p_lgl(
+      FALSE,
+      doc = paste(
+        "Count a cell's last loci on the last chromosome used, which the",
+        "reference implementation drops."
+      )
+    )
+  )
+)
+
+spec_atac_gene_activity <- param_spec(
+  name = "atac_gene_activity",
+  title = "Wrapper function for the gene activity parameters",
+  description = paste(
+    "Parameters of [bixverse::gene_activity_sc()], Signac's",
+    "`GeneActivity()`: per gene, the longest span of its biotype, under",
+    "`max_width`, extended `upstream` of the TSS."
+  ),
+  references = "Stuart, et al., Nat Methods, 2021.",
+  checker = "AtacGeneActivity",
+  label = "gene activity params",
+  hint = paste(
+    "upstream and downstream must be integers >= 0; max_width must be an",
+    "integer >= 1; biotypes must be NULL or a character vector."
+  ),
+  fields = list(
+    upstream = p_int(
+      2000L,
+      range = "[0,)",
+      doc = "Bases added upstream of the TSS."
+    ),
+    downstream = p_int(
+      0L,
+      range = "[0,)",
+      doc = "Bases added downstream of the gene end."
+    ),
+    max_width = p_int(
+      500000L,
+      range = "[1,)",
+      doc = "Genes this long or longer are dropped."
+    ),
+    biotypes = p_chr(
+      "protein_coding",
+      null_ok = TRUE,
+      len = "+",
+      doc = "Gene biotypes to keep. `NULL` keeps all."
+    )
+  )
+)
+
+spec_atac_lsi <- param_spec(
+  name = "atac_lsi",
+  title = "Wrapper function for the ATAC LSI parameters",
+  description = paste(
+    "Parameters of [bixverse::calculate_lsi_sc()], Signac's `RunSVD()` on",
+    "the TF-IDF."
+  ),
+  checker = "AtacLsi",
+  label = "LSI params",
+  hint = paste(
+    "n_comp must be an integer >= 2; drop_first must be a boolean;",
+    "scale_max must be NULL or > 0."
+  ),
+  fields = list(
+    n_comp = p_int(50L, range = "[2,)", doc = "Components to compute."),
+    drop_first = p_lgl(
+      TRUE,
+      doc = paste(
+        "Leave component 1 out of the embedding. It usually tracks",
+        "sequencing depth; [bixverse::get_lsi_depth_cor()] shows whether it",
+        "does."
+      )
+    ),
+    solver = p_choice(
+      "auto",
+      c("auto", "exact", "randomised", "covariance"),
+      doc = "SVD solver, see [bixverse::params_sc_pca()] for the trade-offs."
+    ),
+    scale_max = p_dbl(
+      NULL,
+      range = "(0,)",
+      null_ok = TRUE,
+      doc = "Clip the z-scored components to `+-scale_max`."
+    )
+  )
+)
+
+spec_atac_rlsi <- param_spec(
+  name = "atac_rlsi",
+  title = "Wrapper function for the rLSI integration parameters",
+  description = paste(
+    "Parameters of [bixverse::run_rlsi_sc()], Signac's",
+    "`FindIntegrationAnchors(reduction = \"rlsi\")` followed by",
+    "`IntegrateEmbeddings()`."
+  ),
+  references = "Stuart, et al., Nat Methods, 2021.",
+  checker = "AtacRlsi",
+  label = "rLSI params",
+  hint = paste(
+    "dims must be integers >= 1; n_comp, k_anchor, k_score and k_weight",
+    "must be integers >= 1; sd must be > 0; l2_norm must be a boolean."
+  ),
+  fields = list(
+    dims = p_int(
+      2L:30L,
+      range = "[1,)",
+      len = "+",
+      doc = paste(
+        "Per-batch LSI components the anchors use, 1-based. The default is",
+        "Signac's `dims = 2:30`."
+      )
+    ),
+    n_comp = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Components of the per-batch LSIs; must reach `max(dims)`."
+    ),
+    k_anchor = p_int(5L, range = "[1,)", doc = "Neighbours for the anchors."),
+    k_score = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Neighbours for the anchor scores."
+    ),
+    k_weight = p_int(
+      100L,
+      range = "[1,)",
+      doc = "Anchors per cell in the correction weights."
+    ),
+    sd = p_dbl(1, range = "(0,)", doc = "Bandwidth divisor of the weights."),
+    l2_norm = p_lgl(
+      TRUE,
+      doc = "Scale and L2 normalise the anchor spaces."
+    ),
+    solver = p_choice(
+      "auto",
+      c("auto", "exact", "randomised", "covariance"),
+      doc = "SVD solver of the per-batch LSIs."
+    ),
+    knn = p_merge(
+      "knn_defaults",
+      doc = paste(
+        "Optional overrides for kNN parameters. See",
+        "[bixverse::params_knn_defaults()] for available parameters. Only",
+        "the backend is used; the neighbour counts are `k_anchor`,",
+        "`k_score` and `k_weight`."
+      )
+    )
+  )
+)
+
+spec_sc_seurat_transfer <- param_spec(
+  name = "sc_seurat_transfer",
+  title = "Wrapper function for the Seurat label transfer parameters",
+  description = paste(
+    "Parameters of [bixverse::transfer_labels_seurat_sc()], Seurat's",
+    "`FindTransferAnchors(reduction = \"cca\")` followed by",
+    "`TransferData()`."
+  ),
+  references = "Stuart, et al., Cell, 2019.",
+  checker = "ScSeuratTransfer",
+  label = "Seurat transfer params",
+  hint = paste(
+    "n_cc, k_anchor, k_score and k_weight must be integers >= 1; scale_max",
+    "and sd must be > 0; l2_norm must be a boolean."
+  ),
+  fields = list(
+    n_cc = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Canonical correlation vectors."
+    ),
+    k_anchor = p_int(5L, range = "[1,)", doc = "Neighbours for the anchors."),
+    k_score = p_int(
+      30L,
+      range = "[1,)",
+      doc = "Neighbours for the anchor scores."
+    ),
+    scale_max = p_dbl(
+      10,
+      range = "(0,)",
+      doc = "Clip of the scaled features."
+    ),
+    l2_norm = p_lgl(TRUE, doc = "L2 normalise the CCA space."),
+    k_weight = p_int(
+      50L,
+      range = "[1,)",
+      doc = "Anchors per query cell in the weights."
+    ),
+    sd = p_dbl(1, range = "(0,)", doc = "Bandwidth divisor of the weights."),
+    knn = p_merge(
+      "knn_defaults",
+      doc = paste(
+        "Optional overrides for kNN parameters. See",
+        "[bixverse::params_knn_defaults()] for available parameters. Only",
+        "the backend is used; the neighbour counts are `k_anchor`,",
+        "`k_score` and `k_weight`."
       )
     )
   )

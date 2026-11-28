@@ -1,15 +1,17 @@
+//! h5ad and AnnData Zarr export through `bixverse-sc-export`.
+
 use extendr_api::*;
 use std::collections::HashMap;
 use std::path::Path;
 
 use bixverse_r::prelude::*;
-use scx_core::api::write::{H5AdBuilder, H5AdOptions};
-use scx_core::ir::{
-    Column, ColumnData, DenseMatrix, Embeddings, ObsTable, UnsTable, VarTable, Varm,
+use bixverse_r::single_cell::sc_export::ad_export::{
+    save_store, AdFormat, AdParts, Column, ColumnData, CsMatI, DenseMatrix, Embeddings, LevelType,
+    ObsTable, UnsTable, VarTable, Varm,
 };
-use sprs::CsMatI;
 
-use crate::single_cell::utils::norm_counts_to_f32;
+/// gzip level of the numeric h5ad datasets, the one the rhdf5 writers used.
+const H5AD_COMPRESSION: u8 = 6;
 
 /////////////
 // extendR //
@@ -88,7 +90,12 @@ fn factor_to_categorical(name: &str, x: &Robj) -> Result<ColumnData> {
             }
         })
         .collect();
-    Ok(ColumnData::Categorical { codes, levels })
+    Ok(ColumnData::Categorical {
+        codes,
+        levels,
+        ordered: false,
+        level_type: LevelType::Str,
+    })
 }
 
 /// Translate a named R list of columns into scx columns
@@ -192,31 +199,46 @@ fn r_list_to_csr(name: &str, x: Robj, n: usize) -> Result<CsMatI<f32, u32>> {
 // h5ad //
 //////////
 
-/// Write a single cell experiment to h5ad
+// No `export-zarr` on Windows, see Cargo.toml.
+#[cfg(not(windows))]
+fn zarr_format() -> Result<AdFormat> {
+    Ok(AdFormat::Zarr)
+}
+
+#[cfg(windows)]
+fn zarr_format() -> Result<AdFormat> {
+    Err(extendr_api::Error::Other(
+        "Zarr export is not available on Windows. Use save_h5ad().".into(),
+    ))
+}
+
+/// Write a single cell experiment to h5ad or AnnData Zarr
 ///
 /// @description
 /// Streams the counts out of the cell-based binary file, cell batch by cell
-/// batch, into a spec-compliant h5ad file via
-/// [scx-core](https://github.com/btraven00/scx), together with the obs and
-/// var tables, dense embeddings and sparse cell x cell graphs supplied from
-/// R. Counts are stored as `float32`. All inputs are checked before the file
-/// is created.
+/// batch, into a spec-compliant h5ad file (or an AnnData Zarr v3 store) via
+/// `bixverse-sc-export`, together with the obs and var tables, dense
+/// embeddings and sparse cell x cell graphs supplied from R. Counts are stored
+/// as `float32`. All inputs are checked before the output is created.
 ///
 /// @param f_path_cells String. Path to the `counts_cells.bin` file.
-/// @param h5_path String. Path of the h5ad file to create.
+/// @param h5_path String. Path of the h5ad file or Zarr directory to create.
 /// @param cell_indices Integer vector. The cells to write (0-indexed!), in
 /// the order they shall appear in the file.
 /// @param norm Boolean. Write the normalised instead of the raw counts.
 /// @param obs_index Character vector. One name per cell.
 /// @param obs Named list. The obs columns, see the R wrapper for the types.
-/// @param var_index Character vector. One name per gene.
+/// @param var_index Character vector. One name per written gene.
 /// @param var Named list. The var columns.
 /// @param obsm Named list of numeric matrices with one row per cell.
-/// @param varm Named list of numeric matrices with one row per gene.
+/// @param varm Named list of numeric matrices with one row per written gene.
 /// @param obsp Named list of CSR matrices, each a list with `indptr`,
 /// `indices` (0-indexed) and `data`.
 /// @param uns_json String. JSON object written to `uns`.
 /// @param chunk_size Integer. Number of cells per streaming batch.
+/// @param zarr Boolean. Write an AnnData Zarr store instead of an h5ad file.
+/// @param gene_indices Optional integer vector. The genes to write
+/// (0-indexed!), in output order. `NULL` writes every gene.
 ///
 /// @returns Invisible `NULL`.
 ///
@@ -239,80 +261,57 @@ fn rs_save_h5ad(
     obsp: List,
     uns_json: &str,
     chunk_size: usize,
+    zarr: bool,
+    gene_indices: Nullable<Vec<i32>>,
 ) -> Result<()> {
     let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.into_option().map(|g| g.r_int_convert());
     let n_obs = cell_indices.len();
     let n_vars = var_index.len();
-    let chunk_size = chunk_size.max(1);
 
-    // convert and check everything before the file exists, so that bad input
-    // fails here and not after the counts have been streamed
-    let reader = ParallelSparseReader::new(f_path_cells).to_extendr()?;
     check_len("obs_index", obs_index.len(), n_obs)?;
-    let obs = ObsTable {
-        index: obs_index,
-        columns: r_list_to_columns(obs, n_obs)?,
+    let parts = AdParts {
+        obs: ObsTable {
+            index: obs_index,
+            columns: r_list_to_columns(obs, n_obs)?,
+        },
+        var: VarTable {
+            index: var_index,
+            columns: r_list_to_columns(var, n_vars)?,
+        },
+        obsm: Embeddings {
+            map: r_list_to_dense(obsm, n_obs)?,
+        },
+        varm: Varm {
+            map: r_list_to_dense(varm, n_vars)?,
+        },
+        obsp: obsp
+            .iter()
+            .map(|(name, x)| Ok((name.to_string(), r_list_to_csr(name, x, n_obs)?)))
+            .collect::<Result<Vec<_>>>()?,
+        uns: UnsTable {
+            raw: serde_json::from_str(uns_json).to_extendr()?,
+            ..Default::default()
+        },
     };
-    let var = VarTable {
-        index: var_index,
-        columns: r_list_to_columns(var, n_vars)?,
-    };
-    let obsm = Embeddings {
-        map: r_list_to_dense(obsm, n_obs)?,
-    };
-    let varm = Varm {
-        map: r_list_to_dense(varm, n_vars)?,
-    };
-    let obsp = obsp
-        .iter()
-        .map(|(name, x)| Ok((name, r_list_to_csr(name, x, n_obs)?)))
-        .collect::<Result<Vec<_>>>()?;
-    let uns = UnsTable {
-        raw: serde_json::from_str(uns_json).to_extendr()?,
-    };
-
-    let mut opts = H5AdOptions::default();
-    // ponytail: fixed gzip level, the one the rhdf5 writers used; expose
-    // it if anyone needs faster or smaller files
-    opts.compression = Some(6);
-    opts.chunk_size = Some(chunk_size);
-    let mut builder = H5AdBuilder::new(Path::new(h5_path), n_obs, n_vars, &opts).to_extendr()?;
-
-    for (i, batch) in cell_indices.chunks(chunk_size).enumerate() {
-        let cells = reader.read_cells_parallel(batch).to_extendr()?;
-        let nnz = cells.iter().map(|c| c.indices.len()).sum();
-        let mut indptr: Vec<u64> = Vec::with_capacity(cells.len() + 1);
-        let mut indices: Vec<u32> = Vec::with_capacity(nnz);
-        let mut data: Vec<f32> = Vec::with_capacity(nnz);
-        indptr.push(0);
-        for cell in &cells {
-            indices.extend_from_slice(&cell.indices);
-            indptr.push(indices.len() as u64);
+    let format = if zarr {
+        zarr_format()?
+    } else {
+        AdFormat::H5ad {
+            compression: Some(H5AD_COMPRESSION),
         }
-        if norm {
-            data.extend(cells.iter().flat_map(|c| norm_counts_to_f32(&c.data_norm)));
-        } else {
-            data.extend(
-                cells
-                    .iter()
-                    .flat_map(|c| c.data_raw.iter().map(|x| x as f32)),
-            );
-        }
-        // the vectors move into scx, no copy
-        builder
-            .push_x_csr_chunk(i * chunk_size, indptr, indices, data)
-            .to_extendr()?;
-    }
+    };
 
-    builder.obs(obs).to_extendr()?;
-    builder.var(var).to_extendr()?;
-    builder.add_obsm(obsm).to_extendr()?;
-    builder.add_varm(varm).to_extendr()?;
-    for (name, mat) in &obsp {
-        builder.add_obsp_csr(name, mat.view()).to_extendr()?;
-    }
-    builder.add_uns(uns).to_extendr()?;
-    builder.finalize().to_extendr()?;
-
-    Ok(())
+    let reader = ParallelSparseReader::new(f_path_cells).to_extendr()?;
+    save_store(
+        &reader,
+        Path::new(h5_path),
+        format,
+        &cell_indices,
+        gene_indices.as_deref(),
+        norm,
+        parts,
+        chunk_size.max(1),
+    )
+    .to_extendr()
 }

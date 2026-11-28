@@ -13,7 +13,7 @@ rs_fast_cluster_sc(embd, resolutions, fc_params, n_seeds, seed, verbose)
 
 \item{fc_params}{Named list. The fast clustering parameters, see
 \code{\link[=params_sc_fast_cluster]{params_sc_fast_cluster()}}. Also carries the k-means keys (\code{km_type},
-\code{kmeans_iters}, \code{batch_size}, \code{drift_threshold}, \code{lr_alpha}).}
+\code{k_means_iter}, \code{batch_size}, \code{drift_threshold}, \code{lr_alpha}).}
 
 \item{n_seeds}{Integer. Number of seeds per resolution. \code{1L} runs a single
 pass without stability metrics.}

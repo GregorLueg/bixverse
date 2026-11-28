@@ -8,7 +8,8 @@ harmony_sc(
   object,
   batch_column,
   additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
+  embd_to_use = "pca",
+  modality = c("rna", "adt", "atac"),
   harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
@@ -23,8 +24,13 @@ batch labels.}
 \item{additional_batch_columns}{Optional character vector. Additional batch
 columns to regress out. If \code{NULL}, only the primary batch column is used.}
 
-\item{modality}{String. One of \code{c("rna", "adt")}. You can only use \code{"adt"}
-on \code{SingleCellsMultiModal} class.}
+\item{embd_to_use}{String. The embedding to correct. \code{"pca"} (default) or
+another cached embedding of the modality, e.g. \code{"lsi"} with
+\code{modality = "atac"}.}
+
+\item{modality}{String. One of \code{c("rna", "adt", "atac")}. \code{"adt"} needs a
+\code{SingleCellsMultiModal}, \code{"atac"} a \code{SingleCellsMultiModal} or a
+\code{SingleCellsAtac}.}
 
 \item{harmony_params}{List. Output of \code{\link[=params_sc_harmony_v2]{params_sc_harmony_v2()}}.}
 

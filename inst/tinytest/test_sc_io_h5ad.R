@@ -264,6 +264,7 @@ file_res <- rust_con$h5ad_to_file_streaming(
   no_genes = h5_meta_csr$dims["var"],
   qc_params = sc_qc_param,
   slot = "X",
+  max_mem_gb = NULL,
   verbose = FALSE
 )
 
@@ -286,6 +287,7 @@ file_res <- rust_con$h5ad_to_file_streaming(
   no_genes = h5_meta_csc$dims["var"],
   qc_params = sc_qc_param,
   slot = "X",
+  max_mem_gb = NULL,
   verbose = FALSE
 )
 
@@ -820,6 +822,7 @@ file_res <- rust_con$h5ad_to_file_streaming(
   no_genes = h5_meta_dense$dims["var"],
   qc_params = sc_qc_param,
   slot = "X",
+  max_mem_gb = NULL,
   verbose = FALSE
 )
 
@@ -1041,6 +1044,35 @@ expect_identical(
   current = get_sc_var(sc_nullable)$symbol,
   target = paste0("SYM", 0:4),
   info = "anndata 0.13 - load_h5ad var nullable string column"
+)
+
+## csc_mem_gb bounds the streamed csc transpose -------------------------------
+
+dir_csc_free <- file.path(test_temp_dir, "csc_free")
+dir_csc_capped <- file.path(test_temp_dir, "csc_capped")
+dir.create(dir_csc_free, showWarnings = FALSE)
+dir.create(dir_csc_capped, showWarnings = FALSE)
+
+sc_csc_free <- load_h5ad(
+  object = SingleCells(dir_data = dir_csc_free),
+  h5_path = path.expand(f_path_csc),
+  sc_qc_param = sc_qc_param,
+  .verbose = FALSE
+)
+
+# ~100 non-zeros per phase, so the transpose runs in many phases
+sc_csc_capped <- load_h5ad(
+  object = SingleCells(dir_data = dir_csc_capped),
+  h5_path = path.expand(f_path_csc),
+  sc_qc_param = sc_qc_param,
+  csc_mem_gb = 1e-6,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = get_sc_counts(sc_csc_capped, assay = "raw"),
+  target = get_sc_counts(sc_csc_free, assay = "raw"),
+  info = "h5ad csc - capped csc_mem_gb gives the same counts"
 )
 
 # clean up ---------------------------------------------------------------------

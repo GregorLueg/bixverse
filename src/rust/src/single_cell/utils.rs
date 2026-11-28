@@ -4,16 +4,30 @@
 use bixverse_r::prelude::*;
 use bixverse_r::single_cell::sc_analysis::dialogue::{DialogueResult, ProgrammeSignature};
 use bixverse_r::single_cell::sc_analysis::nebula::NebulaScRes;
-use bixverse_r::single_cell::sc_annotation::sc_type::CellTypeMarkers;
-use bixverse_r::single_cell::sc_data::data_io::{ParallelSparseReader, SingleCellReading};
-use bixverse_r::single_cell::sc_data::in_memory_io::{
-    prefer_cell_subset, read_cell_subset_csc, InMemorySparseReader,
-};
 use bixverse_r::single_cell::sc_analysis::vision::{SignatureGenes, VisionAutocorRes};
+use bixverse_r::single_cell::sc_annotation::sc_type::CellTypeMarkers;
+use bixverse_r::single_cell::sc_data::store::gene_file::GENE_FILE_BYTES_PER_NNZ;
 use bixverse_r::single_cell::sc_processing::hvg::{HvgDispersionRes, HvgRes, HvgScranRes};
 use std::collections::HashMap;
 
 use extendr_api::*;
+
+/////////////
+// Helpers //
+/////////////
+
+/// Turn a memory budget into a cap on the non-zeros held in memory
+///
+/// ### Params
+///
+/// * `max_mem_gb` - Budget in GB, `None` for no cap
+///
+/// ### Returns
+///
+/// The cap on the non-zeros, at least 1, or `None`.
+pub fn max_nnz(max_mem_gb: Option<f64>) -> Option<usize> {
+    max_mem_gb.map(|gb| ((gb * 1e9) as usize / GENE_FILE_BYTES_PER_NNZ).max(1))
+}
 
 ///////////
 // Types //
@@ -28,88 +42,6 @@ use extendr_api::*;
 /// * `2` - Number of neighbours
 /// * `3` - Distance metric
 pub type NeighboursData = Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, usize, String)>;
-
-/////////////////
-// Cell subset //
-/////////////////
-
-/// A small cell selection held in memory, read off the cell-major store.
-///
-/// The gene-major drivers (HVG, residual fits) decompress every gene chunk
-/// whatever the selection, so their cost follows the store, not the subset.
-/// Below the [`prefer_cell_subset`] gate it is cheaper to read just the selected
-/// cells and run the same drivers over an [`InMemorySparseReader`]. Cells are
-/// renumbered `0..n` in selection order; gene indices stay store indices, so
-/// nothing downstream needs remapping.
-pub struct CellSubset {
-    /// The selected cells, CSC with shape (cells, genes). Raw counts in `data`,
-    /// normalised counts in `data_2`.
-    pub matrix: CompressedSparseData2<u32, f32>,
-    /// Library size the normalised layer of the store was scaled to.
-    pub target_size: Option<f32>,
-    /// `0..n`, the selection's indices into `matrix`.
-    pub local: Vec<usize>,
-}
-
-impl CellSubset {
-    /// Read the selection into memory if the gate says the cell path wins.
-    ///
-    /// ### Params
-    ///
-    /// * `f_path_cell` - Path to the `counts_cells.bin` file.
-    /// * `cell_set` - The selected cells, 0-indexed store positions.
-    /// * `n_total` - Number of cells in the store.
-    /// * `verbose` - Controls verbosity.
-    ///
-    /// ### Returns
-    ///
-    /// `Some` with the in-memory subset, or `None` when the gene-major sweep
-    /// should be used.
-    pub fn load(
-        f_path_cell: &str,
-        cell_set: &[usize],
-        n_total: usize,
-        verbose: bool,
-    ) -> Result<Option<Self>> {
-        if !prefer_cell_subset(cell_set.len(), n_total) {
-            return Ok(None);
-        }
-        if verbose {
-            println!(
-                "Reading the {} selected cells from the cell-major store.",
-                cell_set.len()
-            );
-        }
-
-        let cell_reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
-        let matrix = read_cell_subset_csc(&cell_reader, cell_set).to_extendr()?;
-
-        Ok(Some(Self {
-            matrix,
-            target_size: cell_reader.target_size(),
-            local: (0..cell_set.len()).collect(),
-        }))
-    }
-
-    /// Gene-major reader over the subset.
-    ///
-    /// ### Returns
-    ///
-    /// The [`InMemorySparseReader`], borrowing the subset.
-    pub fn reader(&self) -> Result<InMemorySparseReader<'_>> {
-        InMemorySparseReader::new(&self.matrix, self.target_size).to_extendr()
-    }
-
-    /// Cell-major reader over the subset, for the drivers that need per-cell
-    /// chunks over the same renumbered cells. Holds a CSR copy of the subset.
-    ///
-    /// ### Returns
-    ///
-    /// The [`InMemorySparseReader`] in cell-major mode, borrowing the subset.
-    pub fn cell_reader(&self) -> Result<InMemorySparseReader<'_>> {
-        InMemorySparseReader::new_cell_major(&self.matrix, self.target_size).to_extendr()
-    }
-}
 
 /////////////////////
 // Batch-aware HVG //
@@ -291,8 +223,7 @@ pub fn pad_knn_rows_warn(
     distances: Option<&mut [Vec<f32>]>,
     k: usize,
 ) -> usize {
-    let padded =
-        bixverse_r::single_cell::sc_processing::knn::pad_knn_rows(indices, distances, k);
+    let padded = bixverse_r::single_cell::sc_processing::knn::pad_knn_rows(indices, distances, k);
 
     if padded > 0 {
         println!(
@@ -343,9 +274,9 @@ pub fn random_sig_genes(random_gs_list: List) -> Result<Vec<Vec<SignatureGenes>>
     random_gs_list
         .values()
         .map(|cluster| {
-            let cluster = cluster
-                .as_list()
-                .ok_or_else(|| Error::Other("Each random_gs_list cluster must be a list.".into()))?;
+            let cluster = cluster.as_list().ok_or_else(|| {
+                Error::Other("Each random_gs_list cluster must be a list.".into())
+            })?;
             r_list_to_sig_genes(cluster)
         })
         .collect()
@@ -770,20 +701,4 @@ pub fn nebula_res_to_r_list(res: NebulaScRes) -> List {
         p_values = res.p_val,
         fdr = res.fdr
     )
-}
-
-/// Decode the stored `f16` normalised counts to `f32`
-///
-/// ### Params
-///
-/// * `data` - The normalised counts as stored in the binary files.
-///
-/// ### Returns
-///
-/// An iterator over the values as `f32`.
-pub fn norm_counts_to_f32(data: &[F16]) -> impl Iterator<Item = f32> + '_ {
-    data.iter().map(|&x| {
-        let v: half::f16 = x.into();
-        v.to_f32()
-    })
 }

@@ -3,6 +3,393 @@
 
 # parameter checkers -----------------------------------------------------------
 
+#' Check AMULET params
+#'
+#' @description Checkmate extension for the output of [params_atac_amulet()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkAtacAmuletParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "max_overlap",
+      "max_fragment_len",
+      "repeat_q",
+      "multiplet_q",
+      "chroms",
+      "count_trailing_loci"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      max_overlap = "I1[1,)",
+      max_fragment_len = "I1[1,)",
+      repeat_q = "N1(0,1)",
+      multiplet_q = "N1(0,1)",
+      chroms = c("S+", "0"),
+      count_trailing_loci = "B1"
+    ),
+    label = "AMULET params",
+    hint = paste(
+      "max_overlap and max_fragment_len must be integers >= 1; repeat_q",
+      "and multiplet_q must be in (0, 1); chroms must be NULL or a",
+      "character vector; count_trailing_loci must be a boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert AMULET params
+#'
+#' @inheritParams checkAtacAmuletParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertAtacAmuletParams <- checkmate::makeAssertionFunction(
+  checkAtacAmuletParams
+)
+
+#' Check peak calling params
+#'
+#' @description Checkmate extension for the output of
+#' [params_atac_call_peaks()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkAtacCallPeaksParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "tag_source",
+      "keep_dup",
+      "shift",
+      "extsize",
+      "genome_size",
+      "llocal",
+      "q_value",
+      "min_length",
+      "max_gap"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      keep_dup = c("I1[1,)", "0"),
+      shift = "I1",
+      extsize = "I1[1,)",
+      genome_size = "N1(0,)",
+      llocal = "I1[1,)",
+      q_value = "N1(0,1)",
+      min_length = c("I1[1,)", "0"),
+      max_gap = c("I1[1,)", "0")
+    ),
+    label = "peak calling params",
+    hint = paste(
+      "keep_dup, min_length and max_gap must be NULL or integers >= 1;",
+      "extsize and llocal must be integers >= 1; genome_size must be >",
+      "0; q_value must be in (0, 1)."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      tag_source = c("insertion", "fragment_start")
+    ),
+    label = "peak calling params",
+    hint = paste(
+      "keep_dup, min_length and max_gap must be NULL or integers >= 1;",
+      "extsize and llocal must be integers >= 1; genome_size must be >",
+      "0; q_value must be in (0, 1)."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert peak calling params
+#'
+#' @inheritParams checkAtacCallPeaksParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertAtacCallPeaksParams <- checkmate::makeAssertionFunction(
+  checkAtacCallPeaksParams
+)
+
+#' Check gene activity params
+#'
+#' @description Checkmate extension for the output of
+#' [params_atac_gene_activity()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkAtacGeneActivityParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("upstream", "downstream", "max_width", "biotypes")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      upstream = "I1[0,)",
+      downstream = "I1[0,)",
+      max_width = "I1[1,)",
+      biotypes = c("S+", "0")
+    ),
+    label = "gene activity params",
+    hint = paste(
+      "upstream and downstream must be integers >= 0; max_width must be",
+      "an integer >= 1; biotypes must be NULL or a character vector."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert gene activity params
+#'
+#' @inheritParams checkAtacGeneActivityParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertAtacGeneActivityParams <- checkmate::makeAssertionFunction(
+  checkAtacGeneActivityParams
+)
+
+#' Check LSI params
+#'
+#' @description Checkmate extension for the output of [params_atac_lsi()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkAtacLsiParams <- function(x) {
+  res <- check_list_shape(x, c("n_comp", "drop_first", "solver", "scale_max"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_comp = "I1[2,)",
+      drop_first = "B1",
+      scale_max = c("N1(0,)", "0")
+    ),
+    label = "LSI params",
+    hint = paste(
+      "n_comp must be an integer >= 2; drop_first must be a boolean;",
+      "scale_max must be NULL or > 0."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      solver = c("auto", "exact", "randomised", "covariance")
+    ),
+    label = "LSI params",
+    hint = paste(
+      "n_comp must be an integer >= 2; drop_first must be a boolean;",
+      "scale_max must be NULL or > 0."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert LSI params
+#'
+#' @inheritParams checkAtacLsiParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertAtacLsiParams <- checkmate::makeAssertionFunction(checkAtacLsiParams)
+
+#' Check rLSI params
+#'
+#' @description Checkmate extension for the output of [params_atac_rlsi()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkAtacRlsiParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "dims",
+      "n_comp",
+      "k_anchor",
+      "k_score",
+      "k_weight",
+      "sd",
+      "l2_norm",
+      "solver",
+      "k",
+      "knn_method",
+      "ann_dist",
+      "n_trees",
+      "search_budget",
+      "delta",
+      "diversify_prob",
+      "ef_budget",
+      "m",
+      "ef_construction",
+      "ef_search",
+      "n_list",
+      "n_probe"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      dims = "I+[1,)",
+      n_comp = "I1[1,)",
+      k_anchor = "I1[1,)",
+      k_score = "I1[1,)",
+      k_weight = "I1[1,)",
+      sd = "N1(0,)",
+      l2_norm = "B1",
+      k = "I1[0,)",
+      n_trees = "I1[1,)",
+      search_budget = c("I1[1,)", "0"),
+      delta = "N1[0,1]",
+      diversify_prob = "N1[0,1]",
+      ef_budget = c("I1[1,)", "0"),
+      m = "I1[1,)",
+      ef_construction = "I1[1,)",
+      ef_search = "I1[1,)",
+      n_list = c("I1[1,)", "0"),
+      n_probe = c("I1[1,)", "0")
+    ),
+    label = "rLSI params",
+    hint = paste(
+      "dims must be integers >= 1; n_comp, k_anchor, k_score and",
+      "k_weight must be integers >= 1; sd must be > 0; l2_norm must be",
+      "a boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      solver = c("auto", "exact", "randomised", "covariance"),
+      knn_method = c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "ivf",
+        "exhaustive"
+      ),
+      ann_dist = c("euclidean", "cosine")
+    ),
+    label = "rLSI params",
+    hint = paste(
+      "dims must be integers >= 1; n_comp, k_anchor, k_score and",
+      "k_weight must be integers >= 1; sd must be > 0; l2_norm must be",
+      "a boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert rLSI params
+#'
+#' @inheritParams checkAtacRlsiParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertAtacRlsiParams <- checkmate::makeAssertionFunction(checkAtacRlsiParams)
+
 #' Check binary heatmap params
 #'
 #' @description Checkmate extension for the output of [params_binary_heatmap()].
@@ -176,6 +563,7 @@ checkScBoostParams <- function(x) {
       "n_list",
       "n_probe",
       "km_type",
+      "e_means_epochs",
       "n_centroids",
       "k_means_iter",
       "batch_size",
@@ -215,6 +603,7 @@ checkScBoostParams <- function(x) {
       ef_search = "I1[1,)",
       n_list = c("I1[1,)", "0"),
       n_probe = c("I1[1,)", "0"),
+      e_means_epochs = c("N1(0,)", "0"),
       n_centroids = c("I1", "0"),
       k_means_iter = "I1",
       batch_size = "I1",
@@ -256,7 +645,7 @@ checkScBoostParams <- function(x) {
         "exhaustive"
       ),
       ann_dist = c("euclidean", "cosine"),
-      km_type = c("minibatch", "standard")
+      km_type = c("emeans", "standard", "minibatch")
     ),
     label = "Boost params",
     hint = paste(
@@ -1072,7 +1461,13 @@ assertEdgeRQlParams <- checkmate::makeAssertionFunction(checkEdgeRQlParams)
 checkFastClusterDefaultParams <- function(x) {
   res <- check_list_shape(
     x,
-    c("km_type", "n_centroids", "k_means_iter", "batch_size")
+    c(
+      "km_type",
+      "e_means_epochs",
+      "n_centroids",
+      "k_means_iter",
+      "batch_size"
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -1081,6 +1476,7 @@ checkFastClusterDefaultParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
+      e_means_epochs = c("N1(0,)", "0"),
       n_centroids = c("I1", "0"),
       k_means_iter = "I1",
       batch_size = "I1"
@@ -1088,7 +1484,8 @@ checkFastClusterDefaultParams <- function(x) {
     label = "FastCluster params",
     hint = paste(
       "batch_size and k_means_iter must be integers; n_centroids must",
-      "be an integer or NULL."
+      "be an integer or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -1098,12 +1495,13 @@ checkFastClusterDefaultParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      km_type = c("minibatch", "standard")
+      km_type = c("emeans", "standard", "minibatch")
     ),
     label = "FastCluster params",
     hint = paste(
       "batch_size and k_means_iter must be integers; n_centroids must",
-      "be an integer or NULL."
+      "be an integer or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -1457,7 +1855,14 @@ assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
 checkKMeansParams <- function(x) {
   res <- check_list_shape(
     x,
-    c("k_means_iter", "k_means_init", "gemm", "hamerly")
+    c(
+      "k_means_algorithm",
+      "e_means_epochs",
+      "k_means_iter",
+      "k_means_init",
+      "gemm",
+      "hamerly"
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -1466,6 +1871,7 @@ checkKMeansParams <- function(x) {
   res <- apply_qtest_rules(
     x,
     list(
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1",
       gemm = c("B1", "0"),
       hamerly = c("B1", "0")
@@ -1473,7 +1879,8 @@ checkKMeansParams <- function(x) {
     label = "k-means params",
     hint = paste(
       "k_means_iter must be an integer; gemm and hamerly must be",
-      "booleans or NULL."
+      "booleans or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -1483,12 +1890,14 @@ checkKMeansParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      k_means_algorithm = c("emeans", "lloyd"),
       k_means_init = c("parallel", "random")
     ),
     label = "k-means params",
     hint = paste(
       "k_means_iter must be an integer; gemm and hamerly must be",
-      "booleans or NULL."
+      "booleans or NULL; e_means_epochs must be NULL or a positive",
+      "number."
     )
   )
   if (!isTRUE(res)) {
@@ -2369,7 +2778,6 @@ checkNmfConsensusParams <- function(x) {
       "consensus_target",
       "n_neighbours",
       "density_threshold",
-      "kmeans_iters",
       "kmeans_n_init"
     )
   )
@@ -2382,15 +2790,13 @@ checkNmfConsensusParams <- function(x) {
     list(
       n_neighbours = "I1[0,)",
       density_threshold = "N1[0,2]",
-      kmeans_iters = "I1[1,)",
       kmeans_n_init = "I1[1,)"
     ),
     label = "NMF consensus params",
     hint = paste(
       "n_neighbours must be a non-negative integer (0 = auto);",
       "density_threshold must be a numeric in [0, 2] (>= 2 disables the",
-      "filter); kmeans_iters and kmeans_n_init must be positive",
-      "integers."
+      "filter); kmeans_n_init must be a positive integer."
     )
   )
   if (!isTRUE(res)) {
@@ -2406,8 +2812,7 @@ checkNmfConsensusParams <- function(x) {
     hint = paste(
       "n_neighbours must be a non-negative integer (0 = auto);",
       "density_threshold must be a numeric in [0, 2] (>= 2 disables the",
-      "filter); kmeans_iters and kmeans_n_init must be positive",
-      "integers."
+      "filter); kmeans_n_init must be a positive integer."
     )
   )
   if (!isTRUE(res)) {
@@ -3352,6 +3757,7 @@ checkScFastClusterParams <- function(x) {
     c(
       "n_centroids",
       "km_type",
+      "e_means_epochs",
       "k_means_iter",
       "batch_size",
       "drift_threshold",
@@ -3372,6 +3778,7 @@ checkScFastClusterParams <- function(x) {
       "beta",
       "min_gain",
       "local_moving",
+      "node_order",
       "multi_level",
       "max_evals"
     )
@@ -3384,6 +3791,7 @@ checkScFastClusterParams <- function(x) {
     x,
     list(
       n_centroids = c("I1[2,)", "0"),
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1[1,)",
       batch_size = "I1[1,)",
       drift_threshold = "N1",
@@ -3399,6 +3807,8 @@ checkScFastClusterParams <- function(x) {
       n_iterations = c("I1", "0"),
       beta = "N1(0,)",
       min_gain = "N1[0,)",
+      local_moving = c("S1", "0"),
+      node_order = c("S1", "0"),
       multi_level = "B1",
       max_evals = "I1[1,)"
     ),
@@ -3407,7 +3817,8 @@ checkScFastClusterParams <- function(x) {
       "n_centroids must be NULL or an integer >= 2; k_means_iter,",
       "batch_size, n_anchors, centroid_k and max_evals must be integers",
       ">= 1; n_iterations must be NULL or a non-zero integer;",
-      "cell_mediated and multi_level must be booleans."
+      "cell_mediated and multi_level must be booleans; local_moving and",
+      "node_order must be NULL or one of their choices."
     )
   )
   if (!isTRUE(res)) {
@@ -3417,23 +3828,36 @@ checkScFastClusterParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
-      km_type = c("standard", "minibatch"),
+      km_type = c("emeans", "standard", "minibatch"),
       dist = c("euclidean", "cosine"),
       knn_sym = c("snn", "umap", "knn"),
       snn_similarity = c("jaccard", "rank"),
-      algorithm = c("louvain", "leiden"),
-      local_moving = c("queue", "coloured")
+      algorithm = c("louvain", "leiden")
     ),
     label = "fast clustering params",
     hint = paste(
       "n_centroids must be NULL or an integer >= 2; k_means_iter,",
       "batch_size, n_anchors, centroid_k and max_evals must be integers",
       ">= 1; n_iterations must be NULL or a non-zero integer;",
-      "cell_mediated and multi_level must be booleans."
+      "cell_mediated and multi_level must be booleans; local_moving and",
+      "node_order must be NULL or one of their choices."
     )
   )
   if (!isTRUE(res)) {
     return(res)
+  }
+
+  if (!checkmate::qtest(x$local_moving, c("0", "S1"))) {
+    return("The element `local_moving` must be NULL or a string.")
+  }
+  if (!is.null(x$local_moving) && !x$local_moving %in% c("queue", "coloured")) {
+    return("The element `local_moving` must be one of `queue` or `coloured`.")
+  }
+  if (!checkmate::qtest(x$node_order, c("0", "S1"))) {
+    return("The element `node_order` must be NULL or a string.")
+  }
+  if (!is.null(x$node_order) && !x$node_order %in% c("bfs", "shuffle")) {
+    return("The element `node_order` must be one of `bfs` or `shuffle`.")
   }
 
   return(TRUE)
@@ -3671,6 +4095,8 @@ checkScHarmonyParams <- function(x) {
       "epsilon_kmeans",
       "epsilon_harmony",
       "window_size",
+      "k_means_algorithm",
+      "e_means_epochs",
       "k_means_iter",
       "k_means_init",
       "gemm",
@@ -3694,6 +4120,7 @@ checkScHarmonyParams <- function(x) {
       epsilon_kmeans = "N1(0,)",
       epsilon_harmony = "N1(0,)",
       window_size = "I1[1,)",
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1",
       gemm = c("B1", "0"),
       hamerly = c("B1", "0")
@@ -3714,6 +4141,7 @@ checkScHarmonyParams <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      k_means_algorithm = c("emeans", "lloyd"),
       k_means_init = c("parallel", "random")
     ),
     label = "Harmony params",
@@ -3773,6 +4201,8 @@ checkScHarmonyV2Params <- function(x) {
       "tau",
       "batch_proportion_cutoff",
       "use_dynamic_lambda",
+      "k_means_algorithm",
+      "e_means_epochs",
       "k_means_iter",
       "k_means_init",
       "gemm",
@@ -3800,6 +4230,7 @@ checkScHarmonyV2Params <- function(x) {
       tau = "N1[0,)",
       batch_proportion_cutoff = "N1(0,)",
       use_dynamic_lambda = "B1",
+      e_means_epochs = c("N1(0,)", "0"),
       k_means_iter = "I1",
       gemm = c("B1", "0"),
       hamerly = c("B1", "0")
@@ -3822,6 +4253,7 @@ checkScHarmonyV2Params <- function(x) {
   res <- apply_choice_rules(
     x,
     list(
+      k_means_algorithm = c("emeans", "lloyd"),
       k_means_init = c("parallel", "random")
     ),
     label = "Harmony v2 params",
@@ -5293,6 +5725,120 @@ assertScSeuratRpcaParams <- checkmate::makeAssertionFunction(
   checkScSeuratRpcaParams
 )
 
+#' Check Seurat transfer params
+#'
+#' @description Checkmate extension for the output of
+#' [params_sc_seurat_transfer()].
+#'
+#' @param x The object to check.
+#'
+#' @returns `TRUE` if the check was successful, otherwise a
+#' checkmate-style error string.
+#'
+#' @keywords internal
+checkScSeuratTransferParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_cc",
+      "k_anchor",
+      "k_score",
+      "scale_max",
+      "l2_norm",
+      "k_weight",
+      "sd",
+      "k",
+      "knn_method",
+      "ann_dist",
+      "n_trees",
+      "search_budget",
+      "delta",
+      "diversify_prob",
+      "ef_budget",
+      "m",
+      "ef_construction",
+      "ef_search",
+      "n_list",
+      "n_probe"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_cc = "I1[1,)",
+      k_anchor = "I1[1,)",
+      k_score = "I1[1,)",
+      scale_max = "N1(0,)",
+      l2_norm = "B1",
+      k_weight = "I1[1,)",
+      sd = "N1(0,)",
+      k = "I1[0,)",
+      n_trees = "I1[1,)",
+      search_budget = c("I1[1,)", "0"),
+      delta = "N1[0,1]",
+      diversify_prob = "N1[0,1]",
+      ef_budget = c("I1[1,)", "0"),
+      m = "I1[1,)",
+      ef_construction = "I1[1,)",
+      ef_search = "I1[1,)",
+      n_list = c("I1[1,)", "0"),
+      n_probe = c("I1[1,)", "0")
+    ),
+    label = "Seurat transfer params",
+    hint = paste(
+      "n_cc, k_anchor, k_score and k_weight must be integers >= 1;",
+      "scale_max and sd must be > 0; l2_norm must be a boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      knn_method = c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "ivf",
+        "exhaustive"
+      ),
+      ann_dist = c("euclidean", "cosine")
+    ),
+    label = "Seurat transfer params",
+    hint = paste(
+      "n_cc, k_anchor, k_score and k_weight must be integers >= 1;",
+      "scale_max and sd must be > 0; l2_norm must be a boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert Seurat transfer params
+#'
+#' @inheritParams checkScSeuratTransferParams
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertScSeuratTransferParams <- checkmate::makeAssertionFunction(
+  checkScSeuratTransferParams
+)
+
 #' Check SuperCell params
 #'
 #' @description Checkmate extension for the output of [params_sc_supercell()].
@@ -5980,6 +6526,7 @@ checkScDblFinderParams <- function(x) {
       "n_list",
       "n_probe",
       "km_type",
+      "e_means_epochs",
       "n_centroids",
       "k_means_iter",
       "batch_size",
@@ -6027,6 +6574,7 @@ checkScDblFinderParams <- function(x) {
       ef_search = "I1[1,)",
       n_list = c("I1[1,)", "0"),
       n_probe = c("I1[1,)", "0"),
+      e_means_epochs = c("N1(0,)", "0"),
       n_centroids = c("I1", "0"),
       k_means_iter = "I1",
       batch_size = "I1",
@@ -6068,7 +6616,7 @@ checkScDblFinderParams <- function(x) {
         "exhaustive"
       ),
       ann_dist = c("euclidean", "cosine"),
-      km_type = c("minibatch", "standard")
+      km_type = c("emeans", "standard", "minibatch")
     ),
     label = "scDblFinder params"
   )

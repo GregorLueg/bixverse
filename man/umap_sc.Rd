@@ -10,7 +10,7 @@ umap_sc(
   embd_to_use = "pca",
   slot_name = "umap",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -38,7 +38,7 @@ Defaults to \code{"umap"}.}
 use. If \code{NULL} all will be used.}
 
 \item{modality}{String. On which modality to run the UMAP. One of
-\code{c("rna", "adt", "wnn")}. The two latter options are only available for
+\code{c("rna", "adt", "atac", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
 
 \item{n_dim}{Integer. Number of UMAP dimensions. Defaults to \code{2L}.}
@@ -56,7 +56,9 @@ computed from the embedding.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}.}
 
-\item{umap_params}{Named list. See \code{\link[manifoldsR:params_umap]{manifoldsR::params_umap()}}.}
+\item{umap_params}{Named list. See \code{\link[manifoldsR:params_umap]{manifoldsR::params_umap()}}.
+\code{optimiser = "adam_v06"} and \code{init = "recursive"} give the umap-learn
+0.6 Adam optimiser and initialisation.}
 
 \item{seed}{Integer. For reproducibility.}
 
