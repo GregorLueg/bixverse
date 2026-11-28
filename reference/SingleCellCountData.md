@@ -258,6 +258,12 @@ Write an h5ad file to disk using streaming
   CellXGene data) or `"layers.counts"`. Unmatched values fall back to
   `"X"`.
 
+- `max_mem_gb`:
+
+  (`numeric` or `NULL`)  
+  Memory in GB for the cell-major transpose of a CSC file. `NULL` holds
+  the whole matrix. Ignored for CSR.
+
 - `verbose`:
 
   (`logical`)  
@@ -659,9 +665,9 @@ stores.
 
 An integer vector `c(cells, genes)` with the file versions.
 
-### Method `upgrade_to_v4`
+### Method `upgrade_to_v5`
 
-Convert both binaries to the v4 file format in place
+Convert both binaries to the v5 file format in place
 
 #### Arguments
 
@@ -673,7 +679,7 @@ Convert both binaries to the v4 file format in place
 - `keep_backup`:
 
   (`logical`)  
-  Keep the original files as `<path>.v3.bak`.
+  Keep the original files as `<path>.v<n>.bak`, `n` their version.
 
 - `verbose`:
 

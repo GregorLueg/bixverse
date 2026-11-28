@@ -61,6 +61,10 @@
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.md):
 - [Multi-modal single cell analysis with
   bixverse](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.md):
+- [Joint RNA and ATAC analysis with
+  bixverse](https://gregorlueg.github.io/bixverse/articles/atac_multiome.md):
+- [Single cell ATAC without
+  RNA](https://gregorlueg.github.io/bixverse/articles/atac_only.md):
 - [A guide to single-cell plotting
   functions](https://gregorlueg.github.io/bixverse/articles/single_cell_visualisation.md):
 - [Clustering, cell type annotation and reference

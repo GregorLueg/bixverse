@@ -9,7 +9,7 @@ long format, ready for stacked (one gene per row) violin plots."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,6 +69,8 @@ long format, ready for stacked (one gene per row) violin plots."><meta property=
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -109,7 +111,7 @@ long format, ready for stacked (one gene per row) violin plots.</p>
 <span>  <span class="va">grouping_variable</span>,</span>
 <span>  scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span><span class="op">)</span>,</span>
+<span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"atac"</span><span class="op">)</span>,</span>
 <span>  layer <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"norm"</span>, <span class="st">"magic"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -139,7 +141,7 @@ long format, ready for stacked (one gene per row) violin plots.</p>
 
 
 <dt id="arg-modality">modality<a class="anchor" aria-label="anchor" href="#arg-modality"></a></dt>
-<dd><p>String. One of <code>c("rna", "adt")</code>.</p></dd>
+<dd><p>String. One of <code>c("rna", "adt", "atac")</code>.</p></dd>
 
 
 <dt id="arg-layer">layer<a class="anchor" aria-label="anchor" href="#arg-layer"></a></dt>
@@ -164,10 +166,10 @@ long format, ready for stacked (one gene per row) violin plots.</p>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     cell_id       group    gene expression</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;      &lt;fctr&gt;  &lt;fctr&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001 cell_type_1 gene_01   6.222656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002 cell_type_2 gene_01   4.113281</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003 cell_type_3 gene_01   4.300781</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_004 cell_type_1 gene_01   5.757812</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001 cell_type_1 gene_01   6.223760</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002 cell_type_2 gene_01   4.111858</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003 cell_type_3 gene_01   4.299178</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_004 cell_type_1 gene_01   5.756331</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_005 cell_type_2 gene_01   0.000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_006 cell_type_3 gene_01   0.000000</span>
 <span class="r-in"><span></span></span>

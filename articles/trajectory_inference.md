@@ -249,18 +249,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality       artefact   name stamped  stale reason               id
 #>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 78598059b3df3d1a
-#> 2:      rna      embedding   umap    TRUE  FALSE   <NA> c476cddcf5e5ffff
-#> 3:      rna            knn   <NA>    TRUE  FALSE   <NA> 8d7da40ee9c8ed10
-#> 4:      rna connectivities   <NA>    TRUE  FALSE   <NA> b87b6ff32b791ae8
-#> 5:      rna          magic   <NA>    TRUE  FALSE   <NA> f522f45250f33622
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 765bd2492343f726
+#> 2:      rna      embedding   umap    TRUE  FALSE   <NA> a22ef158af3f3544
+#> 3:      rna            knn   <NA>    TRUE  FALSE   <NA> 54c51eb8aa9a6508
+#> 4:      rna connectivities   <NA>    TRUE  FALSE   <NA> 7b31cbf727e37603
+#> 5:      rna          magic   <NA>    TRUE  FALSE   <NA> 013fc8f66a1dc7e6
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: 78598059b3df3d1a,8d7da40ee9c8ed10
-#> 3:                  78598059b3df3d1a
-#> 4:                  8d7da40ee9c8ed10
-#> 5:                  8d7da40ee9c8ed10
+#> 2: 765bd2492343f726,54c51eb8aa9a6508
+#> 3:                  765bd2492343f726
+#> 4:                  54c51eb8aa9a6508
+#> 5:                  54c51eb8aa9a6508
 ```
 
 ## PAGA
@@ -287,27 +287,27 @@ cluster, with a zero diagonal.
 paga_res$sizes
 #>    cluster n_cells
 #>     <char>   <int>
-#> 1:       0     691
+#> 1:       0     697
 #> 2:       1     674
-#> 3:       2     634
+#> 3:       2     632
 #> 4:       3     523
-#> 5:       4     449
-#> 6:       5     429
-#> 7:       6     413
-#> 8:       7     186
-#> 9:       8     143
+#> 5:       4     450
+#> 6:       5     431
+#> 7:       6     415
+#> 8:       7     187
+#> 9:       8     133
 
 round(as.matrix(paga_res$connectivities), 3)
 #>       0     1     2     3     4     5     6     7     8
-#> 0 0.000 0.474 0.001 0.000 0.001 0.002 0.026 0.001 0.395
-#> 1 0.474 0.000 0.028 0.070 0.599 0.003 0.196 0.000 0.328
-#> 2 0.001 0.028 0.000 0.445 0.121 0.003 0.329 0.001 0.005
-#> 3 0.000 0.070 0.445 0.000 0.431 0.004 0.044 0.000 0.006
-#> 4 0.001 0.599 0.121 0.431 0.000 0.015 0.258 0.000 0.077
-#> 5 0.002 0.003 0.003 0.004 0.015 0.000 0.004 0.701 0.533
-#> 6 0.026 0.196 0.329 0.044 0.258 0.004 0.000 0.000 0.004
-#> 7 0.001 0.000 0.001 0.000 0.000 0.701 0.000 0.000 0.000
-#> 8 0.395 0.328 0.005 0.006 0.077 0.533 0.004 0.000 0.000
+#> 0 0.000 0.476 0.001 0.000 0.001 0.002 0.026 0.001 0.383
+#> 1 0.476 0.000 0.029 0.069 0.597 0.004 0.195 0.000 0.329
+#> 2 0.001 0.029 0.000 0.442 0.122 0.005 0.331 0.001 0.000
+#> 3 0.000 0.069 0.442 0.000 0.433 0.005 0.054 0.000 0.001
+#> 4 0.001 0.597 0.122 0.433 0.000 0.016 0.256 0.000 0.080
+#> 5 0.002 0.004 0.005 0.005 0.016 0.000 0.004 0.699 0.594
+#> 6 0.026 0.195 0.331 0.054 0.256 0.004 0.000 0.000 0.004
+#> 7 0.001 0.000 0.001 0.000 0.000 0.699 0.000 0.000 0.000
+#> 8 0.383 0.329 0.000 0.001 0.080 0.594 0.004 0.000 0.000
 ```
 
 [`paga_plot_sc()`](https://gregorlueg.github.io/bixverse.plots/reference/paga_plot_sc.html)
@@ -395,7 +395,7 @@ palantir_res <- run_palantir_sc(
 
 palantir_res
 #> PalantirRes: 4142 cells, 3 terminal states (rna modality)
-#>   Start cell: Run5_164698952452459 | waypoints: 997
+#>   Start cell: Run5_164698952452459 | waypoints: 1000
 #>   Converged: TRUE (2 iterations)
 #>   Repair edges: 0, stranded waypoints: 0
 ```
@@ -440,12 +440,12 @@ sc_object[["palantir_branch"]] <- colnames(fate_probs)[
 
 head(round(fate_probs, 3))
 #>                        Ery    DC  Mono
-#> Run4_120703408880541 0.559 0.088 0.353
-#> Run4_120703409056541 0.215 0.157 0.628
-#> Run4_120703409580963 0.055 0.139 0.805
-#> Run4_120703423990708 0.016 0.035 0.950
-#> Run4_120703436876077 0.209 0.158 0.633
-#> Run4_120726912355038 0.113 0.161 0.727
+#> Run4_120703408880541 0.604 0.068 0.328
+#> Run4_120703409056541 0.257 0.129 0.615
+#> Run4_120703409580963 0.059 0.120 0.821
+#> Run4_120703423990708 0.031 0.054 0.914
+#> Run4_120703436876077 0.245 0.131 0.625
+#> Run4_120726912355038 0.119 0.123 0.758
 ```
 
 Rows do not necessarily sum to one. Fate probabilities below
@@ -580,7 +580,7 @@ data.table(
 #>                 cell_id branch pseudotime
 #>                  <char> <char>      <num>
 #> 1: Run5_205922701598003   Mono      0.075
-#> 2: Run5_235070783670620   Mono      0.576
+#> 2: Run5_235070783670620   Mono      0.573
 ```
 
 ## Gene trends
@@ -604,7 +604,7 @@ trends <- run_gene_trends_sc(
 
 trends
 #> GeneTrendsRes: 3 branches, 4 genes, 500 grid points
-#>   Cells per branch: Ery (1380), DC (1536), Mono (1940)
+#>   Cells per branch: Ery (1381), DC (1460), Mono (1866)
 #>   Source: normalised counts
 #>   Length scale: 1 | sigma: 1
 ```
@@ -644,7 +644,7 @@ set the reference notebook plots.
 
 purrr::map_int(trends$branch_cells, length)
 #>  Ery   DC Mono 
-#> 1380 1536 1940
+#> 1381 1460 1866
 ```
 
 The same trick works with any per-cell quantity. A loess through the

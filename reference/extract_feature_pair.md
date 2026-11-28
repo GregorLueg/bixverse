@@ -18,7 +18,7 @@ extract_feature_pair(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 )
 ```
@@ -53,7 +53,7 @@ extract_feature_pair(
 - modality:
 
   String. Fallback modality for unsuffixed features. One of
-  `c("rna", "adt")`.
+  `c("rna", "adt", "atac")`.
 
 - layer:
 
@@ -77,12 +77,12 @@ genes <- get_gene_names(sc)[1:2]
 head(extract_feature_pair(sc, genes[1], genes[2], obs_cols = "cell_grp"))
 #>     cell_id feature_1 feature_2    cell_grp
 #>      <char>     <num>     <num>      <char>
-#> 1: cell_001  6.222656  6.761719 cell_type_1
-#> 2: cell_002  4.113281  4.511719 cell_type_2
-#> 3: cell_003  4.300781  4.300781 cell_type_3
-#> 4: cell_004  5.757812  5.757812 cell_type_1
+#> 1: cell_001  6.223760  6.761931 cell_type_1
+#> 2: cell_002  4.111858  4.511849 cell_type_2
+#> 3: cell_003  4.299178  4.299178 cell_type_3
+#> 4: cell_004  5.756331  5.756331 cell_type_1
 #> 5: cell_005  0.000000  0.000000 cell_type_2
-#> 6: cell_006  0.000000  4.234375 cell_type_3
+#> 6: cell_006  0.000000  4.234501 cell_type_3
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

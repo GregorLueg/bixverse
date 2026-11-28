@@ -11,9 +11,10 @@ find_markers_sc(
   object,
   cells_1,
   cells_2,
-  method = c("wilcox"),
+  method = NULL,
   alternative = c("twosided", "greater", "less"),
   min_prop = 0.05,
+  modality = c("rna", "atac"),
   .verbose = TRUE
 )
 ```
@@ -38,9 +39,10 @@ find_markers_sc(
 
 - method:
 
-  String. Which method to use for the calculations of the DGE. At the
-  moment the only option is `"wilcox"`, but the parameter is reserved
-  for future features.
+  Optional string. One of `c("wilcox", "lr")`: the Wilcoxon rank sum
+  test, or Seurat's logistic regression test (`LRDETest()`) with the
+  library size as the latent variable. `NULL` picks `"lr"` on ATAC data
+  and `"wilcox"` otherwise.
 
 - alternative:
 
@@ -51,6 +53,12 @@ find_markers_sc(
 
   Numeric. The minimum proportion of cells that need to express the gene
   to be tested in any of the two groups.
+
+- modality:
+
+  String. One of `c("rna", "atac")`. `"atac"` tests the features of the
+  ATAC store of a `SingleCellsMultiModal`; on a `SingleCellsAtac` both
+  name its own store. Results are then keyed by `feature_id`.
 
 - .verbose:
 
@@ -77,12 +85,12 @@ res <- find_markers_sc(
 head(res)
 #>    gene_id      lfc     prop1     prop2 z_scores     p_values          fdr
 #>     <char>    <num>     <num>     <num>    <num>        <num>        <num>
-#> 1: gene_01 3.339259 0.9880239 0.6946108 14.38283 6.632426e-47 7.043991e-46
-#> 2: gene_02 3.292559 0.9880239 0.6886228 14.16134 1.589201e-45 9.932503e-45
-#> 3: gene_03 3.461920 1.0000000 0.6946108 14.95929 1.354582e-50 3.386456e-49
-#> 4: gene_04 2.915536 0.9580838 0.6886228 12.95389 2.233137e-38 8.588988e-38
-#> 5: gene_05 2.709312 0.8383234 0.4431138 10.68923 1.142846e-26 3.361312e-26
-#> 6: gene_06 3.113609 0.9760479 0.7005988 14.03355 9.715047e-45 5.397248e-44
+#> 1: gene_01 3.339092 0.9880239 0.6946108 14.38336 6.581099e-47 7.105061e-46
+#> 2: gene_02 3.292497 0.9880239 0.6886228 14.16017 1.615884e-45 1.009927e-44
+#> 3: gene_03 3.461720 1.0000000 0.6946108 14.95812 1.378589e-50 3.446472e-49
+#> 4: gene_04 2.915461 0.9580838 0.6886228 12.95331 2.250255e-38 8.654827e-38
+#> 5: gene_05 2.709359 0.8383234 0.4431138 10.69039 1.128701e-26 3.319709e-26
+#> 6: gene_06 3.113653 0.9760479 0.7005988 14.03240 9.874756e-45 5.482066e-44
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

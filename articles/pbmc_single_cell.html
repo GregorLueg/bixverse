@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Analysing PBMCs with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -387,20 +389,20 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_markers</span><span class="op">[</span><span class="va">fdr</span> <span class="op">&lt;=</span> <span class="fl">0.05</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lfc</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      grp         gene_id      lfc     prop1      prop2 z_scores      p_values</span></span>
 <span><span class="co">#&gt;    &lt;int&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;      &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     2 ENSG00000163220 4.083154 0.9955752 0.21540727 38.09150 8.857130e-318</span></span>
-<span><span class="co">#&gt; 2:     5 ENSG00000105374 4.068351 1.0000000 0.25599316 24.94107 1.334719e-137</span></span>
-<span><span class="co">#&gt; 3:     5 ENSG00000115523 3.972615 0.9415584 0.13313356 28.53081 2.430420e-179</span></span>
-<span><span class="co">#&gt; 4:     2 ENSG00000090382 3.946784 0.9977876 0.52060843 33.78940 1.411288e-250</span></span>
-<span><span class="co">#&gt; 5:     2 ENSG00000143546 3.623994 0.9734513 0.12266929 40.52358  0.000000e+00</span></span>
-<span><span class="co">#&gt; 6:     5 ENSG00000100453 3.410739 0.9610389 0.06592466 34.80499 1.021970e-265</span></span>
+<span><span class="co">#&gt; 1:     2 ENSG00000163220 4.083062 0.9955752 0.21540727 38.09158 8.829462e-318</span></span>
+<span><span class="co">#&gt; 2:     5 ENSG00000105374 4.068440 1.0000000 0.25599316 24.94156 1.318245e-137</span></span>
+<span><span class="co">#&gt; 3:     5 ENSG00000115523 3.972590 0.9415584 0.13313356 28.53064 2.442397e-179</span></span>
+<span><span class="co">#&gt; 4:     2 ENSG00000090382 3.946893 0.9977876 0.52060843 33.78891 1.434898e-250</span></span>
+<span><span class="co">#&gt; 5:     2 ENSG00000143546 3.624055 0.9734513 0.12266929 40.52367  0.000000e+00</span></span>
+<span><span class="co">#&gt; 6:     5 ENSG00000100453 3.410837 0.9610389 0.06592466 34.80510 1.018358e-265</span></span>
 <span><span class="co">#&gt;              fdr gene_symbol</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: 1.332112e-314      S100A9</span></span>
-<span><span class="co">#&gt; 2: 4.762895e-135        NKG7</span></span>
-<span><span class="co">#&gt; 3: 2.254944e-176        GNLY</span></span>
-<span><span class="co">#&gt; 4: 7.075258e-248         LYZ</span></span>
+<span><span class="co">#&gt; 1: 1.327951e-314      S100A9</span></span>
+<span><span class="co">#&gt; 2: 4.704107e-135        NKG7</span></span>
+<span><span class="co">#&gt; 3: 2.266056e-176        GNLY</span></span>
+<span><span class="co">#&gt; 4: 7.193623e-248         LYZ</span></span>
 <span><span class="co">#&gt; 5:  0.000000e+00      S100A8</span></span>
-<span><span class="co">#&gt; 6: 4.740919e-262        GZMB</span></span></code></pre></div>
+<span><span class="co">#&gt; 6: 4.724163e-262        GZMB</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="fast-clustering">Fast clustering<a class="anchor" aria-label="anchor" href="#fast-clustering"></a>
 </h3>
@@ -419,12 +421,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fast_clusted_dt</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    cell_idx res_2 res_1 res_0.5</span></span>
 <span><span class="co">#&gt;       &lt;int&gt; &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        1     2     0       0</span></span>
-<span><span class="co">#&gt; 2:        2     3     3       3</span></span>
-<span><span class="co">#&gt; 3:        3     2     0       0</span></span>
-<span><span class="co">#&gt; 4:        4     0     1       1</span></span>
-<span><span class="co">#&gt; 5:        5     1     2       2</span></span>
-<span><span class="co">#&gt; 6:        6     2     0       0</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        1     2     3       0</span></span>
+<span><span class="co">#&gt; 2:        2     4     4       3</span></span>
+<span><span class="co">#&gt; 3:        3     1     2       0</span></span>
+<span><span class="co">#&gt; 4:        4     3     0       1</span></span>
+<span><span class="co">#&gt; 5:        5     0     1       2</span></span>
+<span><span class="co">#&gt; 6:        6     1     2       0</span></span></code></pre></div>
 </div>
 <p>If you want to explore the k-means memberships or centroids, there are getters for this.</p>
 <div class="cell">
@@ -452,12 +454,12 @@
 <span><span class="co">#&gt; 6:        6 AAACGCACTGGTAC-1   779     2154    TRUE 0.016713092 0.3635097</span></span>
 <span><span class="co">#&gt;    outlier leiden_clusters res_2 res_1 res_0.5</span></span>
 <span><span class="co">#&gt;     &lt;lgcl&gt;           &lt;int&gt; &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:   FALSE               0     2     0       0</span></span>
-<span><span class="co">#&gt; 2:   FALSE               3     3     3       3</span></span>
-<span><span class="co">#&gt; 3:   FALSE               0     2     0       0</span></span>
-<span><span class="co">#&gt; 4:   FALSE               2     0     1       1</span></span>
-<span><span class="co">#&gt; 5:   FALSE               5     1     2       2</span></span>
-<span><span class="co">#&gt; 6:   FALSE               0     2     0       0</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:   FALSE               0     2     3       0</span></span>
+<span><span class="co">#&gt; 2:   FALSE               3     4     4       3</span></span>
+<span><span class="co">#&gt; 3:   FALSE               0     1     2       0</span></span>
+<span><span class="co">#&gt; 4:   FALSE               2     3     0       1</span></span>
+<span><span class="co">#&gt; 5:   FALSE               5     0     1       2</span></span>
+<span><span class="co">#&gt; 6:   FALSE               0     1     2       0</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="dimensionality-reduction">Dimensionality reduction<a class="anchor" aria-label="anchor" href="#dimensionality-reduction"></a>
 </h3>

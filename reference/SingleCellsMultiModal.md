@@ -42,7 +42,8 @@ Returns the `SingleCellsMultiModal` class for further operations.
 
 - peak_connection:
 
-  Future feature: to store ATAC Seq counts in the future.
+  Rust connection to the ATAC peak or tile store in `<dir_data>/atac`,
+  `NULL` until ATAC is added.
 
 - dir_data:
 
@@ -80,6 +81,11 @@ Returns the `SingleCellsMultiModal` class for further operations.
 
   Dimensions of the original data.
 
+- atac_info:
+
+  `AtacInfo` with the ATAC store state and the LSI fit, `NULL` until
+  ATAC is added.
+
 ## Examples
 
 ``` r
@@ -113,7 +119,13 @@ object
 #>     Other embeddings: none
 #>     KNN generated: FALSE
 #>     Graph generated: FALSE
-#>   ATAC: not yet implemented
+#>   ATAC:
+#>     Present: FALSE
+#>     Kind: none
+#>     TF-IDF: FALSE
+#>     Other embeddings: none
+#>     KNN generated: FALSE
+#>     Graph generated: FALSE
 #>   Stale artefacts: none
 
 unlink(dir, recursive = TRUE, force = TRUE)

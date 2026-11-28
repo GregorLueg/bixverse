@@ -67,8 +67,8 @@ head(get_data(res), 3)
 #>    cell_idx res_1
 #>       <int> <int>
 #> 1:        1     2
-#> 2:        2     0
-#> 3:        3     1
+#> 2:        2     1
+#> 3:        3     0
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

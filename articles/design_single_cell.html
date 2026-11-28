@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Technical design choices for the single cell implementation</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -215,7 +217,7 @@ Same as kNN graph ~244 MB</code></pre>
 <ol type="1">
 <li><p><strong><em>We do not keep data in memory if not needed!</em></strong> Most analyses leveraging counts only need subsets of cells and genes. We can also avoid holding metadata in memory via DuckDB. Data will be streamed from disk when needed and Rust’s compiler will free memory once it is no longer needed, sometimes enforced explicitly with <code><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop()</a></code>. Raw counts? Nope. Normalised counts? Nope. Scaled counts? Nope. We just removed up to 40 GB of unnecessary stuff from memory (in our 1M cell example). Data can be loaded into memory in milliseconds if need be.</p></li>
 <li><p><strong><em>We do not even load all data into memory to begin with.</em></strong> In 99.99% of cases, we know we do not want low quality cells with tiny library sizes and few unique features. We also almost always do the usual library-size-to-target-size normalisation with log transformation. (Anyone who has tried a fancy modelling approach with Pearson residual modelling on large data sets knows what I am talking about. But <code>bixverse</code> does also offer memory-frugal versions of <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8764781/" class="external-link">scTransform v2</a> if you want them.) That means when reading h5ad or mtx files, we can pre-scan them, take only what we want, and normalise in a single pass, avoiding the load-everything, then-filter, then-normalise pattern. Additionally, data gets streamed into the binary files to avoid sudden memory spikes and OOM errors.</p></li>
-<li><p><strong><em>We accept that single cell is noisy</em></strong> and do not bother with <code>f32</code> or even <code>f64</code> precision for storage. Raw counts are integers and most of them are tiny, so on disk they get bit-packed to whatever width the block actually needs. A block of ones and twos costs a single bit per value, the rare gene with a count in the thousands only widens its own block, and nothing gets clipped. Normalised counts get <code>f16</code> precision (the v4 section below covers how that layer is dropped and recomputed): the ML field has shown you can get away with it, and they are pushing quantisation even further than that. We will accept the precision loss when upcasting to <code>f64</code> to avoid catastrophic cancellation issues at large N.</p></li>
+<li><p><strong><em>We accept that single cell is noisy</em></strong> and do not bother with <code>f32</code> or even <code>f64</code> precision for storage. Raw counts are integers and most of them are tiny, so on disk they get bit-packed to whatever width the block actually needs. A block of ones and twos costs a single bit per value, the rare gene with a count in the thousands only widens its own block, and nothing gets clipped. The normalised layer is not stored at all: it is recomputed from the raw counts on read, in <code>f32</code> (the format section below covers how). Where precision matters we upcast to <code>f64</code> to avoid catastrophic cancellation at large N.</p></li>
 <li><p><strong><em>We are not doing any heavy calculations in R (or Python, future roadmap).</em></strong> Rust is superior for speed and optimisation: aggressive multi-threading, no copy-on-modify semantics, tight memory control, and SIMD acceleration for specific bottlenecks (distance calculations, averaging, summing, normalising). R here is just an interface, telling the underlying Rust code what to do. We pay for this with some long compile time while installing the package, but the speed-ups across the board are so substantial that it is worth it.</p></li>
 </ol>
 <p>But if the data is not in memory, will this not be slow? Well, no. We store data in structures like this. One for cells:</p>
@@ -252,23 +254,24 @@ Same as kNN graph ~244 MB</code></pre>
 <p><strong>Disk space is cheap; memory ain’t</strong></p>
 </blockquote>
 <p>The two-layer approach (heavily inspired by TileDB) means raw and normalised counts share one set of indices instead of each dragging their own. Every cell and every gene is its own independently compressed chunk, the file tail holds the offsets, and reads go through <code>mmap</code>. This assumes decent SSD speeds, but most modern hardware has that covered.</p>
-<section class="level4"><h4 id="the-v4-file-format">The v4 file format<a class="anchor" aria-label="anchor" href="#the-v4-file-format"></a>
+<section class="level4"><h4 id="the-file-format">The file format<a class="anchor" aria-label="anchor" href="#the-file-format"></a>
 </h4>
-<p>Cheap disk space is no excuse to waste it though. The first versions of the format were lazy: absolute <code>u32</code> indices, <code>u16</code> raw counts, the full <code>f16</code> normalised layer, all thrown at <a href="https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)" class="external-link">lz4</a>. lz4 is fast, but it cannot do much with a sorted list of absolute indices. Version 4 (the default for everything the package writes now) looks at what a chunk actually holds:</p>
+<p>Cheap disk space is no excuse to waste it though. The first versions of the format were lazy: absolute <code>u32</code> indices, <code>u16</code> raw counts, the full <code>f16</code> normalised layer, all thrown at <a href="https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)" class="external-link">lz4</a>. lz4 is fast, but it cannot do much with a sorted list of absolute indices. Version 4 looked at what a chunk actually holds, and version 5 (what the package writes now) keeps that chunk layout:</p>
 <ul>
 <li>
 <strong>Indices are delta bit-packed</strong> in blocks of 128. Sorted gene (or cell) indices turn into small gaps, and each block is packed to the width of its largest gap.</li>
 <li>
 <strong>Raw counts are bit-packed the same way</strong>, stored as <code>count - 1</code> since a stored entry is never zero. That saves another bit per value, and in UMI data that bit matters.</li>
 <li>
-<strong>The normalised layer is dropped.</strong> Library-size normalisation plus <code>log1p</code> is a pure function of the raw count, the library size and the target size, so we recompute it on read, bit for bit identical to what used to be stored. A chunk where the recompute does not reproduce the stored values keeps them verbatim, so nothing changes under your feet. Gene chunks need the library size of each cell for this, so the gene file carries a per-cell library-size table in its tail, plus a small lookup table for counts 1 to 4, which covers the common low counts without a single <code>ln_1p</code> call.</li>
+<strong>The normalised layer is dropped.</strong> Library-size normalisation plus <code>log1p</code> is a pure function of the raw count, the library size and the target size, so we recompute it on read, in <code>f32</code>, through <code>f64</code> maths so every OS derives the same bits. Gene chunks need the library size of each cell for this, so the gene file carries a per-cell library-size table in its tail, plus a small lookup table for counts 1 to 4, which covers the common low counts without a single <code>ln_1p</code> call.</li>
 <li>
 <strong>A fixed 32 byte header sits uncompressed</strong> in front of every chunk: nnz, library size (or average expression for genes), original index, flags and the codec. Things like library sizes can be read without decompressing anything.</li>
 <li>
 <strong>The codec is per chunk:</strong> lz4 by default, zstd if you want smaller files and can live with slower decoding, or none. A chunk that does not shrink is stored raw whatever you asked for.</li>
 </ul>
-<p>So in practice we store raw counts and only raw counts, wherever possible, and the normalised layer is computed on the fly. Reads also prefetch their byte range into the page cache, so cold reads do not crawl through one page fault at a time.</p>
-<p>Got stores from an older version of the package? They still open and work, you just get a warning nudging you to convert them. <code><a href="../reference/upgrade_sc_store.html">upgrade_sc_store()</a></code> does that in place: it writes the v4 files next to the old ones, checks them, and only then swaps them in, keeping <code>.v3.bak</code> copies unless you tell it otherwise.</p>
+<p>So in practice we store raw counts and only raw counts, wherever possible, and the normalised layer is computed on the fly.</p>
+<p>Version 5 makes the store usable for more than genes. The header records what the features are (genes, ATAC peaks or tiles, gene activity) and how the norm derives (log-CPM, or TF-IDF for ATAC), so an ATAC store switches to TF-IDF by rewriting a header field, not the counts. It also carries a hash of the cell ids, which is how a gene activity store knows it belongs to its experiment, a genome interval index for peaks, checksums per chunk, and free-form caller metadata. Feature flags in the header let the format grow without a version 6. Reads also prefetch their byte range into the page cache, so cold reads do not crawl through one page fault at a time.</p>
+<p>Got stores from an older version of the package? v4 stores still open and work, you just get a warning nudging you to convert them. v3 stores no longer open. <code><a href="../reference/upgrade_sc_store.html">upgrade_sc_store()</a></code> converts either in place: it writes the v5 files next to the old ones, checks them, and only then swaps them in, keeping <code>.v3.bak</code> or <code>.v4.bak</code> copies unless you tell it otherwise.</p>
 <p>Once you are done with the analysis, the package also offers versions to archive the binary files, squeezing the disk footprint further. The idea is to use your disk space temporarily, stream data into the analysis methods in the right shape and when done, compress everything down.</p>
 </section></section><section class="level3"><h3 id="lets-not-round-trip-into-interpreted-languages">Let’s not round trip into interpreted languages<a class="anchor" aria-label="anchor" href="#lets-not-round-trip-into-interpreted-languages"></a>
 </h3>

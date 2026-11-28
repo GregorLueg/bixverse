@@ -127,12 +127,12 @@ res <- run_gene_trends_sc(
 head(res$trends)
 #>      branch pseudotime    gene expression
 #>      <fctr>      <num>  <fctr>      <num>
-#> 1: cell_099 0.00000000 gene_01   6.259300
-#> 2: cell_099 0.02040816 gene_01   6.247292
-#> 3: cell_099 0.04081633 gene_01   6.229469
-#> 4: cell_099 0.06122449 gene_01   6.205736
-#> 5: cell_099 0.08163265 gene_01   6.176019
-#> 6: cell_099 0.10204082 gene_01   6.140287
+#> 1: cell_099 0.00000000 gene_01   6.248244
+#> 2: cell_099 0.02040816 gene_01   6.238535
+#> 3: cell_099 0.04081633 gene_01   6.223187
+#> 4: cell_099 0.06122449 gene_01   6.202110
+#> 5: cell_099 0.08163265 gene_01   6.175241
+#> 6: cell_099 0.10204082 gene_01   6.142554
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

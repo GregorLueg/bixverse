@@ -15,7 +15,7 @@ Communities are numbered by size, 1 being the largest."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,6 +75,8 @@ Communities are numbered by size, 1 being the largest."><meta property="og:image
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -119,7 +121,8 @@ Communities are numbered by size, <code>1</code> being the largest.</p>
 <span>  beta <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  n_iterations <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_gain <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  local_moving <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"queue"</span>, <span class="st">"coloured"</span><span class="op">)</span>,</span>
+<span>  local_moving <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  node_order <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -153,8 +156,7 @@ Louvain.</p></dd>
 <dt id="arg-n-iterations">n_iterations<a class="anchor" aria-label="anchor" href="#arg-n-iterations"></a></dt>
 <dd><p>Optional integer. Number of full iterations, each
 starting from the previous partition. A negative value iterates until the
-partition is stable. If <code>NULL</code>, <code>5L</code> for Leiden and <code>2L</code> for Louvain, which
-gave the best modularity across synthetic graphs.</p></dd>
+partition is stable. If <code>NULL</code>, <code>2L</code>.</p></dd>
 
 
 <dt id="arg-min-gain">min_gain<a class="anchor" aria-label="anchor" href="#arg-min-gain"></a></dt>
@@ -163,9 +165,16 @@ iteration gains no more than this in modularity.</p></dd>
 
 
 <dt id="arg-local-moving">local_moving<a class="anchor" aria-label="anchor" href="#arg-local-moving"></a></dt>
-<dd><p>String. One of <code>c("queue", "coloured")</code>. <code>"queue"</code> is
-Traag's sequential queue. <code>"coloured"</code> moves the nodes of one colour class
-in parallel, which only kicks in on larger levels of the graph.</p></dd>
+<dd><p>Optional string. One of <code>c("queue", "coloured")</code>.
+<code>"queue"</code> is Traag's sequential queue. <code>"coloured"</code> moves the nodes of one
+colour class in parallel, which only kicks in on larger levels of the graph.
+<code>NULL</code> is <code>"queue"</code> for Leiden and <code>"coloured"</code> for Louvain.</p></dd>
+
+
+<dt id="arg-node-order">node_order<a class="anchor" aria-label="anchor" href="#arg-node-order"></a></dt>
+<dd><p>Optional string. Visit order of the queue, <code>"bfs"</code> (sweep
+in BFS order from a random start) or <code>"shuffle"</code> (as igraph). <code>NULL</code> is
+<code>"bfs"</code> for Leiden and <code>"shuffle"</code> for Louvain.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

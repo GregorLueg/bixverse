@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>KNN searches for single cell</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -446,7 +448,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2490 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2489]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.6076, 153.2035]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.6087, 153.1987]</span></span></code></pre></div>
 </div>
 <p>This is the class that is actually stored in the object after running <code><a href="../reference/find_neighbours_sc.html">find_neighbours_sc()</a></code>.</p>
 <div class="cell">
@@ -477,7 +479,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2490 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2489]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.6076, 153.2035]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.6087, 153.1987]</span></span></code></pre></div>
 </div>
 <p>The print message showed this line here:</p>
 <pre><code>Recall of approximate nearest neighbours search in random subset: 1.00</code></pre>
@@ -515,7 +517,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2490 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2489]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.6076, 154.7401]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.6087, 154.6102]</span></span></code></pre></div>
 </div>
 <p>With one tree, we can appreciate that the Recall reported above is dropping. Let’s get some more detailed info here:</p>
 <div class="cell">
@@ -534,8 +536,8 @@
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Annoy vs exhaustive.</span></span>
-<span><span class="co">#&gt;   Recall@15: 0.736.</span></span>
-<span><span class="co">#&gt;   Distance ratio: 1.022.</span></span></code></pre></div>
+<span><span class="co">#&gt;   Recall@15: 0.749.</span></span>
+<span><span class="co">#&gt;   Distance ratio: 1.020.</span></span></code></pre></div>
 </div>
 <p>We can appreciate that with one tree we do not get a Recall of 1 and the distance ratio is worse than the exhaustive one. Let’s test another index</p>
 <div class="cell">
@@ -551,7 +553,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2490 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2489]</span></span>
-<span><span class="co">#&gt;   Distance range: [3.6076, 154.1590]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.6087, 153.6435]</span></span></code></pre></div>
 </div>
 <p>And benchmark it:</p>
 <div class="cell">

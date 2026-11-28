@@ -36,7 +36,7 @@ load_h5ad_norm(
 
 - h5_path:
 
-  File path to the h5ad object you wish to load in.
+  Path to the h5ad file or AnnData Zarr store to load.
 
 - obs_lib_size_col:
 

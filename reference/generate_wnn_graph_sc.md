@@ -124,7 +124,7 @@ object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
 object <- calculate_pca_adt_sc(object, no_pcs = 10L)
 object <- generate_wnn_graph_sc(object, .verbose = FALSE)
 get_connectivities(object, modality = "wnn")
-#> SingleCellConnectivity: 1000 cells, 35379 edges
+#> SingleCellConnectivity: 1000 cells, 35361 edges
 #>   Method: snn
 
 unlink(dir, recursive = TRUE, force = TRUE)

@@ -335,7 +335,7 @@ calculate_kbet_sc(sc_object, batch_column = "exp_id")
 #> kBET Scores
 #>   Cells: 6626 | Batches: 2 | Threshold: 0.050
 #>   Rejection rate:      0.9870 (6540 / 6626)
-#>   Mean Chi-Square:     12.7892 (expected under H0: 1)
+#>   Mean Chi-Square:     12.7900 (expected under H0: 1)
 #>   Median Chi-Square:   8.1742
 ```
 
@@ -357,7 +357,7 @@ metrics_dt <- calculate_integration_metrics_sc(
 metrics_dt[]
 #>    embedding kbet_accept batch_asw ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num> <num>          <num> <num>         <num>
-#> 1:       pca  0.01297917 0.9063555     0             NA     1     0.6508355
+#> 1:       pca  0.01297917 0.9063547     0             NA     1     0.6508361
 #>    graph_connectivity      method
 #>                 <num>      <char>
 #> 1:          0.9501534 Uncorrected
@@ -416,7 +416,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "fastMNN"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       mnn   0.6845759 0.9736488 0.4705881      0.9600038     1     0.6492018
+#> 1:       mnn   0.6853305 0.9736461 0.4705881      0.9599944     1     0.6491963
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:          0.9489644 fastMNN
@@ -530,7 +530,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v2"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.7982191  0.977846 0.6423357      0.9493217     1     0.6677088
+#> 1:   harmony    0.798521 0.9778477 0.6423357      0.9500981     1     0.6684426
 #>    graph_connectivity     method
 #>                 <num>     <char>
 #> 1:          0.9499137 Harmony v2
@@ -614,10 +614,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v1"]
 #>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v1   0.8827347 0.9754045 0.6423357      0.9817465     1
+#> 1: harmony_v1   0.8836402 0.9753397 0.6423357      0.9826929     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
-#> 1:     0.6671693          0.9499659 Harmony v1
+#> 1:      0.667803          0.9499137 Harmony v1
 ```
 
 ``` r
@@ -710,10 +710,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat CCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:       cca     0.77377 0.9569454 0.4705881      0.9784447     1     0.6653001
+#> 1:       cca   0.7579233 0.9547717 0.4705881      0.9777682     1     0.6660706
 #>    graph_connectivity     method
 #>                 <num>     <char>
-#> 1:          0.9499659 Seurat CCA
+#> 1:          0.9497784 Seurat CCA
 ```
 
 ``` r
@@ -791,7 +791,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Seurat rPCA"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:      rpca   0.8131603 0.9678163 0.6423357      0.9419804     1      0.663178
+#> 1:      rpca   0.8163296 0.9666131 0.6423357      0.9411962     1     0.6634398
 #>    graph_connectivity      method
 #>                 <num>      <char>
 #> 1:          0.9495387 Seurat rPCA
@@ -920,10 +920,10 @@ data.table(
 )
 #>    cross_batch_share_knn cross_batch_share_edges cross_batch_share_weight
 #>                    <num>                   <num>                    <num>
-#> 1:             0.4668377               0.5072296               0.03727733
+#> 1:             0.4668377               0.5072158               0.03727771
 #>    median_nearest_same_batch median_nearest_other_batch
 #>                        <num>                      <num>
-#> 1:                  4.547937                   8.465939
+#> 1:                  4.548621                   8.465795
 ```
 
 Half the edges cross batches, but they carry only a few percent of the
@@ -971,8 +971,8 @@ rbindlist(purrr::map(
 #>            clustering n_clusters n_unmixed_clusters share_cells_in_unmixed
 #>                <char>      <int>              <int>                  <num>
 #> 1: leiden_uncorrected         22                 17            0.971174162
-#> 2:     leiden_harmony         15                  1            0.005131301
-#> 3:       leiden_bbknn         18                 13            0.876546936
+#> 2:     leiden_harmony         15                  1            0.004527618
+#> 3:       leiden_bbknn         18                 13            0.876999698
 ```
 
 ``` r
@@ -1024,21 +1024,21 @@ metrics_dt[, .(
 )]
 #>         method kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>         <char>       <num>     <num>     <num>          <num> <num>
-#> 1: Uncorrected  0.01297917 0.9063555 0.0000000             NA     1
-#> 2:     fastMNN  0.68457591 0.9736488 0.4705881      0.9600038     1
-#> 3:  Harmony v2  0.79821914 0.9778460 0.6423357      0.9493217     1
-#> 4:  Harmony v1  0.88273468 0.9754045 0.6423357      0.9817465     1
-#> 5:  Seurat CCA  0.77377000 0.9569454 0.4705881      0.9784447     1
-#> 6: Seurat rPCA  0.81316028 0.9678163 0.6423357      0.9419804     1
+#> 1: Uncorrected  0.01297917 0.9063547 0.0000000             NA     1
+#> 2:     fastMNN  0.68533052 0.9736461 0.4705881      0.9599944     1
+#> 3:  Harmony v2  0.79852098 0.9778477 0.6423357      0.9500981     1
+#> 4:  Harmony v1  0.88364021 0.9753397 0.6423357      0.9826929     1
+#> 5:  Seurat CCA  0.75792333 0.9547717 0.4705881      0.9777682     1
+#> 6: Seurat rPCA  0.81632961 0.9666131 0.6423357      0.9411962     1
 #> 7:       BBKNN  1.00000000        NA 0.9911504             NA     1
 #>    cell_type_asw graph_connectivity
 #>            <num>              <num>
-#> 1:     0.6508355          0.9501534
-#> 2:     0.6492018          0.9489644
-#> 3:     0.6677088          0.9499137
-#> 4:     0.6671693          0.9499659
-#> 5:     0.6653001          0.9499659
-#> 6:     0.6631780          0.9495387
+#> 1:     0.6508361          0.9501534
+#> 2:     0.6491963          0.9489644
+#> 3:     0.6684426          0.9499137
+#> 4:     0.6678030          0.9499137
+#> 5:     0.6660706          0.9497784
+#> 6:     0.6634398          0.9495387
 #> 7:            NA          0.9501534
 ```
 

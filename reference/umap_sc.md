@@ -40,7 +40,7 @@ umap_sc(
   embd_to_use = "pca",
   slot_name = "umap",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -82,8 +82,8 @@ umap_sc(
 - modality:
 
   String. On which modality to run the UMAP. One of
-  `c("rna", "adt", "wnn")`. The two latter options are only available
-  for multi-modal versions with the added data.
+  `c("rna", "adt", "atac", "wnn")`. The two latter options are only
+  available for multi-modal versions with the added data.
 
 - n_dim:
 
@@ -117,6 +117,8 @@ umap_sc(
 
   Named list. See
   [`manifoldsR::params_umap()`](https://gregorlueg.github.io/manifoldsR/reference/params_umap.html).
+  `optimiser = "adam_v06"` and `init = "recursive"` give the umap-learn
+  0.6 Adam optimiser and initialisation.
 
 - seed:
 

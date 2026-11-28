@@ -693,10 +693,10 @@ k_sweep
 #> 1:     2 0.7546717 0.13438072   0.13449627            FALSE         0
 #> 2:     3 0.7082610 0.09671029   0.09806779            FALSE         0
 #> 3:     4 0.9751885 0.06291160   0.06299967            FALSE         0
-#> 4:     5 0.8993866 0.05916342   0.06091455            FALSE         0
-#> 5:     6 0.7649848 0.05695935   0.05906541            FALSE         0
-#> 6:     7 0.7104793 0.05512725   0.05638576            FALSE         0
-#> 7:     8 0.6015507 0.05385696   0.05448819            FALSE         0
+#> 4:     5 0.8825423 0.05916342   0.06091455            FALSE         0
+#> 5:     6 0.7702740 0.05695935   0.05906541            FALSE         0
+#> 6:     7 0.7021799 0.05512725   0.05638576            FALSE         0
+#> 7:     8 0.5892700 0.05385696   0.05448819            FALSE         0
 #>    n_empty_clusters n_converged
 #>               <int>       <int>
 #> 1:                0          10
@@ -771,12 +771,12 @@ line up directly.
 head(consensus_stab$clusters)
 #>      component_id   run component pooled_idx cluster local_density silhouette
 #>            <char> <int>     <int>      <int>   <int>         <num>      <num>
-#> 1: run_01.comp_01     1         1          1       3  5.220118e-06  0.9999714
-#> 2: run_01.comp_02     1         2          2       4  9.438175e-03  0.9763555
-#> 3: run_01.comp_03     1         3          3       1  7.572240e-03  0.9526643
-#> 4: run_01.comp_04     1         4          4       2  1.848401e-04  0.9952859
-#> 5: run_02.comp_01     2         1          5       2  5.203952e-05  0.9968476
-#> 6: run_02.comp_02     2         2          6       3  6.306892e-07  0.9999903
+#> 1: run_01.comp_01     1         1          1       2  5.220118e-06  0.9999714
+#> 2: run_01.comp_02     1         2          2       1  9.438175e-03  0.9763555
+#> 3: run_01.comp_03     1         3          3       4  7.572240e-03  0.9526643
+#> 4: run_01.comp_04     1         4          4       3  1.848401e-04  0.9952859
+#> 5: run_02.comp_01     2         1          5       3  5.203952e-05  0.9968476
+#> 6: run_02.comp_02     2         2          6       2  6.306892e-07  0.9999903
 #>      kept
 #>    <lgcl>
 #> 1:   TRUE
@@ -793,10 +793,10 @@ nmf_consensus_modules <- get_nmf_modules(coexp_nmf_consensus)
 nmf_consensus_modules[, .N, by = module_id]
 #>    module_id     N
 #>       <char> <int>
-#> 1:   comp_01    57
-#> 2:   comp_02    66
-#> 3:   comp_03     3
-#> 4:   comp_04    54
+#> 1:   comp_01    54
+#> 2:   comp_02     3
+#> 3:   comp_03    66
+#> 4:   comp_04    57
 ```
 
 ## Recovery of planted modules

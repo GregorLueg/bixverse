@@ -561,8 +561,7 @@ sc_restored
 ### Archiving for cold storage
 
 Project done, but you want to keep the data around? The two count
-binaries are lz4-compressed per chunk (v4 format), but still take disk
-space.
+binaries are lz4-compressed per chunk, but still take disk space.
 [`archive_sc_exp()`](https://gregorlueg.github.io/bixverse/reference/archive_sc_exp.md)
 compresses `counts_cells.bin` into a single zstd `counts.bxa` and, by
 default, deletes both binaries. The gene-based file is not archived at
@@ -587,7 +586,7 @@ c(
   archive_mb = archive_stats$archive_bytes / 1e6
 )
 #> binaries_mb  archive_mb 
-#>    0.110075    0.028114
+#>    0.116264    0.028130
 list.files(dir_h5)
 #> [1] "counts.bxa"   "memory.rds"   "sc_duckdb.db"
 ```

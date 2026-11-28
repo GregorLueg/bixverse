@@ -11,7 +11,7 @@ etc."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/l
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,6 +71,8 @@ etc."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/l
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -114,6 +116,8 @@ etc.</p>
 <li><p><a href="#method-SingleCellDuckDBBase-get_obs_table"><code>SingleCellDuckDBBase$get_obs_table()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDBBase-get_vars_table"><code>SingleCellDuckDBBase$get_vars_table()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDBBase-get_vars_adt_table"><code>SingleCellDuckDBBase$get_vars_adt_table()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDBBase-get_vars_atac_table"><code>SingleCellDuckDBBase$get_vars_atac_table()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDBBase-has_table"><code>SingleCellDuckDBBase$has_table()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDBBase-get_obs_index_map"><code>SingleCellDuckDBBase$get_obs_index_map()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDBBase-get_var_index_map"><code>SingleCellDuckDBBase$get_var_index_map()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDBBase-get_cells_to_keep"><code>SingleCellDuckDBBase$get_cells_to_keep()</code></a></p></li>
@@ -233,13 +237,55 @@ selected indices and/or columns.</p>
 
 </div>
 
+<p></p><hr><a id="method-SingleCellDuckDBBase-get_vars_atac_table"></a><div class="section">
+<h3 id="singlecellduckdbbase-get-vars-atac-table-"><code>SingleCellDuckDBBase$get_vars_atac_table()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-get-vars-atac-table-"></a></h3>
+<p>Returns the var table of the ATAC features from the DuckDB.</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">get_vars_atac_table</span><span class="op">(</span>indices <span class="op">=</span> <span class="cn">NULL</span>, cols <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>indices</code></dt>
+<dd><p>Optional feature indices (1-based).</p></dd>
+
+      <dt><code>cols</code></dt>
+<dd><p>Optional column names to return.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<p>The var atac table as a data.table, keyed <code>feature_idx</code> /
+<code>feature_id</code>, with optionally selected indices and/or columns.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDBBase-has_table"></a><div class="section">
+<h3 id="singlecellduckdbbase-has-table-"><code>SingleCellDuckDBBase$has_table()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-has-table-"></a></h3>
+<p>Checks whether a table exists in the DuckDB.</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">has_table</span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>name</code></dt>
+<dd><p>String. The table name.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>Boolean.</p>
+</div>
+
+</div>
+
 <p></p><hr><a id="method-SingleCellDuckDBBase-get_obs_index_map"></a><div class="section">
 <h3 id="singlecellduckdbbase-get-obs-index-map-"><code>SingleCellDuckDBBase$get_obs_index_map()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-get-obs-index-map-"></a></h3>
 <p>Returns a mapping between cell index and cell names/barcodes.</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">get_obs_index_map</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>A named numeric containing the cell index mapping.</p>
 </div>
 
@@ -248,10 +294,10 @@ selected indices and/or columns.</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-get_var_index_map"></a><div class="section">
 <h3 id="singlecellduckdbbase-get-var-index-map-"><code>SingleCellDuckDBBase$get_var_index_map()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-get-var-index-map-"></a></h3>
 <p>Returns a mapping between variable index and variable names.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">get_var_index_map</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
 <p>A named numeric containing the gene index mapping.</p>
 </div>
 
@@ -260,10 +306,10 @@ selected indices and/or columns.</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-get_cells_to_keep"></a><div class="section">
 <h3 id="singlecellduckdbbase-get-cells-to-keep-"><code>SingleCellDuckDBBase$get_cells_to_keep()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-get-cells-to-keep-"></a></h3>
 <p>Returns the indices of the cells that have to_keep = TRUE in the DB.</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">get_cells_to_keep</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
 <p>The index positions (1-index) of the cells to keep.</p>
 </div>
 
@@ -272,10 +318,10 @@ selected indices and/or columns.</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-get_obs_cols"></a><div class="section">
 <h3 id="singlecellduckdbbase-get-obs-cols-"><code>SingleCellDuckDBBase$get_obs_cols()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-get-obs-cols-"></a></h3>
 <p>Returns the available column names in the obs table.</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">get_obs_cols</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
 <p>A character vector of column names.
 Filter the obs table and reset the cell idx</p>
 </div>
@@ -285,10 +331,10 @@ Filter the obs table and reset the cell idx</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-set_cells_to_keep"></a><div class="section">
 <h3 id="singlecellduckdbbase-set-cells-to-keep-"><code>SingleCellDuckDBBase$set_cells_to_keep()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-set-cells-to-keep-"></a></h3>
 <p></p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">set_cells_to_keep</span><span class="op">(</span><span class="va">cell_idx_to_keep</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>cell_idx_to_keep</code></dt>
 <dd><p>Integer vector with the cell indices to keep.
 Needs to be 1-indexed!</p></dd>
@@ -296,7 +342,7 @@ Needs to be 1-indexed!</p></dd>
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
 <p>Invisible self after updating the to_keep column in the DuckDB.
 Restore every cell in the obs table</p>
 </div>
@@ -310,10 +356,10 @@ only flips this flag, so nothing was lost and nothing needs rebuilding.
 A single statement rather than a round trip through
 <code><a href="set_cells_to_keep.html">set_cells_to_keep()</a></code>, which would write a temp table the size of the
 whole obs table just to switch every flag back on.</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">reset_cells_to_keep</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
 <p>Invisible self after resetting the to_keep column.
 Filter the var table and reset the gene idx</p>
 </div>
@@ -323,10 +369,10 @@ Filter the var table and reset the gene idx</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-filter_var_table"></a><div class="section">
 <h3 id="singlecellduckdbbase-filter-var-table-"><code>SingleCellDuckDBBase$filter_var_table()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-filter-var-table-"></a></h3>
 <p></p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">filter_var_table</span><span class="op">(</span><span class="va">filter_vec</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>filter_vec</code></dt>
 <dd><p>Boolean vector that will be used to filter the var
 table.</p></dd>
@@ -340,10 +386,10 @@ table.</p></dd>
 <p></p><hr><a id="method-SingleCellDuckDBBase-add_data_obs"></a><div class="section">
 <h3 id="singlecellduckdbbase-add-data-obs-"><code>SingleCellDuckDBBase$add_data_obs()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-add-data-obs-"></a></h3>
 <p>Add new data to the obs table in the DuckDB</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">add_data_obs</span><span class="op">(</span><span class="va">new_data</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>new_data</code></dt>
 <dd><p>A data.table with additional new columns. The order needs
 to be the same as the original in the obs table.</p></dd>
@@ -351,7 +397,7 @@ to be the same as the original in the obs table.</p></dd>
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
 <p>Invisible self while adding the new columns to the obs table
 in the DuckDB.</p>
 </div>
@@ -361,17 +407,17 @@ in the DuckDB.</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-join_data_obs"></a><div class="section">
 <h3 id="singlecellduckdbbase-join-data-obs-"><code>SingleCellDuckDBBase$join_data_obs()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-join-data-obs-"></a></h3>
 <p>Left join new data to the obs table in the DuckDB by cell_idx</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">join_data_obs</span><span class="op">(</span><span class="va">new_data</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>new_data</code></dt>
 <dd><p>A data.table with a cell_idx column to join on.</p></dd>
 
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
 <p>Invisible self while left joining the new data to the obs table
 in the DuckDB.</p>
 </div>
@@ -381,7 +427,7 @@ in the DuckDB.</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-set_to_keep_column"></a><div class="section">
 <h3 id="singlecellduckdbbase-set-to-keep-column-"><code>SingleCellDuckDBBase$set_to_keep_column()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-set-to-keep-column-"></a></h3>
 <p>Independent of the loader, set the to_keep column to <code>TRUE</code> initially</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">set_to_keep_column</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -390,10 +436,10 @@ in the DuckDB.</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-add_data_var"></a><div class="section">
 <h3 id="singlecellduckdbbase-add-data-var-"><code>SingleCellDuckDBBase$add_data_var()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-add-data-var-"></a></h3>
 <p>Add the information which genes pass threshold to the DuckDB.</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">add_data_var</span><span class="op">(</span><span class="va">new_data</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>new_data</code></dt>
 <dd><p>A data.table with additional new columns. The order needs
 to be the same as the original in the var table.</p></dd>
@@ -401,7 +447,7 @@ to be the same as the original in the var table.</p></dd>
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
 <p>Invisible self while adding the new columns to the var table
 in the DuckDB.</p>
 </div>
@@ -411,10 +457,10 @@ in the DuckDB.</p>
 <p></p><hr><a id="method-SingleCellDuckDBBase-rename_column"></a><div class="section">
 <h3 id="singlecellduckdbbase-rename-column-"><code>SingleCellDuckDBBase$rename_column()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-rename-column-"></a></h3>
 <p>Rename a column in the obs or var table.</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">rename_column</span><span class="op">(</span>table <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs"</span>, <span class="st">"var"</span><span class="op">)</span>, <span class="va">old</span>, <span class="va">new</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>table</code></dt>
 <dd><p>String. Either "obs" or "var".</p></dd>
 
@@ -427,7 +473,7 @@ in the DuckDB.</p>
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
 <p>Invisible self.</p>
 </div>
 
@@ -439,10 +485,10 @@ in the DuckDB.</p>
 <p>Refuses to drop the protected identifier and bookkeeping columns
 (<code>cell_idx</code>, <code>cell_id</code>, <code>to_keep</code> for obs; <code>gene_idx</code>, <code>gene_id</code> for
 var). Columns that do not exist trigger a warning and are skipped.</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">drop_columns</span><span class="op">(</span>table <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs"</span>, <span class="st">"var"</span><span class="op">)</span>, <span class="va">cols</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
+<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>table</code></dt>
 <dd><p>String. Either "obs" or "var".</p></dd>
 
@@ -452,7 +498,7 @@ var). Columns that do not exist trigger a warning and are skipped.</p><div class
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<h4 id="returns-16">Returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
 <p>Invisible self.</p>
 </div>
 
@@ -461,10 +507,10 @@ var). Columns that do not exist trigger a warning and are skipped.</p><div class
 <p></p><hr><a id="method-SingleCellDuckDBBase-clone"></a><div class="section">
 <h3 id="singlecellduckdbbase-clone-"><code>SingleCellDuckDBBase$clone()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdbbase-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDBBase</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
+<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

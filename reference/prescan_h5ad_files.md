@@ -18,8 +18,8 @@ prescan_h5ad_files(
 
 - h5_paths:
 
-  Character vector of file paths to h5ad files. If names are provided,
-  these will be used as experimental identifiers.
+  Character vector of paths to h5ad files or AnnData Zarr stores. If
+  names are provided, these will be used as experimental identifiers.
 
 - gene_universe:
 

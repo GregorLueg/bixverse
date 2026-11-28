@@ -40,7 +40,10 @@ load_tenx_h5(
 - feature_type:
 
   String. Modality to keep. Defaults to `"Gene Expression"`. Ignored for
-  v2 (single modality).
+  v2 (single modality). `"Peaks"` errors, see
+  [`load_atac_tenx()`](https://gregorlueg.github.io/bixverse/reference/load_atac_tenx.md)
+  and
+  [`add_atac_tenx_sc()`](https://gregorlueg.github.io/bixverse/reference/add_atac_tenx_sc.md).
 
 - csc_mem_gb:
 

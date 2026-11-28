@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -2035,7 +2037,21 @@
           <code><a href="save_h5ad.html">save_h5ad()</a></code>
 
         </dt>
-        <dd>Save a <code>SingleCells</code> object to h5ad</dd>
+        <dd>Write a <code>SingleCells</code> object to h5ad</dd>
+
+        <dt>
+
+          <code><a href="save_zarr.html">save_zarr()</a></code>
+
+        </dt>
+        <dd>Write a <code>SingleCells</code> object to an AnnData Zarr store</dd>
+
+        <dt>
+
+          <code><a href="write_tenx_h5_sc.html">write_tenx_h5_sc()</a></code>
+
+        </dt>
+        <dd>Helper function to write data to a 10x CellRanger-style h5 file</dd>
 
         <dt>
 
@@ -2056,7 +2072,7 @@
           <code><a href="upgrade_sc_store.html">upgrade_sc_store()</a></code>
 
         </dt>
-        <dd>Upgrade the on-disk counts to the v4 file format</dd>
+        <dd>Upgrade the on-disk counts to the v5 file format</dd>
 
         <dt>
 
@@ -3086,6 +3102,211 @@
         </dt>
         <dd>Wrapper function for the DIALOGUE refinement parameters</dd>
       </dl></div><div class="section level2">
+      <h2 id="single-cell-atac">Single cell ATAC<a class="anchor" aria-label="anchor" href="#single-cell-atac"></a></h2>
+
+      <div class="section-desc"><p>ATAC-only experiments and ATAC next to the RNA. Loading from fragment files or 10x peak matrices, fragment QC, multiplets, peak calling, TF-IDF and LSI, integration, gene activity and peak to gene links.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="SingleCellsAtac.html">SingleCellsAtac()</a></code>
+
+        </dt>
+        <dd>bixverse single cell ATAC class</dd>
+
+        <dt>
+
+          <code><a href="load_atac_fragments.html">load_atac_fragments()</a></code>
+
+        </dt>
+        <dd>Load an ATAC-only experiment from a fragment file</dd>
+
+        <dt>
+
+          <code><a href="load_atac_tenx.html">load_atac_tenx()</a></code>
+
+        </dt>
+        <dd>Load an ATAC-only experiment from a 10x peak matrix h5</dd>
+
+        <dt>
+
+          <code><a href="add_atac_tenx_sc.html">add_atac_tenx_sc()</a></code>
+
+        </dt>
+        <dd>Add the peaks of a 10x multiome h5 as the ATAC store</dd>
+
+        <dt>
+
+          <code><a href="add_atac_fragments_sc.html">add_atac_fragments_sc()</a></code>
+
+        </dt>
+        <dd>Count a fragment file into peaks or genome tiles as the ATAC store</dd>
+
+        <dt>
+
+          <code><a href="barcode_fragment_counts.html">barcode_fragment_counts()</a></code>
+
+        </dt>
+        <dd>Fragments per barcode, every barcode in the file</dd>
+
+        <dt>
+
+          <code><a href="read_cellranger_barcodes.html">read_cellranger_barcodes()</a></code>
+
+        </dt>
+        <dd>Read the cell barcodes Cell Ranger ATAC called</dd>
+
+        <dt>
+
+          <code><a href="merge_fragments.html">merge_fragments()</a></code>
+
+        </dt>
+        <dd>Merge per-sample fragment files into one</dd>
+
+        <dt>
+
+          <code><a href="fragment_qc_sc.html">fragment_qc_sc()</a></code>
+
+        </dt>
+        <dd>Per-cell QC from the fragment file</dd>
+
+        <dt>
+
+          <code><a href="fragment_profiles_sc.html">fragment_profiles_sc()</a></code>
+
+        </dt>
+        <dd>TSS insertion profile and fragment length histogram of the kept cells</dd>
+
+        <dt>
+
+          <code><a href="amulet_sc.html">amulet_sc()</a></code>
+
+        </dt>
+        <dd>Flag multiplets from fragment overlaps (AMULET)</dd>
+
+        <dt>
+
+          <code><a href="params_atac_amulet.html">params_atac_amulet()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the AMULET parameters</dd>
+
+        <dt>
+
+          <code><a href="call_peaks_sc.html">call_peaks_sc()</a></code>
+
+        </dt>
+        <dd>Call peaks on the kept cells, pooled or per group</dd>
+
+        <dt>
+
+          <code><a href="params_atac_call_peaks.html">params_atac_call_peaks()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the ATAC peak calling parameters</dd>
+
+        <dt>
+
+          <code><a href="remove_blacklisted.html">remove_blacklisted()</a></code>
+
+        </dt>
+        <dd>Drop the peaks that overlap a blacklist region</dd>
+
+        <dt>
+
+          <code><a href="annotate_peaks_sc.html">annotate_peaks_sc()</a></code>
+
+        </dt>
+        <dd>The closest gene of every ATAC feature</dd>
+
+        <dt>
+
+          <code><a href="run_tfidf_sc.html">run_tfidf_sc()</a></code>
+
+        </dt>
+        <dd>Switch the ATAC store to TF-IDF over the kept cells</dd>
+
+        <dt>
+
+          <code><a href="find_top_features_sc.html">find_top_features_sc()</a></code>
+
+        </dt>
+        <dd>Find the most accessible features</dd>
+
+        <dt>
+
+          <code><a href="calculate_lsi_sc.html">calculate_lsi_sc()</a></code>
+
+        </dt>
+        <dd>LSI over the TF-IDF of the kept cells</dd>
+
+        <dt>
+
+          <code><a href="params_atac_lsi.html">params_atac_lsi()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the ATAC LSI parameters</dd>
+
+        <dt>
+
+          <code><a href="get_lsi_depth_cor.html">get_lsi_depth_cor()</a></code>
+
+        </dt>
+        <dd>Correlation of each LSI component with the library size</dd>
+
+        <dt>
+
+          <code><a href="project_lsi_sc.html">project_lsi_sc()</a></code>
+
+        </dt>
+        <dd>Project the query's kept cells onto the reference LSI</dd>
+
+        <dt>
+
+          <code><a href="run_rlsi_sc.html">run_rlsi_sc()</a></code>
+
+        </dt>
+        <dd>rLSI integration</dd>
+
+        <dt>
+
+          <code><a href="params_atac_rlsi.html">params_atac_rlsi()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the rLSI integration parameters</dd>
+
+        <dt>
+
+          <code><a href="gene_activity_sc.html">gene_activity_sc()</a></code>
+
+        </dt>
+        <dd>Count fragments over gene body plus promoter into a gene activity store</dd>
+
+        <dt>
+
+          <code><a href="get_gene_activity.html">get_gene_activity()</a></code>
+
+        </dt>
+        <dd>Open an experiment's gene activity store</dd>
+
+        <dt>
+
+          <code><a href="params_atac_gene_activity.html">params_atac_gene_activity()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the gene activity parameters</dd>
+
+        <dt>
+
+          <code><a href="peak_to_gene_sc.html">peak_to_gene_sc()</a></code>
+
+        </dt>
+        <dd>Link peaks to nearby genes by correlation over groups of cells</dd>
+      </dl></div><div class="section level2">
       <h2 id="single-cell-multi-modal-analysis-methods">Single cell multi-modal analysis methods<a class="anchor" aria-label="anchor" href="#single-cell-multi-modal-analysis-methods"></a></h2>
 
       <div class="section-desc"><p>Methods to analyse multi-modal single cell data</p></div>
@@ -3231,6 +3452,20 @@
 
         </dt>
         <dd>Transfer labels from a Symphony reference to a query via kNN majority vote</dd>
+
+        <dt>
+
+          <code><a href="transfer_labels_seurat_sc.html">transfer_labels_seurat_sc()</a></code>
+
+        </dt>
+        <dd>Seurat label transfer</dd>
+
+        <dt>
+
+          <code><a href="params_sc_seurat_transfer.html">params_sc_seurat_transfer()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the Seurat label transfer parameters</dd>
 
         <dt>
 
@@ -3776,6 +4011,13 @@
 
         <dt>
 
+          <code><a href="download_pbmc_multiome.html">download_pbmc_multiome()</a></code>
+
+        </dt>
+        <dd>Download the 10x PBMC unsorted 3k multiome data</dd>
+
+        <dt>
+
           <code><a href="download_pbmc8k.html">download_pbmc8k()</a></code>
 
         </dt>
@@ -3960,6 +4202,20 @@
 
         <dt>
 
+          <code><a href="agent_skill_status.html">agent_skill_status()</a></code>
+
+        </dt>
+        <dd>Installed bixverse agent skills and their versions</dd>
+
+        <dt>
+
+          <code><a href="skill_cli.html">skill_cli()</a></code>
+
+        </dt>
+        <dd>Manage the agent skill from a shell</dd>
+
+        <dt>
+
           <code><a href="knn_graph_label_propagation.html">knn_graph_label_propagation()</a></code>
 
         </dt>
@@ -4011,10 +4267,129 @@
 
         <dt>
 
+          <code><a href="rs_adt_clr.html">rs_adt_clr()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Applies CLR normalisation on ADT counts</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_amulet.html">rs_atac_amulet()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>AMULET multiplet detection from fragment overlaps</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_barcode_fragment_counts.html">rs_atac_barcode_fragment_counts()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Fragments per barcode</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_call_peaks.html">rs_atac_call_peaks()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Call peaks per group of cells</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_closest_genes.html">rs_atac_closest_genes()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>The closest gene body to every region</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_fragment_profiles.html">rs_atac_fragment_profiles()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>TSS profiles and fragment length histograms per group of cells</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_fragment_qc.html">rs_atac_fragment_qc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Per-cell QC from a fragment file</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_gene_activity_regions.html">rs_atac_gene_activity_regions()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Gene body plus promoter regions from a GTF</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_genome_tiles.html">rs_atac_genome_tiles()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Fixed-width tiles over chromosomes</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_merge_fragments.html">rs_atac_merge_fragments()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Merge fragment files into one indexed file</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_overlaps_any.html">rs_atac_overlaps_any()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Flag regions that overlap any of another set</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_peak_to_gene.html">rs_atac_peak_to_gene()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Peak to gene links over groups of cells</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_read_bed.html">rs_atac_read_bed()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Read a BED file</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_reduce_regions.html">rs_atac_reduce_regions()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Merge overlapping and abutting regions</dd>
+
+        <dt>
+
+          <code><a href="rs_atac_tss_positions.html">rs_atac_tss_positions()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>TSS positions from a GTF</dd>
+
+        <dt>
+
           <code><a href="rs_batch_silhouette_width.html">rs_batch_silhouette_width()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate batch silhouette width from an embedding</dd>
+
+        <dt>
+
+          <code><a href="rs_bbknn.html">rs_bbknn()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>BBKNN implementation in Rust</dd>
+
+        <dt>
+
+          <code><a href="rs_bbknn_filtering.html">rs_bbknn_filtering()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Reduce BBKNN results to the k nearest neighbours</dd>
 
         <dt>
 
@@ -4032,10 +4407,52 @@
 
         <dt>
 
+          <code><a href="rs_bonsai_layout.html">rs_bonsai_layout()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Lay out an existing Bonsai tree</dd>
+
+        <dt>
+
           <code><a href="rs_bpca.html">rs_bpca()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Bayesian PCA on a matrix with missing values</dd>
+
+        <dt>
+
+          <code><a href="rs_calc_es.html">rs_calc_es()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates the traditional GSEA enrichment score</dd>
+
+        <dt>
+
+          <code><a href="rs_calc_gsea_stat_cumulative_batch.html">rs_calc_gsea_stat_cumulative_batch()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Helper function to generate fgsea simple-based permutations</dd>
+
+        <dt>
+
+          <code><a href="rs_calc_gsea_stat_traditional_batch.html">rs_calc_gsea_stat_traditional_batch()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Helper function to generate traditional GSEA-based permutations</dd>
+
+        <dt>
+
+          <code><a href="rs_calc_gsea_stats.html">rs_calc_gsea_stats()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Rust implementation of the fgsea::calcGseaStat() function</dd>
+
+        <dt>
+
+          <code><a href="rs_calc_multi_level.html">rs_calc_multi_level()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates p-values for pre-processed data</dd>
 
         <dt>
 
@@ -4144,6 +4561,27 @@
 
         <dt>
 
+          <code><a href="rs_create_random_aucs.html">rs_create_random_aucs()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Create random AUCs</dd>
+
+        <dt>
+
+          <code><a href="rs_critval.html">rs_critval()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate the critical value</dd>
+
+        <dt>
+
+          <code><a href="rs_critval_mat.html">rs_critval_mat()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate the critical value</dd>
+
+        <dt>
+
           <code><a href="rs_dense_to_upper_triangle.html">rs_dense_to_upper_triangle()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4165,10 +4603,31 @@
 
         <dt>
 
+          <code><a href="rs_dsb.html">rs_dsb()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run DSB normalisation on raw ADT counts</dd>
+
+        <dt>
+
+          <code><a href="rs_edger_ql.html">rs_edger_ql()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run the edgeR quasi-likelihood chain on a count matrix</dd>
+
+        <dt>
+
           <code><a href="rs_fast_auc.html">rs_fast_auc()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Fast AUC calculation</dd>
+
+        <dt>
+
+          <code><a href="rs_fast_cluster_sc.html">rs_fast_cluster_sc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Runs fast clustering on the data</dd>
 
         <dt>
 
@@ -4193,6 +4652,13 @@
 
         <dt>
 
+          <code><a href="rs_filter_onto_sim.html">rs_filter_onto_sim()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Filter the term similarities for a specific critical value</dd>
+
+        <dt>
+
           <code><a href="rs_gene_trends.html">rs_gene_trends()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4200,10 +4666,31 @@
 
         <dt>
 
+          <code><a href="rs_generate_bulk_rnaseq.html">rs_generate_bulk_rnaseq()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Generation of bulkRNAseq-like data with optional correlation structure</dd>
+
+        <dt>
+
+          <code><a href="rs_generate_ligand_target_influence.html">rs_generate_ligand_target_influence()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Generate the ligand to target influence matrices</dd>
+
+        <dt>
+
           <code><a href="rs_geom_elim_fgsea_simple.html">rs_geom_elim_fgsea_simple()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run fgsea simple method for gene ontology with elimination method</dd>
+
+        <dt>
+
+          <code><a href="rs_get_gs_indices.html">rs_get_gs_indices()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Helper function to rapidly retrieve the indices of the gene set members</dd>
 
         <dt>
 
@@ -4218,6 +4705,55 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate graph connectivity per cell type</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_from_bytes.html">rs_graph_from_bytes()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Read a Rust neighbour graph back from bytes</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_from_edges.html">rs_graph_from_edges()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Build a Rust neighbour graph from an edge list</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_info.html">rs_graph_info()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Summary of a Rust neighbour graph</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_leiden.html">rs_graph_leiden()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Leiden and Louvain clustering on a Rust neighbour graph</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_to_bytes.html">rs_graph_to_bytes()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Serialise a Rust neighbour graph to bytes</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_to_csr.html">rs_graph_to_csr()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Extract the CSR adjacency of a Rust neighbour graph</dd>
+
+        <dt>
+
+          <code><a href="rs_graph_to_edges.html">rs_graph_to_edges()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Flatten a Rust neighbour graph into an edge list</dd>
 
         <dt>
 
@@ -4242,6 +4778,27 @@
 
         <dt>
 
+          <code><a href="rs_h5_attrs.html">rs_h5_attrs()</a></code>
+
+        </dt>
+        <dd>Read the attributes of an HDF5 group or dataset into R</dd>
+
+        <dt>
+
+          <code><a href="rs_h5_ls.html">rs_h5_ls()</a></code>
+
+        </dt>
+        <dd>List the members of an HDF5 group</dd>
+
+        <dt>
+
+          <code><a href="rs_h5_read.html">rs_h5_read()</a></code>
+
+        </dt>
+        <dd>Read one HDF5 dataset into R</dd>
+
+        <dt>
+
           <code><a href="rs_h5ad_data.html">rs_h5ad_data()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4253,6 +4810,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Dimensions and storage layout of an h5ad file</dd>
+
+        <dt>
+
+          <code><a href="rs_h5ad_frame.html">rs_h5ad_frame()</a></code>
+
+        </dt>
+        <dd>Read an h5ad dataframe group into R</dd>
+
+        <dt>
+
+          <code><a href="rs_h5ad_frame_to_parquet.html">rs_h5ad_frame_to_parquet()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Write the obs or var dataframe of an h5ad file to Parquet</dd>
 
         <dt>
 
@@ -4291,6 +4862,13 @@
 
         <dt>
 
+          <code><a href="rs_hotspot_cluster_genes.html">rs_hotspot_cluster_genes()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Cluster the genes by Z-score together</dd>
+
+        <dt>
+
           <code><a href="rs_hypergeom_test.html">rs_hypergeom_test()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4316,6 +4894,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run ICA with cross-validation and random initialisation</dd>
+
+        <dt>
+
+          <code><a href="rs_importance_threshold.html">rs_importance_threshold()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>SCENIC: Select TF-gene pairs by per-gene importance threshold</dd>
 
         <dt>
 
@@ -4347,24 +4932,31 @@
 
         <dt>
 
+          <code><a href="rs_knn_mat_to_edge_pairs.html">rs_knn_mat_to_edge_pairs()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Flatten kNN matrix to edge pairs</dd>
+
+        <dt>
+
+          <code><a href="rs_lda.html">rs_lda()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Fit a latent Dirichlet allocation model to a document-term matrix</dd>
+
+        <dt>
+
+          <code><a href="rs_lda_k_sweep.html">rs_lda_k_sweep()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Fit LDA across a range of topic counts and score each fit</dd>
+
+        <dt>
+
           <code><a href="rs_leiden_clustering.html">rs_leiden_clustering()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust implementation of Leiden and Louvain clustering</dd>
-
-        <dt>
-
-          <code><a href="rs_lm_activity.html">rs_lm_activity()</a></code>
-          <span class="badge lifecycle lifecycle-experimental">experimental</span>
-        </dt>
-        <dd>ULM / MLM activity scores (decoupler-style)</dd>
-
-        <dt>
-
-          <code><a href="rs_generate_ligand_target_influence.html">rs_generate_ligand_target_influence()</a></code>
-          <span class="badge lifecycle lifecycle-experimental">experimental</span>
-        </dt>
-        <dd>Generate the ligand to target influence matrices</dd>
 
         <dt>
 
@@ -4389,6 +4981,13 @@
 
         <dt>
 
+          <code><a href="rs_lm_activity.html">rs_lm_activity()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>ULM / MLM activity scores (decoupler-style)</dd>
+
+        <dt>
+
           <code><a href="rs_mad_outlier.html">rs_mad_outlier()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4396,10 +4995,10 @@
 
         <dt>
 
-          <code><a href="rs_edger_ql.html">rs_edger_ql()</a></code>
+          <code><a href="rs_make_milor_nhoods.html">rs_make_milor_nhoods()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Run the edgeR quasi-likelihood chain on a count matrix</dd>
+        <dd>Generate the neighbourhoods akin to the miloR approach</dd>
 
         <dt>
 
@@ -4410,10 +5009,24 @@
 
         <dt>
 
+          <code><a href="rs_mc_bonsai.html">rs_mc_bonsai()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Build a Bonsai tree from metacell counts</dd>
+
+        <dt>
+
           <code><a href="rs_mc_dialogue.html">rs_mc_dialogue()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run DIALOGUE over meta cells</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_fit_residuals.html">rs_mc_fit_residuals()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Fits a residual model for meta cells</dd>
 
         <dt>
 
@@ -4428,13 +5041,6 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate gene to gene spatial correlations (for meta cells)</dd>
-
-        <dt>
-
-          <code><a href="rs_mc_fit_residuals.html">rs_mc_fit_residuals()</a></code>
-          <span class="badge lifecycle lifecycle-experimental">experimental</span>
-        </dt>
-        <dd>Fits a residual model for meta cells</dd>
 
         <dt>
 
@@ -4494,10 +5100,45 @@
 
         <dt>
 
+          <code><a href="rs_meld_sc.html">rs_meld_sc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run MELD</dd>
+
+        <dt>
+
+          <code><a href="rs_metacell_compactness.html">rs_metacell_compactness()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates the compactness of the MetaCells based on diffusion map coordinates</dd>
+
+        <dt>
+
+          <code><a href="rs_metacell_density.html">rs_metacell_density()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates diffusion maps for density calculations for meta cells</dd>
+
+        <dt>
+
+          <code><a href="rs_metacell_separation.html">rs_metacell_separation()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates the separation of the centroids of the MetaCells based on diffusion map coordinates.</dd>
+
+        <dt>
+
           <code><a href="rs_mitch_calc.html">rs_mitch_calc()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate mitch enrichment leveraging Rust under the hood</dd>
+
+        <dt>
+
+          <code><a href="rs_mutual_info.html">rs_mutual_info()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates the mutual information matrix</dd>
 
         <dt>
 
@@ -4508,10 +5149,59 @@
 
         <dt>
 
-          <code><a href="rs_mutual_info.html">rs_mutual_info()</a></code>
+          <code><a href="rs_nmf_consensus_bulk.html">rs_nmf_consensus_bulk()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Calculates the mutual information matrix</dd>
+        <dd>Run consensus NMF on a bulk expression matrix</dd>
+
+        <dt>
+
+          <code><a href="rs_nmf_consensus_mc.html">rs_nmf_consensus_mc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run consensus NMF on MetaCells</dd>
+
+        <dt>
+
+          <code><a href="rs_nmf_k_sweep_bulk.html">rs_nmf_k_sweep_bulk()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Sweep k and report consensus stability against reconstruction error (bulk)</dd>
+
+        <dt>
+
+          <code><a href="rs_nmf_k_sweep_mc.html">rs_nmf_k_sweep_mc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Sweep k and report consensus stability against reconstruction error</dd>
+
+        <dt>
+
+          <code><a href="rs_nmf_multi_bulk.html">rs_nmf_multi_bulk()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run multiple NMF (HALS) restarts on a bulk expression matrix</dd>
+
+        <dt>
+
+          <code><a href="rs_nmf_multi_mc.html">rs_nmf_multi_mc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run multiple NMF (HALS) restarts on MetaCells</dd>
+
+        <dt>
+
+          <code><a href="rs_nmf_single_bulk.html">rs_nmf_single_bulk()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run NMF (HALS) on a bulk expression matrix (single run)</dd>
+
+        <dt>
+
+          <code><a href="rs_nmf_single_mc.html">rs_nmf_single_mc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run NMF (HALS) on MetaCells</dd>
 
         <dt>
 
@@ -4550,6 +5240,13 @@
 
         <dt>
 
+          <code><a href="rs_paga.html">rs_paga()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run PAGA over a kNN graph and a clustering</dd>
+
+        <dt>
+
           <code><a href="rs_page_rank.html">rs_page_rank()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4561,6 +5258,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate massively parallelised personalised page rank scores</dd>
+
+        <dt>
+
+          <code><a href="rs_pairwise_gene_cors_mc.html">rs_pairwise_gene_cors_mc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate the pairwise gene-correlation for meta cells</dd>
+
+        <dt>
+
+          <code><a href="rs_palantir.html">rs_palantir()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run Palantir trajectory inference over a kNN graph</dd>
 
         <dt>
 
@@ -4596,6 +5307,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust implementation of prcomp</dd>
+
+        <dt>
+
+          <code><a href="rs_prepare_gsva_gs.html">rs_prepare_gsva_gs()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Prepare a pathway list for GSVA</dd>
 
         <dt>
 
@@ -4648,6 +5366,13 @@
 
         <dt>
 
+          <code><a href="rs_rbf_iterate_epsilons.html">rs_rbf_iterate_epsilons()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Helper to identify the right epsilon parameter</dd>
+
+        <dt>
+
           <code><a href="rs_rbh_cor.html">rs_rbh_cor()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4662,10 +5387,38 @@
 
         <dt>
 
+          <code><a href="rs_read_tenx_h5_modality.html">rs_read_tenx_h5_modality()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Loads in a modality from a 10x h5 file</dd>
+
+        <dt>
+
+          <code><a href="rs_regulon_thresholds.html">rs_regulon_thresholds()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Derive the on/off threshold per regulon in Rust</dd>
+
+        <dt>
+
           <code><a href="rs_remove_batch_effect.html">rs_remove_batch_effect()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Remove batch effects from a log-expression matrix</dd>
+
+        <dt>
+
+          <code><a href="rs_sample_ids_for_cell_types.html">rs_sample_ids_for_cell_types()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Helper function to generate sample identifiers based on cells</dd>
+
+        <dt>
+
+          <code><a href="rs_sc_infer_empty_droplets.html">rs_sc_infer_empty_droplets()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Identify the empty droplets from the per-barcode library sizes</dd>
 
         <dt>
 
@@ -4676,6 +5429,13 @@
 
         <dt>
 
+          <code><a href="rs_sc_knn_graph.html">rs_sc_knn_graph()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Generates the neighbour graph</dd>
+
+        <dt>
+
           <code><a href="rs_sc_knn_w_dist.html">rs_sc_knn_w_dist()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4683,10 +5443,31 @@
 
         <dt>
 
-          <code><a href="rs_sc_knn_graph.html">rs_sc_knn_graph()</a></code>
+          <code><a href="rs_sc_otsu_method.html">rs_sc_otsu_method()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Generates the neighbour graph</dd>
+        <dd>Run Otsu's method</dd>
+
+        <dt>
+
+          <code><a href="rs_sc_type_assign_cells.html">rs_sc_type_assign_cells()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Per-cell ScType assignment with optional kNN smoothing</dd>
+
+        <dt>
+
+          <code><a href="rs_sc_type_assign_cells_graph.html">rs_sc_type_assign_cells_graph()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Assign ScType cell types per cell, smoothing over a Rust neighbour graph</dd>
+
+        <dt>
+
+          <code><a href="rs_sc_type_cluster_assignment.html">rs_sc_type_cluster_assignment()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Score the individual clusters based on ScType</dd>
 
         <dt>
 
@@ -4708,6 +5489,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Set similarities over two list</dd>
+
+        <dt>
+
+          <code><a href="rs_simple_and_multi_err.html">rs_simple_and_multi_err()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculates the simple and multi error for fgsea multi level</dd>
+
+        <dt>
+
+          <code><a href="rs_simulate_dropouts.html">rs_simulate_dropouts()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Sparsify bulkRNAseq like data</dd>
 
         <dt>
 
@@ -4739,10 +5534,24 @@
 
         <dt>
 
-          <code><a href="rs_spatial_fdr.html">rs_spatial_fdr()</a></code>
+          <code><a href="rs_snf_affinity_cat.html">rs_snf_affinity_cat()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Weighted Benjamini-Hochberg over overlapping neighbourhoods</dd>
+        <dd>Calculate the SNF affinity matrix for categorical values</dd>
+
+        <dt>
+
+          <code><a href="rs_snf_affinity_continuous.html">rs_snf_affinity_continuous()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate the SNF affinity matrix for continuous values</dd>
+
+        <dt>
+
+          <code><a href="rs_snf_affinity_mixed.html">rs_snf_affinity_mixed()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate the SNF affinity matrix for mixed values</dd>
 
         <dt>
 
@@ -4760,6 +5569,13 @@
 
         <dt>
 
+          <code><a href="rs_spatial_fdr.html">rs_spatial_fdr()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Weighted Benjamini-Hochberg over overlapping neighbourhoods</dd>
+
+        <dt>
+
           <code><a href="rs_spectral_clustering.html">rs_spectral_clustering()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -4774,10 +5590,59 @@
 
         <dt>
 
+          <code><a href="rs_split_cor_signs.html">rs_split_cor_signs()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Helper function to split correlation matrices by sign</dd>
+
+        <dt>
+
           <code><a href="rs_ssgsea.html">rs_ssgsea()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust version of the ssGSEA algorithm</dd>
+
+        <dt>
+
+          <code><a href="rs_synthetic_sc_adt_with_cell_types.html">rs_synthetic_sc_adt_with_cell_types()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Generates synthetic ADT counts with defined cell types</dd>
+
+        <dt>
+
+          <code><a href="rs_synthetic_sc_cellsweep_data.html">rs_synthetic_sc_cellsweep_data()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Generates synthetic single cell counts with a planted ambient profile</dd>
+
+        <dt>
+
+          <code><a href="rs_synthetic_sc_data_with_cell_types.html">rs_synthetic_sc_data_with_cell_types()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Generates synthetic data for single cell</dd>
+
+        <dt>
+
+          <code><a href="rs_synthetic_sc_dialogue_data.html">rs_synthetic_sc_dialogue_data()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Generates synthetic data with a planted multicellular programme</dd>
+
+        <dt>
+
+          <code><a href="rs_tenx_frame_to_parquet.html">rs_tenx_frame_to_parquet()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Write the barcodes or features of a 10x h5 file to Parquet</dd>
+
+        <dt>
+
+          <code><a href="rs_tenx_h5_metadata.html">rs_tenx_h5_metadata()</a></code>
+
+        </dt>
+        <dd>Version and dimensions of a 10x CellRanger h5 file</dd>
 
         <dt>
 
@@ -4792,6 +5657,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the TOM over an affinity matrix</dd>
+
+        <dt>
+
+          <code><a href="rs_top_k_targets.html">rs_top_k_targets()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>SCENIC: Select the Top TF &lt;&gt; Gene pairs</dd>
+
+        <dt>
+
+          <code><a href="rs_transfer_labels_symphony.html">rs_transfer_labels_symphony()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Transfer labels from a Symphony reference to a query via kNN vote</dd>
 
         <dt>
 
@@ -4820,6 +5699,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run the weighted nearest neighbour algorithm</dd>
+
+        <dt>
+
+          <code><a href="rs_write_h5ad_plain.html">rs_write_h5ad_plain()</a></code>
+
+        </dt>
+        <dd>Write a minimal h5ad file</dd>
 
         <dt>
 

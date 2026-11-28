@@ -198,7 +198,7 @@ tree
 #>   Genes: 348 used, 10791 dropped
 #>   Loglikelihood: -504754.9
 #>   Layout: equal_angle
-#>   Seconds: sanity 35.4 | ingest 0.0 | bonsai 36.6 | layout 0.0 | total 72.0
+#>   Seconds: sanity 39.4 | ingest 0.0 | bonsai 42.1 | layout 0.0 | total 81.6
 ```
 
 Where did the time go? Every stage is timed, and `total` is the whole
@@ -212,11 +212,11 @@ few hundred that survive.
 tree$timings
 #>     stage      seconds
 #>    <char>        <num>
-#> 1: sanity 35.397638599
-#> 2: ingest  0.010805721
-#> 3: bonsai 36.584603723
-#> 4: layout  0.000112905
-#> 5:  total 72.004437447
+#> 1: sanity 39.426721793
+#> 2: ingest  0.009980501
+#> 3: bonsai 42.125306551
+#> 4: layout  0.000153862
+#> 5:  total 81.575483561
 ```
 
 The search reports its steps too: the loglikelihood after each and what
@@ -228,15 +228,15 @@ behind.
 ``` r
 
 tree$steps
-#>           step    loglik      seconds
-#>         <char>     <num>        <num>
-#> 1: 1-2 linkage -760924.3  0.207397095
-#> 2:  3 polytomy -760924.3  0.009877153
-#> 3:    4 branch -518298.5  0.717926579
-#> 4:       5 spr -505044.2 32.697338938
-#> 5:       6 nni -505041.8  1.101952195
-#> 6:    7 branch -504756.6  0.858066279
-#> 7:  8 collapse -504754.9  0.983156254
+#>           step    loglik     seconds
+#>         <char>     <num>       <num>
+#> 1: 1-2 linkage -760924.3  0.17245068
+#> 2:  3 polytomy -760924.3  0.01119031
+#> 3:    4 branch -518298.5  0.83589808
+#> 4:       5 spr -505044.2 37.53186772
+#> 5:       6 nni -505041.8  1.43101899
+#> 6:    7 branch -504756.6  0.98783840
+#> 7:  8 collapse -504754.9  1.14706732
 ```
 
 ### Which genes made it?
@@ -373,11 +373,11 @@ tree_mc <- bonsai_sc(supercells, .verbose = TRUE)
 #> Running Sanity and Bonsai over 120 metacells and 11139 candidate genes.
 
 tree_mc
-#> BonsaiTree: 120 leaves (2399 cells), 109 inferred ancestors
-#>   Genes: 2228 used, 8911 dropped
-#>   Loglikelihood: -145143.8
+#> BonsaiTree: 120 leaves (2399 cells), 102 inferred ancestors
+#>   Genes: 2223 used, 8916 dropped
+#>   Loglikelihood: -146741.1
 #>   Layout: equal_angle
-#>   Seconds: sanity 10.7 | ingest 0.0 | bonsai 3.4 | layout 0.0 | total 14.2
+#>   Seconds: sanity 12.1 | ingest 0.0 | bonsai 3.9 | layout 0.0 | total 16.0
 ```
 
 The same PBMCs as 100 metacells: a few seconds instead of the minutes

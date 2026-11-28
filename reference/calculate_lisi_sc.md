@@ -91,7 +91,7 @@ calculate_lisi_sc(
 )
 #> iLISI (batch)
 #>   Cells: 600 | Labels: 3
-#>   Mean LISI:    1.8192
+#>   Mean LISI:    1.8197
 #>   Median LISI:  1.8000
 #>   Normalised:   0.4000 (0 = worst, 1 = best)
 

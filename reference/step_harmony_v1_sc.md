@@ -10,7 +10,7 @@ as an `ScStep`.
 step_harmony_v1_sc(
   batch_column,
   additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   harmony_params = params_sc_harmony(),
   seed = 42L,
   .verbose = TRUE
@@ -30,8 +30,9 @@ step_harmony_v1_sc(
 
 - modality:
 
-  String. One of `c("rna", "adt")`. You can only use `"adt"` on
-  `SingleCellsMultiModal` class.
+  String. One of `c("rna", "adt", "atac")`. `"adt"` needs a
+  `SingleCellsMultiModal`, `"atac"` a `SingleCellsMultiModal` or a
+  `SingleCellsAtac`.
 
 - harmony_params:
 
@@ -59,6 +60,6 @@ An `ScStep`.
 step_harmony_v1_sc(batch_column = "batch_index") %>>%
   step_neighbours_sc(embd_to_use = "harmony_v1")
 #> <ScPipeline> 2 steps
-#>   1. harmony_v1  batch_column = "batch_index", additional_batch_columns = NULL, modality = c("rna", "adt"), harmony_params = <params_sc_harmony>, seed = 42L, .verbose = TRUE
-#>   2. neighbours  embd_to_use = "harmony_v1", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
+#>   1. harmony_v1  batch_column = "batch_index", additional_batch_columns = NULL, modality = c("rna", "adt", "atac"), harmony_params = <params_sc_harmony>, seed = 42L, .verbose = TRUE
+#>   2. neighbours  embd_to_use = "harmony_v1", no_embd_to_use = NULL, modality = c("rna", "adt", "atac"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
 ```

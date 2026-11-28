@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -147,9 +149,9 @@ scored cells.</p></dd>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">score_clusters</span><span class="op">(</span><span class="va">scores</span>, cluster_labels <span class="op">=</span> <span class="fu"><a href="get_data.html">get_data</a></span><span class="op">(</span><span class="va">clusters</span><span class="op">)</span><span class="op">$</span><span class="va">res_1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    cluster_id   cell_type   scores n_cells</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;int&gt;      &lt;char&gt;    &lt;num&gt;   &lt;int&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:          0 cell_type_3 465.7503     169</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:          1 cell_type_2 456.6014     173</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:          2 cell_type_1 445.1144     158</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:          0 cell_type_1 454.1026     162</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:          1 cell_type_2 458.5585     170</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:          2 cell_type_3 466.1836     168</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

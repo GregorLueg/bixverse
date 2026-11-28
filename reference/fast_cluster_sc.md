@@ -114,12 +114,12 @@ res <- fast_cluster_sc(
 head(get_data(res))
 #>    cell_idx res_1 res_0.5
 #>       <int> <int>   <int>
-#> 1:        1     2       0
+#> 1:        1     0       0
 #> 2:        2     1       0
-#> 3:        3     0       0
-#> 4:        4     2       0
+#> 3:        3     2       0
+#> 4:        4     0       0
 #> 5:        5     1       0
-#> 6:        6     0       0
+#> 6:        6     2       0
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

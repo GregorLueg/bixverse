@@ -1,5 +1,95 @@
 # Changelog
 
+## bixverse 0.10.0
+
+### Features
+
+- `bixverse-r` 0.11.0 under the hood, needs `manifoldsR` 0.7.0.
+- Single cell ATAC. `SingleCellsAtac` for ATAC on its own, an ATAC layer
+  on `SingleCellsMultiModal` for multiome. Load from fragments or Cell
+  Ranger output
+  ([`load_atac_fragments()`](https://gregorlueg.github.io/bixverse/reference/load_atac_fragments.md),
+  [`load_atac_tenx()`](https://gregorlueg.github.io/bixverse/reference/load_atac_tenx.md)
+  and their `add_*_sc()` twins), then fragment QC and profiles, AMULET
+  multiplets, peak calling per group, TF-IDF, LSI and RLSI, peak
+  annotation, gene activity and peak to gene links. Two new vignettes.
+  The ATAC plots come with bixverse.plots 0.4.0.
+- kNN, clustering, UMAP, WNN and Harmony take `modality = "atac"`.
+  [`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
+  corrects any cached embedding via `embd_to_use`.
+- The marker functions gain `method = "lr"` (Seurat’s logistic
+  regression, library size as covariate) and `modality = "atac"`. `NULL`
+  picks `"lr"` on ATAC and `"wilcox"` otherwise.
+- [`transfer_labels_seurat_sc()`](https://gregorlueg.github.io/bixverse/reference/transfer_labels_seurat_sc.md):
+  Seurat’s anchor based label transfer, e.g. from an RNA reference onto
+  ATAC gene activity.
+- [`save_zarr()`](https://gregorlueg.github.io/bixverse/reference/save_zarr.md)
+  writes an AnnData Zarr store. It and
+  [`save_h5ad()`](https://gregorlueg.github.io/bixverse/reference/save_h5ad.md)
+  take `genes` to write a subset. The h5ad loaders,
+  [`prescan_h5ad_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_h5ad_files.md)
+  and the h5ad readers take Zarr stores too. No Zarr export on Windows:
+  [`save_zarr()`](https://gregorlueg.github.io/bixverse/reference/save_zarr.md)
+  errors there, reading works.
+- [`umap_sc()`](https://gregorlueg.github.io/bixverse/reference/umap_sc.md)
+  takes the umap-learn 0.6 Adam optimiser and initialisation via
+  `manifoldsR::params_umap(optimiser = "adam_v06", init = "recursive")`.
+- Methods that assume RNA counts refuse peak, tile and protein stores,
+  and refuse or warn on gene activity.
+- The agent skill is stamped with the package version and
+  [`library(bixverse)`](https://gregorlueg.github.io/bixverse) warns
+  when an installed copy lags.
+  [`agent_skill_status()`](https://gregorlueg.github.io/bixverse/reference/agent_skill_status.md)
+  lists installs,
+  [`skill_cli()`](https://gregorlueg.github.io/bixverse/reference/skill_cli.md)
+  installs and checks from a shell
+  (`Rscript -e 'bixverse::skill_cli()' skill install`).
+
+### Breaking changes
+
+- Store format v5. v4 stores load with a warning, v3 stores no longer
+  open.
+  [`upgrade_sc_store()`](https://gregorlueg.github.io/bixverse/reference/upgrade_sc_store.md)
+  converts both.
+- [`params_nmf_consensus()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_consensus.md)
+  loses `kmeans_iters`.
+- [`install_agent_skill()`](https://gregorlueg.github.io/bixverse/reference/install_agent_skill.md)
+  follows the Python package: `agent = "codex"` installs `SKILL.md` to
+  `.agents/skills`, `scope = "project"` installs under the working
+  directory, `agent = "generic"` and the `AGENTS.md` rewrite are gone.
+- New defaults, ported from the Python front end. Results move at the
+  same seed:
+  - k-means is e-means: `km_type` in
+    [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md)
+    and
+    [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
+    (boost, scDblFinder), `k_means_algorithm` in
+    [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md)
+    (Harmony v1 and v2). SCENIC, DSB and NMF consensus switch to e-means
+    inside Rust.
+  - Leiden runs 2 iterations instead of 5. `local_moving` and the new
+    `node_order` default to `NULL`: `"queue"` / `"bfs"` for Leiden,
+    `"coloured"` / `"shuffle"` for Louvain, so Louvain moves too.
+  - Harmony v2 `block_size` is 0.05 instead of 0.2.
+  - manifoldsR 0.7.0 moves UMAP, densMAP and ForceAtlas2 coordinates.
+- Other result changes from `bixverse-r` 0.11.0, all at the same seed:
+  - Harmony v1 and v2 draw their random block order once per run.
+  - [`seurat_rpca_sc()`](https://gregorlueg.github.io/bixverse/reference/seurat_rpca_sc.md)
+    and
+    [`seurat_cca_sc()`](https://gregorlueg.github.io/bixverse/reference/seurat_cca_sc.md)
+    search within-batch neighbours at `k + 1` and cap each cell at
+    `k_weight` anchor pairs, as Seurat does.
+  - The normalised layer is recomputed in f32, also for v4 stores, which
+    read it at f16 before. Values differ slightly.
+  - `edge-rs` 0.4.0 moves the edge-rs based DGE results slightly.
+
+### Fixes
+
+- `load_h5ad(csc_mem_gb = ...)` also caps the cell-major transpose of a
+  streamed CSC file. Results are unchanged.
+- `load_tenx_h5(feature_type = "Peaks")` errors and points to the ATAC
+  loaders instead of building an RNA store of peaks.
+
 ## bixverse 0.9.2
 
 - Works with S7 1.0.0, which rejected the bulk, graph, ontology and

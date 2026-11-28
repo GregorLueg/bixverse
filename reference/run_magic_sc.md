@@ -21,7 +21,7 @@ or hand it to any of the extractors with `layer = "magic"`.
 run_magic_sc(
   object,
   features,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   magic_params = params_sc_magic(),
   .verbose = TRUE
 )
@@ -41,8 +41,8 @@ run_magic_sc(
 
 - modality:
 
-  String. One of `c("rna", "adt", "wnn")`. Which kNN graph does the
-  smoothing. Anything but `"rna"` requires a `SingleCellsMultiModal`
+  String. One of `c("rna", "adt", "atac", "wnn")`. Which kNN graph does
+  the smoothing. Anything but `"rna"` requires a `SingleCellsMultiModal`
   object. The counts themselves always come from the RNA store, and the
   layer is always written to the RNA cache.
 

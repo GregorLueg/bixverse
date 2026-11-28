@@ -5,7 +5,12 @@ Getter the var table
 ## Usage
 
 ``` r
-get_sc_var(object, indices = NULL, cols = NULL, modality = c("rna", "adt"))
+get_sc_var(
+  object,
+  indices = NULL,
+  cols = NULL,
+  modality = c("rna", "adt", "atac")
+)
 ```
 
 ## Arguments
@@ -24,7 +29,7 @@ get_sc_var(object, indices = NULL, cols = NULL, modality = c("rna", "adt"))
 
 - modality:
 
-  String. The modality to return. One of `c("rna", "adt")`.
+  String. The modality to return. One of `c("rna", "adt", "atac")`.
 
 ## Value
 

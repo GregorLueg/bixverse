@@ -22,8 +22,8 @@ extract_feature_plot_data(
   scale = FALSE,
   clip = NULL,
   obs_col = NULL,
-  expr_modality = c("rna", "adt"),
-  embd_modality = c("rna", "adt", "wnn"),
+  expr_modality = c("rna", "adt", "atac"),
+  embd_modality = c("rna", "adt", "atac", "wnn"),
   layer = c("norm", "magic"),
   ...
 )
@@ -59,12 +59,13 @@ extract_feature_plot_data(
 - expr_modality:
 
   String. Modality the expression is pulled from. One of
-  `c("rna", "adt")`.
+  `c("rna", "adt", "atac")`.
 
 - embd_modality:
 
   String. Modality the embedding is pulled from. One of
-  `c("rna", "adt", "wnn")`. Use `"wnn"` for WNN-derived embeddings.
+  `c("rna", "adt", "atac", "wnn")`. Use `"wnn"` for WNN-derived
+  embeddings.
 
 - layer:
 
@@ -100,12 +101,12 @@ dt <- extract_feature_plot_data(
 head(dt[, c("cell_id", "dim_1", "dim_2", "gene", "expression")])
 #>     cell_id      dim_1      dim_2    gene expression
 #>      <char>      <num>      <num>  <fctr>      <num>
-#> 1: cell_001  0.3694211  3.0682013 gene_01   6.222656
-#> 2: cell_002 -2.2331283 -2.5044506 gene_01   4.113281
-#> 3: cell_003  2.4834063  0.5060492 gene_01   4.300781
-#> 4: cell_004 -1.3577558  2.6232290 gene_01   5.757812
-#> 5: cell_005 -2.1342576 -0.2906672 gene_01   0.000000
-#> 6: cell_006  2.6232185  0.5387377 gene_01   0.000000
+#> 1: cell_001  0.3693915  3.0684264 gene_01   6.223760
+#> 2: cell_002 -2.2334790 -2.5043652 gene_01   4.111858
+#> 3: cell_003  2.4827571  0.5070686 gene_01   4.299178
+#> 4: cell_004 -1.3581411  2.6233981 gene_01   5.756331
+#> 5: cell_005 -2.1339433 -0.2906340 gene_01   0.000000
+#> 6: cell_006  2.6228275  0.5391235 gene_01   0.000000
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

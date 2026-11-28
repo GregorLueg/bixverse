@@ -16,7 +16,8 @@ leiden_clustering(
   beta = 0.01,
   n_iterations = NULL,
   min_gain = 0,
-  local_moving = c("queue", "coloured"),
+  local_moving = NULL,
+  node_order = NULL,
   seed = 42L
 )
 ```
@@ -49,8 +50,7 @@ leiden_clustering(
 
   Optional integer. Number of full iterations, each starting from the
   previous partition. A negative value iterates until the partition is
-  stable. If `NULL`, `5L` for Leiden and `2L` for Louvain, which gave
-  the best modularity across synthetic graphs.
+  stable. If `NULL`, `2L`.
 
 - min_gain:
 
@@ -59,9 +59,16 @@ leiden_clustering(
 
 - local_moving:
 
-  String. One of `c("queue", "coloured")`. `"queue"` is Traag's
+  Optional string. One of `c("queue", "coloured")`. `"queue"` is Traag's
   sequential queue. `"coloured"` moves the nodes of one colour class in
-  parallel, which only kicks in on larger levels of the graph.
+  parallel, which only kicks in on larger levels of the graph. `NULL` is
+  `"queue"` for Leiden and `"coloured"` for Louvain.
+
+- node_order:
+
+  Optional string. Visit order of the queue, `"bfs"` (sweep in BFS order
+  from a random start) or `"shuffle"` (as igraph). `NULL` is `"bfs"` for
+  Leiden and `"shuffle"` for Louvain.
 
 - seed:
 

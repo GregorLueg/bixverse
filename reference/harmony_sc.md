@@ -12,7 +12,8 @@ harmony_sc(
   object,
   batch_column,
   additional_batch_columns = NULL,
-  modality = c("rna", "adt"),
+  embd_to_use = "pca",
+  modality = c("rna", "adt", "atac"),
   harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
@@ -34,10 +35,16 @@ harmony_sc(
   Optional character vector. Additional batch columns to regress out. If
   `NULL`, only the primary batch column is used.
 
+- embd_to_use:
+
+  String. The embedding to correct. `"pca"` (default) or another cached
+  embedding of the modality, e.g. `"lsi"` with `modality = "atac"`.
+
 - modality:
 
-  String. One of `c("rna", "adt")`. You can only use `"adt"` on
-  `SingleCellsMultiModal` class.
+  String. One of `c("rna", "adt", "atac")`. `"adt"` needs a
+  `SingleCellsMultiModal`, `"atac"` a `SingleCellsMultiModal` or a
+  `SingleCellsAtac`.
 
 - harmony_params:
 

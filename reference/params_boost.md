@@ -107,8 +107,8 @@ params_boost(
   List. Optional overrides for the fast clustering parameters. Only
   relevant if `fast_cluster = TRUE`. See
   [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
-  for available parameters: `km_type`, `n_centroids`, `k_means_iter` and
-  `batch_size`. See
+  for available parameters: `km_type`, `e_means_epochs`, `n_centroids`,
+  `k_means_iter` and `batch_size`. See
   [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
   for the available elements. Defaults to
   [`list()`](https://rdrr.io/r/base/list.html).

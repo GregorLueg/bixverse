@@ -12,7 +12,8 @@ Parse an optional modality suffix from a feature id
 
 - feature:
 
-  String. Feature id, optionally suffixed with `_rna` or `_adt`.
+  String. Feature id, optionally suffixed with `_rna`, `_adt` or
+  `_atac`.
 
 - default_modality:
 

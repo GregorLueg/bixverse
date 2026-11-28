@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Multi-modal single cell analysis with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -139,7 +141,7 @@
 
     <section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
 </h2>
-<p>This vignette walks through a multi-modal single cell workflow on a CITE-seq data set (10x’s 10k Human PBMC TotalSeq-B). The general <code>bixverse</code> philosophy — do not keep things in memory if you do not have to, keep heavy lifting in Rust, only round-trip to R when the user actually needs to look at something — still applies. The bit that changes is that there is now a second modality hanging off the main class: Antibody-Derived Tags (ADT). ATAC is on the roadmap but not yet wired up.</p>
+<p>This vignette walks through a multi-modal single cell workflow on a CITE-seq data set (10x’s 10k Human PBMC TotalSeq-B). The general <code>bixverse</code> philosophy — do not keep things in memory if you do not have to, keep heavy lifting in Rust, only round-trip to R when the user actually needs to look at something — still applies. The bit that changes is that there is now a second modality hanging off the main class: Antibody-Derived Tags (ADT). ATAC hangs off the same class; it has <a href="https://gregorlueg.github.io/bixverse/articles/atac_multiome.html">its own vignette</a>.</p>
 <p>Before going further, please read the <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">introductory vignette</a> if you have not already. This vignette assumes you are comfortable with the <code>SingleCells</code> class, the on-disk count storage, and the cells-to-keep logic.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
@@ -176,7 +178,7 @@
 <p>Two feature types: gene expression and antibody capture. Good, we have both modalities to play with.</p>
 </section><section class="level3"><h3 id="loading-in-the-rna">Loading in the RNA<a class="anchor" aria-label="anchor" href="#loading-in-the-rna"></a>
 </h3>
-<p>The RNA goes through <code>SingleCellsMultiModal</code>, which is essentially the same class as <code>SingleCells</code> with extra slots for <code>adt_counts</code> (and, later, an <code>atac</code> connection). RNA loading and storage are identical to the single-modal case: counts get pre-filtered, normalised, transposed, and written to the two binary files on disk.</p>
+<p>The RNA goes through <code>SingleCellsMultiModal</code>, which is essentially the same class as <code>SingleCells</code> with extra slots for <code>adt_counts</code> and the ATAC store. RNA loading and storage are identical to the single-modal case: counts get pre-filtered, normalised, transposed, and written to the two binary files on disk.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCellsMultiModal.html">SingleCellsMultiModal</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="va">tempdir_10x_total_seq</span><span class="op">)</span></span>

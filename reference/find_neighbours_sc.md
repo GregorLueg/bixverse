@@ -39,7 +39,7 @@ find_neighbours_sc(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
@@ -64,7 +64,7 @@ find_neighbours_sc(
 
 - modality:
 
-  String. One of `c("rna", "adt")`. You can only use `"adt"` on
+  String. One of `c("rna", "adt", "atac")`. You can only use `"adt"` on
   `SingleCellsMultiModal` class.
 
 - neighbours_params:

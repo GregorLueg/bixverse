@@ -10,7 +10,7 @@ params_sc_harmony_v2(
   sigma = 0.1,
   theta = 2,
   lambda = 1,
-  block_size = 0.2,
+  block_size = 0.05,
   max_iter_kmeans = 4L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 0.001,
@@ -55,7 +55,7 @@ params_sc_harmony_v2(
 
   Numeric. Fraction of cells to update per block during optimisation
   (0.0-1.0). Lower values reduce memory usage but increase computation
-  time. Defaults to `0.2`.
+  time. Defaults to `0.05`.
 
 - max_iter_kmeans:
 
@@ -108,8 +108,9 @@ params_sc_harmony_v2(
 - kmeans:
 
   List. Optional overrides for the k-means clustering algorithm Possible
-  parameters are `"k_means_iter"` (10 here, as in R harmony),
-  `"k_means_init"`, `"gemm"` and `"hamerly"`, see
+  parameters are `"k_means_algorithm"`, `"e_means_epochs"`,
+  `"k_means_iter"` (10 here, as in R harmony), `"k_means_init"`,
+  `"gemm"` and `"hamerly"`, see
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md).
   See
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md)
@@ -139,7 +140,7 @@ A named list with the following elements:
 
 - block_size - Numeric. Fraction of cells to update per block during
   optimisation (0.0-1.0). Lower values reduce memory usage but increase
-  computation time. Defaults to `0.2`.
+  computation time. Defaults to `0.05`.
 
 - max_iter_kmeans - Integer. Maximum number of k-means iterations per
   Harmony round. Defaults to `4L`.

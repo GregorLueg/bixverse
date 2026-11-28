@@ -116,7 +116,7 @@ milo <- get_miloR_abundances_sc(
   .verbose = FALSE
 )
 dim(milo$sample_counts)
-#> [1] 84  6
+#> [1] 83  6
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

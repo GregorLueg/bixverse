@@ -29,7 +29,7 @@ genes_to_use to the highly variable genes or a candidate set."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,6 +89,8 @@ genes_to_use to the highly variable genes or a candidate set."><meta property="o
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -257,28 +259,28 @@ expression filter, with the Wald test and both overdispersions.</p></li>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">results</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    gene_id      log_fc effect_se           z    p_value       fdr</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;       &lt;num&gt;     &lt;num&gt;       &lt;num&gt;      &lt;num&gt;     &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: gene_01  0.01337655 0.1414657  0.09455684 0.92466683 0.9845895</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: gene_02 -0.02825830 0.1381089 -0.20460889 0.83787771 0.9842000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_03 -0.24943883 0.1385520 -1.80032709 0.07180901 0.5317242</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_04 -0.15638762 0.1463091 -1.06888499 0.28512150 0.8929664</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_05  0.14882188 0.1750502  0.85016709 0.39523219 0.8929664</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: gene_06 -0.29350995 0.1405359 -2.08850540 0.03675227 0.5317242</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: gene_01  0.01337655 0.1414657  0.09455685 0.92466683 0.9845894</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: gene_02 -0.02825830 0.1381089 -0.20460887 0.83787772 0.9841998</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_03 -0.24943884 0.1385521 -1.80032535 0.07180928 0.5317242</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_04 -0.15638762 0.1463091 -1.06888509 0.28512145 0.8929668</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_05  0.14882188 0.1750501  0.85016726 0.39523210 0.8929668</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: gene_06 -0.29350995 0.1405359 -2.08850530 0.03675228 0.5317242</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    subject_overdispersion cell_overdispersion convergence sigma_at_bound</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;num&gt;               &lt;num&gt;       &lt;int&gt;         &lt;lgcl&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                  1e-04            2.398554           1           TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                  1e-04            2.268378           1           TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                  1e-04            2.295687           1           TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                  1e-04            2.398553           1           TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                  1e-04            2.268379           1           TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                  1e-04            2.295692           1           TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4:                  1e-04            2.542552           1           TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:                  1e-04            3.570781           1           TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:                  1e-04            3.570780           1           TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6:                  1e-04            2.344475           1           TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    cell_overdispersion_shrunk</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                         &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                   2.402084</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                   2.294756</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                   2.308729</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:                   2.568139</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:                   3.554056</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:                   2.367201</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                   2.402872</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                   2.296964</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                   2.309900</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:                   2.570062</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:                   3.549057</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:                   2.369432</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

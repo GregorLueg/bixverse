@@ -15,7 +15,7 @@ results with the cellular composition of each neighbourhood."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,6 +75,8 @@ results with the cellular composition of each neighbourhood."><meta property="og
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -163,19 +165,19 @@ as the number of cells (rows) in the nhoods matrix.</p></dd>
 <span class="r-in"><span><span class="va">milo</span> <span class="op">&lt;-</span> <span class="fu"><a href="test_nhoods.html">test_nhoods</a></span><span class="op">(</span><span class="va">milo</span>, design <span class="op">=</span> <span class="op">~</span><span class="va">grp</span>, design_df <span class="op">=</span> <span class="va">design_df</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">milo</span> <span class="op">&lt;-</span> <span class="fu">add_nhoods_info</span><span class="op">(</span><span class="va">milo</span>, cell_info <span class="op">=</span> <span class="fu"><a href="get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">$</span><span class="va">cell_grp</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_differential_abundance_res.html">get_differential_abundance_res</a></span><span class="op">(</span><span class="va">milo</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Nhood       logFC   logCPM           F    PValue       FDR SpatialFDR</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;int&gt;       &lt;num&gt;    &lt;num&gt;       &lt;num&gt;     &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     1  0.43394889 13.84157 0.433206314 0.5108705 0.9640042  0.9599185</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     2  0.12629598 14.15793 0.053925002 0.8165104 0.9640042  0.9644670</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     3 -0.53221669 13.79775 0.599966995 0.4391353 0.9640042  0.9598125</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     4 -0.36980693 13.84297 0.313858391 0.5756954 0.9640042  0.9599185</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:     5  0.73814666 13.60314 1.138735255 0.2936231 0.9640042  0.9598125</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:     6  0.03387627 13.70417 0.002060917 0.9638176 0.9754298  0.9772304</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Nhood       logFC   logCPM            F    PValue       FDR SpatialFDR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;int&gt;       &lt;num&gt;    &lt;num&gt;        &lt;num&gt;     &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     1  0.42390689 13.85440 0.3958957378 0.5296492 0.9455350  0.9459114</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     2  0.11686896 14.17130 0.0458927514 0.8305024 0.9455350  0.9459114</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     3 -0.42239717 13.76630 0.3524301245 0.5531450 0.9455350  0.9459114</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     4 -0.37967351 13.85711 0.3177198405 0.5733617 0.9455350  0.9459114</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:     5  0.72784199 13.61784 1.0455122319 0.3078362 0.9455350  0.9459114</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:     6  0.02071073 13.71601 0.0007936764 0.9775417 0.9775417  0.9775417</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    majority_celltype majority_prop</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;char&gt;         &lt;num&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1:       cell_type_1     1.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2:       cell_type_3     1.0000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:       cell_type_1     0.6000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:       cell_type_1     0.6315789</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4:       cell_type_2     0.8571429</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5:       cell_type_2     1.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6:       cell_type_1     1.0000000</span>

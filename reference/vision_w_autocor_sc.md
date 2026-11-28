@@ -118,8 +118,8 @@ res <- vision_w_autocor_sc(
 res$auto_cor_dt
 #>    gene_set_name  auto_cor      p_val        fdr
 #>           <char>     <num>      <num>      <num>
-#> 1:   programme_a 0.7248461 0.01960784 0.01960784
-#> 2:   programme_b 0.7437420 0.01960784 0.01960784
+#> 1:   programme_a 0.7246889 0.01960784 0.01960784
+#> 2:   programme_b 0.7436759 0.01960784 0.01960784
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

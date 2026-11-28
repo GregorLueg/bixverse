@@ -1,4 +1,4 @@
-# Save a `SingleCells` object to h5ad
+# Write a `SingleCells` object to h5ad
 
 Writes the counts, the DuckDB obs/var tables and whatever is cached in
 memory (PCA, embeddings, neighbour graph) to a spec-compliant h5ad file,
@@ -7,10 +7,11 @@ streamed cell batch by cell batch and never fully materialised in R.
 
 Only the cells that are currently kept are written, i.e. the export
 matches what `object[]` and `object[[]]` return. Counts are stored as
-`float32`, which is the ScanPy convention.
+`float32`, which is the ScanPy convention. A failed write leaves no file
+behind.
 
 A `SingleCellsMultiModal` object inherits this method and exports its
-RNA modality; the ADT layer is not written.
+RNA modality; the ADT and ATAC layers are not written.
 
 ## Usage
 
@@ -19,6 +20,7 @@ save_h5ad(
   object,
   h5_path,
   assay = c("raw", "norm"),
+  genes = NULL,
   chunk_size = 10000L,
   overwrite = TRUE,
   .verbose = TRUE
@@ -38,6 +40,12 @@ save_h5ad(
 - assay:
 
   String. One of `c("raw", "norm")`. Which count assay to place in `X`.
+
+- genes:
+
+  Optional character vector of gene ids or integer vector of (1-based)
+  gene indices to write, in the column order wanted. `NULL` writes every
+  gene.
 
 - chunk_size:
 

@@ -30,6 +30,8 @@ observation/cell metadata and the feature/gene metadata.
 
 - [`SingleCellDuckDB$populate_var_adt_from_data.table()`](#method-SingleCellDuckDB-populate_var_adt_from_data.table)
 
+- [`SingleCellDuckDB$populate_var_atac_from_data.table()`](#method-SingleCellDuckDB-populate_var_atac_from_data.table)
+
 - [`SingleCellDuckDB$populate_obs_from_tenx_h5()`](#method-SingleCellDuckDB-populate_obs_from_tenx_h5)
 
 - [`SingleCellDuckDB$populate_vars_from_tenx_h5()`](#method-SingleCellDuckDB-populate_vars_from_tenx_h5)
@@ -58,7 +60,9 @@ Inherited methods
 - [`SingleCellDuckDBBase$get_obs_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_obs_table)
 - [`SingleCellDuckDBBase$get_var_index_map()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_var_index_map)
 - [`SingleCellDuckDBBase$get_vars_adt_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_vars_adt_table)
+- [`SingleCellDuckDBBase$get_vars_atac_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_vars_atac_table)
 - [`SingleCellDuckDBBase$get_vars_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_vars_table)
+- [`SingleCellDuckDBBase$has_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-has_table)
 - [`SingleCellDuckDBBase$initialize()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-initialize)
 - [`SingleCellDuckDBBase$join_data_obs()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-join_data_obs)
 - [`SingleCellDuckDBBase$rename_column()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-rename_column)
@@ -304,7 +308,27 @@ populate the var_adt table from R
 
 #### Returns
 
-Invisible self and populates the internal var_adt table.
+Invisible self and populates the internal var_adt table. Function to
+populate the var_atac table from R
+
+------------------------------------------------------------------------
+
+### `SingleCellDuckDB$populate_var_atac_from_data.table()`
+
+#### Usage
+
+    SingleCellDuckDB$populate_var_atac_from_data.table(var_dt)
+
+#### Arguments
+
+- `var_dt`:
+
+  data.table with a `feature_id` column, one row per ATAC feature in
+  store order. `feature_idx` is set to `1..n`.
+
+#### Returns
+
+Invisible self and populates the internal var_atac table.
 
 ------------------------------------------------------------------------
 

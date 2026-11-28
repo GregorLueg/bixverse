@@ -1,11 +1,11 @@
-# Write a single cell experiment to h5ad
+# Write a single cell experiment to h5ad or AnnData Zarr
 
 Streams the counts out of the cell-based binary file, cell batch by cell
-batch, into a spec-compliant h5ad file via
-[scx-core](https://github.com/btraven00/scx), together with the obs and
-var tables, dense embeddings and sparse cell x cell graphs supplied from
-R. Counts are stored as `float32`. All inputs are checked before the
-file is created.
+batch, into a spec-compliant h5ad file (or an AnnData Zarr v3 store) via
+`bixverse-sc-export`, together with the obs and var tables, dense
+embeddings and sparse cell x cell graphs supplied from R. Counts are
+stored as `float32`. All inputs are checked before the output is
+created.
 
 ## Usage
 
@@ -23,7 +23,9 @@ rs_save_h5ad(
   varm,
   obsp,
   uns_json,
-  chunk_size
+  chunk_size,
+  zarr,
+  gene_indices
 )
 ```
 
@@ -35,7 +37,7 @@ rs_save_h5ad(
 
 - h5_path:
 
-  String. Path of the h5ad file to create.
+  String. Path of the h5ad file or Zarr directory to create.
 
 - cell_indices:
 
@@ -56,7 +58,7 @@ rs_save_h5ad(
 
 - var_index:
 
-  Character vector. One name per gene.
+  Character vector. One name per written gene.
 
 - var:
 
@@ -68,7 +70,7 @@ rs_save_h5ad(
 
 - varm:
 
-  Named list of numeric matrices with one row per gene.
+  Named list of numeric matrices with one row per written gene.
 
 - obsp:
 
@@ -82,6 +84,15 @@ rs_save_h5ad(
 - chunk_size:
 
   Integer. Number of cells per streaming batch.
+
+- zarr:
+
+  Boolean. Write an AnnData Zarr store instead of an h5ad file.
+
+- gene_indices:
+
+  Optional integer vector. The genes to write (0-indexed!), in output
+  order. `NULL` writes every gene.
 
 ## Value
 

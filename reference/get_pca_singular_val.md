@@ -42,7 +42,7 @@ The PCA singular values from the object (if found).
 # singular values, largest first
 sc <- demo_single_cells()
 head(get_pca_singular_val(sc), 3)
-#> [1] 47.75282 44.16640 25.33718
+#> [1] 47.75323 44.16611 25.33733
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

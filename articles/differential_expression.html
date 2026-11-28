@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Differential expression with donor structure</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -310,13 +312,13 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;     gene_id    log_fc         z p_value   fdr</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;     &lt;num&gt;     &lt;num&gt;   &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: APOBEC3B  4.666642  70.90766       0     0</span></span>
-<span><span class="co">#&gt; 2:     CCL8  5.968108  84.06402       0     0</span></span>
-<span><span class="co">#&gt; 3:   CXCL10  5.614680 108.35227       0     0</span></span>
-<span><span class="co">#&gt; 4:     CTSC  2.641458  46.26616       0     0</span></span>
-<span><span class="co">#&gt; 5:      IL8 -2.067606 -52.81027       0     0</span></span>
+<span><span class="co">#&gt; 1: APOBEC3B  4.666642  70.90767       0     0</span></span>
+<span><span class="co">#&gt; 2:     CCL8  5.968109  84.06438       0     0</span></span>
+<span><span class="co">#&gt; 3:   CXCL10  5.614680 108.35247       0     0</span></span>
+<span><span class="co">#&gt; 4:     CTSC  2.641458  46.26615       0     0</span></span>
+<span><span class="co">#&gt; 5:      IL8 -2.067606 -52.81026       0     0</span></span>
 <span><span class="co">#&gt; 6:   CXCL11  5.931948  44.58929       0     0</span></span>
-<span><span class="co">#&gt; 7:   FAM26F  3.230210  54.80266       0     0</span></span>
+<span><span class="co">#&gt; 7:   FAM26F  3.230209  54.80266       0     0</span></span>
 <span><span class="co">#&gt; 8:    IL1RN  4.216905  56.46413       0     0</span></span></code></pre></div>
 </div>
 <p>CXCL10, CCL8 and APOBEC3B at the top, IL8 down. That is the interferon response, and it is reassuring rather than surprising.</p>
@@ -456,12 +458,12 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;                   gene_id subject_overdispersion cell_overdispersion</span></span>
 <span><span class="co">#&gt;                    &lt;char&gt;                  &lt;num&gt;               &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:               APOBEC3B              1.7497689           0.5120647</span></span>
-<span><span class="co">#&gt; 2:               HLA-DRB5              1.3323523           0.6969546</span></span>
-<span><span class="co">#&gt; 3:                   GJB2              0.9802969           9.5504329</span></span>
-<span><span class="co">#&gt; 4:               TMEM176B              0.9453621           1.0881471</span></span>
-<span><span class="co">#&gt; 5: AKR1C1_ENSG00000187134              0.9314293          64.4152489</span></span>
-<span><span class="co">#&gt; 6:               TMEM176A              0.9152085           2.6871328</span></span>
+<span><span class="co">#&gt; 1:               APOBEC3B              1.7497820           0.5120644</span></span>
+<span><span class="co">#&gt; 2:               HLA-DRB5              1.3323530           0.6969544</span></span>
+<span><span class="co">#&gt; 3:                   GJB2              0.9802986           9.5504465</span></span>
+<span><span class="co">#&gt; 4:               TMEM176B              0.9453898           1.0881478</span></span>
+<span><span class="co">#&gt; 5: AKR1C1_ENSG00000187134              0.9314291          64.4152464</span></span>
+<span><span class="co">#&gt; 6:               TMEM176A              0.9152175           2.6871298</span></span>
 <span><span class="co">#&gt;    sigma_at_bound convergence</span></span>
 <span><span class="co">#&gt;            &lt;lgcl&gt;       &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:          FALSE           1</span></span>
@@ -489,9 +491,9 @@
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">nebula_res</span><span class="op">$</span><span class="va">coefficients</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          (Intercept)   stimstim</span></span>
-<span><span class="co">#&gt; HBB        -7.310407 0.51063384</span></span>
-<span><span class="co">#&gt; APOBEC3B   -8.637498 4.66664250</span></span>
-<span><span class="co">#&gt; HBA2       -8.767251 0.24343042</span></span>
+<span><span class="co">#&gt; HBB        -7.310408 0.51063391</span></span>
+<span><span class="co">#&gt; APOBEC3B   -8.637505 4.66664249</span></span>
+<span><span class="co">#&gt; HBA2       -8.767251 0.24343053</span></span>
 <span><span class="co">#&gt; HBA1       -9.041839 0.07146763</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="which-one-to-reach-for">Which one to reach for<a class="anchor" aria-label="anchor" href="#which-one-to-reach-for"></a>

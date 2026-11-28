@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Doublet detection with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -235,7 +237,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">scrublet</span></span>
-<span><span class="co">#&gt; ScrubletRes: 14537 cells, 1693 doublets (11.6%)</span></span>
+<span><span class="co">#&gt; ScrubletRes: 14537 cells, 1691 doublets (11.6%)</span></span>
 <span><span class="co">#&gt;   Threshold:              0.2228</span></span>
 <span><span class="co">#&gt;   Detected doublet rate:  11.6%</span></span>
 <span><span class="co">#&gt;   Detectable fraction:    84.4%</span></span>
@@ -262,13 +264,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6639102</span></span>
+<span><span class="co">#&gt; [1] 0.6641041</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.7205128</span></span>
+<span><span class="co">#&gt; [1] 0.7198718</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6910544</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6908643</span></span></code></pre></div>
 </div>
 <p>If you want to add the information to the DuckDB within the object, you can just run:</p>
 <div class="cell">
@@ -319,13 +321,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scrublet_adj_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6779553</span></span>
+<span><span class="co">#&gt; [1] 0.6777494</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.6801282</span></span>
+<span><span class="co">#&gt; [1] 0.6794872</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.67904</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6786172</span></span></code></pre></div>
 </div>
 <p>We have made it worse here, but maybe there are cases where the scores are not very good. Compared to the original version, Otsu’s method is used to identify the perfect threshold, but it might fail in some situations.</p>
 </section><section class="level4"><h4 id="running-with-grouping-variables-or-within-specific-cell-subsets">Running with grouping variables or within specific cell subsets<a class="anchor" aria-label="anchor" href="#running-with-grouping-variables-or-within-specific-cell-subsets"></a>
@@ -350,13 +352,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6635638</span></span>
+<span><span class="co">#&gt; [1] 0.6610717</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.6397436</span></span>
+<span><span class="co">#&gt; [1] 0.6564103</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.651436</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6587327</span></span></code></pre></div>
 </div>
 <p>Overall, it takes longer and has worse performance (in this data set). If you wish to have a partially orthogonal method, it can be worthwhile nonetheless. There is also an option to accelerate the algorithm via fast clustering. This will run k-means clustering with <code>sqrt(n_cells) * 4</code> centroids by default, run the kNN on these subset of centroids, Louvain on the smaller kNN and project back the Louvain membership for final scoring. However, this comes at cost of Recall, as you can see below. Generally speaking, you need to see how many centroids you need to represent your data properly. On smaller data sets, you can get away with <code>n_cells / 10</code> and compress 10 cells into one centroid… On larger data sets, you might want to compress further.</p>
 <div class="cell">
@@ -383,13 +385,13 @@
 <span>  actual <span class="op">=</span> <span class="va">boosted_fast_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.7108042</span></span>
+<span><span class="co">#&gt; [1] 0.7086991</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.5608974</span></span>
+<span><span class="co">#&gt; [1] 0.5692308</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6270154</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6313544</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="scdblfinder">scDblFinder<a class="anchor" aria-label="anchor" href="#scdblfinder"></a>
 </h3>
@@ -418,13 +420,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scdblfinder_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.5591443</span></span>
+<span><span class="co">#&gt; [1] 0.5869468</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.8544872</span></span>
+<span><span class="co">#&gt; [1] 0.8416667</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6759635</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6915986</span></span></code></pre></div>
 </div>
 <p>We can also extract the other scores from scDblFinder. We can for example extract the weighted score, identify the threshold via Otsu’s method and check the doublets like this.</p>
 <div class="cell">
@@ -441,8 +443,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         weighted</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 11647   506</span></span>
-<span><span class="co">#&gt;    TRUE    187  2197</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 11711   589</span></span>
+<span><span class="co">#&gt;    TRUE    150  2087</span></span></code></pre></div>
 </div>
 <p>Or alternatively, the cxds scores can also be extracted and used. These scores were originally developed by <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7703774/" class="external-link">Bais and Kostka</a> and are used as an input into the classifier.</p>
 <div class="cell">
@@ -459,8 +461,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;         cxds</span></span>
 <span><span class="co">#&gt; lightgbm FALSE  TRUE</span></span>
-<span><span class="co">#&gt;    FALSE 11981   172</span></span>
-<span><span class="co">#&gt;    TRUE   1247  1137</span></span></code></pre></div>
+<span><span class="co">#&gt;    FALSE 12077   223</span></span>
+<span><span class="co">#&gt;    TRUE   1151  1086</span></span></code></pre></div>
 </div>
 <p>Should you observe that this is very flat or you only have a few data points (this can occur in low complexity experiments in which the highest expressing genes are VERY similar across all the cells for example in cell culture experiments), you can bump <code>cxds_genes</code> up. The default here is 500L, but you might want to increase this pending your experiment.</p>
 </section><section class="level3"><h3 id="pca-solver-and-hvg-method">PCA solver and HVG method<a class="anchor" aria-label="anchor" href="#pca-solver-and-hvg-method"></a>

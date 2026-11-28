@@ -13,6 +13,7 @@ get_pseudobulked_sc(
   cell_list,
   return_format = c("dense", "sparse"),
   assay = c("raw", "norm"),
+  modality = c("rna", "atac"),
   .verbose = TRUE
 )
 ```
@@ -34,6 +35,11 @@ get_pseudobulked_sc(
 - assay:
 
   String. One of `c("raw", "norm")`.
+
+- modality:
+
+  String. One of `c("rna", "atac")`. `"atac"` aggregates the ATAC store
+  of a `SingleCellsMultiModal`, with the features as columns.
 
 - .verbose:
 

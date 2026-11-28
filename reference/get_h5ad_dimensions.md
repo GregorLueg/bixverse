@@ -16,7 +16,7 @@ get_h5ad_dimensions(f_path)
 
 - f_path:
 
-  File path to the `.h5ad` file.
+  Path to the `.h5ad` file or AnnData Zarr store.
 
 ## Value
 

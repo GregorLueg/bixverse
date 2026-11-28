@@ -23,7 +23,7 @@ existing binary objects and writing CellSweep-denoised counts."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,6 +83,8 @@ existing binary objects and writing CellSweep-denoised counts."><meta property="
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -339,6 +341,9 @@ surviving QC), <code>lib_size</code> and <code>nnz</code>.</p>
 
 <dt><code>slot</code></dt>
 <dd><p>(<code>character</code>)<br> Where to find the raw counts. One of <code>"X"</code>, <code>"raw.X"</code> (or <code>"raw"</code>, for CellXGene data) or <code>"layers.counts"</code>. Unmatched values fall back to <code>"X"</code>.</p></dd>
+
+<dt><code>max_mem_gb</code></dt>
+<dd><p>(<code>numeric</code> or <code>NULL</code>)<br> Memory in GB for the cell-major transpose of a CSC file. <code>NULL</code> holds the whole matrix. Ignored for CSR.</p></dd>
 
 <dt><code>verbose</code></dt>
 <dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>
@@ -703,8 +708,8 @@ stores.</p>
 </div>
 
 <div class="section">
-<h3 id="method-upgrade-to-v-">Method <code>upgrade_to_v4</code><a class="anchor" aria-label="anchor" href="#method-upgrade-to-v-"></a></h3>
-<p>Convert both binaries to the v4 file format in place</p>
+<h3 id="method-upgrade-to-v-">Method <code>upgrade_to_v5</code><a class="anchor" aria-label="anchor" href="#method-upgrade-to-v-"></a></h3>
+<p>Convert both binaries to the v5 file format in place</p>
 <div class="section">
 <h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
 
@@ -712,7 +717,7 @@ stores.</p>
 <dd><p>(<code>character</code>)<br> One of <code>"lz4"</code>, <code>"zstd"</code> or <code>"none"</code>.</p></dd>
 
 <dt><code>keep_backup</code></dt>
-<dd><p>(<code>logical</code>)<br> Keep the original files as <code>&lt;path&gt;.v3.bak</code>.</p></dd>
+<dd><p>(<code>logical</code>)<br> Keep the original files as <code>&lt;path&gt;.v&lt;n&gt;.bak</code>, <code>n</code> their version.</p></dd>
 
 <dt><code>verbose</code></dt>
 <dd><p>(<code>logical</code>)<br> Controls verbosity of the function.</p></dd>

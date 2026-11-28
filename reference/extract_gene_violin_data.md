@@ -14,7 +14,7 @@ extract_gene_violin_data(
   grouping_variable,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 )
 ```
@@ -43,7 +43,7 @@ extract_gene_violin_data(
 
 - modality:
 
-  String. One of `c("rna", "adt")`.
+  String. One of `c("rna", "adt", "atac")`.
 
 - layer:
 
@@ -67,10 +67,10 @@ head(extract_gene_violin_data(
 ))
 #>     cell_id       group    gene expression
 #>      <char>      <fctr>  <fctr>      <num>
-#> 1: cell_001 cell_type_1 gene_01   6.222656
-#> 2: cell_002 cell_type_2 gene_01   4.113281
-#> 3: cell_003 cell_type_3 gene_01   4.300781
-#> 4: cell_004 cell_type_1 gene_01   5.757812
+#> 1: cell_001 cell_type_1 gene_01   6.223760
+#> 2: cell_002 cell_type_2 gene_01   4.111858
+#> 3: cell_003 cell_type_3 gene_01   4.299178
+#> 4: cell_004 cell_type_1 gene_01   5.756331
 #> 5: cell_005 cell_type_2 gene_01   0.000000
 #> 6: cell_006 cell_type_3 gene_01   0.000000
 

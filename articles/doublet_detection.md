@@ -150,7 +150,7 @@ scrublet <- scrublet_sc(
 )
 
 scrublet
-#> ScrubletRes: 14537 cells, 1693 doublets (11.6%)
+#> ScrubletRes: 14537 cells, 1691 doublets (11.6%)
 #>   Threshold:              0.2228
 #>   Detected doublet rate:  11.6%
 #>   Detectable fraction:    84.4%
@@ -180,13 +180,13 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 #> $precision
-#> [1] 0.6639102
+#> [1] 0.6641041
 #> 
 #> $recall
-#> [1] 0.7205128
+#> [1] 0.7198718
 #> 
 #> $f1
-#> [1] 0.6910544
+#> [1] 0.6908643
 ```
 
 If you want to add the information to the DuckDB within the object, you
@@ -242,13 +242,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.6779553
+#> [1] 0.6777494
 #> 
 #> $recall
-#> [1] 0.6801282
+#> [1] 0.6794872
 #> 
 #> $f1
-#> [1] 0.67904
+#> [1] 0.6786172
 ```
 
 We have made it worse here, but maybe there are cases where the scores
@@ -292,13 +292,13 @@ boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 #> $precision
-#> [1] 0.6635638
+#> [1] 0.6610717
 #> 
 #> $recall
-#> [1] 0.6397436
+#> [1] 0.6564103
 #> 
 #> $f1
-#> [1] 0.651436
+#> [1] 0.6587327
 ```
 
 Overall, it takes longer and has worse performance (in this data set).
@@ -338,13 +338,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7108042
+#> [1] 0.7086991
 #> 
 #> $recall
-#> [1] 0.5608974
+#> [1] 0.5692308
 #> 
 #> $f1
-#> [1] 0.6270154
+#> [1] 0.6313544
 ```
 
 ### scDblFinder
@@ -383,13 +383,13 @@ doublet_metrics(
   actual = scdblfinder_dt$Call
 )
 #> $precision
-#> [1] 0.5591443
+#> [1] 0.5869468
 #> 
 #> $recall
-#> [1] 0.8544872
+#> [1] 0.8416667
 #> 
 #> $f1
-#> [1] 0.6759635
+#> [1] 0.6915986
 ```
 
 We can also extract the other scores from scDblFinder. We can for
@@ -410,8 +410,8 @@ table(
 )
 #>         weighted
 #> lightgbm FALSE  TRUE
-#>    FALSE 11647   506
-#>    TRUE    187  2197
+#>    FALSE 11711   589
+#>    TRUE    150  2087
 ```
 
 Or alternatively, the cxds scores can also be extracted and used. These
@@ -433,8 +433,8 @@ table(
 )
 #>         cxds
 #> lightgbm FALSE  TRUE
-#>    FALSE 11981   172
-#>    TRUE   1247  1137
+#>    FALSE 12077   223
+#>    TRUE   1151  1086
 ```
 
 Should you observe that this is very flat or you only have a few data

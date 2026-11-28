@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Ligand-receptor analysis with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -289,7 +291,7 @@
 <span><span class="va">cpdb_sig</span> <span class="op">&lt;-</span> <span class="va">cpdb_res</span><span class="op">[</span><span class="va">gate</span> <span class="op">==</span> <span class="cn">TRUE</span> <span class="op">&amp;</span> <span class="va">pval</span> <span class="op">&lt;=</span> <span class="fl">0.05</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">cpdb_sig</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 320</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 323</span></span></code></pre></div>
 </div>
 <p>That’s a lot of dropped interactions. <code><a href="../reference/load_mtx.html">load_mtx()</a></code> throws out genes seen in fewer than 10 cells, and much of CellPhoneDB (neurotransmitter transporters, neuronal receptors, …) is simply not expressed in blood:</p>
 <div class="cell">
@@ -335,16 +337,16 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;        sender  receiver partner_a partner_b     mean  pval</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;    &lt;char&gt;    &lt;char&gt;    &lt;char&gt;    &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1: cluster_6 cluster_5       APP      CD74 2.982131     0</span></span>
-<span><span class="co">#&gt;  2: cluster_6 cluster_3       APP      CD74 2.918462     0</span></span>
-<span><span class="co">#&gt;  3: cluster_5 cluster_5       APP      CD74 2.685051     0</span></span>
-<span><span class="co">#&gt;  4: cluster_6 cluster_5       PF4     CXCR3 2.648153     0</span></span>
-<span><span class="co">#&gt;  5: cluster_5 cluster_3       APP      CD74 2.621382     0</span></span>
-<span><span class="co">#&gt;  6: cluster_4 cluster_1      CD44    TYROBP 2.550512     0</span></span>
-<span><span class="co">#&gt;  7: cluster_4 cluster_4      CD44    TYROBP 2.454405     0</span></span>
-<span><span class="co">#&gt;  8: cluster_0 cluster_1      CD44    TYROBP 2.405280     0</span></span>
-<span><span class="co">#&gt;  9: cluster_1 cluster_1      CD44    TYROBP 2.369329     0</span></span>
-<span><span class="co">#&gt; 10: cluster_0 cluster_4      CD44    TYROBP 2.309173     0</span></span></code></pre></div>
+<span><span class="co">#&gt;  1: cluster_6 cluster_5       APP      CD74 2.982333     0</span></span>
+<span><span class="co">#&gt;  2: cluster_6 cluster_3       APP      CD74 2.918507     0</span></span>
+<span><span class="co">#&gt;  3: cluster_5 cluster_5       APP      CD74 2.685233     0</span></span>
+<span><span class="co">#&gt;  4: cluster_6 cluster_5       PF4     CXCR3 2.648240     0</span></span>
+<span><span class="co">#&gt;  5: cluster_5 cluster_3       APP      CD74 2.621407     0</span></span>
+<span><span class="co">#&gt;  6: cluster_4 cluster_1      CD44    TYROBP 2.550533     0</span></span>
+<span><span class="co">#&gt;  7: cluster_4 cluster_4      CD44    TYROBP 2.454430     0</span></span>
+<span><span class="co">#&gt;  8: cluster_0 cluster_1      CD44    TYROBP 2.404656     0</span></span>
+<span><span class="co">#&gt;  9: cluster_1 cluster_1      CD44    TYROBP 2.369332     0</span></span>
+<span><span class="co">#&gt; 10: cluster_0 cluster_4      CD44    TYROBP 2.308553     0</span></span></code></pre></div>
 </div>
 <p>Two things to keep in mind here. First, the permutation test asks for specificity, not just expression. PPIA-BSG passes the expression gate in 49 of the 49 cluster pairs, but is significant in only 20 of them. Second, the top of that list is dominated by clusters 5 and 6, which hold 32, 13 cells. Means over a handful of cells are noisy, so treat hits from tiny clusters with care.</p>
 </section><section class="level3"><h3 id="deg-based-analysis">DEG-based analysis<a class="anchor" aria-label="anchor" href="#deg-based-analysis"></a>
@@ -372,16 +374,16 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;        sender  receiver partner_a partner_b     mean</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;    &lt;char&gt;    &lt;char&gt;    &lt;char&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1: cluster_6 cluster_5       APP      CD74 2.982131</span></span>
-<span><span class="co">#&gt;  2: cluster_6 cluster_3       APP      CD74 2.918462</span></span>
-<span><span class="co">#&gt;  3: cluster_5 cluster_5       APP      CD74 2.685051</span></span>
-<span><span class="co">#&gt;  4: cluster_6 cluster_5       PF4     CXCR3 2.648153</span></span>
-<span><span class="co">#&gt;  5: cluster_5 cluster_3       APP      CD74 2.621382</span></span>
-<span><span class="co">#&gt;  6: cluster_4 cluster_1      CD44    TYROBP 2.550512</span></span>
-<span><span class="co">#&gt;  7: cluster_4 cluster_4      CD44    TYROBP 2.454405</span></span>
-<span><span class="co">#&gt;  8: cluster_0 cluster_1      CD44    TYROBP 2.405280</span></span>
-<span><span class="co">#&gt;  9: cluster_1 cluster_1      CD44    TYROBP 2.369329</span></span>
-<span><span class="co">#&gt; 10: cluster_0 cluster_4      CD44    TYROBP 2.309173</span></span></code></pre></div>
+<span><span class="co">#&gt;  1: cluster_6 cluster_5       APP      CD74 2.982333</span></span>
+<span><span class="co">#&gt;  2: cluster_6 cluster_3       APP      CD74 2.918507</span></span>
+<span><span class="co">#&gt;  3: cluster_5 cluster_5       APP      CD74 2.685233</span></span>
+<span><span class="co">#&gt;  4: cluster_6 cluster_5       PF4     CXCR3 2.648240</span></span>
+<span><span class="co">#&gt;  5: cluster_5 cluster_3       APP      CD74 2.621407</span></span>
+<span><span class="co">#&gt;  6: cluster_4 cluster_1      CD44    TYROBP 2.550533</span></span>
+<span><span class="co">#&gt;  7: cluster_4 cluster_4      CD44    TYROBP 2.454430</span></span>
+<span><span class="co">#&gt;  8: cluster_0 cluster_1      CD44    TYROBP 2.404656</span></span>
+<span><span class="co">#&gt;  9: cluster_1 cluster_1      CD44    TYROBP 2.369332</span></span>
+<span><span class="co">#&gt; 10: cluster_0 cluster_4      CD44    TYROBP 2.308553</span></span></code></pre></div>
 </div>
 <p>181 interaction and cluster pair combinations pass the DEG gate, and 162 of them are also significant in the permutation run. This is the route to take if you’ve got a proper DE setup, e.g. pseudo-bulk across samples (see the notes at the end). The cell type specificity then comes from the DE test instead of from shuffling labels.</p>
 </section></section><section class="level2"><h2 id="nichenet">NicheNet<a class="anchor" aria-label="anchor" href="#nichenet"></a>
@@ -612,7 +614,7 @@
 <span>  <span class="va">gene</span></span>
 <span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">geneset_oi</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 874</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 879</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="ligand-activity-scoring">Ligand activity scoring<a class="anchor" aria-label="anchor" href="#ligand-activity-scoring"></a>
 </h3>
@@ -626,22 +628,14 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">activity</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">aupr_corrected</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;         gene_set ligand     auroc      aupr aupr_corrected      pearson</span></span>
-<span><span class="co">#&gt;           &lt;char&gt; &lt;char&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: receiver_degs  TGFB1 0.6594982 0.3956790    0.170679012  0.299473381</span></span>
-<span><span class="co">#&gt; 2: receiver_degs   IL15 0.5663082 0.2353395    0.010339506  0.117053047</span></span>
-<span><span class="co">#&gt; 3: receiver_degs   CCL5 0.5501792 0.2291667    0.004166667 -0.004045534</span></span>
-<span><span class="co">#&gt; 4: receiver_degs CXCL10 0.5501792 0.2291667    0.004166667 -0.004045534</span></span>
-<span><span class="co">#&gt; 5: receiver_degs    TNF 0.5125448 0.2086676   -0.016332442 -0.004747876</span></span>
-<span><span class="co">#&gt; 6: receiver_degs  ICAM1 0.5125448 0.2086676   -0.016332442 -0.004747876</span></span>
-<span><span class="co">#&gt;      spearman</span></span>
-<span><span class="co">#&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.26664795</span></span>
-<span><span class="co">#&gt; 2: 0.11085364</span></span>
-<span><span class="co">#&gt; 3: 0.09001531</span></span>
-<span><span class="co">#&gt; 4: 0.09001531</span></span>
-<span><span class="co">#&gt; 5: 0.02025577</span></span>
-<span><span class="co">#&gt; 6: 0.02025577</span></span></code></pre></div>
+<span><span class="co">#&gt;         gene_set ligand     auroc      aupr aupr_corrected    pearson  spearman</span></span>
+<span><span class="co">#&gt;           &lt;char&gt; &lt;char&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: receiver_degs  TGFB1 0.7031250 0.4055556   0.2055555556 0.35548570 0.3252847</span></span>
+<span><span class="co">#&gt; 2: receiver_degs   IL15 0.6015625 0.2277778   0.0277777778 0.16504693 0.1626424</span></span>
+<span><span class="co">#&gt; 3: receiver_degs   CCL5 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457</span></span>
+<span><span class="co">#&gt; 4: receiver_degs CXCL10 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457</span></span>
+<span><span class="co">#&gt; 5: receiver_degs    TNF 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010</span></span>
+<span><span class="co">#&gt; 6: receiver_degs  ICAM1 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="sender-and-receiver-tables">Sender and receiver tables<a class="anchor" aria-label="anchor" href="#sender-and-receiver-tables"></a>
 </h3>
@@ -702,11 +696,11 @@
 <span><span class="co">#&gt;       sender  receiver ligand_symbol receptor_symbol prioritisation_score</span></span>
 <span><span class="co">#&gt;       &lt;char&gt;    &lt;char&gt;        &lt;char&gt;          &lt;char&gt;                &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: cluster_4 cluster_0         TGFB1          TGFBR2            0.8333333</span></span>
-<span><span class="co">#&gt; 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7838219</span></span>
-<span><span class="co">#&gt; 3: cluster_2 cluster_0         TGFB1          TGFBR2            0.7104549</span></span>
-<span><span class="co">#&gt; 4: cluster_1 cluster_0          IL15           IL2RG            0.5830033</span></span>
+<span><span class="co">#&gt; 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7839065</span></span>
+<span><span class="co">#&gt; 3: cluster_2 cluster_0         TGFB1          TGFBR2            0.6911115</span></span>
+<span><span class="co">#&gt; 4: cluster_1 cluster_0          IL15           IL2RG            0.5808030</span></span>
 <span><span class="co">#&gt; 5: cluster_3 cluster_0         TGFB1          TGFBR2            0.5500000</span></span>
-<span><span class="co">#&gt; 6: cluster_4 cluster_0          IL15           IL2RG            0.5309639</span></span>
+<span><span class="co">#&gt; 6: cluster_4 cluster_0          IL15           IL2RG            0.5454205</span></span>
 <span><span class="co">#&gt;    prioritisation_rank</span></span>
 <span><span class="co">#&gt;                  &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:                   1</span></span>

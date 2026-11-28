@@ -197,7 +197,7 @@ cpdb_res <- cellphonedb_sc(
 cpdb_sig <- cpdb_res[gate == TRUE & pval <= 0.05]
 
 nrow(cpdb_sig)
-#> [1] 320
+#> [1] 323
 ```
 
 That’s a lot of dropped interactions.
@@ -252,16 +252,16 @@ head(
 )
 #>        sender  receiver partner_a partner_b     mean  pval
 #>        <char>    <char>    <char>    <char>    <num> <num>
-#>  1: cluster_6 cluster_5       APP      CD74 2.982131     0
-#>  2: cluster_6 cluster_3       APP      CD74 2.918462     0
-#>  3: cluster_5 cluster_5       APP      CD74 2.685051     0
-#>  4: cluster_6 cluster_5       PF4     CXCR3 2.648153     0
-#>  5: cluster_5 cluster_3       APP      CD74 2.621382     0
-#>  6: cluster_4 cluster_1      CD44    TYROBP 2.550512     0
-#>  7: cluster_4 cluster_4      CD44    TYROBP 2.454405     0
-#>  8: cluster_0 cluster_1      CD44    TYROBP 2.405280     0
-#>  9: cluster_1 cluster_1      CD44    TYROBP 2.369329     0
-#> 10: cluster_0 cluster_4      CD44    TYROBP 2.309173     0
+#>  1: cluster_6 cluster_5       APP      CD74 2.982333     0
+#>  2: cluster_6 cluster_3       APP      CD74 2.918507     0
+#>  3: cluster_5 cluster_5       APP      CD74 2.685233     0
+#>  4: cluster_6 cluster_5       PF4     CXCR3 2.648240     0
+#>  5: cluster_5 cluster_3       APP      CD74 2.621407     0
+#>  6: cluster_4 cluster_1      CD44    TYROBP 2.550533     0
+#>  7: cluster_4 cluster_4      CD44    TYROBP 2.454430     0
+#>  8: cluster_0 cluster_1      CD44    TYROBP 2.404656     0
+#>  9: cluster_1 cluster_1      CD44    TYROBP 2.369332     0
+#> 10: cluster_0 cluster_4      CD44    TYROBP 2.308553     0
 ```
 
 Two things to keep in mind here. First, the permutation test asks for
@@ -302,16 +302,16 @@ head(
 )
 #>        sender  receiver partner_a partner_b     mean
 #>        <char>    <char>    <char>    <char>    <num>
-#>  1: cluster_6 cluster_5       APP      CD74 2.982131
-#>  2: cluster_6 cluster_3       APP      CD74 2.918462
-#>  3: cluster_5 cluster_5       APP      CD74 2.685051
-#>  4: cluster_6 cluster_5       PF4     CXCR3 2.648153
-#>  5: cluster_5 cluster_3       APP      CD74 2.621382
-#>  6: cluster_4 cluster_1      CD44    TYROBP 2.550512
-#>  7: cluster_4 cluster_4      CD44    TYROBP 2.454405
-#>  8: cluster_0 cluster_1      CD44    TYROBP 2.405280
-#>  9: cluster_1 cluster_1      CD44    TYROBP 2.369329
-#> 10: cluster_0 cluster_4      CD44    TYROBP 2.309173
+#>  1: cluster_6 cluster_5       APP      CD74 2.982333
+#>  2: cluster_6 cluster_3       APP      CD74 2.918507
+#>  3: cluster_5 cluster_5       APP      CD74 2.685233
+#>  4: cluster_6 cluster_5       PF4     CXCR3 2.648240
+#>  5: cluster_5 cluster_3       APP      CD74 2.621407
+#>  6: cluster_4 cluster_1      CD44    TYROBP 2.550533
+#>  7: cluster_4 cluster_4      CD44    TYROBP 2.454430
+#>  8: cluster_0 cluster_1      CD44    TYROBP 2.404656
+#>  9: cluster_1 cluster_1      CD44    TYROBP 2.369332
+#> 10: cluster_0 cluster_4      CD44    TYROBP 2.308553
 ```
 
 181 interaction and cluster pair combinations pass the DEG gate, and 162
@@ -575,7 +575,7 @@ geneset_oi <- celltype_de[
   gene
 ]
 length(geneset_oi)
-#> [1] 874
+#> [1] 879
 ```
 
 ### Ligand activity scoring
@@ -593,22 +593,14 @@ activity <- ligand_activity_scores(
 )
 
 activity[order(-aupr_corrected)]
-#>         gene_set ligand     auroc      aupr aupr_corrected      pearson
-#>           <char> <char>     <num>     <num>          <num>        <num>
-#> 1: receiver_degs  TGFB1 0.6594982 0.3956790    0.170679012  0.299473381
-#> 2: receiver_degs   IL15 0.5663082 0.2353395    0.010339506  0.117053047
-#> 3: receiver_degs   CCL5 0.5501792 0.2291667    0.004166667 -0.004045534
-#> 4: receiver_degs CXCL10 0.5501792 0.2291667    0.004166667 -0.004045534
-#> 5: receiver_degs    TNF 0.5125448 0.2086676   -0.016332442 -0.004747876
-#> 6: receiver_degs  ICAM1 0.5125448 0.2086676   -0.016332442 -0.004747876
-#>      spearman
-#>         <num>
-#> 1: 0.26664795
-#> 2: 0.11085364
-#> 3: 0.09001531
-#> 4: 0.09001531
-#> 5: 0.02025577
-#> 6: 0.02025577
+#>         gene_set ligand     auroc      aupr aupr_corrected    pearson  spearman
+#>           <char> <char>     <num>     <num>          <num>      <num>     <num>
+#> 1: receiver_degs  TGFB1 0.7031250 0.4055556   0.2055555556 0.35548570 0.3252847
+#> 2: receiver_degs   IL15 0.6015625 0.2277778   0.0277777778 0.16504693 0.1626424
+#> 3: receiver_degs   CCL5 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457
+#> 4: receiver_degs CXCL10 0.5781250 0.2166667   0.0166666667 0.03378687 0.1342457
+#> 5: receiver_degs    TNF 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010
+#> 6: receiver_degs  ICAM1 0.5468750 0.1997326  -0.0002673797 0.03965258 0.0725010
 ```
 
 ### Sender and receiver tables
@@ -681,11 +673,11 @@ head(
 #>       sender  receiver ligand_symbol receptor_symbol prioritisation_score
 #>       <char>    <char>        <char>          <char>                <num>
 #> 1: cluster_4 cluster_0         TGFB1          TGFBR2            0.8333333
-#> 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7838219
-#> 3: cluster_2 cluster_0         TGFB1          TGFBR2            0.7104549
-#> 4: cluster_1 cluster_0          IL15           IL2RG            0.5830033
+#> 2: cluster_1 cluster_0         TGFB1          TGFBR2            0.7839065
+#> 3: cluster_2 cluster_0         TGFB1          TGFBR2            0.6911115
+#> 4: cluster_1 cluster_0          IL15           IL2RG            0.5808030
 #> 5: cluster_3 cluster_0         TGFB1          TGFBR2            0.5500000
-#> 6: cluster_4 cluster_0          IL15           IL2RG            0.5309639
+#> 6: cluster_4 cluster_0          IL15           IL2RG            0.5454205
 #>    prioritisation_rank
 #>                  <int>
 #> 1:                   1

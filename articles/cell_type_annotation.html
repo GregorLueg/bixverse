@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Clustering, cell type annotation and reference mapping</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -330,10 +332,10 @@
 <span><span class="co">#&gt; Key: &lt;resolution&gt;</span></span>
 <span><span class="co">#&gt;    resolution   knn   snn  umap</span></span>
 <span><span class="co">#&gt;         &lt;num&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        0.5    10    13    11</span></span>
-<span><span class="co">#&gt; 2:        1.0    12    15    16</span></span>
-<span><span class="co">#&gt; 3:        1.5    17    20    22</span></span>
-<span><span class="co">#&gt; 4:        2.0    23    22    26</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        0.5    10    13    12</span></span>
+<span><span class="co">#&gt; 2:        1.0    13    15    17</span></span>
+<span><span class="co">#&gt; 3:        1.5    17    19    20</span></span>
+<span><span class="co">#&gt; 4:        2.0    20    21    23</span></span></code></pre></div>
 </div>
 <p>The point of this table: <strong>resolutions do not carry over between graphs</strong>. The <code>"umap"</code> and <code>"knn"</code> graphs only hold the kNN pairs, while the sNN graph also links cells that merely share neighbours and prunes weak edges. On this data the differences are a handful of communities at a given resolution, and not always in the same direction. On other data they can be larger. If you move a ScanPy pipeline over and switch to <code>knn_sym = "umap"</code>, keep its resolution; if you switch to sNN, retune it.</p>
 <p>For the rest of the vignette we work on the sNN graph.</p>
@@ -494,24 +496,24 @@
 <span><span class="va">fc_stats</span></span>
 <span><span class="co">#&gt;    resolution  mean_ari median_ari mean_conductance median_conductance</span></span>
 <span><span class="co">#&gt;         &lt;num&gt;     &lt;num&gt;      &lt;num&gt;            &lt;num&gt;              &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        2.0 0.9828833  0.9823357       0.19748537         0.18767531</span></span>
-<span><span class="co">#&gt; 2:        1.5 1.0000000  1.0000000       0.05310797         0.06072441</span></span>
-<span><span class="co">#&gt; 3:        1.0 1.0000000  1.0000000       0.05228200         0.05938450</span></span>
-<span><span class="co">#&gt; 4:        0.5 1.0000000  1.0000000       0.05178834         0.05776583</span></span>
-<span><span class="co">#&gt; 5:        2.0 0.9464080  0.9424633       0.23830207         0.18086970</span></span>
-<span><span class="co">#&gt; 6:        1.5 0.9378425  0.9501527       0.18763205         0.14751919</span></span>
-<span><span class="co">#&gt; 7:        1.0 0.9744326  0.9712801       0.11759994         0.12176237</span></span>
-<span><span class="co">#&gt; 8:        0.5 0.9500480  0.9645567       0.08086254         0.07918369</span></span>
+<span><span class="co">#&gt; 1:        2.0 0.9485831  0.9685292       0.19758260         0.14972800</span></span>
+<span><span class="co">#&gt; 2:        1.5 0.9460498  0.9373711       0.13699794         0.14035495</span></span>
+<span><span class="co">#&gt; 3:        1.0 1.0000000  1.0000000       0.05229899         0.04312012</span></span>
+<span><span class="co">#&gt; 4:        0.5 0.9973198  1.0000000       0.05094934         0.04312012</span></span>
+<span><span class="co">#&gt; 5:        2.0 0.9613395  0.9657883       0.20043926         0.16953792</span></span>
+<span><span class="co">#&gt; 6:        1.5 0.9649647  0.9706615       0.11693661         0.10900225</span></span>
+<span><span class="co">#&gt; 7:        1.0 0.9655958  0.9658371       0.11592946         0.10724215</span></span>
+<span><span class="co">#&gt; 8:        0.5 0.9526404  0.9501640       0.08449532         0.07613153</span></span>
 <span><span class="co">#&gt;    mean_n_comms         graph</span></span>
 <span><span class="co">#&gt;           &lt;num&gt;        &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:          8.0  centroid kNN</span></span>
-<span><span class="co">#&gt; 2:          5.0  centroid kNN</span></span>
+<span><span class="co">#&gt; 1:          8.8  centroid kNN</span></span>
+<span><span class="co">#&gt; 2:          7.2  centroid kNN</span></span>
 <span><span class="co">#&gt; 3:          5.0  centroid kNN</span></span>
 <span><span class="co">#&gt; 4:          5.0  centroid kNN</span></span>
-<span><span class="co">#&gt; 5:         14.6 cell-mediated</span></span>
-<span><span class="co">#&gt; 6:         12.6 cell-mediated</span></span>
+<span><span class="co">#&gt; 5:         13.0 cell-mediated</span></span>
+<span><span class="co">#&gt; 6:          9.0 cell-mediated</span></span>
 <span><span class="co">#&gt; 7:          9.0 cell-mediated</span></span>
-<span><span class="co">#&gt; 8:          6.8 cell-mediated</span></span>
+<span><span class="co">#&gt; 8:          6.9 cell-mediated</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/melt.data.table.html" class="external-link">melt</a></span><span class="op">(</span></span>
 <span>  <span class="va">fc_stats</span>,</span>
@@ -640,9 +642,9 @@
 <span></span>
 <span><span class="va">sctype_cells</span></span>
 <span><span class="co">#&gt; ScTypeCellResults: 6626 cells, 10 cell types</span></span>
-<span><span class="co">#&gt;   Unknown cells:  70</span></span>
+<span><span class="co">#&gt;   Unknown cells:  71</span></span>
 <span><span class="co">#&gt;   Smoothing used: TRUE</span></span>
-<span><span class="co">#&gt;   Mixed clusters: 8 out of 15</span></span>
+<span><span class="co">#&gt;   Mixed clusters: 7 out of 15</span></span>
 <span></span>
 <span><span class="va">sc_ref</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sc_type_cell"</span>, <span class="st">"sc_type_hybrid"</span>, <span class="st">"sc_type_margin"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  sc_type_cell <span class="op">=</span> <span class="va">sctype_cells</span><span class="op">$</span><span class="va">assignments</span>,</span>
@@ -656,38 +658,38 @@
 <code class="sourceCode R"><span><span class="va">sctype_cells</span><span class="op">$</span><span class="va">composition</span></span>
 <span><span class="co">#&gt;     cluster_id n_cells n_unknown   dominant    purity     second</span></span>
 <span><span class="co">#&gt;          &lt;int&gt;   &lt;int&gt;     &lt;int&gt;     &lt;char&gt;     &lt;num&gt;     &lt;char&gt;</span></span>
-<span><span class="co">#&gt;  1:          0    1304        62    T cells 0.7285276     CD4+ T</span></span>
-<span><span class="co">#&gt;  2:          1    1106         0 CD14+ Mono 0.9882459   Platelet</span></span>
-<span><span class="co">#&gt;  3:          2     956         5    T cells 0.6359833     CD4+ T</span></span>
-<span><span class="co">#&gt;  4:          3     873         2     CD8+ T 0.4226804         NK</span></span>
-<span><span class="co">#&gt;  5:          4     592         0    B cells 0.9966216        pDC</span></span>
-<span><span class="co">#&gt;  6:          5     540         0     CD8+ T 0.8629630    T cells</span></span>
-<span><span class="co">#&gt;  7:          6     343         0    B cells 0.9504373        mDC</span></span>
-<span><span class="co">#&gt;  8:          7     338         0         NK 0.9881657 CD16+ Mono</span></span>
-<span><span class="co">#&gt;  9:          8     306         0 CD16+ Mono 0.9346405 CD14+ Mono</span></span>
-<span><span class="co">#&gt; 10:          9     130         0        mDC 0.8692307 CD14+ Mono</span></span>
+<span><span class="co">#&gt;  1:          0    1369        64    T cells 0.7260774     CD4+ T</span></span>
+<span><span class="co">#&gt;  2:          1    1110         0 CD14+ Mono 0.9882883   Platelet</span></span>
+<span><span class="co">#&gt;  3:          2     900         4    T cells 0.6344444     CD4+ T</span></span>
+<span><span class="co">#&gt;  4:          3     868         2     CD8+ T 0.4251152         NK</span></span>
+<span><span class="co">#&gt;  5:          4     607         0    B cells 0.9950576        pDC</span></span>
+<span><span class="co">#&gt;  6:          5     538         0     CD8+ T 0.8680297    T cells</span></span>
+<span><span class="co">#&gt;  7:          6     338         0         NK 0.9881657 CD16+ Mono</span></span>
+<span><span class="co">#&gt;  8:          7     328         0    B cells 0.9512195        mDC</span></span>
+<span><span class="co">#&gt;  9:          8     302         0 CD16+ Mono 0.9470199 CD14+ Mono</span></span>
+<span><span class="co">#&gt; 10:          9     123         0        mDC 0.9186992 CD14+ Mono</span></span>
 <span><span class="co">#&gt; 11:         10      40         0        pDC 1.0000000       &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 12:         11      34         1    T cells 0.6176471     CD4+ T</span></span>
-<span><span class="co">#&gt; 13:         12      28         0    T cells 0.5000000     CD8+ T</span></span>
-<span><span class="co">#&gt; 14:         13      25         0   Platelet 1.0000000       &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 15:         14      11         0        mDC 0.7272727     CD4+ T</span></span>
+<span><span class="co">#&gt; 12:         11      30         1    T cells 0.6666667     CD4+ T</span></span>
+<span><span class="co">#&gt; 13:         12      27         0    T cells 0.5925926     CD8+ T</span></span>
+<span><span class="co">#&gt; 14:         13      23         0   Platelet 1.0000000       &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 15:         14      23         0        mDC 0.3478261   Platelet</span></span>
 <span><span class="co">#&gt;     second_fraction    entropy cluster_mixed</span></span>
 <span><span class="co">#&gt;               &lt;num&gt;      &lt;num&gt;        &lt;lgcl&gt;</span></span>
-<span><span class="co">#&gt;  1:     0.143404901 0.96370196          TRUE</span></span>
-<span><span class="co">#&gt;  2:     0.006329114 0.07924042         FALSE</span></span>
-<span><span class="co">#&gt;  3:     0.308577418 0.90547264          TRUE</span></span>
-<span><span class="co">#&gt;  4:     0.278350502 1.27517283          TRUE</span></span>
-<span><span class="co">#&gt;  5:     0.003378378 0.02259685         FALSE</span></span>
-<span><span class="co">#&gt;  6:     0.122222222 0.46605775          TRUE</span></span>
-<span><span class="co">#&gt;  7:     0.037900876 0.23082455         FALSE</span></span>
-<span><span class="co">#&gt;  8:     0.005917160 0.07657434         FALSE</span></span>
-<span><span class="co">#&gt;  9:     0.058823530 0.26271373         FALSE</span></span>
-<span><span class="co">#&gt; 10:     0.084615387 0.49354321          TRUE</span></span>
+<span><span class="co">#&gt;  1:     0.149744332 0.96347678          TRUE</span></span>
+<span><span class="co">#&gt;  2:     0.005405406 0.07986341         FALSE</span></span>
+<span><span class="co">#&gt;  3:     0.310000002 0.90603709          TRUE</span></span>
+<span><span class="co">#&gt;  4:     0.282258064 1.27172685          TRUE</span></span>
+<span><span class="co">#&gt;  5:     0.004942339 0.03117352         FALSE</span></span>
+<span><span class="co">#&gt;  6:     0.117100373 0.45621976          TRUE</span></span>
+<span><span class="co">#&gt;  7:     0.005917160 0.07657434         FALSE</span></span>
+<span><span class="co">#&gt;  8:     0.039634146 0.22427084         FALSE</span></span>
+<span><span class="co">#&gt;  9:     0.049668875 0.21958460         FALSE</span></span>
+<span><span class="co">#&gt; 10:     0.081300810 0.28193498         FALSE</span></span>
 <span><span class="co">#&gt; 11:     0.000000000 0.00000000         FALSE</span></span>
-<span><span class="co">#&gt; 12:     0.352941185 0.76889431          TRUE</span></span>
-<span><span class="co">#&gt; 13:     0.214285716 1.31297684          TRUE</span></span>
+<span><span class="co">#&gt; 12:     0.266666681 0.84952480          TRUE</span></span>
+<span><span class="co">#&gt; 13:     0.222222224 1.15196407          TRUE</span></span>
 <span><span class="co">#&gt; 14:     0.000000000 0.00000000         FALSE</span></span>
-<span><span class="co">#&gt; 15:     0.272727281 0.58595264          TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 15:     0.304347813 1.35256112          TRUE</span></span></code></pre></div>
 </div>
 <p>Most of the mixed clusters are T cell clusters split between <code>"T cells"</code> and <code>"CD4+ T"</code> or <code>"CD8+ T"</code>. That is the marker set, not the method: the generic <code>"T cells"</code> set (CD3D/E/G) competes with the subtype sets on the same cells. A hierarchical marker set, or dropping the generic T cell entry, cleans this up.</p>
 <p>The margin (best minus second best score) flags ambiguous calls:</p>
@@ -764,7 +766,7 @@
 <span>    title <span class="op">=</span> <span class="st">"Reference cell types (scType, hybrid)"</span>,</span>
 <span>    colour <span class="op">=</span> <span class="st">"Cell type:"</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Removed 70 rows containing missing values or values outside the scale range</span></span>
+<span><span class="co">#&gt; Warning: Removed 71 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">#&gt; (`geom_point()`).</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
@@ -1035,7 +1037,7 @@
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">30</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1.025</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Removed 105 rows containing missing values or values outside the scale range</span></span>
+<span><span class="co">#&gt; Warning: Removed 111 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">#&gt; (`geom_point()`).</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>

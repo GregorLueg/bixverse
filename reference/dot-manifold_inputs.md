@@ -40,7 +40,7 @@ from the one the result is written to.
 
 - modality:
 
-  String. One of `c("rna", "adt", "wnn")`.
+  String. One of `c("rna", "adt", "atac", "wnn")`.
 
 - k:
 

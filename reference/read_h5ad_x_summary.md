@@ -12,7 +12,7 @@ read_h5ad_x_summary(f_path, n_sample = 10000L)
 
 - f_path:
 
-  File path to the `.h5ad` file.
+  Path to the `.h5ad` file or AnnData Zarr store.
 
 - n_sample:
 

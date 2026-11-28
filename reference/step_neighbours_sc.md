@@ -10,7 +10,7 @@ as an `ScStep`.
 step_neighbours_sc(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
@@ -31,7 +31,7 @@ step_neighbours_sc(
 
 - modality:
 
-  String. One of `c("rna", "adt")`. You can only use `"adt"` on
+  String. One of `c("rna", "adt", "atac")`. You can only use `"adt"` on
   `SingleCellsMultiModal` class.
 
 - neighbours_params:
@@ -64,5 +64,5 @@ An `ScStep`.
 step_pca_sc(no_pcs = 10L) %>>% step_neighbours_sc()
 #> <ScPipeline> 2 steps
 #>   1. pca         no_pcs = 10L, pca_params = <list>, sparse_svd = NULL, hvg = NULL, seed = 42L, residuals = FALSE, .verbose = TRUE
-#>   2. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
+#>   2. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt", "atac"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
 ```

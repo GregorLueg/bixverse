@@ -39,7 +39,7 @@ res <- doublet_detection_boost_sc(
 )
 print(res)
 #> BoostRes: 500 cells, 2 doublets (0.4%)
-#>   Score range: [0.0000, 0.8291]
+#>   Score range: [0.0000, 0.8283]
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

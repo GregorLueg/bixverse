@@ -47,14 +47,14 @@ sc <- demo_single_cells()
 get_sc_cache_status(sc)
 #>    modality       artefact   name stamped  stale reason               id
 #>      <char>         <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 11ed75048b66a23d
-#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 6f922e2350492037
-#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 12aeb65121766781
+#> 1:      rna            pca   <NA>    TRUE  FALSE   <NA> 7b2f14ebd33d7ee5
+#> 2:      rna            knn   <NA>    TRUE  FALSE   <NA> 9872f62d4b219894
+#> 3:      rna connectivities   <NA>    TRUE  FALSE   <NA> 697acea73625d79e
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 11ed75048b66a23d
-#> 3: 6f922e2350492037
+#> 2: 7b2f14ebd33d7ee5
+#> 3: 9872f62d4b219894
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

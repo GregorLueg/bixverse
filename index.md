@@ -84,11 +84,12 @@ benchmarks](https://github.com/GregorLueg/single-cell-benchmark/blob/main/docs/r
 | Bulk DGE | limma-voom via [edge-rs](https://crates.io/crates/edge-rs) (no limma or edgeR needed), Hedges’ g effect sizes, batch correction, TPM and RPKM, structured handling of many contrasts | [bulk DGE](https://gregorlueg.github.io/bixverse/articles/bulk_dge.html) |
 | Ontologies | Resnik, Lin and Wang semantic similarities over disease, phenotype and gene ontologies | [semantic similarities](https://gregorlueg.github.io/bixverse/articles/ontologies.html) |
 | Graphs | Network diffusion, constrained page rank, reciprocal best hit graphs, similarity network fusion, community detection | [diffusions and communities](https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.html) |
-| Single cell | Streaming i/o, QC, doublet detection, HVG, PCA, Harmony v1 and v2, fastMNN, BBKNN, Seurat CCA and rPCA, LISI and ASW integration metrics, kNN and clustering, markers, pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA | [start here](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html), then the Single Cells menu |
+| Single cell | Streaming i/o, QC, doublet detection, HVG, PCA, Harmony v1 and v2, fastMNN, BBKNN, Seurat CCA and rPCA, LISI and ASW integration metrics, kNN and clustering, markers (Wilcoxon or Seurat’s logistic regression), pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA | [start here](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html), then the Single Cells menu |
 | Single cell, counts | CellSweep ambient RNA removal, analytic Pearson residuals and scTransform v2 for HVG selection and PCA. Fit and HVG stream; residual PCA is dense, so it caps out before atlas scale | [CellSweep](https://gregorlueg.github.io/bixverse/articles/cell_sweep.html), [residuals](https://gregorlueg.github.io/bixverse/articles/single_cell_residuals.html) |
-| Single cell, advanced | Clustering, cell type annotation and Symphony reference mapping, CellPhoneDB and NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories | [clustering and annotation](https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.html), [ligand receptor](https://gregorlueg.github.io/bixverse/articles/ligand_receptor.html), [DIALOGUE](https://gregorlueg.github.io/bixverse/articles/dialogue.html), [trajectories](https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html) |
+| Single cell, advanced | Clustering, cell type annotation, Symphony and Seurat reference mapping, CellPhoneDB and NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories | [clustering and annotation](https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.html), [ligand receptor](https://gregorlueg.github.io/bixverse/articles/ligand_receptor.html), [DIALOGUE](https://gregorlueg.github.io/bixverse/articles/dialogue.html), [trajectories](https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html) |
 | Meta cells | Generation, purity and entropy diagnostics, the full downstream analysis surface | [meta cells](https://gregorlueg.github.io/bixverse/articles/meta_cells.html) |
-| Multi-modal | ADT counts, DSB normalisation, WNN graphs | [multi-modal analysis](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html) |
+| Single cell ATAC | ATAC on its own or as multiome: fragments or Cell Ranger output in, fragment QC, AMULET multiplets, peak calling, TF-IDF and LSI, gene activity, differential accessibility, peak to gene links, label transfer from RNA | [ATAC only](https://gregorlueg.github.io/bixverse/articles/atac_only.html), [multiome](https://gregorlueg.github.io/bixverse/articles/atac_multiome.html) |
+| Multi-modal | ADT counts, DSB normalisation, ATAC, WNN graphs | [multi-modal analysis](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html) |
 
 ## The “bixverse ecosystem”
 
@@ -109,6 +110,9 @@ benchmarks](https://github.com/GregorLueg/single-cell-benchmark/blob/main/docs/r
   graph-heavy one. Ships a database of gene to gene interaction and
   regulatory networks. Useful across a lot of computational biology
   workflows.
+- [bixverse for Python](https://gregorlueg.github.io/bixverse-rs/): the
+  single cell suite now has a full Python wrapper over the same Rust
+  core (`uv pip install bixverse`). Not a fan of R? You are covered.
 
 ## Installation
 
@@ -187,7 +191,10 @@ main entry point. Three routes depending on what you’re after:
 Working with an LLM coding agent?
 [`install_agent_skill()`](https://gregorlueg.github.io/bixverse/reference/install_agent_skill.md)
 drops a bixverse skill into your agent set up so it stops guessing at
-the API.
+the API. From a shell:
+`Rscript -e 'bixverse::skill_cli()' skill install`.
+[`library(bixverse)`](https://gregorlueg.github.io/bixverse) tells you
+when the installed skill is older than the package.
 
 ## Roadmap
 
@@ -209,8 +216,8 @@ Wire up [edge-rs](https://github.com/GregorLueg/edge-rs) to have
 [NEBULA](https://www.nature.com/articles/s42003-021-02146-6) directly
 integrated into the single cell framework. (Done in `"0.4.11"`).
 
-Save data to h5ad for easier interoperability with Python. (Solved
-thanks to [scx-core](https://crates.io/crates/scx-core))
+Read and save h5ad and AnnData Zarr for easier interoperability with
+Python. (Solved thanks to [scx-core](https://crates.io/crates/scx-core))
 
 Easy interoperability that chunks of data can be read in for neural
 network training in the corresponding deep learning frameworks, see

@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Trajectory inference with Palantir and PAGA</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -314,18 +316,18 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality       artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;         &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 78598059b3df3d1a</span></span>
-<span><span class="co">#&gt; 2:      rna      embedding   umap    TRUE  FALSE   &lt;NA&gt; c476cddcf5e5ffff</span></span>
-<span><span class="co">#&gt; 3:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 8d7da40ee9c8ed10</span></span>
-<span><span class="co">#&gt; 4:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; b87b6ff32b791ae8</span></span>
-<span><span class="co">#&gt; 5:      rna          magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; f522f45250f33622</span></span>
+<span><span class="co">#&gt; 1:      rna            pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 765bd2492343f726</span></span>
+<span><span class="co">#&gt; 2:      rna      embedding   umap    TRUE  FALSE   &lt;NA&gt; a22ef158af3f3544</span></span>
+<span><span class="co">#&gt; 3:      rna            knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 54c51eb8aa9a6508</span></span>
+<span><span class="co">#&gt; 4:      rna connectivities   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 7b31cbf727e37603</span></span>
+<span><span class="co">#&gt; 5:      rna          magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 013fc8f66a1dc7e6</span></span>
 <span><span class="co">#&gt;                                 from</span></span>
 <span><span class="co">#&gt;                               &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                  </span></span>
-<span><span class="co">#&gt; 2: 78598059b3df3d1a,8d7da40ee9c8ed10</span></span>
-<span><span class="co">#&gt; 3:                  78598059b3df3d1a</span></span>
-<span><span class="co">#&gt; 4:                  8d7da40ee9c8ed10</span></span>
-<span><span class="co">#&gt; 5:                  8d7da40ee9c8ed10</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 765bd2492343f726,54c51eb8aa9a6508</span></span>
+<span><span class="co">#&gt; 3:                  765bd2492343f726</span></span>
+<span><span class="co">#&gt; 4:                  54c51eb8aa9a6508</span></span>
+<span><span class="co">#&gt; 5:                  54c51eb8aa9a6508</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="paga">PAGA<a class="anchor" aria-label="anchor" href="#paga"></a>
 </h2>
@@ -344,27 +346,27 @@
 <code class="sourceCode R"><span><span class="va">paga_res</span><span class="op">$</span><span class="va">sizes</span></span>
 <span><span class="co">#&gt;    cluster n_cells</span></span>
 <span><span class="co">#&gt;     &lt;char&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:       0     691</span></span>
+<span><span class="co">#&gt; 1:       0     697</span></span>
 <span><span class="co">#&gt; 2:       1     674</span></span>
-<span><span class="co">#&gt; 3:       2     634</span></span>
+<span><span class="co">#&gt; 3:       2     632</span></span>
 <span><span class="co">#&gt; 4:       3     523</span></span>
-<span><span class="co">#&gt; 5:       4     449</span></span>
-<span><span class="co">#&gt; 6:       5     429</span></span>
-<span><span class="co">#&gt; 7:       6     413</span></span>
-<span><span class="co">#&gt; 8:       7     186</span></span>
-<span><span class="co">#&gt; 9:       8     143</span></span>
+<span><span class="co">#&gt; 5:       4     450</span></span>
+<span><span class="co">#&gt; 6:       5     431</span></span>
+<span><span class="co">#&gt; 7:       6     415</span></span>
+<span><span class="co">#&gt; 8:       7     187</span></span>
+<span><span class="co">#&gt; 9:       8     133</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">paga_res</span><span class="op">$</span><span class="va">connectivities</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       0     1     2     3     4     5     6     7     8</span></span>
-<span><span class="co">#&gt; 0 0.000 0.474 0.001 0.000 0.001 0.002 0.026 0.001 0.395</span></span>
-<span><span class="co">#&gt; 1 0.474 0.000 0.028 0.070 0.599 0.003 0.196 0.000 0.328</span></span>
-<span><span class="co">#&gt; 2 0.001 0.028 0.000 0.445 0.121 0.003 0.329 0.001 0.005</span></span>
-<span><span class="co">#&gt; 3 0.000 0.070 0.445 0.000 0.431 0.004 0.044 0.000 0.006</span></span>
-<span><span class="co">#&gt; 4 0.001 0.599 0.121 0.431 0.000 0.015 0.258 0.000 0.077</span></span>
-<span><span class="co">#&gt; 5 0.002 0.003 0.003 0.004 0.015 0.000 0.004 0.701 0.533</span></span>
-<span><span class="co">#&gt; 6 0.026 0.196 0.329 0.044 0.258 0.004 0.000 0.000 0.004</span></span>
-<span><span class="co">#&gt; 7 0.001 0.000 0.001 0.000 0.000 0.701 0.000 0.000 0.000</span></span>
-<span><span class="co">#&gt; 8 0.395 0.328 0.005 0.006 0.077 0.533 0.004 0.000 0.000</span></span></code></pre></div>
+<span><span class="co">#&gt; 0 0.000 0.476 0.001 0.000 0.001 0.002 0.026 0.001 0.383</span></span>
+<span><span class="co">#&gt; 1 0.476 0.000 0.029 0.069 0.597 0.004 0.195 0.000 0.329</span></span>
+<span><span class="co">#&gt; 2 0.001 0.029 0.000 0.442 0.122 0.005 0.331 0.001 0.000</span></span>
+<span><span class="co">#&gt; 3 0.000 0.069 0.442 0.000 0.433 0.005 0.054 0.000 0.001</span></span>
+<span><span class="co">#&gt; 4 0.001 0.597 0.122 0.433 0.000 0.016 0.256 0.000 0.080</span></span>
+<span><span class="co">#&gt; 5 0.002 0.004 0.005 0.005 0.016 0.000 0.004 0.699 0.594</span></span>
+<span><span class="co">#&gt; 6 0.026 0.195 0.331 0.054 0.256 0.004 0.000 0.000 0.004</span></span>
+<span><span class="co">#&gt; 7 0.001 0.000 0.001 0.000 0.000 0.699 0.000 0.000 0.000</span></span>
+<span><span class="co">#&gt; 8 0.383 0.329 0.000 0.001 0.080 0.594 0.004 0.000 0.000</span></span></code></pre></div>
 </div>
 <p><code><a href="https://gregorlueg.github.io/bixverse.plots/reference/paga_plot_sc.html">paga_plot_sc()</a></code> puts every cluster at the centroid of its cells in an embedding and draws the graph over them. A free layout of the abstracted graph would put the nodes somewhere arbitrary, which you then have to relate back to the UMAP by eye.</p>
 <div class="cell">
@@ -422,7 +424,7 @@
 <span></span>
 <span><span class="va">palantir_res</span></span>
 <span><span class="co">#&gt; PalantirRes: 4142 cells, 3 terminal states (rna modality)</span></span>
-<span><span class="co">#&gt;   Start cell: Run5_164698952452459 | waypoints: 997</span></span>
+<span><span class="co">#&gt;   Start cell: Run5_164698952452459 | waypoints: 1000</span></span>
 <span><span class="co">#&gt;   Converged: TRUE (2 iterations)</span></span>
 <span><span class="co">#&gt;   Repair edges: 0, stranded waypoints: 0</span></span></code></pre></div>
 </div>
@@ -453,12 +455,12 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">fate_probs</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                        Ery    DC  Mono</span></span>
-<span><span class="co">#&gt; Run4_120703408880541 0.559 0.088 0.353</span></span>
-<span><span class="co">#&gt; Run4_120703409056541 0.215 0.157 0.628</span></span>
-<span><span class="co">#&gt; Run4_120703409580963 0.055 0.139 0.805</span></span>
-<span><span class="co">#&gt; Run4_120703423990708 0.016 0.035 0.950</span></span>
-<span><span class="co">#&gt; Run4_120703436876077 0.209 0.158 0.633</span></span>
-<span><span class="co">#&gt; Run4_120726912355038 0.113 0.161 0.727</span></span></code></pre></div>
+<span><span class="co">#&gt; Run4_120703408880541 0.604 0.068 0.328</span></span>
+<span><span class="co">#&gt; Run4_120703409056541 0.257 0.129 0.615</span></span>
+<span><span class="co">#&gt; Run4_120703409580963 0.059 0.120 0.821</span></span>
+<span><span class="co">#&gt; Run4_120703423990708 0.031 0.054 0.914</span></span>
+<span><span class="co">#&gt; Run4_120703436876077 0.245 0.131 0.625</span></span>
+<span><span class="co">#&gt; Run4_120726912355038 0.119 0.123 0.758</span></span></code></pre></div>
 </div>
 <p>Rows do not necessarily sum to one. Fate probabilities below <code>branch_prob_threshold</code> (0.01 by default) are zeroed without renormalisation, and cells whose waypoint weight sits on a stranded waypoint lose that mass entirely.</p>
 </section><section class="level3"><h3 id="pseudotime-and-entropy">Pseudotime and entropy<a class="anchor" aria-label="anchor" href="#pseudotime-and-entropy"></a>
@@ -589,7 +591,7 @@
 <span><span class="co">#&gt;                 cell_id branch pseudotime</span></span>
 <span><span class="co">#&gt;                  &lt;char&gt; &lt;char&gt;      &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1: Run5_205922701598003   Mono      0.075</span></span>
-<span><span class="co">#&gt; 2: Run5_235070783670620   Mono      0.576</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: Run5_235070783670620   Mono      0.573</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="gene-trends">Gene trends<a class="anchor" aria-label="anchor" href="#gene-trends"></a>
 </h2>
@@ -605,7 +607,7 @@
 <span></span>
 <span><span class="va">trends</span></span>
 <span><span class="co">#&gt; GeneTrendsRes: 3 branches, 4 genes, 500 grid points</span></span>
-<span><span class="co">#&gt;   Cells per branch: Ery (1380), DC (1536), Mono (1940)</span></span>
+<span><span class="co">#&gt;   Cells per branch: Ery (1381), DC (1460), Mono (1866)</span></span>
 <span><span class="co">#&gt;   Source: normalised counts</span></span>
 <span><span class="co">#&gt;   Length scale: 1 | sigma: 1</span></span></code></pre></div>
 </div>
@@ -638,7 +640,7 @@
 <div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_int</a></span><span class="op">(</span><span class="va">trends</span><span class="op">$</span><span class="va">branch_cells</span>, <span class="va">length</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  Ery   DC Mono </span></span>
-<span><span class="co">#&gt; 1380 1536 1940</span></span></code></pre></div>
+<span><span class="co">#&gt; 1381 1460 1866</span></span></code></pre></div>
 </div>
 <p>The same trick works with any per-cell quantity. A loess through the entropy column watches commitment happen along the trajectory.</p>
 <div class="cell">

@@ -78,11 +78,10 @@ get_cistarget_res(grn)[, c("gs_name", "motif", "nes")]
 #> Key: <motif>
 #>    gs_name         motif      nes
 #>     <char>        <char>    <num>
-#> 1: gene_01 motif_gene_01 1.243565
-#> 2: gene_02 motif_gene_02 1.666598
-#> 3: gene_03 motif_gene_03 1.038259
-#> 4: gene_04 motif_gene_04 1.063332
-#> 5: gene_05 motif_gene_05 1.608758
+#> 1: gene_01 motif_gene_01 1.171503
+#> 2: gene_02 motif_gene_02 1.582406
+#> 3: gene_03 motif_gene_03 1.047611
+#> 4: gene_05 motif_gene_05 1.502113
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

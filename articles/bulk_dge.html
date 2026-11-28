@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Bulk differential expression with BulkDge</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -600,9 +602,9 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;     limma 1148.3275 1185.0846 1182.0343 1187.4516 1193.8372 1195.4706     5</span></span>
-<span><span class="co">#&gt;  bixverse  149.6789  165.9254  166.8274  167.6705  172.6752  178.1871     5</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr        min         lq      mean     median        uq       max neval</span></span>
+<span><span class="co">#&gt;     limma 1415.91285 1421.79293 1428.6557 1425.48873 1432.6920 1447.3919     5</span></span>
+<span><span class="co">#&gt;  bixverse   95.49148   99.13845  103.1507   99.41645  109.3563  112.3506     5</span></span></code></pre></div>
 </div>
 <p>And the edgeR quasi-likelihood chain, same counts and design as <code><a href="../reference/run_edger_ql.html">run_edger_ql()</a></code> above:</p>
 <div class="cell">
@@ -625,8 +627,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;     edgeR 585.1108 591.0730 610.4184 612.7793 613.5456 649.5834     5</span></span>
-<span><span class="co">#&gt;  bixverse 188.4241 190.9828 256.5002 195.9369 219.1727 487.9847     5</span></span></code></pre></div>
+<span><span class="co">#&gt;     edgeR 666.9075 691.3074 694.5104 693.9098 695.8548 724.5725     5</span></span>
+<span><span class="co">#&gt;  bixverse 175.7980 176.0555 192.1381 193.6127 194.1223 221.1018     5</span></span></code></pre></div>
 </div>
 <p>Both land a few times faster on the Rust side, on eight samples. Mileage on bigger cohorts will vary with your machine, but some benchmarks have shown the delta tends to increase with Rust getting comparably faster with larger N.</p>
 </section><section class="level3"><h3 id="where-the-results-differ-on-purpose">Where the results differ on purpose<a class="anchor" aria-label="anchor" href="#where-the-results-differ-on-purpose"></a>

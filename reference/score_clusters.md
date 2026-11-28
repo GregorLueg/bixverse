@@ -49,9 +49,9 @@ clusters <- fast_cluster_sc(
 head(score_clusters(scores, cluster_labels = get_data(clusters)$res_1))
 #>    cluster_id   cell_type   scores n_cells
 #>         <int>      <char>    <num>   <int>
-#> 1:          0 cell_type_3 465.7503     169
-#> 2:          1 cell_type_2 456.6014     173
-#> 3:          2 cell_type_1 445.1144     158
+#> 1:          0 cell_type_1 454.1026     162
+#> 2:          1 cell_type_2 458.5585     170
+#> 3:          2 cell_type_3 466.1836     168
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

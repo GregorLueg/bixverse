@@ -24,7 +24,7 @@ run_palantir_sc(
   object,
   early_cell,
   terminal_states = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   palantir_params = params_sc_palantir(),
   seed = 42L,
   .verbose = TRUE
@@ -53,8 +53,9 @@ run_palantir_sc(
 
 - modality:
 
-  String. One of `c("rna", "adt", "wnn")`. Which kNN graph to run over.
-  Anything but `"rna"` requires a `SingleCellsMultiModal` object.
+  String. One of `c("rna", "adt", "atac", "wnn")`. Which kNN graph to
+  run over. Anything but `"rna"` requires a `SingleCellsMultiModal`
+  object.
 
 - palantir_params:
 
@@ -122,14 +123,14 @@ res <- run_palantir_sc(
   .verbose = FALSE
 )
 head(res$pseudotime)
-#>     cell_id  pseudotime      entropy
-#>      <char>       <num>        <num>
-#> 1: cell_001 0.003929922 6.039816e-01
-#> 2: cell_002 0.943664312 2.954061e-09
-#> 3: cell_003 0.935922265 1.399714e-02
-#> 4: cell_004 0.057008248 6.029100e-01
-#> 5: cell_005 0.764215469 1.669873e-03
-#> 6: cell_006 0.965360761 7.510433e-03
+#>     cell_id pseudotime     entropy
+#>      <char>      <num>       <num>
+#> 1: cell_001 0.00000000 0.576679349
+#> 2: cell_002 0.94522190 0.004484793
+#> 3: cell_003 0.92710823 0.009629157
+#> 4: cell_004 0.05661712 0.575484335
+#> 5: cell_005 0.76754862 0.058726970
+#> 6: cell_006 0.96575546 0.005356673
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

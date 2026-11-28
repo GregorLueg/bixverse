@@ -158,12 +158,12 @@ grn <- tf_to_genes_motif_enrichment(
 head(get_tf_to_gene(grn))
 #>         tf    gene importance in_leading_edge
 #>     <char>  <char>      <num>          <lgcl>
-#> 1: gene_01 gene_01  0.4643152            TRUE
-#> 2: gene_01 gene_03  0.1435614            TRUE
-#> 3: gene_01 gene_04  0.1418015            TRUE
-#> 4: gene_01 gene_06  0.1926790            TRUE
-#> 5: gene_01 gene_07  0.2010423            TRUE
-#> 6: gene_01 gene_08  0.2110159            TRUE
+#> 1: gene_01 gene_01  0.4622990            TRUE
+#> 2: gene_01 gene_03  0.1474840            TRUE
+#> 3: gene_01 gene_04  0.1460304            TRUE
+#> 4: gene_01 gene_06  0.1945551            TRUE
+#> 5: gene_01 gene_07  0.2030196            TRUE
+#> 6: gene_01 gene_08  0.2132170            TRUE
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

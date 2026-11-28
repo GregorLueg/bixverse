@@ -207,9 +207,9 @@ milo_obj <- get_miloR_abundances_sc(
 )
 
 dim(milo_obj$sample_counts)
-#> [1] 5191   18
+#> [1] 5187   18
 mean(rowSums(milo_obj$sample_counts))
-#> [1] 146.5026
+#> [1] 146.5321
 ```
 
 The test needs a design table with one row per sample, and its rownames
@@ -258,20 +258,20 @@ milo_obj <- test_nhoods(
 da_res <- get_differential_abundance_res(milo_obj)
 
 da_res[SpatialFDR <= 0.1, .N]
-#> [1] 3135
+#> [1] 3118
 ```
 
 ``` r
 
 head(da_res[order(PValue), .(Nhood, logFC, F, PValue, FDR, SpatialFDR)], 6)
-#>    Nhood     logFC        F       PValue          FDR   SpatialFDR
-#>    <int>     <num>    <num>        <num>        <num>        <num>
-#> 1:  4500  3.669117 85.82945 1.011859e-13 2.376116e-10 1.672688e-10
-#> 2:  2167  3.334926 84.10430 1.494970e-13 2.376116e-10 1.672688e-10
-#> 3:  1421  3.947703 84.01501 1.525664e-13 2.376116e-10 1.672688e-10
-#> 4:  2900  3.455329 83.21505 1.831360e-13 2.376116e-10 1.672688e-10
-#> 5:  3721  2.955785 82.19818 2.313184e-13 2.376116e-10 1.672688e-10
-#> 6:  2404 -3.491821 81.45520 2.746425e-13 2.376116e-10 1.672688e-10
+#>    Nhood    logFC        F       PValue          FDR   SpatialFDR
+#>    <int>    <num>    <num>        <num>        <num>        <num>
+#> 1:  4497 3.714238 88.69250 1.596966e-13 3.882489e-10 2.767051e-10
+#> 2:  1421 3.987977 85.97763 2.812790e-13 3.882489e-10 2.767051e-10
+#> 3:  2163 3.365534 85.76755 2.940034e-13 3.882489e-10 2.767051e-10
+#> 4:  3720 2.991096 84.75179 3.644659e-13 3.882489e-10 2.767051e-10
+#> 5:  2897 3.487305 84.62702 3.742519e-13 3.882489e-10 2.767051e-10
+#> 6:  4142 3.188339 81.46344 7.384374e-13 5.674087e-10 3.946702e-10
 ```
 
 A neighbourhood is not a cell type, so on its own a list of
@@ -295,29 +295,28 @@ dcast(
 )[order(-`up at Wk16`)]
 #>      majority_celltype down at Wk16 up at Wk16
 #>                 <char>        <int>      <int>
-#>  1: Intertypical.TEC.1          576        381
-#>  2: Intertypical.TEC.2           48        347
-#>  3: Intertypical.TEC.4          184        343
-#>  4: Intertypical.TEC.3           46        230
-#>  5:             mTEC.2          157         55
+#>  1: Intertypical.TEC.1          568        395
+#>  2: Intertypical.TEC.2           46        358
+#>  3: Intertypical.TEC.4          171        350
+#>  4: Intertypical.TEC.3           43        235
+#>  5:             mTEC.2          144         55
 #>  6:             cTEC.2           46         49
-#>  7:             mTEC.1          254         22
-#>  8:             mTEC.4            0         20
+#>  7:             mTEC.1          247         22
+#>  8:             mTEC.4            0         21
 #>  9:             mTEC.3            0         17
 #> 10:             mTEC.6            0         16
 #> 11:          New.TEC.2            0         10
-#> 12:    PostAire.mTEC.1           21          9
+#> 12:    PostAire.mTEC.1           19          9
 #> 13:              eTEC1            0          7
 #> 14:        Tuft.mTEC.2           19          5
-#> 15:          New.TEC.1            1          0
-#> 16:    PostAire.mTEC.2            4          0
-#> 17:       Prolif.TEC.2           93          0
-#> 18:       Prolif.TEC.3           95          0
-#> 19:         Sca1.TEC.1           12          0
-#> 20:        Tuft.mTEC.1            1          0
-#> 21:             cTEC.1           36          0
-#> 22:             mTEC.5           28          0
-#> 23:             mTEC.7            3          0
+#> 15:    PostAire.mTEC.2            3          0
+#> 16:       Prolif.TEC.2           91          0
+#> 17:       Prolif.TEC.3           95          0
+#> 18:         Sca1.TEC.1           11          0
+#> 19:        Tuft.mTEC.1            1          0
+#> 20:             cTEC.1           36          0
+#> 21:             mTEC.5           27          0
+#> 22:             mTEC.7            2          0
 #>      majority_celltype down at Wk16 up at Wk16
 #>                 <char>        <int>      <int>
 ```
@@ -388,7 +387,7 @@ data.table(
 )
 #>    plain_fdr spatial_fdr
 #>        <int>       <int>
-#> 1:      3109        3135
+#> 1:      3099        3118
 ```
 
 On this data the two barely differ. That is worth knowing rather than
@@ -443,14 +442,14 @@ per_celltype <- meld_dt[, lapply(.SD, mean), by = cluster]
 head(per_celltype[order(-Wk16)], 8)
 #>               cluster       Wk1      Wk16       Wk4
 #>                <char>     <num>     <num>     <num>
-#> 1:             mTEC.6 0.1770806 0.5682456 0.2546739
-#> 2:             mTEC.4 0.2855591 0.4333534 0.2810875
-#> 3: Intertypical.TEC.2 0.2703171 0.4047898 0.3248931
-#> 4: Intertypical.TEC.4 0.3057111 0.3968813 0.2974075
-#> 5:          New.TEC.2 0.3010342 0.3924626 0.3065032
-#> 6:             mTEC.3 0.3254357 0.3683957 0.3061687
-#> 7: Intertypical.TEC.3 0.2877266 0.3647244 0.3475490
-#> 8:          New.TEC.1 0.3712302 0.3629886 0.2657812
+#> 1:             mTEC.6 0.1771155 0.5681600 0.2547245
+#> 2:             mTEC.4 0.2855769 0.4333095 0.2811136
+#> 3: Intertypical.TEC.2 0.2703627 0.4047326 0.3249047
+#> 4: Intertypical.TEC.4 0.3056957 0.3968837 0.2974205
+#> 5:          New.TEC.2 0.3010389 0.3924594 0.3065017
+#> 6:             mTEC.3 0.3254504 0.3683630 0.3061866
+#> 7: Intertypical.TEC.3 0.2877452 0.3647165 0.3475383
+#> 8:          New.TEC.1 0.3712567 0.3629481 0.2657952
 ```
 
 ## Do they agree
@@ -470,29 +469,28 @@ comparison <- merge(per_celltype, milo_per_ct, by = "cluster")
 comparison[order(-milo_logfc), .(cluster, Wk1, Wk16, milo_logfc)]
 #>                cluster       Wk1      Wk16 milo_logfc
 #>                 <char>     <num>     <num>      <num>
-#>  1:             mTEC.6 0.1770806 0.5682456  1.7937274
-#>  2: Intertypical.TEC.2 0.2703171 0.4047898  1.5911538
-#>  3:             mTEC.3 0.3254357 0.3683957  1.3727827
-#>  4: Intertypical.TEC.3 0.2877266 0.3647244  1.2893126
-#>  5:             mTEC.4 0.2855591 0.4333534  1.0972278
-#>  6:              eTEC1 0.3353299 0.3469043  0.9650014
-#>  7:          New.TEC.2 0.3010342 0.3924626  0.9281692
-#>  8: Intertypical.TEC.4 0.3057111 0.3968813  0.6439599
-#>  9:             cTEC.2 0.3056120 0.3373034  0.1408709
-#> 10: Intertypical.TEC.1 0.3343522 0.3136527 -0.5325424
-#> 11:    PostAire.mTEC.1 0.3753332 0.2747342 -0.5653124
-#> 12:             mTEC.2 0.3794611 0.2840836 -0.5875689
-#> 13:        Tuft.mTEC.2 0.3230736 0.2527644 -0.8223745
-#> 14:          New.TEC.1 0.3712302 0.3629886 -1.0003930
-#> 15:    PostAire.mTEC.2 0.3359724 0.3439290 -1.1167300
-#> 16:             mTEC.5 0.4041162 0.2327593 -1.1572635
-#> 17:        Tuft.mTEC.1 0.3345615 0.2984189 -1.1745815
-#> 18:             mTEC.7 0.3852273 0.2806892 -1.2730840
-#> 19:             mTEC.1 0.4464053 0.2144022 -1.3845189
-#> 20:         Sca1.TEC.1 0.4224332 0.1967016 -1.4761205
-#> 21:             cTEC.1 0.4649790 0.2659894 -1.6419000
-#> 22:       Prolif.TEC.2 0.4804880 0.1791882 -1.7606735
-#> 23:       Prolif.TEC.3 0.5147457 0.1555439 -2.1050597
+#>  1:             mTEC.6 0.1771155 0.5681600  1.8257259
+#>  2: Intertypical.TEC.2 0.2703627 0.4047326  1.6250862
+#>  3:             mTEC.3 0.3254504 0.3683630  1.4069932
+#>  4: Intertypical.TEC.3 0.2877452 0.3647165  1.3455055
+#>  5:             mTEC.4 0.2855769 0.4333095  1.1345981
+#>  6:              eTEC1 0.3353540 0.3468851  1.0061614
+#>  7:          New.TEC.2 0.3010389 0.3924594  0.9641824
+#>  8: Intertypical.TEC.4 0.3056957 0.3968837  0.7137404
+#>  9:             cTEC.2 0.3055970 0.3373261  0.1785536
+#> 10: Intertypical.TEC.1 0.3343380 0.3136782 -0.4739980
+#> 11:    PostAire.mTEC.1 0.3753246 0.2747544 -0.5049635
+#> 12:             mTEC.2 0.3794624 0.2840831 -0.5373728
+#> 13:        Tuft.mTEC.2 0.3230802 0.2527809 -0.8110108
+#> 14:    PostAire.mTEC.2 0.3359552 0.3439315 -1.0818052
+#> 15:             mTEC.5 0.4041101 0.2327680 -1.1264554
+#> 16:        Tuft.mTEC.1 0.3345522 0.2984122 -1.1336378
+#> 17:             mTEC.7 0.3852279 0.2806545 -1.2985794
+#> 18:             mTEC.1 0.4463786 0.2144301 -1.3479067
+#> 19:         Sca1.TEC.1 0.4224206 0.1967160 -1.4784468
+#> 20:             cTEC.1 0.4648836 0.2660790 -1.6024899
+#> 21:       Prolif.TEC.2 0.4804889 0.1792038 -1.7374287
+#> 22:       Prolif.TEC.3 0.5147081 0.1555746 -2.0695228
 #>                cluster       Wk1      Wk16 milo_logfc
 #>                 <char>     <num>     <num>      <num>
 ```
@@ -500,7 +498,7 @@ comparison[order(-milo_logfc), .(cluster, Wk1, Wk16, milo_logfc)]
 ``` r
 
 cor(comparison$Wk16, comparison$milo_logfc, method = "spearman")
-#> [1] 0.8853755
+#> [1] 0.907397
 ```
 
 Strong agreement, and the disagreements are informative rather than

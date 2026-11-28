@@ -121,9 +121,9 @@ res
 #> 
 #>        k stability best_error median_error consensus_failed n_dropped
 #>    <int>     <num>      <num>        <num>           <lgcl>     <int>
-#> 1:     2 0.9943518  0.2972628    0.2973181            FALSE         0
-#> 2:     3 0.9944324  0.2518355    0.2518508            FALSE         0
-#> 3:     4 0.9003837  0.2320080    0.2320648            FALSE         0
+#> 1:     2 0.9943510  0.2972611    0.2973168            FALSE         0
+#> 2:     3 0.9944319  0.2518347    0.2518498            FALSE         0
+#> 3:     4 0.9004422  0.2320067    0.2320637            FALSE         0
 #>    n_empty_clusters n_converged
 #>               <int>       <int>
 #> 1:                0           5

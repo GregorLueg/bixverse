@@ -30,7 +30,7 @@ res <- fast_cluster_sc(
   .verbose = FALSE
 )
 head(get_kmeans_clusters(res))
-#> [1]  5  9 20 19  2 20
+#> [1] 23 13 27  5 12  1
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

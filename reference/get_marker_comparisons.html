@@ -13,7 +13,7 @@ against."><meta property="og:image" content="https://gregorlueg.github.io/bixver
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,6 +73,8 @@ against."><meta property="og:image" content="https://gregorlueg.github.io/bixver
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -140,20 +142,20 @@ against.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_marker_comparisons</span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        ref_grp   rival_grp gene_id     auroc      lfc  prop_ref prop_rival</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;char&gt;      &lt;char&gt;  &lt;char&gt;     &lt;num&gt;    &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_type_1 cell_type_2 gene_01 0.9541396 3.339259 0.9880239  0.6946108</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_type_1 cell_type_2 gene_02 0.9470938 3.292559 0.9880239  0.6886228</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_type_1 cell_type_2 gene_03 0.9724444 3.461920 1.0000000  0.6946108</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_type_1 cell_type_2 gene_04 0.9087095 2.915536 0.9580838  0.6886228</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_type_1 cell_type_2 gene_05 0.8302556 2.709312 0.8383234  0.4431138</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_type_1 cell_type_2 gene_06 0.9430600 3.113609 0.9760479  0.7005988</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_type_1 cell_type_2 gene_01 0.9541575 3.339092 0.9880239  0.6946108</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_type_1 cell_type_2 gene_02 0.9470580 3.292497 0.9880239  0.6886228</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_type_1 cell_type_2 gene_03 0.9724085 3.461720 1.0000000  0.6946108</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_type_1 cell_type_2 gene_04 0.9086916 2.915461 0.9580838  0.6886228</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_type_1 cell_type_2 gene_05 0.8302915 2.709359 0.8383234  0.4431138</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_type_1 cell_type_2 gene_06 0.9430242 3.113653 0.9760479  0.7005988</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    z_scores     p_values          fdr</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;num&gt;        &lt;num&gt;        &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: 14.38283 3.316213e-47 4.145266e-46</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: 14.16134 7.946003e-46 7.946003e-45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: 14.95929 6.772912e-51 1.693228e-49</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: 12.95389 1.116568e-38 7.975489e-38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: 10.68923 5.714230e-27 3.174572e-26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: 14.03355 4.857523e-45 4.047936e-44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: 14.38336 3.290550e-47 4.113187e-46</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: 14.16017 8.079419e-46 8.079419e-45</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: 14.95812 6.892943e-51 1.723236e-49</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: 12.95331 1.125127e-38 8.036625e-38</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: 10.69039 5.643505e-27 3.135280e-26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: 14.03240 4.937378e-45 4.114482e-44</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

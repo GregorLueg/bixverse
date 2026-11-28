@@ -21,7 +21,7 @@ the chosen combination."><meta property="og:image" content="https://gregorlueg.g
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,6 +81,8 @@ the chosen combination."><meta property="og:image" content="https://gregorlueg.g
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -128,8 +130,8 @@ the chosen combination.</p>
 <span>  scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  obs_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  expr_modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span><span class="op">)</span>,</span>
-<span>  embd_modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"wnn"</span><span class="op">)</span>,</span>
+<span>  expr_modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"atac"</span><span class="op">)</span>,</span>
+<span>  embd_modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"atac"</span>, <span class="st">"wnn"</span><span class="op">)</span>,</span>
 <span>  layer <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"norm"</span>, <span class="st">"magic"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -166,12 +168,12 @@ the chosen combination.</p>
 
 <dt id="arg-expr-modality">expr_modality<a class="anchor" aria-label="anchor" href="#arg-expr-modality"></a></dt>
 <dd><p>String. Modality the expression is pulled from. One of
-<code>c("rna", "adt")</code>.</p></dd>
+<code>c("rna", "adt", "atac")</code>.</p></dd>
 
 
 <dt id="arg-embd-modality">embd_modality<a class="anchor" aria-label="anchor" href="#arg-embd-modality"></a></dt>
 <dd><p>String. Modality the embedding is pulled from. One of
-<code>c("rna", "adt", "wnn")</code>. Use <code>"wnn"</code> for WNN-derived embeddings.</p></dd>
+<code>c("rna", "adt", "atac", "wnn")</code>. Use <code>"wnn"</code> for WNN-derived embeddings.</p></dd>
 
 
 <dt id="arg-layer">layer<a class="anchor" aria-label="anchor" href="#arg-layer"></a></dt>
@@ -203,12 +205,12 @@ modality is set via <code>embd_modality</code> and passing it again will error.<
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dt</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"dim_1"</span>, <span class="st">"dim_2"</span>, <span class="st">"gene"</span>, <span class="st">"expression"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     cell_id      dim_1      dim_2    gene expression</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;      &lt;num&gt;      &lt;num&gt;  &lt;fctr&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001  0.3694211  3.0682013 gene_01   6.222656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002 -2.2331283 -2.5044506 gene_01   4.113281</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003  2.4834063  0.5060492 gene_01   4.300781</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_004 -1.3577558  2.6232290 gene_01   5.757812</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_005 -2.1342576 -0.2906672 gene_01   0.000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_006  2.6232185  0.5387377 gene_01   0.000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001  0.3693915  3.0684264 gene_01   6.223760</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002 -2.2334790 -2.5043652 gene_01   4.111858</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003  2.4827571  0.5070686 gene_01   4.299178</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_004 -1.3581411  2.6233981 gene_01   5.756331</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_005 -2.1339433 -0.2906340 gene_01   0.000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_006  2.6228275  0.5391235 gene_01   0.000000</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

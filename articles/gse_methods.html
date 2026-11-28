@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -126,7 +128,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-11-24</p>
+      <p class="date">2026-11-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -284,7 +286,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.141 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.37 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -381,7 +383,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.228 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.582 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -572,8 +574,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.277654 2.464279 2.576542 2.580022 2.670334 2.890422     5</span></span>
-<span><span class="co">#&gt;   rust 1.526186 1.546916 1.549219 1.551821 1.555672 1.565500     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.457649 2.591454 2.760231 2.813243 2.848484 3.090322     5</span></span>
+<span><span class="co">#&gt;   rust 1.824788 1.825399 1.840155 1.832189 1.851345 1.867055     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -679,10 +681,10 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr       min         lq       mean     median        uq        max</span></span>
-<span><span class="co">#&gt;       fgsea 1527.2272 1543.14937 1546.80840 1546.59181 1557.2153 1559.85826</span></span>
-<span><span class="co">#&gt;  blitz_cold  398.4619  400.09652  402.37736  401.61732  405.0156  406.69545</span></span>
-<span><span class="co">#&gt;  blitz_warm   10.1856   11.42571   11.44548   11.70223   11.7638   12.15008</span></span>
+<span><span class="co">#&gt;        expr        min         lq       mean    median         uq        max</span></span>
+<span><span class="co">#&gt;       fgsea 1789.17824 1824.71604 1824.28968 1826.5506 1837.46202 1843.54153</span></span>
+<span><span class="co">#&gt;  blitz_cold  427.55845  428.42343  439.65954  434.8490  445.02332  462.44348</span></span>
+<span><span class="co">#&gt;  blitz_warm   10.12423   10.45092   11.00699   10.4816   10.84869   13.12953</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span>

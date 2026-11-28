@@ -44,12 +44,12 @@ grn <- identify_tf_to_genes(
 head(get_tf_to_gene(grn))
 #>         tf    gene importance
 #>     <char>  <char>      <num>
-#> 1: gene_01 gene_01  0.4643152
-#> 2: gene_03 gene_01  0.3568220
-#> 3: gene_04 gene_01  0.1553617
-#> 4: gene_02 gene_02  0.4926334
-#> 5: gene_03 gene_02  0.2651168
-#> 6: gene_04 gene_02  0.1317756
+#> 1: gene_01 gene_01  0.4622990
+#> 2: gene_03 gene_01  0.3576578
+#> 3: gene_04 gene_01  0.1564250
+#> 4: gene_02 gene_02  0.4914245
+#> 5: gene_03 gene_02  0.2639831
+#> 6: gene_04 gene_02  0.1304403
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

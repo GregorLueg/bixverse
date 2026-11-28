@@ -190,12 +190,11 @@ much easier. From there we can make some design decisions.
     and most of them are tiny, so on disk they get bit-packed to
     whatever width the block actually needs. A block of ones and twos
     costs a single bit per value, the rare gene with a count in the
-    thousands only widens its own block, and nothing gets clipped.
-    Normalised counts get `f16` precision (the v4 section below covers
-    how that layer is dropped and recomputed): the ML field has shown
-    you can get away with it, and they are pushing quantisation even
-    further than that. We will accept the precision loss when upcasting
-    to `f64` to avoid catastrophic cancellation issues at large N.
+    thousands only widens its own block, and nothing gets clipped. The
+    normalised layer is not stored at all: it is recomputed from the raw
+    counts on read, in `f32` (the format section below covers how).
+    Where precision matters we upcast to `f64` to avoid catastrophic
+    cancellation at large N.
 
 4.  ***We are not doing any heavy calculations in R (or Python, future
     roadmap).*** Rust is superior for speed and optimisation: aggressive
@@ -264,15 +263,15 @@ chunk, the file tail holds the offsets, and reads go through `mmap`.
 This assumes decent SSD speeds, but most modern hardware has that
 covered.
 
-#### The v4 file format
+#### The file format
 
 Cheap disk space is no excuse to waste it though. The first versions of
 the format were lazy: absolute `u32` indices, `u16` raw counts, the full
 `f16` normalised layer, all thrown at
 [lz4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)). lz4 is
 fast, but it cannot do much with a sorted list of absolute indices.
-Version 4 (the default for everything the package writes now) looks at
-what a chunk actually holds:
+Version 4 looked at what a chunk actually holds, and version 5 (what the
+package writes now) keeps that chunk layout:
 
 - **Indices are delta bit-packed** in blocks of 128. Sorted gene (or
   cell) indices turn into small gaps, and each block is packed to the
@@ -282,13 +281,12 @@ what a chunk actually holds:
   and in UMI data that bit matters.
 - **The normalised layer is dropped.** Library-size normalisation plus
   `log1p` is a pure function of the raw count, the library size and the
-  target size, so we recompute it on read, bit for bit identical to what
-  used to be stored. A chunk where the recompute does not reproduce the
-  stored values keeps them verbatim, so nothing changes under your feet.
-  Gene chunks need the library size of each cell for this, so the gene
-  file carries a per-cell library-size table in its tail, plus a small
-  lookup table for counts 1 to 4, which covers the common low counts
-  without a single `ln_1p` call.
+  target size, so we recompute it on read, in `f32`, through `f64` maths
+  so every OS derives the same bits. Gene chunks need the library size
+  of each cell for this, so the gene file carries a per-cell
+  library-size table in its tail, plus a small lookup table for counts 1
+  to 4, which covers the common low counts without a single `ln_1p`
+  call.
 - **A fixed 32 byte header sits uncompressed** in front of every chunk:
   nnz, library size (or average expression for genes), original index,
   flags and the codec. Things like library sizes can be read without
@@ -298,16 +296,26 @@ what a chunk actually holds:
   not shrink is stored raw whatever you asked for.
 
 So in practice we store raw counts and only raw counts, wherever
-possible, and the normalised layer is computed on the fly. Reads also
-prefetch their byte range into the page cache, so cold reads do not
-crawl through one page fault at a time.
+possible, and the normalised layer is computed on the fly.
 
-Got stores from an older version of the package? They still open and
-work, you just get a warning nudging you to convert them.
+Version 5 makes the store usable for more than genes. The header records
+what the features are (genes, ATAC peaks or tiles, gene activity) and
+how the norm derives (log-CPM, or TF-IDF for ATAC), so an ATAC store
+switches to TF-IDF by rewriting a header field, not the counts. It also
+carries a hash of the cell ids, which is how a gene activity store knows
+it belongs to its experiment, a genome interval index for peaks,
+checksums per chunk, and free-form caller metadata. Feature flags in the
+header let the format grow without a version 6. Reads also prefetch
+their byte range into the page cache, so cold reads do not crawl through
+one page fault at a time.
+
+Got stores from an older version of the package? v4 stores still open
+and work, you just get a warning nudging you to convert them. v3 stores
+no longer open.
 [`upgrade_sc_store()`](https://gregorlueg.github.io/bixverse/reference/upgrade_sc_store.md)
-does that in place: it writes the v4 files next to the old ones, checks
-them, and only then swaps them in, keeping `.v3.bak` copies unless you
-tell it otherwise.
+converts either in place: it writes the v5 files next to the old ones,
+checks them, and only then swaps them in, keeping `.v3.bak` or `.v4.bak`
+copies unless you tell it otherwise.
 
 Once you are done with the analysis, the package also offers versions to
 archive the binary files, squeezing the disk footprint further. The idea

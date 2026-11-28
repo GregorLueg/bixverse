@@ -13,7 +13,7 @@ transformation will occur automatically."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,6 +73,8 @@ transformation will occur automatically."><meta property="og:image" content="htt
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -134,7 +136,7 @@ transformation will occur automatically.</p>
 
 
 <dt id="arg-h-path">h5_path<a class="anchor" aria-label="anchor" href="#arg-h-path"></a></dt>
-<dd><p>File path to the h5ad object you wish to load in.</p></dd>
+<dd><p>Path to the h5ad file or AnnData Zarr store to load.</p></dd>
 
 
 <dt id="arg-sc-qc-param">sc_qc_param<a class="anchor" aria-label="anchor" href="#arg-sc-qc-param"></a></dt>
@@ -170,7 +172,9 @@ Recommended for large files. Defaults to <code>TRUE</code>.</p></dd>
 <dd><p>Optional numeric. Memory in GB for the buffers of the
 cell-to-gene (CSR to CSC) conversion, at 10 bytes per non-zero. <code>NULL</code>
 (default) converts in one pass and holds the whole matrix. Set a cap for
-large data sets; every extra phase re-reads the cell file once.</p></dd>
+large data sets; every extra phase re-reads the cell file once. With
+<code>h5ad_streaming = TRUE</code> it also bounds the cell-major transpose of a CSC
+file.</p></dd>
 
 
 <dt id="arg-streaming-batch-size-max-genes-in-memory-cell-batch-size">streaming, batch_size, max_genes_in_memory, cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-streaming-batch-size-max-genes-in-memory-cell-batch-size"></a></dt>

@@ -32,7 +32,7 @@ load_h5ad(
 
 - h5_path:
 
-  File path to the h5ad object you wish to load in.
+  Path to the h5ad file or AnnData Zarr store to load.
 
 - sc_qc_param:
 
@@ -73,7 +73,9 @@ load_h5ad(
   Optional numeric. Memory in GB for the buffers of the cell-to-gene
   (CSR to CSC) conversion, at 10 bytes per non-zero. `NULL` (default)
   converts in one pass and holds the whole matrix. Set a cap for large
-  data sets; every extra phase re-reads the cell file once.
+  data sets; every extra phase re-reads the cell file once. With
+  `h5ad_streaming = TRUE` it also bounds the cell-major transpose of a
+  CSC file.
 
 - streaming, batch_size, max_genes_in_memory, cell_batch_size:
 

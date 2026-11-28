@@ -77,7 +77,7 @@ mc <- calc_diffusion_coordinates(
 table(mc[["density_region"]]$density_region)
 #> 
 #> high  low  mid 
-#>   12   11   27 
+#>   12   10   28 
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

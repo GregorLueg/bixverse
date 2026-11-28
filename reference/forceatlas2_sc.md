@@ -34,7 +34,7 @@ forceatlas2_sc(
   slot_name = "fa2",
   no_embd_to_use = NULL,
   init_embd = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   k = 15L,
   knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "balltree", "ivf", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
@@ -84,8 +84,8 @@ forceatlas2_sc(
 - modality:
 
   String. On which modality to run ForceAtlas2. One of
-  `c("rna", "adt", "wnn")`. The two latter options are only available
-  for multi-modal versions with the added data.
+  `c("rna", "adt", "atac", "wnn")`. The two latter options are only
+  available for multi-modal versions with the added data.
 
 - k:
 

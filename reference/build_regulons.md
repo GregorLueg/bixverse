@@ -105,7 +105,7 @@ lengths(build_regulons(
   .verbose = FALSE
 ))
 #> gene_01 gene_02 gene_03 gene_04 gene_05 
-#>      10       4      17      13       5 
+#>      10       5      17      12       5 
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

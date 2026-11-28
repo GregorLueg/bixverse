@@ -5,7 +5,7 @@ Helper function to generate manifoldsR nearest neighbours
 ## Usage
 
 ``` r
-.get_manifoldsr_knn(x, modality = c("rna", "adt"))
+.get_manifoldsr_knn(x, modality = c("rna", "adt", "atac"))
 ```
 
 ## Arguments
@@ -16,7 +16,7 @@ Helper function to generate manifoldsR nearest neighbours
 
 - modality:
 
-  String. One of `c("rna", "adt")`.
+  String. One of `c("rna", "adt", "atac")`.
 
 ## Value
 

@@ -87,5 +87,5 @@ step_fast_mnn_sc(
   step_neighbours_sc(embd_to_use = "mnn")
 #> <ScPipeline> 2 steps
 #>   1. fast_mnn    batch_column = "batch_index", batch_hvg_genes = <integer>, fastmnn_params = <list>, use_precomputed_pca = FALSE, seed = 42L, .verbose = TRUE
-#>   2. neighbours  embd_to_use = "mnn", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
+#>   2. neighbours  embd_to_use = "mnn", no_embd_to_use = NULL, modality = c("rna", "adt", "atac"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
 ```

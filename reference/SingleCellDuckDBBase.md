@@ -16,6 +16,10 @@ checks, etc.
 
 - [`SingleCellDuckDBBase$get_vars_adt_table()`](#method-SingleCellDuckDBBase-get_vars_adt_table)
 
+- [`SingleCellDuckDBBase$get_vars_atac_table()`](#method-SingleCellDuckDBBase-get_vars_atac_table)
+
+- [`SingleCellDuckDBBase$has_table()`](#method-SingleCellDuckDBBase-has_table)
+
 - [`SingleCellDuckDBBase$get_obs_index_map()`](#method-SingleCellDuckDBBase-get_obs_index_map)
 
 - [`SingleCellDuckDBBase$get_var_index_map()`](#method-SingleCellDuckDBBase-get_var_index_map)
@@ -158,6 +162,51 @@ Returns the var table specific for the ADTs from the DuckDB.
 
 The var adt table (if found) as a data.table with optionally selected
 indices and/or columns.
+
+------------------------------------------------------------------------
+
+### `SingleCellDuckDBBase$get_vars_atac_table()`
+
+Returns the var table of the ATAC features from the DuckDB.
+
+#### Usage
+
+    SingleCellDuckDBBase$get_vars_atac_table(indices = NULL, cols = NULL)
+
+#### Arguments
+
+- `indices`:
+
+  Optional feature indices (1-based).
+
+- `cols`:
+
+  Optional column names to return.
+
+#### Returns
+
+The var atac table as a data.table, keyed `feature_idx` / `feature_id`,
+with optionally selected indices and/or columns.
+
+------------------------------------------------------------------------
+
+### `SingleCellDuckDBBase$has_table()`
+
+Checks whether a table exists in the DuckDB.
+
+#### Usage
+
+    SingleCellDuckDBBase$has_table(name)
+
+#### Arguments
+
+- `name`:
+
+  String. The table name.
+
+#### Returns
+
+Boolean.
 
 ------------------------------------------------------------------------
 

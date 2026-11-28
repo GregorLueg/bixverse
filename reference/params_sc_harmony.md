@@ -82,8 +82,9 @@ params_sc_harmony(
 - kmeans:
 
   List. Optional overrides for the k-means clustering algorithm Possible
-  parameters are `"k_means_iter"` (10 here, as in R harmony),
-  `"k_means_init"`, `"gemm"` and `"hamerly"`, see
+  parameters are `"k_means_algorithm"`, `"e_means_epochs"`,
+  `"k_means_iter"` (10 here, as in R harmony), `"k_means_init"`,
+  `"gemm"` and `"hamerly"`, see
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md).
   See
   [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md)

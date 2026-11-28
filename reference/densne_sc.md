@@ -23,7 +23,7 @@ densne_sc(
   embd_to_use = "pca",
   slot_name = "densne",
   no_embd_to_use = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   n_dim = 2L,
   perplexity = 10,
   approx_type = c("bh", "bh_qd", "fft", "fft_3k"),
@@ -65,8 +65,8 @@ densne_sc(
 - modality:
 
   String. On which modality to run den-SNE. One of
-  `c("rna", "adt", "wnn")`. The two latter options are only available
-  for multi-modal versions with the added data.
+  `c("rna", "adt", "atac", "wnn")`. The two latter options are only
+  available for multi-modal versions with the added data.
 
 - n_dim:
 

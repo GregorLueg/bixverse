@@ -49,7 +49,7 @@ new_sc_knn(
 #> SingleCellNearestNeighbour: 500 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 499]
-#>   Distance range: [1.1849, 4.2876]
+#>   Distance range: [1.1851, 4.2886]
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

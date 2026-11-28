@@ -38,7 +38,7 @@ res <- consensus_nmf_sc(
   .verbose = FALSE
 )
 get_stability(res)$stability
-#> [1] 0.9446008
+#> [1] 0.9446045
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

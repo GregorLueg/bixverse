@@ -47,7 +47,7 @@ A `SingleCellConnectivity`, see
 # the neighbour graph the clustering methods run on
 sc <- demo_single_cells()
 get_connectivities(sc)
-#> SingleCellConnectivity: 500 cells, 18888 edges
+#> SingleCellConnectivity: 500 cells, 18903 edges
 #>   Method: snn
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)

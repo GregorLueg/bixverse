@@ -111,12 +111,12 @@ grn <- tf_to_genes_correlations(grn, object = sc, .verbose = FALSE)
 head(get_tf_to_gene(grn))
 #>         tf    gene importance pairwise_cor cor_sign
 #>     <char>  <char>      <num>        <num>    <int>
-#> 1: gene_03 gene_01  0.3568220    0.5735584        1
-#> 2: gene_04 gene_01  0.1553617    0.5115550        1
-#> 3: gene_03 gene_02  0.2651168    0.5171022        1
-#> 4: gene_04 gene_02  0.1317756    0.4859316        1
-#> 5: gene_04 gene_03  0.1788230    0.5314755        1
-#> 6: gene_01 gene_03  0.1435614    0.5735584        1
+#> 1: gene_03 gene_01  0.3576578    0.5734442        1
+#> 2: gene_04 gene_01  0.1564250    0.5115237        1
+#> 3: gene_03 gene_02  0.2639831    0.5171185        1
+#> 4: gene_04 gene_02  0.1304403    0.4860079        1
+#> 5: gene_04 gene_03  0.1774745    0.5315632        1
+#> 6: gene_01 gene_03  0.1474840    0.5734442        1
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

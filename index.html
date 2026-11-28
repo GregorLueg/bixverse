@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,6 +94,8 @@
     <li><a class="dropdown-item" href="articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -237,7 +239,7 @@
 </tr>
 <tr>
 <td>Single cell</td>
-<td>Streaming i/o, QC, doublet detection, HVG, PCA, Harmony v1 and v2, fastMNN, BBKNN, Seurat CCA and rPCA, LISI and ASW integration metrics, kNN and clustering, markers, pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA</td>
+<td>Streaming i/o, QC, doublet detection, HVG, PCA, Harmony v1 and v2, fastMNN, BBKNN, Seurat CCA and rPCA, LISI and ASW integration metrics, kNN and clustering, markers (Wilcoxon or Seurat’s logistic regression), pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA</td>
 <td>
 <a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">start here</a>, then the Single Cells menu</td>
 </tr>
@@ -250,7 +252,7 @@
 </tr>
 <tr>
 <td>Single cell, advanced</td>
-<td>Clustering, cell type annotation and Symphony reference mapping, CellPhoneDB and NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories</td>
+<td>Clustering, cell type annotation, Symphony and Seurat reference mapping, CellPhoneDB and NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories</td>
 <td>
 <a href="https://gregorlueg.github.io/bixverse/articles/cell_type_annotation.html">clustering and annotation</a>, <a href="https://gregorlueg.github.io/bixverse/articles/ligand_receptor.html">ligand receptor</a>, <a href="https://gregorlueg.github.io/bixverse/articles/dialogue.html">DIALOGUE</a>, <a href="https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html">trajectories</a>
 </td>
@@ -261,8 +263,15 @@
 <td><a href="https://gregorlueg.github.io/bixverse/articles/meta_cells.html">meta cells</a></td>
 </tr>
 <tr>
+<td>Single cell ATAC</td>
+<td>ATAC on its own or as multiome: fragments or Cell Ranger output in, fragment QC, AMULET multiplets, peak calling, TF-IDF and LSI, gene activity, differential accessibility, peak to gene links, label transfer from RNA</td>
+<td>
+<a href="https://gregorlueg.github.io/bixverse/articles/atac_only.html">ATAC only</a>, <a href="https://gregorlueg.github.io/bixverse/articles/atac_multiome.html">multiome</a>
+</td>
+</tr>
+<tr>
 <td>Multi-modal</td>
-<td>ADT counts, DSB normalisation, WNN graphs</td>
+<td>ADT counts, DSB normalisation, ATAC, WNN graphs</td>
 <td><a href="https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html">multi-modal analysis</a></td>
 </tr>
 </tbody>
@@ -280,6 +289,8 @@
 <a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a> for manifold learning: UMAP, tSNE, diffusion maps, and a cool clustering method called <a href="https://github.com/TutteInstitute/evoc" class="external-link">EVoC</a>. Every 2D visualisation in the single cell suite goes through it.</li>
 <li>
 <a href="https://github.com/GregorLueg/genewalkR" class="external-link">genewalkR</a> is the graph-heavy one. Ships a database of gene to gene interaction and regulatory networks. Useful across a lot of computational biology workflows.</li>
+<li>
+<a href="https://gregorlueg.github.io/bixverse-rs/">bixverse for Python</a>: the single cell suite now has a full Python wrapper over the same Rust core (<code>uv pip install bixverse</code>). Not a fan of R? You are covered.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -329,7 +340,7 @@
 <li>
 <a href="https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html">The PBMC3k walkthrough</a> for a first end-to-end run on a small data set.</li>
 </ul>
-<p>Working with an LLM coding agent? <code><a href="reference/install_agent_skill.html">install_agent_skill()</a></code> drops a bixverse skill into your agent set up so it stops guessing at the API.</p>
+<p>Working with an LLM coding agent? <code><a href="reference/install_agent_skill.html">install_agent_skill()</a></code> drops a bixverse skill into your agent set up so it stops guessing at the API. From a shell: <code>Rscript -e 'bixverse::skill_cli()' skill install</code>. <code><a href="https://gregorlueg.github.io/bixverse">library(bixverse)</a></code> tells you when the installed skill is older than the package.</p>
 </div>
 <div class="section level2">
 <h2 id="roadmap">Roadmap<a class="anchor" aria-label="anchor" href="#roadmap"></a>
@@ -345,7 +356,7 @@
 <p><strong>Implemented</strong></p>
 <ul class="task-list">
 <li><label><input type="checkbox" checked>Wire up <a href="https://github.com/GregorLueg/edge-rs" class="external-link">edge-rs</a> to have <a href="https://www.nature.com/articles/s42003-021-02146-6" class="external-link">NEBULA</a> directly integrated into the single cell framework. (Done in <code>"0.4.11"</code>).</label></li>
-<li><label><input type="checkbox" checked>Save data to h5ad for easier interoperability with Python. (Solved thanks to <a href="https://crates.io/crates/scx-core" class="external-link">scx-core</a>)</label></li>
+<li><label><input type="checkbox" checked>Read and save h5ad and AnnData Zarr for easier interoperability with Python. (Solved thanks to <a href="https://crates.io/crates/scx-core" class="external-link">scx-core</a>)</label></li>
 <li><label><input type="checkbox" checked>Easy interoperability that chunks of data can be read in for neural network training in the corresponding deep learning frameworks, see <a href="https://gregorlueg.github.io/bixverse-rs/">Python bindings</a>.</label></li>
 </ul>
 </div>

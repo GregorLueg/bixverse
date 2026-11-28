@@ -12,7 +12,7 @@ extract_dot_plot_data(
   features,
   grouping_variable,
   scale_exp = TRUE,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt", "atac")
 )
 ```
 
@@ -36,7 +36,7 @@ extract_dot_plot_data(
 
 - modality:
 
-  String. One of `c("rna", "adt")`. ADT is only available for
+  String. One of `c("rna", "adt", "atac")`. ADT is only available for
   `SingleCellsMultiModal`.
 
 ## Value
@@ -57,9 +57,9 @@ dt <- extract_dot_plot_data(
 head(dt, 3)
 #>       gene       group mean_exp  pct_exp scaled_exp
 #>     <fctr>      <fctr>    <num>    <num>      <num>
-#> 1: gene_01 cell_type_1 6.241650 98.80239 1.00000000
-#> 2: gene_01 cell_type_2 2.902390 69.46108 0.00000000
-#> 3: gene_01 cell_type_3 3.123859 76.50602 0.06632256
+#> 1: gene_01 cell_type_1 6.241539 98.80239 1.00000000
+#> 2: gene_01 cell_type_2 2.902447 69.46108 0.00000000
+#> 3: gene_01 cell_type_3 3.123820 76.50602 0.06629746
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

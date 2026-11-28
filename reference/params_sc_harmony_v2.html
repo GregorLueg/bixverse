@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -105,7 +107,7 @@
 <span>  sigma <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  theta <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  lambda <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  block_size <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  block_size <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  max_iter_kmeans <span class="op">=</span> <span class="fl">4L</span>,</span>
 <span>  max_iter_harmony <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  epsilon_kmeans <span class="op">=</span> <span class="fl">0.001</span>,</span>
@@ -150,7 +152,7 @@ design matrix; the intercept is not penalised. Ignored when
 <dt id="arg-block-size">block_size<a class="anchor" aria-label="anchor" href="#arg-block-size"></a></dt>
 <dd><p>Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
-computation time. Defaults to <code>0.2</code>.</p></dd>
+computation time. Defaults to <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-max-iter-kmeans">max_iter_kmeans<a class="anchor" aria-label="anchor" href="#arg-max-iter-kmeans"></a></dt>
@@ -203,10 +205,10 @@ the fixed <code>lambda</code> value. Defaults to <code>TRUE</code>.</p></dd>
 
 <dt id="arg-kmeans">kmeans<a class="anchor" aria-label="anchor" href="#arg-kmeans"></a></dt>
 <dd><p>List. Optional overrides for the k-means clustering algorithm
-Possible parameters are <code>"k_means_iter"</code> (10 here, as in R harmony),
-<code>"k_means_init"</code>, <code>"gemm"</code> and <code>"hamerly"</code>, see <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>.
-See <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code> for the available elements. Defaults to
-<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
+Possible parameters are <code>"k_means_algorithm"</code>, <code>"e_means_epochs"</code>,
+<code>"k_means_iter"</code> (10 here, as in R harmony), <code>"k_means_init"</code>, <code>"gemm"</code> and
+<code>"hamerly"</code>, see <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>. See <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>
+for the available elements. Defaults to <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -225,7 +227,7 @@ the design matrix; the intercept is not penalised. Ignored when
 <code>use_dynamic_lambda = TRUE</code>. Defaults to <code>1.0</code>.</p></li>
 <li><p>block_size - Numeric. Fraction of cells to update per block during
 optimisation (0.0-1.0). Lower values reduce memory usage but increase
-computation time. Defaults to <code>0.2</code>.</p></li>
+computation time. Defaults to <code>0.05</code>.</p></li>
 <li><p>max_iter_kmeans - Integer. Maximum number of k-means iterations per
 Harmony round. Defaults to <code>4L</code>.</p></li>
 <li><p>max_iter_harmony - Integer. Maximum number of Harmony outer

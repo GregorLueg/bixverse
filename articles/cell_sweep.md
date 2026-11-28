@@ -317,7 +317,7 @@ obs_cells <- get_sc_obs(cell_object)
 table(obs_cells$leiden_clusters)
 #> 
 #>   0   1   2   3   4   5   6   7   8 
-#> 243 233  89  82  81  36  36  32  13
+#> 239 233  89  86  81  36  36  32  13
 ```
 
 845 cells over nine clusters. Good enough to subtract against; you would
@@ -349,7 +349,7 @@ raw_object[["sample_id"]] <- rep("pbmc_1k", nrow(obs_raw))
 table(cell_type, useNA = "ifany")
 #> cell_type
 #> cluster_0 cluster_1 cluster_2 cluster_3 cluster_4 cluster_5 cluster_6 cluster_7 
-#>       243       233        89        82        81        36        36        32 
+#>       239       233        89        86        81        36        36        32 
 #> cluster_8      <NA> 
 #>        13     97153
 ```
@@ -465,7 +465,7 @@ ggplot(obs_clean, aes(x = cellsweep_alpha)) +
 
 summary(obs_clean$cellsweep_alpha)
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> 0.000e+00 8.800e-07 1.069e-04 2.282e-02 9.736e-03 7.321e-01
+#> 0.000e+00 9.200e-07 1.005e-04 2.285e-02 9.946e-03 7.309e-01
 
 obs_clean[,
   .(n = .N, median_alpha = median(cellsweep_alpha)),
@@ -473,15 +473,15 @@ obs_clean[,
 ][order(-median_alpha)]
 #>    cell_type     n median_alpha
 #>       <char> <int>        <num>
-#> 1: cluster_1   233 1.148048e-02
-#> 2: cluster_3    82 1.155385e-04
-#> 3: cluster_0   243 1.030036e-04
-#> 4: cluster_2    89 1.559239e-05
-#> 5: cluster_8    13 1.397798e-05
-#> 6: cluster_6    36 5.526336e-06
-#> 7: cluster_7    32 1.685669e-06
-#> 8: cluster_5    36 4.179532e-07
-#> 9: cluster_4    81 2.480712e-07
+#> 1: cluster_1   233 1.148050e-02
+#> 2: cluster_0   239 1.006898e-04
+#> 3: cluster_3    86 9.657018e-05
+#> 4: cluster_2    89 1.559255e-05
+#> 5: cluster_8    13 1.397796e-05
+#> 6: cluster_6    36 5.526360e-06
+#> 7: cluster_7    32 1.685670e-06
+#> 8: cluster_5    36 4.179614e-07
+#> 9: cluster_4    81 2.480878e-07
 ```
 
 This run is clean. The median barcode is essentially uncontaminated and
@@ -530,37 +530,37 @@ rates <- rbind(
 
 dcast(rates, gene + cell_type ~ layer, value.var = "detected")
 #> Key: <gene, cell_type>
-#>       gene cell_type   denoised         raw
-#>     <char>    <char>      <num>       <num>
-#>  1:    LYZ cluster_0 0.00000000 0.012345679
-#>  2:    LYZ cluster_1 0.98283262 0.987124464
-#>  3:    LYZ cluster_2 0.00000000 0.011235955
-#>  4:    LYZ cluster_3 0.00000000 0.000000000
-#>  5:    LYZ cluster_4 0.00000000 0.012345679
-#>  6:    LYZ cluster_5 0.00000000 0.000000000
-#>  7:    LYZ cluster_6 0.00000000 0.027777778
-#>  8:    LYZ cluster_7 0.00000000 0.000000000
-#>  9:    LYZ cluster_8 0.92307692 0.923076923
-#> 10:   PPBP cluster_0 0.00000000 0.000000000
-#> 11:   PPBP cluster_1 0.02145923 0.038626609
-#> 12:   PPBP cluster_2 0.00000000 0.000000000
-#> 13:   PPBP cluster_3 0.00000000 0.000000000
-#> 14:   PPBP cluster_4 0.00000000 0.000000000
-#> 15:   PPBP cluster_5 0.00000000 0.000000000
-#> 16:   PPBP cluster_6 0.00000000 0.000000000
-#> 17:   PPBP cluster_7 0.00000000 0.000000000
-#> 18:   PPBP cluster_8 0.07692308 0.076923077
-#> 19: S100A8 cluster_0 0.00000000 0.004115226
-#> 20: S100A8 cluster_1 0.98712446 0.987124464
-#> 21: S100A8 cluster_2 0.00000000 0.033707865
-#> 22: S100A8 cluster_3 0.00000000 0.000000000
-#> 23: S100A8 cluster_4 0.00000000 0.037037037
-#> 24: S100A8 cluster_5 0.00000000 0.000000000
-#> 25: S100A8 cluster_6 0.00000000 0.027777778
-#> 26: S100A8 cluster_7 0.00000000 0.031250000
-#> 27: S100A8 cluster_8 0.69230769 0.692307692
-#>       gene cell_type   denoised         raw
-#>     <char>    <char>      <num>       <num>
+#>       gene cell_type   denoised        raw
+#>     <char>    <char>      <num>      <num>
+#>  1:    LYZ cluster_0 0.00000000 0.01255230
+#>  2:    LYZ cluster_1 0.98283262 0.98712446
+#>  3:    LYZ cluster_2 0.00000000 0.01123596
+#>  4:    LYZ cluster_3 0.00000000 0.00000000
+#>  5:    LYZ cluster_4 0.00000000 0.01234568
+#>  6:    LYZ cluster_5 0.00000000 0.00000000
+#>  7:    LYZ cluster_6 0.00000000 0.02777778
+#>  8:    LYZ cluster_7 0.00000000 0.00000000
+#>  9:    LYZ cluster_8 0.92307692 0.92307692
+#> 10:   PPBP cluster_0 0.00000000 0.00000000
+#> 11:   PPBP cluster_1 0.02145923 0.03862661
+#> 12:   PPBP cluster_2 0.00000000 0.00000000
+#> 13:   PPBP cluster_3 0.00000000 0.00000000
+#> 14:   PPBP cluster_4 0.00000000 0.00000000
+#> 15:   PPBP cluster_5 0.00000000 0.00000000
+#> 16:   PPBP cluster_6 0.00000000 0.00000000
+#> 17:   PPBP cluster_7 0.00000000 0.00000000
+#> 18:   PPBP cluster_8 0.07692308 0.07692308
+#> 19: S100A8 cluster_0 0.00000000 0.00418410
+#> 20: S100A8 cluster_1 0.98712446 0.98712446
+#> 21: S100A8 cluster_2 0.00000000 0.03370787
+#> 22: S100A8 cluster_3 0.00000000 0.00000000
+#> 23: S100A8 cluster_4 0.00000000 0.03703704
+#> 24: S100A8 cluster_5 0.00000000 0.00000000
+#> 25: S100A8 cluster_6 0.00000000 0.02777778
+#> 26: S100A8 cluster_7 0.00000000 0.03125000
+#> 27: S100A8 cluster_8 0.69230769 0.69230769
+#>       gene cell_type   denoised        raw
+#>     <char>    <char>      <num>      <num>
 ```
 
 ``` r

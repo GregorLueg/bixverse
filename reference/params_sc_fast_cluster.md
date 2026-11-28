@@ -9,7 +9,8 @@ centroid is handed back to its cells.
 ``` r
 params_sc_fast_cluster(
   n_centroids = NULL,
-  km_type = c("standard", "minibatch"),
+  km_type = c("emeans", "standard", "minibatch"),
+  e_means_epochs = NULL,
   k_means_iter = 100L,
   batch_size = 4096L,
   drift_threshold = 1e-04,
@@ -23,7 +24,8 @@ params_sc_fast_cluster(
   n_iterations = NULL,
   beta = 0.01,
   min_gain = 0,
-  local_moving = c("queue", "coloured"),
+  local_moving = NULL,
+  node_order = NULL,
   multi_level = TRUE,
   max_evals = 10L
 )
@@ -38,12 +40,19 @@ params_sc_fast_cluster(
 
 - km_type:
 
-  String. Which k-means to run for the coarsening. One of
-  `c("standard", "minibatch")`. Defaults to `"standard"`.
+  String. Which k-means to run for the coarsening: `"emeans"`,
+  `"standard"` (Lloyd's) or `"minibatch"`. One of
+  `c("emeans", "standard", "minibatch")`. Defaults to `"emeans"`.
+
+- e_means_epochs:
+
+  Numeric or `NULL`. `km_type = "emeans"` only. Passes over the data.
+  `NULL` takes the Rust default of 5. Defaults to `NULL`.
 
 - k_means_iter:
 
-  Integer. Number of k-means iterations. Defaults to `100L`.
+  Integer. Number of k-means iterations. Ignored by e-means. Defaults to
+  `100L`.
 
 - batch_size:
 
@@ -102,9 +111,8 @@ params_sc_fast_cluster(
 - n_iterations:
 
   Integer or `NULL`. Number of iterations of the community detection. A
-  negative value iterates until stable. If `NULL`, `2L` for Louvain and
-  `5L` for Leiden, which gave the best modularity across synthetic
-  graphs. Defaults to `NULL`.
+  negative value iterates until stable. If `NULL`, `2L`. Defaults to
+  `NULL`.
 
 - beta:
 
@@ -118,10 +126,16 @@ params_sc_fast_cluster(
 
 - local_moving:
 
-  String. `"queue"` is Traag's sequential queue. `"coloured"` moves the
-  nodes of one colour class in parallel, which only kicks in on larger
-  levels of the graph. One of `c("queue", "coloured")`. Defaults to
-  `"queue"`.
+  String or `NULL`. `"queue"` is Traag's sequential queue. `"coloured"`
+  moves the nodes of one colour class in parallel, which only kicks in
+  on larger levels of the graph. `NULL` is `"queue"` for Leiden and
+  `"coloured"` for Louvain. Defaults to `NULL`.
+
+- node_order:
+
+  String or `NULL`. Visit order of the queue, `"bfs"` (sweep in BFS
+  order from a random start) or `"shuffle"` (as igraph). `NULL` is
+  `"bfs"` for Leiden and `"shuffle"` for Louvain. Defaults to `NULL`.
 
 - multi_level:
 
@@ -140,11 +154,15 @@ A named list with the following elements:
 - n_centroids - Integer or `NULL`. Number of k-means centroids. If
   `NULL`, defaults to `floor(4 * sqrt(n_cells))`. Defaults to `NULL`.
 
-- km_type - String. Which k-means to run for the coarsening. One of
-  `c("standard", "minibatch")`. Defaults to `"standard"`.
+- km_type - String. Which k-means to run for the coarsening: `"emeans"`,
+  `"standard"` (Lloyd's) or `"minibatch"`. One of
+  `c("emeans", "standard", "minibatch")`. Defaults to `"emeans"`.
 
-- k_means_iter - Integer. Number of k-means iterations. Defaults to
-  `100L`.
+- e_means_epochs - Numeric or `NULL`. `km_type = "emeans"` only. Passes
+  over the data. `NULL` takes the Rust default of 5. Defaults to `NULL`.
+
+- k_means_iter - Integer. Number of k-means iterations. Ignored by
+  e-means. Defaults to `100L`.
 
 - batch_size - Integer. `km_type = "minibatch"` only. Batch size.
   Defaults to `4096L`.
@@ -182,8 +200,7 @@ A named list with the following elements:
 
 - n_iterations - Integer or `NULL`. Number of iterations of the
   community detection. A negative value iterates until stable. If
-  `NULL`, `2L` for Louvain and `5L` for Leiden, which gave the best
-  modularity across synthetic graphs. Defaults to `NULL`.
+  `NULL`, `2L`. Defaults to `NULL`.
 
 - beta - Numeric. Leiden only. Randomness of the refinement step.
   Defaults to `0.01`.
@@ -191,10 +208,15 @@ A named list with the following elements:
 - min_gain - Numeric. With a negative `n_iterations`, also stop once an
   iteration gains no more than this in modularity. Defaults to `0.0`.
 
-- local_moving - String. `"queue"` is Traag's sequential queue.
-  `"coloured"` moves the nodes of one colour class in parallel, which
-  only kicks in on larger levels of the graph. One of
-  `c("queue", "coloured")`. Defaults to `"queue"`.
+- local_moving - String or `NULL`. `"queue"` is Traag's sequential
+  queue. `"coloured"` moves the nodes of one colour class in parallel,
+  which only kicks in on larger levels of the graph. `NULL` is `"queue"`
+  for Leiden and `"coloured"` for Louvain. Defaults to `NULL`.
+
+- node_order - String or `NULL`. Visit order of the queue, `"bfs"`
+  (sweep in BFS order from a random start) or `"shuffle"` (as igraph).
+  `NULL` is `"bfs"` for Leiden and `"shuffle"` for Louvain. Defaults to
+  `NULL`.
 
 - multi_level - Boolean. Shall the communities be aggregated and refined
   in levels. Defaults to `TRUE`.

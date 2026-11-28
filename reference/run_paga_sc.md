@@ -18,7 +18,7 @@ and a clustering first.
 run_paga_sc(
   object,
   cluster_col,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   .verbose = TRUE
 )
 ```
@@ -37,8 +37,9 @@ run_paga_sc(
 
 - modality:
 
-  String. One of `c("rna", "adt", "wnn")`. Which kNN graph to run over.
-  Anything but `"rna"` requires a `SingleCellsMultiModal` object.
+  String. One of `c("rna", "adt", "atac", "wnn")`. Which kNN graph to
+  run over. Anything but `"rna"` requires a `SingleCellsMultiModal`
+  object.
 
 - .verbose:
 

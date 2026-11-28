@@ -35,8 +35,8 @@ head(get_sc_obs(sc), 3)
 #>    cell_idx  cell_id    cell_grp batch_index   nnz lib_size to_keep res_1
 #>       <int>   <char>      <char>       <num> <num>    <num>  <lgcl> <int>
 #> 1:        1 cell_001 cell_type_1           1    34      278    TRUE     2
-#> 2:        2 cell_002 cell_type_2           1    31      333    TRUE     0
-#> 3:        3 cell_003 cell_type_3           1    32      413    TRUE     1
+#> 2:        2 cell_002 cell_type_2           1    31      333    TRUE     1
+#> 3:        3 cell_003 cell_type_3           1    32      413    TRUE     0
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

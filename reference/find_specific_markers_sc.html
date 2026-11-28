@@ -31,7 +31,7 @@ rival would otherwise crowd out a small one regardless of effect size."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,6 +91,8 @@ rival would otherwise crowd out a small one regardless of effect size."><meta pr
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -140,9 +142,10 @@ rival would otherwise crowd out a small one regardless of effect size.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  <span class="va">column_of_interest</span>,</span>
 <span>  reference_group <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"wilcox"</span>,</span>
+<span>  method <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alternative <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"greater"</span>, <span class="st">"less"</span>, <span class="st">"twosided"</span><span class="op">)</span>,</span>
 <span>  min_prop <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"atac"</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -166,9 +169,10 @@ groups, e.g. a cell type annotation or a clustering.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>String. Which method to use for the calculations of the DGE.
-At the moment the only option is <code>"wilcox"</code>, but the parameter is reserved
-for future features.</p></dd>
+<dd><p>Optional string. One of <code>c("wilcox", "lr")</code>: the Wilcoxon
+rank sum test, or Seurat's logistic regression test (<code>LRDETest()</code>) with the
+library size as the latent variable. <code>NULL</code> picks <code>"lr"</code> on ATAC data and
+<code>"wilcox"</code> otherwise.</p></dd>
 
 
 <dt id="arg-alternative">alternative<a class="anchor" aria-label="anchor" href="#arg-alternative"></a></dt>
@@ -181,6 +185,13 @@ for future features.</p></dd>
 <dd><p>Numeric. The minimum proportion of cells that need to express
 the gene in at least one of the groups. Applied once, globally, so every
 comparison's FDR is calculated over the same gene set.</p></dd>
+
+
+<dt id="arg-modality">modality<a class="anchor" aria-label="anchor" href="#arg-modality"></a></dt>
+<dd><p>String. One of <code>c("rna", "atac")</code>. <code>"atac"</code> tests the
+features of the ATAC store of a <code>SingleCellsMultiModal</code>; on a
+<code>SingleCellsAtac</code> both name its own store. Results are then keyed by
+<code>feature_id</code>.</p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
@@ -219,20 +230,20 @@ F1000Research, 2016</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">summary</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        ref_grp gene_id  prop_ref median_auroc min_auroc mean_auroc max_auroc</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;char&gt;  &lt;char&gt;     &lt;num&gt;        &lt;num&gt;     &lt;num&gt;      &lt;num&gt;     &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_type_1 gene_01 0.9880239    0.9531087 0.9520777  0.9531087 0.9541396</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_type_1 gene_02 0.9880239    0.9434354 0.9397771  0.9434354 0.9470938</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_type_1 gene_03 1.0000000    0.9699715 0.9674987  0.9699715 0.9724444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_type_1 gene_04 0.9580838    0.9179306 0.9087095  0.9179306 0.9271517</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_type_1 gene_05 0.8383234    0.8323145 0.8302556  0.8323145 0.8343734</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_type_1 gene_06 0.9760479    0.9415538 0.9400476  0.9415538 0.9430600</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_type_1 gene_01 0.9880239    0.9531267 0.9520958  0.9531267 0.9541575</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_type_1 gene_02 0.9880239    0.9434446 0.9398312  0.9434446 0.9470580</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_type_1 gene_03 1.0000000    0.9699717 0.9675348  0.9699717 0.9724085</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_type_1 gene_04 0.9580838    0.9179307 0.9086916  0.9179307 0.9271697</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_type_1 gene_05 0.8383234    0.8323234 0.8302915  0.8323234 0.8343554</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_type_1 gene_06 0.9760479    0.9415449 0.9400656  0.9415449 0.9430242</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    worst_rival min_rank      simes_p    simes_fdr        max_p    max_p_fdr</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;char&gt;    &lt;int&gt;        &lt;num&gt;        &lt;num&gt;        &lt;num&gt;        &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_type_3        4 6.632426e-47 8.290532e-46 1.443307e-46 1.804134e-45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_type_3        5 1.589201e-45 1.589201e-44 3.333359e-44 2.777799e-43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_type_3        2 1.354582e-50 3.386456e-49 1.197853e-49 2.994632e-48</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_type_2        7 1.089790e-41 7.784218e-41 1.116568e-38 7.975489e-38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_type_2        9 2.145260e-27 1.191811e-26 5.714230e-27 3.174572e-26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_type_3        5 9.715047e-45 8.095872e-44 2.126360e-44 2.126360e-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_type_3        4 6.581099e-47 8.226374e-46 1.432128e-46 1.790160e-45</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_type_3        5 1.615884e-45 1.615884e-44 3.255928e-44 2.713274e-43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_type_3        2 1.378589e-50 3.446472e-49 1.178490e-49 2.946226e-48</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_type_2        7 1.081619e-41 7.725847e-41 1.125127e-38 8.036625e-38</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_type_2        9 2.159089e-27 1.199494e-26 5.643505e-27 3.135280e-26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_type_3        5 9.874756e-45 8.228963e-44 2.109971e-44 2.109971e-43</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

@@ -398,12 +398,12 @@ dt <- extract_embedding_data(
 head(dt)
 #>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
 #>              <char>     <num>     <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -5.532514 1.4303284    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -6.901820 4.0647011    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  6.087878 0.6221395 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.533025 2.6208754         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -6.294994 3.1010923    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -5.315051 2.4977725         NK               2 0.4165899
+#> 1: AAACATACAACCAC-1 -5.577694 1.1391201    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -6.676863 3.8900292    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  7.077135 0.3164289 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.456859 2.0862541         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -6.283577 3.0238941    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -5.267121 2.1805005         NK               2 0.4165899
 ```
 
 ## Other 2D embeddings
@@ -577,12 +577,12 @@ dt <- extract_feature_plot_data(
 head(dt)
 #>             cell_id     dim_1     dim_2    sc_type leiden_clusters      Ribo
 #>              <char>     <num>     <num>     <char>           <int>     <num>
-#> 1: AAACATACAACCAC-1 -5.532514 1.4303284    T cells               0 0.4371381
-#> 2: AAACATTGATCAGC-1 -6.901820 4.0647011    T cells               0 0.3171120
-#> 3: AAACCGTGCTTCCG-1  6.087878 0.6221395 CD14+ Mono               1 0.2431611
-#> 4: AAACCGTGTATGCG-1 -2.533025 2.6208754         NK               2 0.1491318
-#> 5: AAACGCACTGGTAC-1 -6.294994 3.1010923    T cells               0 0.3635097
-#> 6: AAACGCTGACCAGT-1 -5.315051 2.4977725         NK               2 0.4165899
+#> 1: AAACATACAACCAC-1 -5.577694 1.1391201    T cells               0 0.4371381
+#> 2: AAACATTGATCAGC-1 -6.676863 3.8900292    T cells               0 0.3171120
+#> 3: AAACCGTGCTTCCG-1  7.077135 0.3164289 CD14+ Mono               1 0.2431611
+#> 4: AAACCGTGTATGCG-1 -2.456859 2.0862541         NK               2 0.1491318
+#> 5: AAACGCACTGGTAC-1 -6.283577 3.0238941    T cells               0 0.3635097
+#> 6: AAACGCTGACCAGT-1 -5.267121 2.1805005         NK               2 0.4165899
 #>               gene expression
 #>             <fctr>      <num>
 #> 1: ENSG00000156738          0
@@ -653,11 +653,11 @@ dt <- extract_dot_plot_data(
 head(dt)
 #>               gene  group   mean_exp   pct_exp scaled_exp
 #>             <fctr> <fctr>      <num>     <num>      <num>
-#> 1: ENSG00000167286      0 2.12263346 87.139106 1.00000000
-#> 2: ENSG00000167286      1 0.14064217  8.593750 0.06625834
-#> 3: ENSG00000167286      2 1.59508967 60.997730 0.75146732
-#> 4: ENSG00000167286      3 0.07070547  3.903904 0.03331026
-#> 5: ENSG00000167286      4 0.09654772  6.756756 0.04548488
+#> 1: ENSG00000167286      0 2.12131047 87.062937 1.00000000
+#> 2: ENSG00000167286      1 0.14063258  8.593750 0.06629514
+#> 3: ENSG00000167286      2 1.59731793 61.136365 0.75298640
+#> 4: ENSG00000167286      3 0.07070824  3.903904 0.03333234
+#> 5: ENSG00000167286      4 0.09654219  6.756756 0.04551064
 #> 6: ENSG00000167286      5 0.00000000  0.000000 0.00000000
 ```
 
@@ -745,10 +745,10 @@ dt <- extract_gene_violin_data(
 head(dt)
 #>             cell_id      group            gene expression
 #>              <char>     <fctr>          <fctr>      <num>
-#> 1: AAACATACAACCAC-1    T cells ENSG00000167286   2.865234
-#> 2: AAACATTGATCAGC-1    T cells ENSG00000167286   3.490234
+#> 1: AAACATACAACCAC-1    T cells ENSG00000167286   2.864632
+#> 2: AAACATTGATCAGC-1    T cells ENSG00000167286   3.490630
 #> 3: AAACCGTGCTTCCG-1 CD14+ Mono ENSG00000167286   0.000000
 #> 4: AAACCGTGTATGCG-1         NK ENSG00000167286   0.000000
-#> 5: AAACGCACTGGTAC-1    T cells ENSG00000167286   1.730469
-#> 6: AAACGCTGACCAGT-1         NK ENSG00000167286   2.324219
+#> 5: AAACGCACTGGTAC-1    T cells ENSG00000167286   1.730332
+#> 6: AAACGCTGACCAGT-1         NK ENSG00000167286   2.324013
 ```

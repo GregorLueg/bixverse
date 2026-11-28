@@ -190,8 +190,8 @@ get_sc_obs(sc_object, filtered = TRUE)[, .N, by = cell_type][order(-N)]
 #>       <char> <int>
 #> 1:   T cells  1130
 #> 2: Monocytes   599
-#> 3:        NK   423
-#> 4:   B cells   314
+#> 3:        NK   424
+#> 4:   B cells   313
 #> 5:        DC    24
 ```
 
@@ -344,7 +344,7 @@ global_hvg <- get_hvg(sc_object)
 subset_hvg <- get_hvg(t_cells)
 
 length(intersect(global_hvg, subset_hvg))
-#> [1] 984
+#> [1] 986
 ```
 
 Around a thousand of the 2000 genes are different, and the ones that
@@ -387,18 +387,18 @@ sub_markers[fdr <= 0.05][order(grp, -lfc)][,
   by = grp,
   .SDcols = c("gene_symbol", "lfc", "fdr")
 ]
-#>       grp gene_symbol       lfc           fdr
-#>     <int>      <char>     <num>         <num>
-#>  1:     0      S100A4 1.5977161 1.521519e-100
-#>  2:     0       ANXA1 0.9066843  2.190267e-36
-#>  3:     0     S100A10 0.8430585  3.692125e-33
-#>  4:     0     S100A11 0.8253519  3.495343e-38
-#>  5:     0        IL32 0.8152004  6.142298e-36
-#>  6:     1        CCR7 0.6021588  8.056951e-25
-#>  7:     1        CD8B 0.4293729  4.137300e-14
-#>  8:     1     C6orf48 0.3866629  1.214503e-10
-#>  9:     1      MALAT1 0.3362350  1.888301e-44
-#> 10:     1         CD7 0.3171249  3.661226e-06
+#>       grp gene_symbol       lfc          fdr
+#>     <int>      <char>     <num>        <num>
+#>  1:     0      S100A4 1.5875844 1.065196e-99
+#>  2:     0       ANXA1 0.9319309 3.323405e-38
+#>  3:     0     S100A11 0.8178020 1.367033e-37
+#>  4:     0        IL32 0.8165761 6.728923e-35
+#>  5:     0        KLF6 0.8092959 4.525507e-29
+#>  6:     1        CCR7 0.5913675 5.085379e-24
+#>  7:     1        CD8B 0.4277980 5.316365e-14
+#>  8:     1     C6orf48 0.4167541 2.340991e-12
+#>  9:     1         CD7 0.3480897 2.232093e-07
+#> 10:     1      MALAT1 0.3310148 1.064990e-42
 ```
 
 S100A4, ANXA1 and IL32 on one side, CCR7, SELL and CD8B on the other.
@@ -462,8 +462,8 @@ get_sc_obs(sc_object, filtered = TRUE)[, .N, by = t_subcluster][order(
 )]
 #>    t_subcluster     N
 #>          <char> <int>
-#> 1:    T cells_0   587
-#> 2:    T cells_1   543
+#> 1:    T cells_0   582
+#> 2:    T cells_1   548
 #> 3:         <NA>  1360
 ```
 
@@ -501,7 +501,7 @@ head(sc_object)[, .(cell_id, cell_type, t_subcluster, res_1, res_0.5)]
 #> 3: AAACATTGATCAGC-1   T cells    T cells_0     0       0
 #> 4: AAACCGTGCTTCCG-1 Monocytes         <NA>    NA      NA
 #> 5: AAACCGTGTATGCG-1        NK         <NA>    NA      NA
-#> 6: AAACGCACTGGTAC-1   T cells    T cells_0     0       0
+#> 6: AAACGCACTGGTAC-1   T cells    T cells_0     2       0
 ```
 
 ## Pipelines
@@ -528,8 +528,8 @@ subcluster_pipeline
 #> <ScPipeline> 4 steps
 #>   1. hvg         hvg_no = 2000L, hvg_params = <list>, streaming = NULL, .verbose = FALSE
 #>   2. pca         no_pcs = 20L, pca_params = <list>, sparse_svd = TRUE, hvg = NULL, seed = 42L, residuals = FALSE, .verbose = FALSE
-#>   3. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = FALSE
-#>   4. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = "subcluster", modality = c("rna", "adt", "wnn"), seed = 42L
+#>   3. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt", "atac"), neighbours_params = <list>, seed = 42L, .verbose = FALSE
+#>   4. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = "subcluster", modality = c("rna", "adt", "atac", "wnn"), seed = 42L
 ```
 
 Pipelines are inert. Nothing runs until you apply one, and the same
@@ -549,7 +549,7 @@ b_cells <- apply_pipeline(subcluster_pipeline, b_cells)
 
 b_cells
 #> Single cell experiment (subset).
-#>   No cells: 314
+#>   No cells: 313
 #>   No genes: 11139
 #>   Group: cell_type = B cells
 #>   HVG calculated: TRUE
@@ -609,10 +609,10 @@ summary_dt <- data.table::rbindlist(purrr::imap(per_group, \(x, name) {
 summary_dt[order(-n_cells)]
 #>    cell_type n_cells n_subclusters hvg_shared_with_global
 #>       <char>   <int>         <int>                  <int>
-#> 1:   T cells    1130             2                    984
+#> 1:   T cells    1130             2                    986
 #> 2: Monocytes     599             2                    856
-#> 3:        NK     423             2                    660
-#> 4:   B cells     314             1                    569
+#> 3:        NK     424             2                    660
+#> 4:   B cells     313             1                    569
 ```
 
 Every lineage picked a different feature set, and the shared fraction
@@ -639,13 +639,13 @@ sc_object <- merge_subset_obs(
 get_sc_obs(sc_object, filtered = TRUE)[, .N, by = fine_label][order(fine_label)]
 #>     fine_label     N
 #>         <char> <int>
-#> 1:   B cells_0   314
-#> 2: Monocytes_0   360
-#> 3: Monocytes_1   239
-#> 4:        NK_0   271
-#> 5:        NK_1   152
-#> 6:   T cells_0   587
-#> 7:   T cells_1   543
+#> 1:   B cells_0   313
+#> 2: Monocytes_0   362
+#> 3: Monocytes_1   237
+#> 4:        NK_0   276
+#> 5:        NK_1   148
+#> 6:   T cells_0   582
+#> 7:   T cells_1   548
 #> 8:        <NA>    24
 ```
 

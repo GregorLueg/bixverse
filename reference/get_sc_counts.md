@@ -12,7 +12,7 @@ get_sc_counts(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   .verbose = TRUE
 )
 ```
@@ -49,7 +49,7 @@ get_sc_counts(
 
 - modality:
 
-  String. The modality to return. One of `c("rna", "adt")`.
+  String. The modality to return. One of `c("rna", "adt", "atac")`.
 
 - .verbose:
 

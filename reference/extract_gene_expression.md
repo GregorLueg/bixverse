@@ -12,7 +12,7 @@ extract_gene_expression(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "atac"),
   layer = c("norm", "magic")
 )
 ```
@@ -41,7 +41,7 @@ extract_gene_expression(
 
 - modality:
 
-  String. One of `c("rna", "adt")`. ADT is only available for
+  String. One of `c("rna", "adt", "atac")`. ADT is only available for
   `SingleCellsMultiModal`.
 
 - layer:
@@ -74,9 +74,9 @@ dt <- extract_gene_expression(
 head(dt, 3)
 #>     cell_id  gene_01  gene_02  gene_03    cell_grp
 #>      <char>    <num>    <num>    <num>      <char>
-#> 1: cell_001 6.222656 6.761719 5.531250 cell_type_1
-#> 2: cell_002 4.113281 4.511719 4.113281 cell_type_2
-#> 3: cell_003 4.300781 4.300781 3.226562 cell_type_3
+#> 1: cell_001 6.223760 6.761931 5.532593 cell_type_1
+#> 2: cell_002 4.111858 4.511849 4.111858 cell_type_2
+#> 3: cell_003 4.299178 4.299178 3.227363 cell_type_3
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

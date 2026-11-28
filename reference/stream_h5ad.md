@@ -30,7 +30,7 @@ stream_h5ad(
 
 - h5_path:
 
-  File path to the h5ad object.
+  Path to the h5ad file or AnnData Zarr store.
 
 - sc_qc_param:
 

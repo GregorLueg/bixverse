@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,8 @@
     <li><a class="dropdown-item" href="../articles/bonsai.html">Cell trees with Bonsai</a></li>
     <li><a class="dropdown-item" href="../articles/cell_type_annotation.html">Clustering, annotation and reference mapping</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_multiome.html">Joint RNA and ATAC (multiome)</a></li>
+    <li><a class="dropdown-item" href="../articles/atac_only.html">ATAC without RNA</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
@@ -131,8 +133,8 @@ on some sub class.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    cell_idx  cell_id    cell_grp batch_index   nnz lib_size to_keep res_1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;int&gt;   &lt;char&gt;      &lt;char&gt;       &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt; &lt;int&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1:        1 cell_001 cell_type_1           1    34      278    TRUE     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:        2 cell_002 cell_type_2           1    31      333    TRUE     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:        3 cell_003 cell_type_3           1    32      413    TRUE     1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:        2 cell_002 cell_type_2           1    31      333    TRUE     1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:        3 cell_003 cell_type_3           1    32      413    TRUE     0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>

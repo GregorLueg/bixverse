@@ -28,7 +28,7 @@ rs_fast_cluster_sc(embd, resolutions, fc_params, n_seeds, seed, verbose)
 
   Named list. The fast clustering parameters, see
   [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md).
-  Also carries the k-means keys (`km_type`, `kmeans_iters`,
+  Also carries the k-means keys (`km_type`, `k_means_iter`,
   `batch_size`, `drift_threshold`, `lr_alpha`).
 
 - n_seeds:

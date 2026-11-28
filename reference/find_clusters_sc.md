@@ -13,7 +13,7 @@ find_clusters_sc(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
   name = NULL,
-  modality = c("rna", "adt", "wnn"),
+  modality = c("rna", "adt", "atac", "wnn"),
   seed = 42L,
   .verbose = TRUE,
   ...
@@ -43,9 +43,9 @@ find_clusters_sc(
 
 - modality:
 
-  String. On which modality to cluster. One of `c("rna", "adt", "wnn")`.
-  The two latter options are only available for multi-modal versions
-  with the added data.
+  String. On which modality to cluster. One of
+  `c("rna", "adt", "atac", "wnn")`. The two latter options are only
+  available for multi-modal versions with the added data.
 
 - seed:
 
@@ -59,7 +59,7 @@ find_clusters_sc(
 
   Further parameters for
   [`leiden_clustering()`](https://gregorlueg.github.io/bixverse/reference/leiden_clustering.md):
-  `n_iterations`, `beta`, `min_gain` and `local_moving`.
+  `n_iterations`, `beta`, `min_gain`, `local_moving` and `node_order`.
 
 ## Value
 

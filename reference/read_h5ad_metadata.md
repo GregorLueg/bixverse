@@ -12,7 +12,7 @@ read_h5ad_metadata(f_path)
 
 - f_path:
 
-  File path to the `.h5ad` file.
+  Path to the `.h5ad` file or AnnData Zarr store.
 
 ## Value
 

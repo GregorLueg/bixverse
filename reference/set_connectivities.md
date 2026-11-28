@@ -47,7 +47,7 @@ sc <- demo_single_cells()
 g <- get_connectivities(sc)
 sc <- set_connectivities(remove_connectivities(sc), g)
 get_connectivities(sc)
-#> SingleCellConnectivity: 500 cells, 18888 edges
+#> SingleCellConnectivity: 500 cells, 18903 edges
 #>   Method: snn
 
 unlink(sc@dir_data, recursive = TRUE, force = TRUE)
