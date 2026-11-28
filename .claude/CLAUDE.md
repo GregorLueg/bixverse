@@ -98,7 +98,7 @@ standalone [`bixverse-rs`](https://crates.io/crates/bixverse-rs) crate, which
 reaches this repo through `bixverse-r` (extendr conversions, re-exports
 `bixverse-rs`). `src/rust/Cargo.toml` declares it with features `single-cell`,
 `multi-modal`, `atac`, `dge`, `bonsai`, `accelerate`, `h5`, `parquet`, `zarr`
-and `export-zarr`, plus `hdf5-filters` and `zarr-blosc` off Windows and
+and `export`, plus `hdf5-filters`, `zarr-blosc` and `export-zarr` off Windows and
 `hdf5-static` by default. See "Local development" above for the
 patch block. Everything under `src/rust/src/` is a thin extendr binding layer,
 one module per domain
